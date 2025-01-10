@@ -36,5 +36,5 @@ class Board(AlderlakeBoardConfig.Board):
         # 0 - PCH UART0, 1 - PCH UART1, 2 - PCH UART2, 0xFF - EC UART 0x3F8
         self.DEBUG_PORT_NUMBER = 0x0
 
-        self.OS_LOADER_FD_SIZE = 0x0005A000
+        self.OS_LOADER_FD_SIZE = 0x0005B000
         self.OS_LOADER_FD_NUMBLK = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
