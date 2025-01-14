@@ -1,7 +1,7 @@
 ## @ StitchIfwiConfig_mtlps.py
 #  This is an IFWI stitch config script for MTL Slim Bootloader
 #
-# Copyright (c) 2021 - 2023, Intel Corporation. All rights reserved. <BR>
+# Copyright (c) 2021 - 2025, Intel Corporation. All rights reserved. <BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -23,8 +23,6 @@ stitching ingredients listed in step 2 below, please contact your Intel represen
       - Components
        Copy 'cse_image.bin'     to 'Input/cse_image.bin'
        Copy PMC firmware image  to 'Input/pmc.bin'.
-       Copy EC firmware image   to 'Input/ec.bin'.
-       copy ECregionpointer.bin to 'Input/ecregionpointer.bin'
        Copy GBE binary image    to 'Input/gbe.bin'.
        Copy ACM firmware image  to 'Input/acm.bin'.
        Copy DiagnosticACM firmware image  to 'Input/DiagnosticAcm.bin'.
@@ -135,9 +133,7 @@ def get_xml_change_list (platform, plt_params_list):
         ('./FlashLayout/DescriptorRegion/HarnessGlobalData/SelectedRvp',            'MTL-P DDR5 (MTL-P + MTP-P)'),
         ('./FlashLayout/Ifwi_IntelMePmcRegion/MeRegionFile',                        '$SourceDir\MeRegionFile.bin'),
         ('./FlashLayout/Ifwi_IntelMePmcRegion/PmcBinary',                           '$SourceDir\PmcBinary.bin'),
-        ('./FlashLayout/EcRegion/InputFile',                                        '$SourceDir\EcRegion.bin'),
-        ('./FlashLayout/EcRegion/Enabled',                                          'Enabled'),
-        ('./FlashLayout/EcRegion/EcRegionPointer',                                  '$SourceDir\EcRegionPointer.bin'),
+        ('./FlashLayout/EcRegion/Enabled',                                          'Disabled'),
         ('./FlashLayout/GbeRegion/InputFile',                                       '$SourceDir\GbeRegion.bin'),
         ('./FlashLayout/GbeRegion/Enabled',                                         'Enabled'),
         ('./FlashLayout/PdrRegion/InputFile',                                       ''),
