@@ -1,7 +1,7 @@
 ## @ StitchIfwiConfig_mtlp.py
 #  This is an IFWI stitch config script for MTL Slim Bootloader
 #
-# Copyright (c) 2021 - 2024, Intel Corporation. All rights reserved. <BR>
+# Copyright (c) 2021 - 2025, Intel Corporation. All rights reserved. <BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -133,9 +133,7 @@ def get_xml_change_list (platform, plt_params_list):
         ('./FlashLayout/DescriptorRegion/HarnessGlobalData/SelectedRvp',            'MTL-P DDR5 (MTL-P + MTP-P)'),
         ('./FlashLayout/Ifwi_IntelMePmcRegion/MeRegionFile',                        '$SourceDir\MeRegionFile.bin'),
         ('./FlashLayout/Ifwi_IntelMePmcRegion/PmcBinary',                           '$SourceDir\PmcBinary.bin'),
-        ('./FlashLayout/EcRegion/InputFile',                                        '$SourceDir\EcRegion.bin'),
-        ('./FlashLayout/EcRegion/Enabled',                                          'Enabled'),
-        ('./FlashLayout/EcRegion/EcRegionPointer',                                  '$SourceDir\EcRegionPointer.bin'),
+        ('./FlashLayout/EcRegion/Enabled',                                          'Disabled'),
         ('./FlashLayout/GbeRegion/InputFile',                                       '$SourceDir\GbeRegion.bin'),
         ('./FlashLayout/GbeRegion/Enabled',                                         'Disabled'),
         ('./FlashLayout/PdrRegion/InputFile',                                       ''),
