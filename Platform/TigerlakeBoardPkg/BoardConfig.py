@@ -1,7 +1,7 @@
 ## @file
 # This file is used to provide board specific image information.
 #
-#  Copyright (c) 2018 - 2024, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2018 - 2025, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -150,7 +150,7 @@ class Board(BaseBoard):
 
         if len(self._PAYLOAD_NAME.split(';')) > 1:
             # EPAYLOAD is specified
-            self.EPAYLOAD_SIZE      = 0x00160000
+            self.EPAYLOAD_SIZE      = 0x00170000
             self.UEFI_VARIABLE_SIZE = 0x00040000
         else:
             # EPAYLOAD does not exist, create a dummy one
