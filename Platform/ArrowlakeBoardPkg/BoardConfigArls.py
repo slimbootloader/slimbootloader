@@ -74,6 +74,7 @@ class Board(BaseBoard):
         self.ENABLE_SMM_REBASE    = 2
         # 0: Disable 1: Enable IPP Crypto performance mesurement
         self.ENABLE_IPP_CRYPTO_PERF = 0
+        self.ENABLE_FIPS_SELFTEST   = 0
 
         # 0 - PCH UART0, 1 - PCH UART1, 2 - PCH UART2, 0xFF - EC UART 0x3F8
         self.DEBUG_PORT_NUMBER = 0x2
@@ -124,6 +125,8 @@ class Board(BaseBoard):
         self.STAGE2_XIP           = 0
 
         self.STAGE1A_SIZE         = 0x00020000
+        if self.ENABLE_FIPS_SELFTEST:
+            self.STAGE1A_SIZE += 0x0000B000
         self.STAGE1_STACK_SIZE    = 0x00003000
         self.STAGE1_DATA_SIZE     = 0x00014000
         self.FSP_M_STACK_TOP      = 0xFEFDFF00
@@ -410,6 +413,11 @@ class Board(BaseBoard):
 
         if self._S_SUPPORT:
             dsc['PcdsFixedAtBuild'].append ('gPlatformArrowLakeTokenSpaceGuid.PcdMtlSSupport | TRUE')
+
+        if self.ENABLE_FIPS_SELFTEST:
+            dsc['PcdsFixedAtBuild'].append ('gPlatformCommonLibTokenSpaceGuid.PcdFipsSupport | TRUE')
+
+        dsc['PcdsFixedAtBuild'].append ('gPlatformCommonLibTokenSpaceGuid.PcdIppcrypto2Lib | TRUE')
 
         return dsc
 
