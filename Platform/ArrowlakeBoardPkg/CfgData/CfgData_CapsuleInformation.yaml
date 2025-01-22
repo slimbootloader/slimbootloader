@@ -1,0 +1,72 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : PLT
+- CAPSULE_INFO_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ CAPSULE_INFO_CFG_DATA, 0x080, 0, 0 ] }
+  - DevType      :
+      name         : DevType
+      type         : Combo
+      option       : 0:SATA, 1:SD, 2:EMMC, 3:UFS, 4:SPI, 5:USB, 6:NVME, 7:MAX
+      help         : >
+                     Specify boot device
+      length       : 0x01
+      value        : 5
+  - DevInstance  :
+      name         : Boot Device instance
+      type         : Combo
+      option       : 0:Device 0, 1:Device 1, 2:Device 2, 3:Device 3
+      help         : >
+                     Specify boot device instance when then are multple instances
+      order        : 0000.0000
+      length       : 0x01
+      value        : 0
+  - Reserved     :
+      length       : 0x03
+      value        : 0
+  - HwPart       :
+      name         : Hardware Partition
+      type         : Combo
+      option       : 0:User Partition, 1:Boot Partition 1, 2:Boot Partition 2
+      help         : >
+                     Specify hardware partition number
+      length       : 0x01
+      value        : 0
+  - SwPart       :
+      name         : Software Partition
+      type         : EditNum, INT, (0,127)
+      help         : >
+                     Specify software partition number
+      length       : 0x01
+      value        : 0
+  - FsType       :
+      name         : File System Type
+      type         : Combo
+      option       : 0:FAT, 1:EXT2, 2:AUTO, 3:RAW
+      help         : >
+                     Image is loaded from file system instead of raw data
+      length       : 0x01
+      value        : 2
+  - FileName     :
+      name         : Capsule File Name
+      type         : EditText
+      help         : >
+                     Specify file name of capsule image  (16-byte max length)
+      length       : 0x10
+      value        : 'FwuImage.bin'
+  - LbaAddr      :
+      name         : LBA address for capsule image)
+      type         : EditNum, HEX, (0,0xFFFFFFFF)
+      help         : >
+                     specify LBA address where to find capsule image
+      length       : 0x04
+      value        : 0
+

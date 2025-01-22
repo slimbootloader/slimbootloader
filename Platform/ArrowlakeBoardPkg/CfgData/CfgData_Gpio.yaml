@@ -1,0 +1,299 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020 - 2024, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : GIO
+- GPIO_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ GPIO_CFG_DATA, 0x400, 1, 0 ] }
+  - GPIO_CFG_HDR :
+    - GpioHeaderSize :
+        length       : 0x01
+        value        : _LENGTH_GPIO_CFG_HDR_
+    - GpioBaseTableId :
+        length       : 0x01
+        value        : 0xFF
+    - GpioItemSize :
+        length       : 0x02
+        value        : 8
+    - GpioItemCount :
+        length       : 0x02
+        value        : (_LENGTH_GPIO_CFG_DATA_ - _LENGTH_GPIO_CFG_HDR_ - 8) / 8
+    # Bit start offset within each GPIO entry array to identify a GPIO pin uniquely. EX: GPIO ChipId + GPIO_Community + GPIO group id + pad id
+    # Offset is 2nd DWORD BIT16 = 1 * 32 + 16 = 48
+    - GpioItemIdBitOff :
+        length       : 0x01
+        value        : 48
+    # Bit length within each GPIO entry array to identify a GPIO pin uniquely.
+    # Length is 2nd DWORD BIT16 to BIT28 = 14
+    - GpioItemIdBitLen :
+        length       : 0x01
+        value        : 14
+    # Bit offset within each GPIO entry array to indicate SKIP a GPIO programming
+    # Offset is 2nd DWORD BIT31 = 63
+    - GpioItemValidBitOff :
+        length       : 0x01
+        value        : 63
+    - GpioItemUnused :
+        length       : 0x01
+        value        : 0
+    # Need 1 bit per GPIO. So this mask byte length needs to be at least (GpioNumber + 7) / 8
+    # Padding can be added to let the whole length aligned at DWORD boundary
+    - GpioBaseTableBitMask :
+        length       : 38
+        value        : {0}
+    - GpioTableData :
+        length       : 0
+        value        : 0
+
+
+  #
+  # Each GPIO controller has a unique chipId which is bitwise
+  # MTL/ARL SOC-M ChipId: 0 (means bit position is 0 as BIT0)
+  # DW1 high 16 bits used as below. others use the default values
+  # BITs:     0     0     000     000     000    00000
+  # Fields:  Skip  Hide  ChipId  ComIdx  GrpIdx  PadIdx
+  #
+  # GPP_V (Community: 0, group: 0)
+  - $ACTION      :
+      page         : GIO_GPP_V:GIO:"GPIO GPP_V"
+  - !expand { GPIO_TMPL : [ GPP_V,  00,  0x00000000,  0x00000000 ] }
+  - !expand { GPIO_TMPL : [ GPP_V,  01,  0x00000000,  0x00010000 ] }
+  - !expand { GPIO_TMPL : [ GPP_V,  02,  0x00000000,  0x00020000 ] }
+  - !expand { GPIO_TMPL : [ GPP_V,  03,  0x00000000,  0x00030000 ] }
+  - !expand { GPIO_TMPL : [ GPP_V,  04,  0x00000000,  0x00040000 ] }
+  - !expand { GPIO_TMPL : [ GPP_V,  05,  0x00000000,  0x00050000 ] }
+  - !expand { GPIO_TMPL : [ GPP_V,  06,  0x00000000,  0x00060000 ] }
+  - !expand { GPIO_TMPL : [ GPP_V,  07,  0x00000000,  0x00070000 ] }
+  - !expand { GPIO_TMPL : [ GPP_V,  08,  0x00000000,  0x00080000 ] }
+  - !expand { GPIO_TMPL : [ GPP_V,  09,  0x00000000,  0x00090000 ] }
+  - !expand { GPIO_TMPL : [ GPP_V,  10,  0x00000000,  0x000A0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_V,  11,  0x00000000,  0x000B0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_V,  12,  0x00000000,  0x000C0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_V,  13,  0x00000000,  0x000D0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_V,  14,  0x00000000,  0x000E0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_V,  15,  0x00000000,  0x000F0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_V,  16,  0x00000000,  0x00100000 ] }
+  - !expand { GPIO_TMPL : [ GPP_V,  17,  0x00000000,  0x00110000 ] }
+  - !expand { GPIO_TMPL : [ GPP_V,  18,  0x00000000,  0x00120000 ] }
+  - !expand { GPIO_TMPL : [ GPP_V,  19,  0x00000000,  0x00130000 ] }
+  - !expand { GPIO_TMPL : [ GPP_V,  20,  0x00000000,  0x00140000 ] }
+  - !expand { GPIO_TMPL : [ GPP_V,  21,  0x00000000,  0x00150000 ] }
+  - !expand { GPIO_TMPL : [ GPP_V,  22,  0x00000000,  0x00160000 ] }
+  - !expand { GPIO_TMPL : [ GPP_V,  23,  0x00000000,  0x00170000 ] }
+
+  # GPP_C (Community: 0, group: 1)
+  - $ACTION      :
+      page         : GIO_GPP_C:GIO:"GPIO GPP_C"
+  - !expand { GPIO_TMPL : [ GPP_C,  00,  0x00000000,  0x00200000 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  01,  0x00000000,  0x00210000 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  02,  0x00000000,  0x00220000 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  03,  0x00000000,  0x00230000 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  04,  0x00000000,  0x00240000 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  05,  0x00000000,  0x00250000 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  06,  0x00000000,  0x00260000 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  07,  0x00000000,  0x00270000 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  08,  0x00000000,  0x00280000 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  09,  0x00000000,  0x00290000 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  10,  0x00000000,  0x002A0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  11,  0x00000000,  0x002B0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  12,  0x00000000,  0x002C0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  13,  0x00000000,  0x002D0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  14,  0x00000000,  0x002E0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  15,  0x00000000,  0x002F0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  16,  0x00000000,  0x00300000 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  17,  0x00000000,  0x00310000 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  18,  0x00000000,  0x00320000 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  19,  0x00000000,  0x00330000 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  20,  0x00000000,  0x00340000 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  21,  0x00000000,  0x00350000 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  22,  0x00000000,  0x00360000 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  23,  0x00000000,  0x00370000 ] }
+
+  # GPP_A (Community: 1, group: 0)
+  - $ACTION      :
+      page         : GIO_GPP_A:GIO:"GPIO GPP_A"
+  - !expand { GPIO_TMPL : [ GPP_A,  00,  0x00000000,  0x01000000 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  01,  0x00000000,  0x01010000 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  02,  0x00000000,  0x01020000 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  03,  0x00000000,  0x01030000 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  04,  0x00000000,  0x01040000 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  05,  0x00000000,  0x01050000 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  06,  0x00000000,  0x01060000 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  07,  0x00000000,  0x01070000 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  08,  0x00000000,  0x01080000 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  09,  0x00000000,  0x01090000 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  10,  0x00000000,  0x010A0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  11,  0x00000000,  0x010B0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  12,  0x00000000,  0x010C0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  13,  0x00000000,  0x010D0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  14,  0x00000000,  0x010E0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  15,  0x00000000,  0x010F0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  16,  0x00000000,  0x01100000 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  17,  0x00000000,  0x01110000 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  18,  0x00000000,  0x01120000 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  19,  0x00000000,  0x01130000 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  20,  0x00000000,  0x01140000 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  21,  0x00000000,  0x01150000 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  22,  0x00000000,  0x01160000 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  23,  0x00000000,  0x01170000 ] }
+
+  # GPP_E (Community: 1, group: 1)
+  - $ACTION      :
+      page         : GIO_GPP_E:GIO:"GPIO GPP_E"
+  - !expand { GPIO_TMPL : [ GPP_E,  00,  0x00000000,  0x01200000 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  01,  0x00000000,  0x01210000 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  02,  0x00000000,  0x01220000 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  03,  0x00000000,  0x01230000 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  04,  0x00000000,  0x01240000 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  05,  0x00000000,  0x01250000 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  06,  0x00000000,  0x01260000 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  07,  0x00000000,  0x01270000 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  08,  0x00000000,  0x01280000 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  09,  0x00000000,  0x01290000 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  10,  0x00000000,  0x012A0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  11,  0x00000000,  0x012B0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  12,  0x00000000,  0x012C0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  13,  0x00000000,  0x012D0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  14,  0x00000000,  0x012E0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  15,  0x00000000,  0x012F0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  16,  0x00000000,  0x01300000 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  17,  0x00000000,  0x01310000 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  18,  0x00000000,  0x01320000 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  19,  0x00000000,  0x01330000 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  20,  0x00000000,  0x01340000 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  21,  0x00000000,  0x01350000 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  22,  0x00000000,  0x01360000 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  23,  0x00000000,  0x01370000 ] }
+
+  # Community 2 doesn't exist in eds.
+  # Reduce the community number for Community 3 and above
+  # e.g. GPP_H community is 3 in EDS, here its community is 2.
+  # GPP_H (Community: 2, group: 0)
+  - $ACTION      :
+      page         : GIO_GPP_H:GIO:"GPIO GPP_H"
+  - !expand { GPIO_TMPL : [ GPP_H,  00,  0x00000000,  0x02000000 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  01,  0x00000000,  0x02010000 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  02,  0x00000000,  0x02020000 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  03,  0x00000000,  0x02030000 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  04,  0x00000000,  0x02040000 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  05,  0x00000000,  0x02050000 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  06,  0x00000000,  0x02060000 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  07,  0x00000000,  0x02070000 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  08,  0x00000000,  0x02080000 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  09,  0x00000000,  0x02090000 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  10,  0x00000000,  0x020A0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  11,  0x00000000,  0x020B0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  12,  0x00000000,  0x020C0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  13,  0x00000000,  0x020D0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  14,  0x00000000,  0x020E0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  15,  0x00000000,  0x020F0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  16,  0x00000000,  0x02100000 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  17,  0x00000000,  0x02110000 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  18,  0x00000000,  0x02120000 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  19,  0x00000000,  0x02130000 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  20,  0x00000000,  0x02140000 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  21,  0x00000000,  0x02150000 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  22,  0x00000000,  0x02160000 ] }
+
+  # GPP_F (Community: 2, group: 1)
+  - $ACTION      :
+      page         : GIO_GPP_F:GIO:"GPIO GPP_F"
+  - !expand { GPIO_TMPL : [ GPP_F,  00,  0x00000000,  0x02200000 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  01,  0x00000000,  0x02210000 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  02,  0x00000000,  0x02220000 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  03,  0x00000000,  0x02230000 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  04,  0x00000000,  0x02240000 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  05,  0x00000000,  0x02250000 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  06,  0x00000000,  0x02260000 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  07,  0x00000000,  0x02270000 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  08,  0x00000000,  0x02280000 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  09,  0x00000000,  0x02290000 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  10,  0x00000000,  0x022A0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  11,  0x00000000,  0x022B0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  12,  0x00000000,  0x022C0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  13,  0x00000000,  0x022D0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  14,  0x00000000,  0x022E0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  15,  0x00000000,  0x022F0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  16,  0x00000000,  0x02300000 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  17,  0x00000000,  0x02310000 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  18,  0x00000000,  0x02320000 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  19,  0x00000000,  0x02330000 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  20,  0x00000000,  0x02340000 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  21,  0x00000000,  0x02350000 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  22,  0x00000000,  0x02360000 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  23,  0x00000000,  0x02370000 ] }
+
+  # GPP_S (Community: 3, group: 0)
+  - $ACTION      :
+      page         : GIO_GPP_S:GIO:"GPIO GPP_S"
+  - !expand { GPIO_TMPL : [ GPP_S,  00,  0x00000000,  0x03000000 ] }
+  - !expand { GPIO_TMPL : [ GPP_S,  01,  0x00000000,  0x03010000 ] }
+  - !expand { GPIO_TMPL : [ GPP_S,  02,  0x00000000,  0x03020000 ] }
+  - !expand { GPIO_TMPL : [ GPP_S,  03,  0x00000000,  0x03030000 ] }
+  - !expand { GPIO_TMPL : [ GPP_S,  04,  0x00000000,  0x03040000 ] }
+  - !expand { GPIO_TMPL : [ GPP_S,  05,  0x00000000,  0x03050000 ] }
+  - !expand { GPIO_TMPL : [ GPP_S,  06,  0x00000000,  0x03060000 ] }
+  - !expand { GPIO_TMPL : [ GPP_S,  07,  0x00000000,  0x03070000 ] }
+
+  # GPP_B (Community: 4, group: 0)
+  - $ACTION      :
+      page         : GIO_GPP_B:GIO:"GPIO GPP_B"
+  - !expand { GPIO_TMPL : [ GPP_B,  00,  0x00000000,  0x04000000 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  01,  0x00000000,  0x04010000 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  02,  0x00000000,  0x04020000 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  03,  0x00000000,  0x04030000 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  04,  0x00000000,  0x04040000 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  05,  0x00000000,  0x04050000 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  06,  0x00000000,  0x04060000 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  07,  0x00000000,  0x04070000 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  08,  0x00000000,  0x04080000 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  09,  0x00000000,  0x04090000 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  10,  0x00000000,  0x040A0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  11,  0x00000000,  0x040B0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  12,  0x00000000,  0x040C0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  13,  0x00000000,  0x040D0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  14,  0x00000000,  0x040E0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  15,  0x00000000,  0x040F0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  16,  0x00000000,  0x04100000 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  17,  0x00000000,  0x04110000 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  18,  0x00000000,  0x04120000 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  19,  0x00000000,  0x04130000 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  20,  0x00000000,  0x04140000 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  21,  0x00000000,  0x04150000 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  22,  0x00000000,  0x04160000 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  23,  0x00000000,  0x04170000 ] }
+
+  # GPP_D (Community: 4, group: 1)
+  - $ACTION      :
+      page         : GIO_GPP_D:GIO:"GPIO GPP_D"
+  - !expand { GPIO_TMPL : [ GPP_D,  00,  0x00000000,  0x04200000 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  01,  0x00000000,  0x04210000 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  02,  0x00000000,  0x04220000 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  03,  0x00000000,  0x04230000 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  04,  0x00000000,  0x04240000 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  05,  0x00000000,  0x04250000 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  06,  0x00000000,  0x04260000 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  07,  0x00000000,  0x04270000 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  08,  0x00000000,  0x04280000 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  09,  0x00000000,  0x04290000 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  10,  0x00000000,  0x042A0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  11,  0x00000000,  0x042B0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  12,  0x00000000,  0x042C0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  13,  0x00000000,  0x042D0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  14,  0x00000000,  0x042E0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  15,  0x00000000,  0x042F0000 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  16,  0x00000000,  0x04300000 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  17,  0x00000000,  0x04310000 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  18,  0x00000000,  0x04320000 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  19,  0x00000000,  0x04330000 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  20,  0x00000000,  0x04340000 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  21,  0x00000000,  0x04350000 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  22,  0x00000000,  0x04360000 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  23,  0x00000000,  0x04370000 ] }

@@ -1,0 +1,21 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Template File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+SPD_TMPL: >
+  - SpdDataSel$(1)$(2)$(3) :
+      name         : Spd Data MC$(1) CH$(2) DIMM$(3)
+      type         : Combo
+      option       : 0:NONE, 1:SPD0, 2:SPD1, 3:SPD2, 4:SPD3
+      help         : >
+                     Select which SPD data should be used for MC$(1) CH$(2) DIMM$(3).SPD0 and SPD1 are associated with configurable SPD data block from MEM SPD. SPD data will be used only when SpdAddressTable SPD Address are marked as 00
+      length       : 0x01
+      value        : $(4)
+
+
