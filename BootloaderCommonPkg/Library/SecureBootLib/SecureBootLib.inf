@@ -40,3 +40,6 @@
   BootloaderCommonLib
   BootloaderLib
   RngLib
+
+[FixedPcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdIppcrypto2Lib
