@@ -10,22 +10,28 @@
 BITS    16
 
 ALIGN   16
+%ifdef ALIGN_TOP_TO_4K_FOR_PAGING
+;
+; Pad the image size to 4k when page tables are in VTF0
+;
+; If the VTF0 image has page tables built in, then we need to make
+; sure the end of VTF0 is 4k above where the page tables end.
+;
+; This is required so the page tables will be 4k aligned when VTF0 is
+; located just below 0x100000000 (4GB) in the firmware device.
+;
+    TIMES (0x1000 - ($ - EndOfPageTables) - (fourGigabytes - EndOfPageTableAlignmentPadding)) DB 0
+EndOfPageTableAlignmentPadding:
+%endif
+ALIGN 16
+
 FITHeader:
-        DQ 0,0,0,0
+    DQ      0,0,0,0
 
-applicationProcessorEntryPoint:
-;
-; Application Processors entry point
-;
-; GenFv generates code aligned on a 4k boundary which will jump to this
-; location.  (0xffffffe0)  This allows the Local APIC Startup IPI to be
-; used to wake up the application processors.
-;
-    jmp     short EarlyApInitReal16
-
+    DQ      0
 ALIGN   8
 
-    DD      0
+    DD      0 ; Tools expect VTF0 signature 0x14 bytes from the end
 
 ;
 ; The VTF signature
@@ -46,8 +52,7 @@ resetVector:
 ;
     nop
     nop
-    jmp     short EarlyBspInitReal16
+    jmp     EarlyBspInitReal16
 ALIGN   16
 
 fourGigabytes:
-

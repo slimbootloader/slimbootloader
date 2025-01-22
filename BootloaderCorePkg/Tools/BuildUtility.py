@@ -431,6 +431,14 @@ def get_fsp_upd_signature (path):
     off  = bytes_to_value (bins[0xB8:0xBC])
     return bins[off:off+8]
 
+def get_fsp_header_revision (path):
+    di = open(path,'rb').read()[0x9F:0xA0]
+    return struct.unpack('B', di)[0]
+
+def get_fsp_image_attribute (path):
+    di = open(path,'rb').read()[0xB4:0xB6]
+    return struct.unpack('H', di)[0]
+
 def get_fsp_revision (path):
     di = open(path,'rb').read()[0xA0:0xA4]
     return struct.unpack('I', di)[0]
@@ -1314,8 +1322,8 @@ def gen_pci_enum_policy_info (policy_dict):
 def get_vtf_patch_base (stage1a_fd):
     stage1a_bin = bytearray (get_file_data (stage1a_fd))
     dlen = len(stage1a_bin) & ~0xF
-    if dlen > 0x1000:
-      dlen = 0x1000
+    if dlen > 0x2000:
+      dlen = 0x2000
 
     found = 0
     for i in range (0, dlen, 16):

@@ -40,3 +40,19 @@ ASM_PFX(FspmSwitchStack):
     mov   esp, ebp
     pop   ebp
     ret
+
+;------------------------------------------------------------------------------
+; EFI_STATUS
+; EFIAPI
+; FspmSwitchStack64 (
+;   IN VOID        *EntryPoint,
+;   IN VOID        *Context1,   OPTIONAL
+;   IN VOID        *Context2,   OPTIONAL
+;   IN VOID        *NewStack
+;   );
+;------------------------------------------------------------------------------
+; x64 FSP not supported in Ia32 Bootloader.
+global ASM_PFX(FspmSwitchStack64)
+ASM_PFX(FspmSwitchStack64):
+    hlt
+    ret

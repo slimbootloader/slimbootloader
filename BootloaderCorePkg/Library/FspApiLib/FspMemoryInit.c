@@ -99,6 +99,23 @@ CallFspMemoryInit (
 
   DEBUG ((DEBUG_INFO, "Call FspMemoryInit ... "));
 
+  // Four Build combination possibilities:
+  // x64 SBL/x64 FSP
+  // ia32 SBL/x64 FSP - NOT SUPPORTED
+  // x64 SBL/ia32 FSP
+  // ia32 SBL/ia32 FSP
+
+#if FixedPcdGetBool(PcdFSPM64Bit)
+  if (IS_X64) {
+    if (NewStack != 0) {
+      Status = FspmSwitchStack64 ((VOID *)(UINTN)FspMemoryInit, (VOID *)FspmUpdPtr, (VOID *)HobList, (VOID *)NewStack);
+    } else {
+      Status = FspMemoryInit (FspmUpdPtr, HobList);
+    }
+  } else {
+    CpuHalt("64-bit FSP not supported in 32-bit Slimbootloader build.\n");
+  }
+#else //FixedPcdGetBool(PcdFSPM64Bit)
   if (IS_X64) {
     if (NewStack != 0) {
       Status = FspmSwitchStack ((VOID *)(UINTN)FspMemoryInit, (VOID *)FspmUpdPtr, (VOID *)HobList, (VOID *)NewStack);
@@ -108,11 +125,13 @@ CallFspMemoryInit (
     Status = (UINTN)LShiftU64 (Status & ((UINTN)MAX_INT32 + 1), 32) | (Status & MAX_INT32);
   } else {
     if (NewStack != 0) {
-      Status = FspmSwitchStack ((VOID *)(UINTN)FspMemoryInit, (VOID *)&FspmUpdPtr, (VOID *)HobList, (VOID *)NewStack);
+      Status = FspmSwitchStack ((VOID *)(UINTN)FspMemoryInit, (VOID *)FspmUpdPtr, (VOID *)HobList, (VOID *)NewStack);
     } else {
-      Status = FspMemoryInit (&FspmUpdPtr, HobList);
+      Status = FspMemoryInit (FspmUpdPtr, HobList);
     }
   }
+#endif //FixedPcdGetBool(PcdFSPM64Bit)
+
   DEBUG ((DEBUG_INFO, "%r\n", Status));
 
   return Status;
@@ -216,12 +235,27 @@ CallFspMultiPhaseMemoryInit (
 
   DEBUG ((DEBUG_INFO, "Call FspMultiPhaseMemoryInit ... "));
 
+  // Four Build combination possibilities:
+  // x64 SBL/x64 FSP
+  // ia32 SBL/x64 FSP - NOT SUPPORTED
+  // x64 SBL/ia32 FSP
+  // ia32 SBL/ia32 FSP
+
+#if FixedPcdGetBool(PcdFSPM64Bit)
   if (IS_X64) {
+    Status = FspMultiPhaseMemoryInit (MultiPhaseInitParamPtr);
+  } else {
+    // This should not be reachable because CallFspMemoryInit() will halt.
+    CpuHalt("64-bit FSP not supported in 32-bit Slimbootloader build.\n");
+  }
+#else //FixedPcdGetBool(PcdFSPM64Bit)
+  if (IS_X64)  {
     Status = Execute32BitCode ((UINTN)FspMultiPhaseMemoryInit, (UINTN)MultiPhaseInitParamPtr, (UINTN)NULL, FALSE);
     Status = (UINTN)LShiftU64 (Status & ((UINTN)MAX_INT32 + 1), 32) | (Status & MAX_INT32);
   } else {
     Status = FspMultiPhaseMemoryInit (MultiPhaseInitParamPtr);
   }
+#endif //FixedPcdGetBool(PcdFSPM64Bit)
   DEBUG ((DEBUG_INFO, "%r\n", Status));
 
   return Status;

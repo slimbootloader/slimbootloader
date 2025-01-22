@@ -9,6 +9,7 @@
 #include <Library/BoardInitLib.h>
 #include <Library/BlMemoryAllocationLib.h>
 #include <Library/FspApiLib.h>
+#include <Library/BootloaderCoreLib.h>
 
 
 /**
@@ -55,12 +56,28 @@ CallFspSiliconInit (
                                              FspHeader->FspSiliconInitEntryOffset);
 
   DEBUG ((DEBUG_INFO, "Call FspSiliconInit ... \n"));
+
+  // Four Build combination possibilities:
+  // x64 SBL/x64 FSP
+  // ia32 SBL/x64 FSP - NOT SUPPORTED
+  // x64 SBL/ia32 FSP
+  // ia32 SBL/ia32 FSP
+
+#if FixedPcdGetBool(PcdFSPS64Bit)
+  if (IS_X64) {
+    Status = FspSiliconInit (FspsUpdptr);
+  } else {
+    // This should not be reachable because CallFspMemoryInit() will halt.
+    CpuHalt("64-bit FSP not supported in 32-bit Slimbootloader build.\n");
+  }
+#else //FixedPcdGetBool(PcdFSPS64Bit)
   if (IS_X64) {
     Status = Execute32BitCode ((UINTN)FspSiliconInit,(UINTN) FspsUpdptr, (UINTN)0, FALSE);
     Status = (UINTN)LShiftU64 (Status & ((UINTN)MAX_INT32 + 1), 32) | (Status & MAX_INT32);
   } else {
     Status = FspSiliconInit (FspsUpdptr);
   }
+#endif //FixedPcdGetBool(PcdFSPS64Bit)
   DEBUG ((DEBUG_INFO, "%r\n", Status));
 
   return Status;
@@ -156,14 +173,28 @@ CallFspMultiPhaseSiliconInit (
   FspMultiPhaseSiliconInit = (FSP_MULTI_PHASE_MEM_INIT)(UINTN)(FspHeader->ImageBase + \
                                FspHeader->FspMultiPhaseSiInitEntryOffset);
 
-  DEBUG ((DEBUG_INFO, "Call FspMultiPhaseSiliconInit ... "));
+  // Four Build combination possibilities:
+  // x64 SBL/x64 FSP
+  // ia32 SBL/x64 FSP - NOT SUPPORTED
+  // x64 SBL/ia32 FSP
+  // ia32 SBL/ia32 FSP
 
+  DEBUG ((DEBUG_INFO, "Call FspMultiPhaseSiliconInit ... "));
+#if FixedPcdGetBool(PcdFSPS64Bit)
+  if (IS_X64) {
+    Status = FspMultiPhaseSiliconInit (MultiPhaseInitParamPtr);
+  } else {
+    // This should not be reachable because CallFspMemoryInit() will halt.
+    CpuHalt("64-bit FSP not supported in 32-bit Slimbootloader build.\n");
+  }
+#else //FixedPcdGetBool(PcdFSPS64Bit)
   if (IS_X64) {
     Status = Execute32BitCode ((UINTN)FspMultiPhaseSiliconInit, (UINTN)MultiPhaseInitParamPtr, (UINTN)NULL, FALSE);
     Status = (UINTN)LShiftU64 (Status & ((UINTN)MAX_INT32 + 1), 32) | (Status & MAX_INT32);
   } else {
     Status = FspMultiPhaseSiliconInit (MultiPhaseInitParamPtr);
   }
+#endif //FixedPcdGetBool(PcdFSPS64Bit)
   DEBUG ((DEBUG_INFO, "%r\n", Status));
 
   return Status;
