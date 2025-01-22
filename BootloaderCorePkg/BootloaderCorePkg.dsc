@@ -496,3 +496,5 @@
   # VS: Use default /Od for now
 !endif
 
+  MSFT:*_*_X64_DLINK_FLAGS = /ALIGN:64
+

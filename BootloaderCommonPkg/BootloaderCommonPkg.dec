@@ -157,6 +157,12 @@
   #     0x04    - SM3_256.<BR>
   gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg                 |        0x01| UINT8 | 0x20000702
 
+  ## This PCD indicates the signing scheme type used for Component signing
+  #  Based on the value set, the required algorithm should be used while verfication
+  #     0x0001    - RSA_PKCS_1_5.<BR>
+  #     0x0002    - RSA_PSS.<BR>
+  gPlatformCommonLibTokenSpaceGuid.PcdCompSignType                    |        0x02| UINT8 | 0x20000228
+
   ## This PCD indicates the signing scheme type included in IPP Crypto library
   #  Based on the value set, the required algorithm should be used while verfication
   #     0x0001    - RSA_PKCS_1_5.<BR>
@@ -345,3 +351,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdCpuX2ApicEnabled            | FALSE  | BOOLEAN | 0x20000220
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled                  | FALSE  | BOOLEAN | 0x20000221
   gPlatformCommonLibTokenSpaceGuid.PcdFspNoEop                    | FALSE  | BOOLEAN | 0x20000223
+
+[PcdsFixedAtBuild]
+  gPlatformCommonLibTokenSpaceGuid.PcdFipsSupport     | FALSE      | BOOLEAN | 0x20000226
+  gPlatformCommonLibTokenSpaceGuid.PcdIppcrypto2Lib   | FALSE      | BOOLEAN | 0x20000227

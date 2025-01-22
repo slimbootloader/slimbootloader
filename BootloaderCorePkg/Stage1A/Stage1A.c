@@ -173,6 +173,18 @@ PrepareStage1B (
   LOADER_COMPRESSED_HEADER *Hdr;
   UINT8                     SignHashAlg;
 
+#if FixedPcdGetBool(PcdFipsSupport)
+  /* If FIPS is enabled, run FIPS self tests before any crypto algorithm is run.
+     Halt execution if any FIPS self test fails
+  */
+  Status = RunFipsSelftests ();
+  if (EFI_ERROR(Status)) {
+    CpuHalt ("FIPS Self Test Failed");
+  }
+  DEBUG((DEBUG_INFO, "FIPS Self-tests Status = Success\n"));
+  AddMeasurePoint (0x10D0);
+#endif
+
   // Load Stage 1B
   Status = GetComponentInfo (FLASH_MAP_SIG_STAGE1B, &Src, &Length);
   if (EFI_ERROR (Status)) {

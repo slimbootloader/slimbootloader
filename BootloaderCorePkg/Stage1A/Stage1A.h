@@ -37,6 +37,7 @@
 #include <Guid/LoaderPlatformDataGuid.h>
 #include <Guid/PcdDataBaseSignatureGuid.h>
 #include <VerInfo.h>
+#include <Library/CryptoLib.h>
 
 /**
   Continue Stage 1A execution.

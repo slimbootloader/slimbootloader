@@ -28,7 +28,7 @@ IPPAPI( const IppsHashMethod*, ippsHashMethod_SHA256Sbl, (void) )
 /* Wrapper function for RSA PKCS_1.5 Verify to make the inferface consistent.
  * Returns non-zero on failure, 0 on success.
  */
-int VerifyRsaPkcs1Signature (CONST PUB_KEY_HDR *PubKeyHdr, CONST SIGNATURE_HDR *SignatureHdr,  CONST UINT8  *Hash)
+int VerifyRsaPkcs1Signature (CONST PUB_KEY_HDR *PubKeyHdr, CONST SIGNATURE_HDR *SignatureHdr,  CONST UINT8  *Src, CONST UINT32  Size)
 {
   int    sz_n;
   int    sz_e;
@@ -136,7 +136,7 @@ int VerifyRsaPkcs1Signature (CONST PUB_KEY_HDR *PubKeyHdr, CONST SIGNATURE_HDR *
   }
 
   if (pHashMethod != NULL) {
-    err = ippsRSAVerifyHash_PKCS1v15_rmf((const Ipp8u *)Hash, (Ipp8u *)SignatureHdr->Signature, &signature_verified, rsa_key_s, pHashMethod, scratch_buf);
+    err = ippsRSAVerify_PKCS1v15_rmf ((const Ipp8u *)Src, Size, (Ipp8u *)SignatureHdr->Signature, &signature_verified, rsa_key_s, pHashMethod, scratch_buf);
   } else {
     err = ippStsNoOperation;
   }
@@ -292,7 +292,7 @@ int VerifyRsaPssSignature (CONST PUB_KEY_HDR *PubKeyHdr, CONST SIGNATURE_HDR *Si
  */
 RETURN_STATUS
 EFIAPI
-RsaVerify_Pkcs_1_5 (CONST PUB_KEY_HDR *PubKeyHdr, CONST SIGNATURE_HDR *SignatureHdr,  CONST UINT8  *Hash)
+RsaVerify2_Pkcs_1_5 (CONST PUB_KEY_HDR *PubKeyHdr, CONST SIGNATURE_HDR *SignatureHdr,  CONST UINT8  *Src, CONST UINT32 SrcSize)
 {
 
   if (FixedPcdGet8(PcdCompSignSchemeSupportedMask) & IPP_RSALIB_PKCS_1_5) {
@@ -300,7 +300,7 @@ RsaVerify_Pkcs_1_5 (CONST PUB_KEY_HDR *PubKeyHdr, CONST SIGNATURE_HDR *Signature
                     ((SignatureHdr->SigSize != RSA2048_MOD_SIZE) && (SignatureHdr->SigSize != RSA3072_MOD_SIZE))) {
       return RETURN_INVALID_PARAMETER;
     } else {
-      return VerifyRsaPkcs1Signature (PubKeyHdr, SignatureHdr, Hash) ? RETURN_SECURITY_VIOLATION : RETURN_SUCCESS ;
+      return VerifyRsaPkcs1Signature (PubKeyHdr, SignatureHdr, Src, SrcSize) ? RETURN_SECURITY_VIOLATION : RETURN_SUCCESS ;
     }
   } else {
       return RETURN_UNSUPPORTED;
