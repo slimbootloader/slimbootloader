@@ -7,7 +7,6 @@
 ;
 ;------------------------------------------------------------------------------
 
-%define FSP_HEADER_TEMPRAMINIT_OFFSET 0x30
 %define PAGE_REGION_SIZE              0x6000
 
 %define PAGE_PRESENT            0x01

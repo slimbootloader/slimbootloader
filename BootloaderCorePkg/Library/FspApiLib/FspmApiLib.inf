@@ -56,4 +56,4 @@
   gPlatformModuleTokenSpaceGuid.PcdFspResetStatus
 
 [FixedPcd]
-  gPlatformModuleTokenSpaceGuid.PcdFSPMUpdSize
+  gPlatformModuleTokenSpaceGuid.PcdFSPM64Bit

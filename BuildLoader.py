@@ -693,17 +693,28 @@ class Build(object):
         if self._arch == 'X64':
             # Find signature at top 4KB
             vtf_patch_data_base = get_vtf_patch_base (os.path.join(self._fv_dir, 'STAGE1A.fd'))
-            page_table_len = 0x8000
-            if self._board.STAGE1_DATA_SIZE < page_table_len:
-                raise Exception ("STAGE1_DATA_SIZE is too small to build x64 page table, "
-                                 "it requires at least 0x%X !" % page_table_len)
-            page_tbl_off = self._board.STAGE1_STACK_BASE_OFFSET + self._board.STAGE1_STACK_SIZE + \
-                           self._board.STAGE1_DATA_SIZE - page_table_len
-            extra_cmd.extend ([
-                "0x%08X, 0x%08X,                                        @Page Table Offset" % (vtf_patch_data_base + 0x00, page_tbl_off),
+            extra_cmd.append (
                 "0x%08X, _BASE_STAGE1A_ - _OFFS_STAGE1A_,                    @FSP-T Base" % (vtf_patch_data_base + 0x04),
-                "0x%08X, Stage1A:_TempRamInitParams,                         @FSP-T UPD"  % (vtf_patch_data_base + 0x0C),
-            ])
+            )
+
+
+            if self._board.FSP_T_64_BIT:
+                extra_cmd.append (
+                    "0x%08X, Stage1A:_TempRamInitParams,                         @FSP-T UPD"  % (vtf_patch_data_base + 0x10)
+                )
+            else:
+                # if FSP-T is 32-bit we can enter long mode after CAR is available
+                # and build page tables in CAR, saving flash space
+                page_table_len = 0x8000
+                if self._board.STAGE1_DATA_SIZE < page_table_len:
+                    raise Exception ("STAGE1_DATA_SIZE is too small to build x64 page table, "
+                                    "it requires at least 0x%X !" % page_table_len)
+                page_tbl_off = self._board.STAGE1_STACK_BASE_OFFSET + self._board.STAGE1_STACK_SIZE + \
+                            self._board.STAGE1_DATA_SIZE - page_table_len
+                extra_cmd.extend ([
+                    "0x%08X, Stage1A:_TempRamInitParams,                         @FSP-T UPD"  % (vtf_patch_data_base + 0x0C),
+                    "0x%08X, 0x%08X,                                        @Page Table Offset" % (vtf_patch_data_base + 0x00, page_tbl_off)
+                ])
 
         extra_cmd.append (
             "0xFFFFFFF8, {3CEA8EF3-95FC-476F-ABA5-7EC5DFA1D77B:0x1C}, @Patch FlashMap",
@@ -1201,6 +1212,9 @@ class Build(object):
                                     (self._board.MIN_FSP_REVISION, revision))
             setattr(self._board, '%s_SIZE' % each, get_fsp_size(fsp_bin) if self._board.HAVE_FSP_BIN else 0)
             setattr(self._board, '%s_UPD_SIZE' % each, get_fsp_upd_size(fsp_bin) if self._board.HAVE_FSP_BIN else 1)
+            setattr(self._board, '%s_64_BIT' % each, True if (self._board.HAVE_FSP_BIN and
+                (get_fsp_header_revision(fsp_bin) >= 7) and
+                (get_fsp_image_attribute(fsp_bin) & (1<<2))) else False)
 
         if self._board.BUILD_CSME_UPDATE_DRIVER:
             if os.name != 'nt':
@@ -1315,7 +1329,10 @@ class Build(object):
 
         # rebuild reset vector
         vtf_dir = os.path.join('BootloaderCorePkg', 'Stage1A', 'Ia32', 'Vtf0')
-        x = subprocess.call([sys.executable, 'Build.py', self._arch.lower()],  cwd=vtf_dir)
+        cmdline = [sys.executable, 'Build.py', self._arch.lower()]
+        if self._board.FSP_T_64_BIT:
+            cmdline.append('fspt64')
+        x = subprocess.call(cmdline,  cwd=vtf_dir)
         if x: raise Exception ('Failed to build reset vector !')
 
     def early_build_init(self):

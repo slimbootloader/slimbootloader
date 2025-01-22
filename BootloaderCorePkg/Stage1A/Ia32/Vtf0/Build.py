@@ -27,7 +27,7 @@ def FixupForRawSection(sectionFile):
 for filename in glob.glob(os.path.join('Bin', '*.raw')):
     os.remove(filename)
 
-# It takes one argument to indicate build arch 'ia32' or 'x64'
+# usage: Build.py <arch> ['fspt64']
 if len(sys.argv) < 2:
     arch = 'ia32'
 else:
@@ -39,13 +39,21 @@ if debugType is not None:
     output += '.' + debugType
 output += '.raw'
 nasmpath = os.path.join(os.environ.get ('NASM_PREFIX', ''), 'nasm')
-commandLine = (
+commandLine = [
     nasmpath,
     '-D', 'ARCH_%s' % arch.upper(),
-    '-D', 'DEBUG_%s' % str(debugType).upper(),
+    '-D', 'DEBUG_%s' % str(debugType).upper()
+]
+
+if len(sys.argv) == 3 and sys.argv[2] == 'fspt64':
+    commandLine.extend([
+        '-D', 'FSPT_X64',
+        '-D', 'PAGE_TABLE_1G'
+        ])
+commandLine.extend([
     '-o', output,
     'Vtf0.nasmb',
-    )
+    ])
 ret = RunCommand(commandLine)
 print ('\tASM\t' + output)
 if ret != 0: sys.exit(ret)

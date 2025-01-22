@@ -6,6 +6,13 @@
 ; SPDX-License-Identifier: BSD-2-Clause-Patent
 ;
 ;------------------------------------------------------------------------------
+%define FSP_HEADER_TEMPRAMINIT_OFFSET 0x30
+%define FSP_HEADER_HDR_REVISION       0x0B
+%define FSP_HEADER_IMAGE_ATTR         0x20
+%define FSP24_HEADER_REVISION         0x07
+%define FSP_IMAGE_ATTR_X64            (1<<2)
+
+;extern Pml4
 
 BITS    16
 
@@ -54,6 +61,9 @@ BuildPatchData:
     DD      0x12345678 ; FSP-T Base
 TempRamInitStack:
     DD      ADDR_OF(TempRamInitDone)
+%ifdef FSPT_X64
+    DD      0
+%endif
     DD      0x12345678 ; FSP-T UPD override
 
 Continue:
@@ -70,6 +80,79 @@ Continue:
     mov     eax, ADDR_OF(BuildPatchData)
     mov     eax, dword [eax + 0x04]
 
+%ifdef FSPT_X64
+    ; EAX: Page base in flash
+    mov     eax, ADDR_OF(Pml4)
+
+    ;
+    ; Set CR3 now that the paging structures are available
+    ;
+    mov     cr3, eax
+
+    mov     eax, cr4
+    bts     eax, 5                      ; enable PAE
+    mov     cr4, eax
+
+    mov     ecx, 0xc0000080
+    rdmsr
+    bts     eax, 8                      ; set LME
+    wrmsr
+
+    mov     ecx, ebp                    ; restore ecx/edx
+    mov     edx, esp
+
+    mov     eax, cr0
+    bts     eax, 31                     ; set PG
+    mov     cr0, eax                    ; enable paging
+
+    jmp     LINEAR_CODE64_SEL:ADDR_OF(jumpTo64BitAndLandHere)
+
+BITS    64
+jumpTo64BitAndLandHere:
+    ;
+    ; Find the fsp info header
+    ; Jump to TempRamInit API
+    ;
+    mov     eax, ADDR_OF(BuildPatchData)
+    mov     eax, dword [eax + 0x04]
+    add     eax, dword [eax + 094h + FSP_HEADER_TEMPRAMINIT_OFFSET]
+    mov     rsp, ADDR_OF(TempRamInitStack)
+    mov     rcx, rsp
+    mov     ecx, dword [rcx + 0x08]
+
+    jmp     rax
+
+TempRamInitDone:
+
+    bt      rax, 03Fh     ;Check if error bit set
+    jnc     FspApiSuccessx64
+    cmp     eax, 0Eh      ;Check if EFI_NOT_FOUND returned. Error code for Microcode Update not found.
+    je      FspApiSuccessx64       ;If microcode not found, don't hang, but continue.
+
+    cmp     rax, 0              ;Check if EFI_SUCCESS returned.
+    jbe     FspApiSuccessx64
+
+    ; FSP API failed:
+    jmp     $
+
+FspApiSuccessx64:
+    ;
+    ; FSP-T NEM returned range
+    ;   ECX: NEM stack base
+    ;   EDX: NEM stack top
+    ;
+    mov     rbp, rcx
+    mov     rsp, rdx
+
+    ;
+    ; Per X64 calling convention, make sure RSP is 16-byte aligned.
+    ;
+    mov     rax, rsp
+    and     rax, 0fh
+    sub     rsp, rax
+
+%else ; FSPT_X64
+
     ;
     ; Find the fsp info header
     ; Jump to TempRamInit API
@@ -77,7 +160,6 @@ Continue:
     add     eax, dword [eax + 094h + FSP_HEADER_TEMPRAMINIT_OFFSET]
     mov     esp, ADDR_OF(TempRamInitStack)
     jmp     eax
-
 
 TempRamInitDone:
     cmp     eax, 8000000Eh      ;Check if EFI_NOT_FOUND returned. Error code for Microcode Update not found.
@@ -141,6 +223,7 @@ FspApiSuccess:
 
 BITS    64
 jumpTo64BitAndLandHere:
+%endif ; FSPT_X64
     ; Set stack
     ;   ECX: NEM start
     ;   EDX: NEM end

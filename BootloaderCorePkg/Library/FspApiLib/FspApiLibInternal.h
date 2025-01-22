@@ -36,4 +36,23 @@ FspmSwitchStack (
   IN VOID        *NewStack
   );
 
+/**
+  Switch to new stack and then call specified function with arguments.
+
+  @param[in] Function     The 64bit code entry to be executed.
+  @param[in] Context1     The first parameter to pass to 32bit code.
+  @param[in] Context2     The second parameter to pass to 32bit code.
+  @param[in] NewStack     The new stack top to use.
+
+  @return    EFI_STATUS returned from the 64bit code.
+**/
+EFI_STATUS
+EFIAPI
+FspmSwitchStack64 (
+  IN VOID        *EntryPoint,
+  IN VOID        *Context1,   OPTIONAL
+  IN VOID        *Context2,   OPTIONAL
+  IN VOID        *NewStack
+  );
+
 #endif
