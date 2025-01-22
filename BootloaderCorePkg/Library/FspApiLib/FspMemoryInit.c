@@ -9,6 +9,7 @@
 #include <Library/FspApiLib.h>
 #include <Library/BoardInitLib.h>
 #include <Library/BootloaderCoreLib.h>
+#include <Library/MemoryAllocationLib.h>
 
 /**
   This FSP API is called after TempRamInit and initializes the memory.
@@ -39,7 +40,7 @@ CallFspMemoryInit (
   OUT VOID                   **HobList
   )
 {
-  UINT8                       FspmUpd[FixedPcdGet32 (PcdFSPMUpdSize)];
+  UINT8                       *FspmUpdPtr;
   UINT8                       *DefaultMemoryInitUpd;
   FSP_INFO_HEADER             *FspHeader;
   FSP_MEMORY_INIT             FspMemoryInit;
@@ -53,11 +54,16 @@ CallFspMemoryInit (
   ASSERT (FspHeader->Signature == FSP_INFO_HEADER_SIGNATURE);
   ASSERT (FspHeader->ImageBase == FspmBase);
 
+  FspmUpdPtr = AllocatePool(FspHeader->CfgRegionSize);
+  if (FspmUpdPtr == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
   // Copy default UPD data
   DefaultMemoryInitUpd = (UINT8 *)(UINTN)(FspHeader->ImageBase + FspHeader->CfgRegionOffset);
-  CopyMem (&FspmUpd, DefaultMemoryInitUpd, FspHeader->CfgRegionSize);
+  CopyMem (FspmUpdPtr, DefaultMemoryInitUpd, FspHeader->CfgRegionSize);
 
-  FspmUpdCommon = (FSPM_UPD_COMMON *)FspmUpd;
+  FspmUpdCommon = (FSPM_UPD_COMMON *)FspmUpdPtr;
   /* Update architectural UPD fields */
   if (FspmUpdCommon->FspUpdHeader.Revision < FSP_HEADER_REVISION_3) {
     FspmUpdCommon->FspmArchUpd.BootLoaderTolumSize  = 0;
@@ -69,7 +75,7 @@ CallFspMemoryInit (
       NewStack = (UINT32)FspmUpdCommon->FspmArchUpd.StackBase + (UINT32)FspmUpdCommon->FspmArchUpd.StackSize;
     }
   } else {
-    FspmUpdCommon24 = (FSPM_UPD_COMMON_FSP24 *)FspmUpd;
+    FspmUpdCommon24 = (FSPM_UPD_COMMON_FSP24 *)FspmUpdPtr;
     FspmUpdCommon24->FspmArchUpd.BootLoaderTolumSize  = 0;
     FspmUpdCommon24->FspmArchUpd.BootMode             = (UINT32)GetBootMode();
 
@@ -85,7 +91,7 @@ CallFspMemoryInit (
     }
   }
 
-  UpdateFspConfig (FspmUpd);
+  UpdateFspConfig (FspmUpdPtr);
 
   ASSERT (FspHeader->FspMemoryInitEntryOffset != 0);
   FspMemoryInit = (FSP_MEMORY_INIT)(UINTN)(FspHeader->ImageBase + \
@@ -95,16 +101,16 @@ CallFspMemoryInit (
 
   if (IS_X64) {
     if (NewStack != 0) {
-      Status = FspmSwitchStack ((VOID *)(UINTN)FspMemoryInit, (VOID *)FspmUpd, (VOID *)HobList, (VOID *)NewStack);
+      Status = FspmSwitchStack ((VOID *)(UINTN)FspMemoryInit, (VOID *)FspmUpdPtr, (VOID *)HobList, (VOID *)NewStack);
     } else {
-      Status = Execute32BitCode ((UINTN)FspMemoryInit, (UINTN)FspmUpd, (UINTN)HobList, FALSE);
+      Status = Execute32BitCode ((UINTN)FspMemoryInit, (UINTN)FspmUpdPtr, (UINTN)HobList, FALSE);
     }
     Status = (UINTN)LShiftU64 (Status & ((UINTN)MAX_INT32 + 1), 32) | (Status & MAX_INT32);
   } else {
     if (NewStack != 0) {
-      Status = FspmSwitchStack ((VOID *)(UINTN)FspMemoryInit, (VOID *)&FspmUpd, (VOID *)HobList, (VOID *)NewStack);
+      Status = FspmSwitchStack ((VOID *)(UINTN)FspMemoryInit, (VOID *)&FspmUpdPtr, (VOID *)HobList, (VOID *)NewStack);
     } else {
-      Status = FspMemoryInit (&FspmUpd, HobList);
+      Status = FspMemoryInit (&FspmUpdPtr, HobList);
     }
   }
   DEBUG ((DEBUG_INFO, "%r\n", Status));
