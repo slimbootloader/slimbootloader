@@ -139,6 +139,8 @@ DefPerfIdToStr (
     return "FSP EndOfFirmware notify";
   case 0x31F0:
     return "End of stage2";
+  case 0x10D0:
+    return "FIPS Selftest run";
   }
   return NULL;
 }

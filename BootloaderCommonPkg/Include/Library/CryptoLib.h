@@ -194,6 +194,28 @@ RsaVerify_Pkcs_1_5 (
   IN CONST UINT8              *Hash
   );
 
+/**
+  Verifies the RSA signature with PKCS1-v1_5 encoding scheme defined in RSA PKCS#1.
+
+  @param[in]  PubKeyHdr         Pointer to a PubKey data.
+  @param[in]  SignatureHdr      Pointer to signature data to be verified.
+  @param[in]  Src               Pointer to meassage.
+  @param[in]  SrcSize           Size of the message.
+
+  @retval  RETURN_SUCCESS             Valid signature.
+  @retval  RETURN_INVALID_PARAMETER   Key or signature format is incorrect.
+  @retval  RETURN_SECURITY_VIOLATION  Invalid signature.
+
+**/
+
+RETURN_STATUS
+EFIAPI
+RsaVerify2_Pkcs_1_5 (
+  IN CONST PUB_KEY_HDR        *PubKeyHdr,
+  IN CONST SIGNATURE_HDR      *SignatureHdr,
+  IN CONST UINT8              *Src,
+  IN CONST UINT32             SrcSize
+  );
 
 /**
   Verifies the RSA signature with PSS encoding scheme defined in RSA PSS.
@@ -434,5 +456,16 @@ Sm3Final (
   OUT      UINT8      *Hash
   );
 
+/**
+  Runs FIPS self test before any crypto function gets executed.
+
+  @retval  RETURN_SUCCESS             Success.
+  @retval  RETURN_UNSUPPORTED  All other errors.
+**/
+RETURN_STATUS
+EFIAPI
+RunFipsSelftests (
+  VOID
+);
 #endif
 
