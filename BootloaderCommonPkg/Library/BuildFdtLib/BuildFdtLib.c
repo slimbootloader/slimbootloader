@@ -84,7 +84,7 @@ BuildFdtForMemory (
       if (ResourceHob->ResourceType == EFI_RESOURCE_SYSTEM_MEMORY) {
         // DEBUG ((DEBUG_ERROR, "Found hob for memory: base %016lX  length %016lX\n", ResourceHob->PhysicalStart, ResourceHob->ResourceLength));
 
-        Status   = AsciiSPrint (TempStr, sizeof (TempStr), "memory@%lX", ResourceHob->PhysicalStart);
+        AsciiSPrint (TempStr, sizeof (TempStr), "memory@%lX", ResourceHob->PhysicalStart);
         TempNode = FdtAddSubnode (Fdt, 0, TempStr);
         ASSERT (TempNode > 0);
 
@@ -139,7 +139,9 @@ BuildFdtForMemAlloc (
 
   Data32 = CpuToFdt32 (2);
   Status = FdtSetProperty (Fdt, ParentNode, "#address-cells", &Data32, sizeof (UINT32));
+  ASSERT_EFI_ERROR (Status);
   Status = FdtSetProperty (Fdt, ParentNode, "#size-cells", &Data32, sizeof (UINT32));
+  ASSERT_EFI_ERROR (Status);
 
   GuidHob     = NULL;
   SmbiosTable = NULL;
@@ -147,16 +149,16 @@ BuildFdtForMemAlloc (
   if (GuidHob != NULL) {
     SmbiosTable = GET_GUID_HOB_DATA (GuidHob);
     DEBUG ((DEBUG_INFO, "To build Smbios memory FDT ,SmbiosTable :%lx, SmBiosEntryPoint :%lx\n", (UINTN)SmbiosTable, SmbiosTable->SmBiosEntryPoint));
-    Status = AsciiSPrint (TempStr, sizeof (TempStr), "memory@%lX", SmbiosTable->SmBiosEntryPoint);
+    AsciiSPrint (TempStr, sizeof (TempStr), "memory@%lX", SmbiosTable->SmBiosEntryPoint);
     DEBUG ((DEBUG_INFO, "To build Smbios memory FDT #2, SmbiosTable->Header.Length  :%x\n", SmbiosTable->Header.Length));
     TempNode = 0;
     TempNode = FdtAddSubnode (Fdt, ParentNode, TempStr);
     DEBUG ((DEBUG_INFO, "FdtAddSubnode %x", TempNode));
     RegTmp[0] = CpuToFdt64 (SmbiosTable->SmBiosEntryPoint);
     RegTmp[1] = CpuToFdt64 (SmbiosTable->Header.Length);
-    FdtSetProperty (Fdt, TempNode, "reg", &RegTmp, sizeof (RegTmp));
+    Status = FdtSetProperty (Fdt, TempNode, "reg", &RegTmp, sizeof (RegTmp));
     ASSERT_EFI_ERROR (Status);
-    FdtSetProperty (Fdt, TempNode, "compatible", "smbios", (UINT32)(AsciiStrLen ("smbios")+1));
+    Status = FdtSetProperty (Fdt, TempNode, "compatible", "smbios", (UINT32)(AsciiStrLen ("smbios")+1));
     ASSERT_EFI_ERROR (Status);
   }
 
@@ -196,7 +198,7 @@ BuildFdtForMemAlloc (
 
       AllocMemType = Hob.MemoryAllocation->AllocDescriptor.MemoryType;
       if (IsStackHob == 1) {
-        Status = AsciiSPrint (
+        AsciiSPrint (
                    TempStr,
                    sizeof (TempStr),
                    "%a@%lX",
@@ -204,7 +206,7 @@ BuildFdtForMemAlloc (
                    Hob.MemoryAllocation->AllocDescriptor.MemoryBaseAddress
                    );
       } else if (IsBspStore == 1) {
-        Status = AsciiSPrint (
+        AsciiSPrint (
                    TempStr,
                    sizeof (TempStr),
                    "%a@%lX",
@@ -212,7 +214,7 @@ BuildFdtForMemAlloc (
                    Hob.MemoryAllocation->AllocDescriptor.MemoryBaseAddress
                    );
       } else {
-        Status = AsciiSPrint (
+        AsciiSPrint (
                    TempStr,
                    sizeof (TempStr),
                    "%a@%lX",
@@ -226,9 +228,9 @@ BuildFdtForMemAlloc (
       }
 
       if (AsciiStrCmp (mMemoryAllocType[AllocMemType], "mmio") == 0) {
-        Status = AsciiSPrint (TempStr, sizeof (TempStr), "mmio@%lX", Hob.MemoryAllocation->AllocDescriptor.MemoryBaseAddress);
+        AsciiSPrint (TempStr, sizeof (TempStr), "mmio@%lX", Hob.MemoryAllocation->AllocDescriptor.MemoryBaseAddress);
       } else {
-        Status = AsciiSPrint (TempStr, sizeof (TempStr), "memory@%lX", Hob.MemoryAllocation->AllocDescriptor.MemoryBaseAddress);
+        AsciiSPrint (TempStr, sizeof (TempStr), "memory@%lX", Hob.MemoryAllocation->AllocDescriptor.MemoryBaseAddress);
       }
 
       TempNode = FdtAddSubnode (Fdt, ParentNode, TempStr);
@@ -298,7 +300,7 @@ BuildFdtForSerial (
   while (GuidHob != NULL) {
     SerialPortInfo = (UNIVERSAL_PAYLOAD_SERIAL_PORT_INFO *)GET_GUID_HOB_DATA (GuidHob);
 
-    Status   = AsciiSPrint (TempStr, sizeof (TempStr), "serial@%lX", SerialPortInfo->RegisterBase);
+    AsciiSPrint (TempStr, sizeof (TempStr), "serial@%lX", SerialPortInfo->RegisterBase);
     TempNode = FdtAddSubnode (Fdt, 0, TempStr);
     ASSERT (TempNode > 0);
 
@@ -394,36 +396,38 @@ BuildFdtForPciRootBridge (
         // UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGES structure is used when Revision equals to UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGES_REVISION
         //
         PciRootBridgeInfo = (UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGES *)GET_GUID_HOB_DATA (GuidHob);
+
+        if (PciRootBridgeInfo != NULL) {
+          DEBUG ((DEBUG_INFO, "PciRootBridgeInfo->Count %x\n", PciRootBridgeInfo->Count));
+          DEBUG ((DEBUG_INFO, "PciRootBridge->Segment %x, \n", PciRootBridgeInfo->RootBridge[0].Segment));
+
+          DEBUG ((DEBUG_INFO, "PciRootBridge->Bus.Base %x, \n", PciRootBridgeInfo->RootBridge[0].Bus.Base));
+          DEBUG ((DEBUG_INFO, "PciRootBridge->Bus.limit %x, \n", PciRootBridgeInfo->RootBridge[0].Bus.Limit));
+
+          DEBUG ((DEBUG_INFO, "PciRootBridge->Mem.Base %x, \n", PciRootBridgeInfo->RootBridge[0].Mem.Base));
+          DEBUG ((DEBUG_INFO, "PciRootBridge->Mem.limit %x, \n", PciRootBridgeInfo->RootBridge[0].Mem.Limit));
+
+          DEBUG ((DEBUG_INFO, "PciRootBridge->MemAbove4G.Base %llx, \n", PciRootBridgeInfo->RootBridge[0].MemAbove4G.Base));
+          DEBUG ((DEBUG_INFO, "PciRootBridge->MemAbove4G.limit %llx, \n", PciRootBridgeInfo->RootBridge[0].MemAbove4G.Limit));
+
+          DEBUG ((DEBUG_INFO, "PciRootBridge->PMem.Base %llx, \n", PciRootBridgeInfo->RootBridge[0].PMem.Base));
+          DEBUG ((DEBUG_INFO, "PciRootBridge->PMem.limit %llx, \n", PciRootBridgeInfo->RootBridge[0].PMem.Limit));
+
+          DEBUG ((DEBUG_INFO, "PciRootBridge->Bus.Base %x, \n", PciRootBridgeInfo->RootBridge[1].Bus.Base));
+          DEBUG ((DEBUG_INFO, "PciRootBridge->Bus.limit %x, \n", PciRootBridgeInfo->RootBridge[1].Bus.Limit));
+
+          DEBUG ((DEBUG_INFO, "PciRootBridge->Mem.Base %x, \n", PciRootBridgeInfo->RootBridge[1].Mem.Base));
+          DEBUG ((DEBUG_INFO, "PciRootBridge->Mem.limit %x, \n", PciRootBridgeInfo->RootBridge[1].Mem.Limit));
+
+          DEBUG ((DEBUG_INFO, "PciRootBridge->MemAbove4G.Base %llx, \n", PciRootBridgeInfo->RootBridge[1].MemAbove4G.Base));
+          DEBUG ((DEBUG_INFO, "PciRootBridge->MemAbove4G.limit %llx, \n", PciRootBridgeInfo->RootBridge[1].MemAbove4G.Limit));
+
+          DEBUG ((DEBUG_INFO, "PciRootBridge->PMem.Base %x, \n", PciRootBridgeInfo->RootBridge[1].PMem.Base));
+          DEBUG ((DEBUG_INFO, "PciRootBridge->PMem.limit %x, \n", PciRootBridgeInfo->RootBridge[1].PMem.Limit));
+        }
       }
     }
   }
-
-  DEBUG ((DEBUG_INFO, "PciRootBridgeInfo->Count %x\n", PciRootBridgeInfo->Count));
-  DEBUG ((DEBUG_INFO, "PciRootBridge->Segment %x, \n", PciRootBridgeInfo->RootBridge[0].Segment));
-
-  DEBUG ((DEBUG_INFO, "PciRootBridge->Bus.Base %x, \n", PciRootBridgeInfo->RootBridge[0].Bus.Base));
-  DEBUG ((DEBUG_INFO, "PciRootBridge->Bus.limit %x, \n", PciRootBridgeInfo->RootBridge[0].Bus.Limit));
-
-  DEBUG ((DEBUG_INFO, "PciRootBridge->Mem.Base %x, \n", PciRootBridgeInfo->RootBridge[0].Mem.Base));
-  DEBUG ((DEBUG_INFO, "PciRootBridge->Mem.limit %x, \n", PciRootBridgeInfo->RootBridge[0].Mem.Limit));
-
-  DEBUG ((DEBUG_INFO, "PciRootBridge->MemAbove4G.Base %llx, \n", PciRootBridgeInfo->RootBridge[0].MemAbove4G.Base));
-  DEBUG ((DEBUG_INFO, "PciRootBridge->MemAbove4G.limit %llx, \n", PciRootBridgeInfo->RootBridge[0].MemAbove4G.Limit));
-
-  DEBUG ((DEBUG_INFO, "PciRootBridge->PMem.Base %llx, \n", PciRootBridgeInfo->RootBridge[0].PMem.Base));
-  DEBUG ((DEBUG_INFO, "PciRootBridge->PMem.limit %llx, \n", PciRootBridgeInfo->RootBridge[0].PMem.Limit));
-
-  DEBUG ((DEBUG_INFO, "PciRootBridge->Bus.Base %x, \n", PciRootBridgeInfo->RootBridge[1].Bus.Base));
-  DEBUG ((DEBUG_INFO, "PciRootBridge->Bus.limit %x, \n", PciRootBridgeInfo->RootBridge[1].Bus.Limit));
-
-  DEBUG ((DEBUG_INFO, "PciRootBridge->Mem.Base %x, \n", PciRootBridgeInfo->RootBridge[1].Mem.Base));
-  DEBUG ((DEBUG_INFO, "PciRootBridge->Mem.limit %x, \n", PciRootBridgeInfo->RootBridge[1].Mem.Limit));
-
-  DEBUG ((DEBUG_INFO, "PciRootBridge->MemAbove4G.Base %llx, \n", PciRootBridgeInfo->RootBridge[1].MemAbove4G.Base));
-  DEBUG ((DEBUG_INFO, "PciRootBridge->MemAbove4G.limit %llx, \n", PciRootBridgeInfo->RootBridge[1].MemAbove4G.Limit));
-
-  DEBUG ((DEBUG_INFO, "PciRootBridge->PMem.Base %x, \n", PciRootBridgeInfo->RootBridge[1].PMem.Base));
-  DEBUG ((DEBUG_INFO, "PciRootBridge->PMem.limit %x, \n", PciRootBridgeInfo->RootBridge[1].PMem.Limit));
 
   if (PciRootBridgeInfo != NULL) {
     for (Index = 0; Index < PciRootBridgeInfo->Count; Index++) {
@@ -431,7 +435,7 @@ BuildFdtForPciRootBridge (
 
       mResourceAssigned     = PciRootBridgeInfo->ResourceAssigned;
       PciExpressBaseAddress = (UINTN) PcdGet64 (PcdPciExpressBaseAddress) + (PCI_LIB_ADDRESS (PciRootBridgeInfo->RootBridge[Index].Bus.Base, 0, 0, 0));
-      Status                = AsciiSPrint (TempStr, sizeof (TempStr), "pci-rb%d@%lX", Index, PciExpressBaseAddress);
+      AsciiSPrint (TempStr, sizeof (TempStr), "pci-rb%d@%lX", Index, PciExpressBaseAddress);
       TempNode              = FdtAddSubnode (Fdt, 0, TempStr);
       ASSERT (TempNode > 0);
       SetMem (RegData, sizeof (RegData), 0);
@@ -575,16 +579,18 @@ BuildFdtForPciRootBridge (
 
       Data32 = CpuToFdt32 (2);
       Status = FdtSetProperty (Fdt, TempNode, "#size-cells", &Data32, sizeof (UINT32));
+      ASSERT_EFI_ERROR (Status);
 
       Data32 = CpuToFdt32 (3);
       Status = FdtSetProperty (Fdt, TempNode, "#address-cells", &Data32, sizeof (UINT32));
+      ASSERT_EFI_ERROR (Status);
 
       Status = FdtSetProperty (Fdt, TempNode, "compatible", "pci-rb", (UINT32)(AsciiStrLen ("pci-rb")+1));
       ASSERT_EFI_ERROR (Status);
 
       if (Index == 0) {
         PciExpressBaseAddress = (UINTN) PCI_LIB_ADDRESS (IGD_BUS_NUM, IGD_DEV_NUM, IGD_FUN_NUM, 0);
-        Status                = AsciiSPrint (GmaStr, sizeof (GmaStr), "gma@%lX", PciExpressBaseAddress);
+        AsciiSPrint (GmaStr, sizeof (GmaStr), "gma@%lX", PciExpressBaseAddress);
         GmaNode               = FdtAddSubnode (Fdt, TempNode, GmaStr);
 
         PciData.Hdr.VendorId   = PciRead16 (PciExpressBaseAddress + PCI_VENDOR_ID_OFFSET);
@@ -596,18 +602,23 @@ BuildFdtForPciRootBridge (
 
         Data32 = CpuToFdt32 (PciData.Device.SubsystemID);
         Status = FdtSetProperty (Fdt, GmaNode, "subsystem-id", &Data32, sizeof (UINT32));
+        ASSERT_EFI_ERROR (Status);
 
         Data32 = CpuToFdt32 (PciData.Device.SubsystemVendorID);
         Status = FdtSetProperty (Fdt, GmaNode, "subsystem-vendor-id", &Data32, sizeof (UINT32));
+        ASSERT_EFI_ERROR (Status);
 
         Data32 = CpuToFdt32 (PciData.Hdr.RevisionID);
         Status = FdtSetProperty (Fdt, GmaNode, "revision-id", &Data32, sizeof (UINT32));
+        ASSERT_EFI_ERROR (Status);
 
         Data32 = CpuToFdt32 (PciData.Hdr.DeviceId);
         Status = FdtSetProperty (Fdt, GmaNode, "device-id", &Data32, sizeof (UINT32));
+        ASSERT_EFI_ERROR (Status);
 
         Data32 = CpuToFdt32 (PciData.Hdr.VendorId);
         Status = FdtSetProperty (Fdt, GmaNode, "vendor-id", &Data32, sizeof (UINT32));
+        ASSERT_EFI_ERROR (Status);
       }
     }
   }
@@ -642,7 +653,7 @@ BuildFdtForFrameBuffer (
   GuidHob = GetFirstGuidHob (&gEfiGraphicsInfoHobGuid);
   if (GuidHob != NULL) {
     GraphicsInfo = (EFI_PEI_GRAPHICS_INFO_HOB *)(GET_GUID_HOB_DATA (GuidHob));
-    Status       = AsciiSPrint (TempStr, sizeof (TempStr), "framebuffer@%lX", GraphicsInfo->FrameBufferBase);
+    AsciiSPrint (TempStr, sizeof (TempStr), "framebuffer@%lX", GraphicsInfo->FrameBufferBase);
     TempNode     = FdtAddSubnode (Fdt, 0, TempStr);
     ASSERT (TempNode > 0);
 
@@ -668,7 +679,7 @@ BuildFdtForFrameBuffer (
     Status = FdtSetProperty (Fdt, TempNode, "compatible", "simple-framebuffer", (UINT32)(AsciiStrLen ("simple-framebuffer")+1));
     ASSERT_EFI_ERROR (Status);
   } else {
-    Status   = AsciiSPrint (TempStr, sizeof (TempStr), "framebuffer@%lX", 0xB0000000);
+    AsciiSPrint (TempStr, sizeof (TempStr), "framebuffer@%lX", 0xB0000000);
     TempNode = FdtAddSubnode (Fdt, 0, TempStr);
     ASSERT (TempNode > 0);
 
@@ -783,11 +794,12 @@ BuildFdtForUplRequired (
     Fit         = (VOID *)(UINTN)PayloadBase->Entry;
     DEBUG ((DEBUG_INFO, "PayloadBase Entry = 0x%08x\n", PayloadBase->Entry));
 
-    Status       = AsciiSPrint (TempStr, sizeof (TempStr), "upl-images@%lX", (UINTN)(Fit));
+    AsciiSPrint (TempStr, sizeof (TempStr), "upl-images@%lX", (UINTN)(Fit));
     UPLImageNode = FdtAddSubnode (Fdt, ParentNode, TempStr);
 
     Data64 = CpuToFdt64 ((UINTN)Fit);
     Status = FdtSetProperty (FdtBase, UPLImageNode, "addr", &Data64, sizeof (Data64));
+    ASSERT_EFI_ERROR (Status);
   }
 
   CustomNode = FdtAddSubnode (Fdt, ParentNode, "upl-custom");
@@ -895,7 +907,9 @@ BuildFdtForUpl (
   // Set cell property of root node
   Data32 = CpuToFdt32 (2);
   Status = FdtSetProperty (FdtBase, 0, "#address-cells", &Data32, sizeof (UINT32));
+  ASSERT_EFI_ERROR (Status);
   Status = FdtSetProperty (FdtBase, 0, "#size-cells", &Data32, sizeof (UINT32));
+  ASSERT_EFI_ERROR (Status);
 
   Status = BuildFdt (FdtBase);
   ASSERT_EFI_ERROR (Status);
