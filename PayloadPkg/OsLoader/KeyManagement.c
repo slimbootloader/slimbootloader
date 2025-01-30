@@ -79,7 +79,6 @@ EmmcSerialNumCheck (
   2.native android (AOS loader) with Trusty OS           = dseed + rpmb
   3.Clear linux without Trusty                           = useed + dseed
   4.Clear Linux with Trusty (no AOS loader)              = all (useed/dseed/rpmb keys)
-  5.ACRN                                                 = all
 
   @param[in]     CurrentBootOption        Current boot option
   @param[in,out]     SeedList             Pointer to the Seed list
@@ -158,20 +157,20 @@ SeedSanityCheck (
     }
 
     // Check Image Type and only then only pass seeds to OS. If not, zero out the HOB
-    if(!((OsImageType == EnumImageTypeClearLinux) || (OsImageType == EnumImageTypeAcrn))) {
+    if(!(OsImageType == EnumImageTypeClearLinux)) {
       if(UseedCount > 0) {
         // No other Image should have useeds. Zero out HOB buffer
         ClearSeedHOB = TRUE;
       }
     }
-    if(!((OsImageType == EnumImageTypeClearLinux) || (OsImageType == EnumImageTypeAcrn) ||
+    if(!((OsImageType == EnumImageTypeClearLinux) ||
     ((OsImageType == EnumImageTypeAndroid) && (TrustyFlag != 0)))) {
       if(DseedCount > 0) {
         // No other Image should have dseeds. Zero out HOB buffer
         ClearSeedHOB = TRUE;
       }
     }
-    if (!((OsImageType == EnumImageTypeAndroid) || (OsImageType == EnumImageTypeAcrn) ||
+    if (!((OsImageType == EnumImageTypeAndroid) ||
     ((OsImageType == EnumImageTypeClearLinux) && (TrustyFlag != 0)))) {
       if(mRpmbKeyCount > 0) {
         // No other Image should have rpmb keys. Zero out HOB buffer

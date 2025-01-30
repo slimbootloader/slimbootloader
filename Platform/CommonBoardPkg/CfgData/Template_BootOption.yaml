@@ -18,7 +18,7 @@ BOOT_OPTION_TMPL: >
     - ImageType_$(1) :
         name         : Image Type
         type         : Combo
-        option       : 0:Default, 1:Android, 2:ClearLinux, 3:Acrn, 4:Fastboot, 0x1E:Extra image, 0x9E:PreOS image, 0xBE: Misc image, 0xFF:Not used
+        option       : 0:Default, 1:Android, 2:ClearLinux, 3:Fastboot, 0x1E:Extra image, 0x9E:PreOS image, 0xBE: Misc image, 0xFF:Not used
         help         : >
                        Specify boot image type.
                        Extra and PreOS image type indicates this option is not a standalone boot option. Instead, it provides additional information for the previous boot option.
