@@ -400,7 +400,11 @@ RunShellCommand (
     return EFI_SUCCESS;
   }
 
-  ASSERT (Count <= (sizeof (Argv) / sizeof (Argv[0])));
+  if (Count > (sizeof (Argv) / sizeof (Argv[0]))) {
+    ShellPrint (L"Invalid command (try help)\n");
+    return EFI_OUT_OF_RESOURCES;
+  }
+
   for (Index = 0, Ptr = Buf; Index < Count; Index++) {
     Argv[Index]  = Ptr;
     Ptr     += StrLen (Ptr) + 1;
