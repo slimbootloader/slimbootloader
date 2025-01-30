@@ -365,7 +365,6 @@ GetNextBootOption (
   2.native android (AOS loader) with Trusty OS           = dseed + rpmb
   3.Clear linux without Trusty                           = useed + dseed
   4.Clear Linux with Trusty (no AOS loader)              = all (useed/dseed/rpmb keys)
-  5.ACRN                                                 = all
 
   @param[in]     CurrentBootOption        Current boot option
   @param[in,out] SeedList                 Pointer to the Seed list

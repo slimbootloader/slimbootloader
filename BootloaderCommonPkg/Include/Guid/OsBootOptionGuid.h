@@ -89,7 +89,6 @@ typedef enum  {
   EnumImageTypeDefault,
   EnumImageTypeAndroid,
   EnumImageTypeClearLinux,
-  EnumImageTypeAcrn,
   EnumImageTypeFastboot,
   EnumImageTypeMax
 } BOOT_IMAGE_TYPE;

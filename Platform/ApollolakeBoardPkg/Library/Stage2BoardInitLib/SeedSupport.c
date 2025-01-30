@@ -283,7 +283,6 @@ GenerateSeeds (
   2.native android (AOS loader) with Trusty OS            = dseed + rpmb
   3.Clear linux without Trusty                            = useed + dseed
   4.Clear Linux with Trusty (no AOS loader)               = all (useed/dseed/rpmb keys)
-  5.ACRN                                                  = all
 
   @retval  BOOLEAN           Seed Type present or not.
 **/
@@ -307,20 +306,20 @@ SeedStatusBasedOnImageType (
 
   switch (SeedType) {
     case UserSeed:
-      if((OsImageType == EnumImageTypeClearLinux) || (OsImageType == EnumImageTypeAcrn)) {
+      if(OsImageType == EnumImageTypeClearLinux) {
         return TRUE;
       }
       break;
 
     case DeviceSeed:
-      if((OsImageType == EnumImageTypeClearLinux) || (OsImageType == EnumImageTypeAcrn) ||
+      if((OsImageType == EnumImageTypeClearLinux) ||
         ((OsImageType == EnumImageTypeAndroid) && (TrustyFlag != 0))) {
         return TRUE;
       }
       break;
 
     case RpmbKey:
-      if ((OsImageType == EnumImageTypeAndroid) || (OsImageType == EnumImageTypeAcrn) ||
+      if ((OsImageType == EnumImageTypeAndroid) ||
         ((OsImageType == EnumImageTypeClearLinux) && (TrustyFlag != 0))) {
         return TRUE;
       }
