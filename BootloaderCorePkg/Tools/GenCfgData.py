@@ -1210,6 +1210,8 @@ class CGenCfgData:
             order = offset
 
         cfg_item = dict()
+        if name == 'CfgHeader':
+            cfg_item['tag'] = self.get_cfg_hdr_tag(item)
         cfg_item['length'] = length
         cfg_item['offset'] = offset
         cfg_item['value']  = value
@@ -1240,6 +1242,12 @@ class CGenCfgData:
 
         return length
 
+    def get_cfg_hdr_tag(self, cfg_hdr):
+        cfg_hdr_yaml_vals = strip_delimiter(cfg_hdr['value'],'{}').split(',')
+        cfg_id_str = cfg_hdr_yaml_vals[-1]
+        tag_id_str = cfg_id_str.strip().split(':')[0]
+        tag_id = eval(tag_id_str)
+        return tag_id
 
     def build_cfg_list (self, cfg_name ='', top = None, path = [], info = {'offset': 0}):
         if top is None:
