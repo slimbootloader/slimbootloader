@@ -1848,16 +1848,79 @@ def generate_values (cfg_tree):
     cfg  = cfgs[-1]
     dlen = (cfg['length'] + cfg['offset'] + 7) // 8
     data = bytearray (dlen)
+
     for cfg in cfgs:
+        # update size in header since source binary can be different from json defaults
+        if (cfg['cname'] == 'UsedLength') or (cfg['cname'] == 'TotalLength'):
+            cfg['value'] = str(dlen)
         value = format_str_to_value (cfg['value'], cfg['length'], False)
         set_bits_to_bytes (data, cfg['offset'], cfg['length'], value)
     return data
 
-def update_values (cfg_tree,  data):
+def bytes_to_cfghdr(data, offset):
+    cfghdr = {}
+    cfghdr['ConditionNum'] = data[offset] & 0x3
+    cfghdr['Length'] = ((data[ offset] & 0xFC) + ((data[offset + 1] & 0x0F) << 8))
+    cfghdr['Flags'] = data[offset + 1] >> 4
+    cfghdr['Version'] = data[offset + 2] & 0x0F
+    cfghdr['Tag'] = ((data[offset + 2] & 0xF0) + (data[offset + 3] << 8)) >> 4
+    cfghdr['Offset'] = offset
+
+    if cfghdr['ConditionNum'] != 0:
+        cfghdr['Condition'] = []
+        for i in range(cfghdr['ConditionNum']):
+            condition_bytes = data[offset + 4 + (4*i):offset + 4 + (4*i) + 4]
+            cfghdr['Condition'].append(int.from_bytes(condition_bytes, 'little'))
+
+    return cfghdr
+
+def load_data_tree(cfg_tree, data):
+    cdata = []
+    # validate CFGD header
+    if data[0:4] != b'CFGD':
+        raise Exception('Invalid CFGD binary')
+    used_length = int.from_bytes(data[8:10], 'little')
+    total_length = int.from_bytes(data[12:14], 'little')
+
+    # skip over CDATA_BLOB header
+    offset = int.from_bytes(data[4:5], 'little')
+
+    while offset < used_length:
+        cfghdr = bytes_to_cfghdr(data, offset)
+        cfghdr['Offset'] = offset * 8 # bit offset
+        cdata.append(cfghdr)
+        offset += cfghdr['Length']
+
+    return cdata
+
+def update_values (cfg_tree,  data, data_tree):
+
+    def _update_cfg_delta():
+        curr_offset_delta = 0xFFFFFFFF
+        for cfg in cfgs:
+            if cfg['cname'] == 'CfgHeader':
+                for cfg_hdr in data_tree:
+                    if cfg_hdr['Tag'] == cfg['tag']:
+                        curr_offset_delta = cfg_hdr['Offset'] - cfg['offset']
+                        break
+            if curr_offset_delta != 0xFFFFFFFF:
+                cfg['offset_delta'] = curr_offset_delta
+
+    def _write_values_to_cfg():
+        for cfg in cfgs:
+            offset = cfg['offset']
+            if 'offset_delta' in cfg:
+                offset += cfg['offset_delta']
+            value = get_bits_from_bytes (data, offset, cfg['length'])
+            cfg['value'] = format_value_to_str (value, cfg['length'], cfg['value'])
+
     cfgs = cfg_tree['_cfg_list']
+
+    _update_cfg_delta()
+
+    _write_values_to_cfg()
+
     for cfg in cfgs:
-        value = get_bits_from_bytes (data, cfg['offset'], cfg['length'])
-        cfg['value'] = format_value_to_str (value, cfg['length'], cfg['value'])
         if 'order' not in cfg:
             cfg['order'] = cfg['offset']
 
@@ -2133,7 +2196,8 @@ def main():
         fo = open(data_file, 'rb')
         data = bytearray(fo.read())
         fo.close()
-    update_values (cfg_tree, data)
+    data_tree = load_data_tree (cfg_tree, data)
+    update_values (cfg_tree, data, data_tree)
 
     # creat main screen
     scr = Window(None, Rect (0, 0, TERM.SCREEN_SIZE[0], TERM.SCREEN_SIZE[1]), 'scr')
