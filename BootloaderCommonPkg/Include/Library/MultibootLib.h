@@ -232,11 +232,6 @@ typedef struct {
   IMAGE_DATA              PlatformInfo;
 } BOOTPARAMS_IMAGE_DATA;
 
-typedef struct {
-  VMM_IMAGE_DATA          VmmImageData;
-  BOOTPARAMS_IMAGE_DATA   BootParamsData;
-} TRUSTY_IMAGE_DATA;
-
 typedef struct multiboot2_start_tag MULTIBOOT2_START_TAG;  /* opaque type */
 
 typedef struct {
@@ -254,7 +249,6 @@ typedef struct {
   UINT16                  MbModuleNumber;
   MULTIBOOT_MODULE        MbModule[MAX_MULTIBOOT_MODULE_NUMBER];
   MULTIBOOT_MODULE_DATA   MbModuleData[MAX_MULTIBOOT_MODULE_NUMBER];
-  TRUSTY_IMAGE_DATA       TrustyImageData;
 } MULTIBOOT_IMAGE;
 
 /**
