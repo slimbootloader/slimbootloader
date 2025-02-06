@@ -74,7 +74,6 @@
   ConfigDataLib
   AbSupportLib
   SblParameterLib
-  TrustyBootLib
   UsbInitLib
   UsbKbLib
   UniversalPayloadLib

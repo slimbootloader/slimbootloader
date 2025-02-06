@@ -700,7 +700,6 @@ UnloadLoadedImage (
   LINUX_IMAGE                *LinuxImage;
   MULTIBOOT_IMAGE            *MultiBootImage;
   MULTIBOOT_MODULE_DATA      *MbModuleData;
-  TRUSTY_IMAGE_DATA          *TrustyImageData;
   MULTIBOOT_INFO             *MbInfo;
   MULTIBOOT2_INFO            *Mb2Info;
   UINT32                      Index;
@@ -747,15 +746,6 @@ UnloadLoadedImage (
       FreeImageData (&MbModuleData[Index].CmdFile);
       FreeImageData (&MbModuleData[Index].ImgFile);
     }
-
-    // Free Trusty Image Data
-    TrustyImageData = &MultiBootImage->TrustyImageData;
-    FreeImageData (&TrustyImageData->VmmImageData.VmmRuntimeAddr);
-    FreeImageData (&TrustyImageData->VmmImageData.VmmHeapAddr);
-    FreeImageData (&TrustyImageData->VmmImageData.VmmBootParams);
-    FreeImageData (&TrustyImageData->BootParamsData.PlatformInfo);
-    FreeImageData (&TrustyImageData->BootParamsData.SeedList);
-    FreeImageData (&TrustyImageData->BootParamsData.Base);
 
     // Free MmapAddr which is allocated in SetupMultibootInfo ()
     MbInfo = &MultiBootImage->MbInfo;

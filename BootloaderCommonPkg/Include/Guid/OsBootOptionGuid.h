@@ -95,7 +95,6 @@ typedef enum  {
 
 typedef enum  {
   EnumPreOsTypeDefault     = 0x0,
-  EnumPreOsTypeTrustyOs,
   EnumPreOsTypeMax
 } PREOS_IMAGE_TYPE;
 

@@ -297,14 +297,6 @@ UpdateOsParameters (
   //
   if (((CurrentBootOption->BootFlags & BOOT_FLAGS_PREOS) != 0) && (LoadedPreOsImage != NULL)) {
     LoadedImage->Image.MultiBoot.CmdBufferSize       = CMDLINE_LENGTH_MAX;
-    if ((CurrentBootOption->PreOsImageType & EnumPreOsTypeTrustyOs) != 0) {
-      LoadedPreOsImage->Image.MultiBoot.CmdBufferSize = CMDLINE_LENGTH_MAX;
-      Status = SetupTrustyBoot (&LoadedPreOsImage->Image.MultiBoot, &LoadedImage->Image.MultiBoot);
-      if (EFI_ERROR (Status)) {
-        DEBUG ((DEBUG_ERROR, "ERROR Setting up preOS Boot!\n"));
-        return Status;
-      }
-    }
     UpdateOsMemMap (LoadedPreOsImage);
     DEBUG ((DEBUG_INFO, "\nDump PreOs image info:\n"));
     DisplayInfo (LoadedPreOsImage);
