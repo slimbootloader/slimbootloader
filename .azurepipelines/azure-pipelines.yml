@@ -111,6 +111,10 @@ jobs:
         Build.Name:   "rpls"
         Build.Arch:   ""
         Build.Target: ""
+      RPLP_X86_DEBUG:
+        Build.Name:   "rplp"
+        Build.Arch:   ""
+        Build.Target: ""
       AZB_X86_DEBUG:
         Build.Name:   "azb"
         Build.Arch:   ""
@@ -264,6 +268,14 @@ jobs:
         Build.Name:   "adln"
         Build.Arch:   "-a x64"
         Build.Target: ""
+      ADLN50_X86_RELEASE:
+        Build.Name:   "adln50"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      ADLN50_X64_DEBUG:
+        Build.Name:   "adln50"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
       IDV_X86_RELEASE:
         Build.Name:   "idv"
         Build.Arch:   ""
@@ -278,6 +290,22 @@ jobs:
         Build.Target: "-r"
       RPLS_X64_DEBUG:
         Build.Name:   "rpls"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      RPLP_X86_RELEASE:
+        Build.Name:   "rplp"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      RPLP_X64_DEBUG:
+        Build.Name:   "rplp"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      RPLPS_X86_RELEASE:
+        Build.Name:   "rplps"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      RPLPS_X64_DEBUG:
+        Build.Name:   "rplps"
         Build.Arch:   "-a x64"
         Build.Target: ""
       AZB_X86_DEBUG:
