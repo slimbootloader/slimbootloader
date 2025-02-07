@@ -293,39 +293,12 @@ SeedStatusBasedOnImageType (
   )
 {
   OS_BOOT_OPTION_LIST   *OsBootOptionList;
-  UINT8                 OsImageType;
-  BOOLEAN               TrustyFlag;
 
   OsBootOptionList = GetBootOptionList ();
   if (OsBootOptionList == NULL || OsBootOptionList->OsBootOptionCount == 0) {
     return FALSE;
   }
-  // First boot option should be the target OS.
-  TrustyFlag  = (OsBootOptionList->OsBootOption[0].BootFlags & BOOT_FLAGS_PREOS) >> 2;
-  OsImageType = OsBootOptionList->OsBootOption[0].ImageType;
 
-  switch (SeedType) {
-    case UserSeed:
-      if(OsImageType == EnumImageTypeClearLinux) {
-        return TRUE;
-      }
-      break;
-
-    case DeviceSeed:
-      if (OsImageType == EnumImageTypeClearLinux) {
-        return TRUE;
-      }
-      break;
-
-    case RpmbKey:
-      if ((OsImageType == EnumImageTypeClearLinux) && (TrustyFlag != 0)) {
-        return TRUE;
-      }
-      break;
-
-    default:
-      break;
-  }
   return FALSE;
 }
 

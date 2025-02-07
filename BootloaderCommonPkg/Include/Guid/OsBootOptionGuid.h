@@ -87,7 +87,6 @@ typedef enum  {
 
 typedef enum  {
   EnumImageTypeDefault,
-  EnumImageTypeClearLinux,
   EnumImageTypeFastboot,
   EnumImageTypeMax
 } BOOT_IMAGE_TYPE;
