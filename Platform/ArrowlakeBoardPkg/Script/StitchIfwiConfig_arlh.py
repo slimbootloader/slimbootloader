@@ -78,8 +78,8 @@ def get_platform_sku():
 def get_component_replace_list(plt_params_list):
     replace_list = [
        #    Path                   file name              compress    Key                           SVN
-      ('IFWI/BIOS/TS0/ACM0',      'Input/acm0.bin',        'dummy',    '',                            ''),
-      ('IFWI/BIOS/TS1/ACM0',      'Input/acm0.bin',        'dummy',    '',                            ''),
+      ('IFWI/BIOS/TS0/ACM0',      'Input/acm0_arlh.bin',        'dummy',    '',                            ''),
+      ('IFWI/BIOS/TS1/ACM0',      'Input/acm0_arlh.bin',        'dummy',    '',                            ''),
        ]
 
     return replace_list
@@ -154,8 +154,8 @@ def get_xml_change_list (platform, plt_params_list):
         ('./FlashLayout/BiosRegion/InputFile',                                                      '$SourceDir\BiosRegion.bin'),
         ('./FlashLayout/Ifwi_IntelMePmcRegion/MeRegionFile',                                        '$SourceDir\ME Sub Partition.bin'),
         ('./FlashLayout/Ifwi_IntelMePmcRegion/PmcBinary',                                           '$SourceDir\CsePlugin#PMC.bin'),
-        ('./FlashLayout/EcRegion/EcRegionPointer',                                                  '$SourceDir\DescriptorPlugin#EcRegionPointer.bin'),
-        ('./FlashLayout/EcRegion/InputFile',                                                        '$SourceDir\SystemPlugin#EcRegion.bin'),
+        ('./FlashLayout/EcRegion/EcRegionPointer',                                                  '$SourceDir\DescriptorPlugin#EcRegionPointer_arlh.bin'),
+        ('./FlashLayout/EcRegion/InputFile',                                                        '$SourceDir\SystemPlugin#EcRegion_arlh.bin'),
         ('./FlashLayout/EcRegion/Enabled',                                                          'Enabled'),
         ('./FlashLayout/GbeRegion/InputFile',                                                       '$SourceDir\SystemPlugin#GbeRegion.bin'),
         ('./FlashLayout/GbeRegion/Enabled',                                                         'Enabled'),
