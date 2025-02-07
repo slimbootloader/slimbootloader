@@ -157,23 +157,17 @@ SeedSanityCheck (
     }
 
     // Check Image Type and only then only pass seeds to OS. If not, zero out the HOB
-    if(!(OsImageType == EnumImageTypeClearLinux)) {
-      if(UseedCount > 0) {
-        // No other Image should have useeds. Zero out HOB buffer
-        ClearSeedHOB = TRUE;
-      }
+    if(UseedCount > 0) {
+       // No other Image should have useeds. Zero out HOB buffer
+       ClearSeedHOB = TRUE;
     }
-    if(!(OsImageType == EnumImageTypeClearLinux)) {
-      if(DseedCount > 0) {
-        // No other Image should have dseeds. Zero out HOB buffer
-        ClearSeedHOB = TRUE;
-      }
+    if(DseedCount > 0) {
+      // No other Image should have dseeds. Zero out HOB buffer
+      ClearSeedHOB = TRUE;
     }
-    if (!((OsImageType == EnumImageTypeClearLinux) && (TrustyFlag != 0))) {
-      if(mRpmbKeyCount > 0) {
-        // No other Image should have rpmb keys. Zero out HOB buffer
-        ClearSeedHOB = TRUE;
-      }
+    if(mRpmbKeyCount > 0) {
+      // No other Image should have rpmb keys. Zero out HOB buffer
+      ClearSeedHOB = TRUE;
     }
   } else {
     // Current boot option Image type is not same as Bootoption[0] ImageType.
