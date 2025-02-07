@@ -163,15 +163,13 @@ SeedSanityCheck (
         ClearSeedHOB = TRUE;
       }
     }
-    if(!((OsImageType == EnumImageTypeClearLinux) ||
-    ((OsImageType == EnumImageTypeAndroid) && (TrustyFlag != 0)))) {
+    if(!(OsImageType == EnumImageTypeClearLinux)) {
       if(DseedCount > 0) {
         // No other Image should have dseeds. Zero out HOB buffer
         ClearSeedHOB = TRUE;
       }
     }
-    if (!((OsImageType == EnumImageTypeAndroid) ||
-    ((OsImageType == EnumImageTypeClearLinux) && (TrustyFlag != 0)))) {
+    if (!((OsImageType == EnumImageTypeClearLinux) && (TrustyFlag != 0))) {
       if(mRpmbKeyCount > 0) {
         // No other Image should have rpmb keys. Zero out HOB buffer
         ClearSeedHOB = TRUE;

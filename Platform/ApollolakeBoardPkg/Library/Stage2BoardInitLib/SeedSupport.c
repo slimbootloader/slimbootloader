@@ -312,15 +312,13 @@ SeedStatusBasedOnImageType (
       break;
 
     case DeviceSeed:
-      if((OsImageType == EnumImageTypeClearLinux) ||
-        ((OsImageType == EnumImageTypeAndroid) && (TrustyFlag != 0))) {
+      if (OsImageType == EnumImageTypeClearLinux) {
         return TRUE;
       }
       break;
 
     case RpmbKey:
-      if ((OsImageType == EnumImageTypeAndroid) ||
-        ((OsImageType == EnumImageTypeClearLinux) && (TrustyFlag != 0))) {
+      if ((OsImageType == EnumImageTypeClearLinux) && (TrustyFlag != 0)) {
         return TRUE;
       }
       break;

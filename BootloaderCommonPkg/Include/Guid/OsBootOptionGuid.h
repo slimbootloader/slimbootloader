@@ -87,7 +87,6 @@ typedef enum  {
 
 typedef enum  {
   EnumImageTypeDefault,
-  EnumImageTypeAndroid,
   EnumImageTypeClearLinux,
   EnumImageTypeFastboot,
   EnumImageTypeMax
