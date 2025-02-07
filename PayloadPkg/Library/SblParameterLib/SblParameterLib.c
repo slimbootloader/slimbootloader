@@ -269,12 +269,10 @@ AddSblCommandLine (
 {
   EFI_STATUS                Status;
   OS_CONFIG_DATA_HOB        *OsConfigData;
-  LOADER_PLATFORM_INFO      *LoaderPlatformInfo;
   VOID                      *Buffer;
   CHAR8                     ParamValue[64];
   OS_BOOT_OPTION_LIST       *OsBootOptionList;
   UINT8                     ResetReason;
-  UINT32                    SerialNumberLength;
   UINT8                     Data8;
   UINT32                    DiskBus;
   UINT32                    MaxCmdSize;
@@ -294,11 +292,6 @@ AddSblCommandLine (
         AsciiStrCatS (CommandLine, MaxCmdSize, " root=PARTLABEL=secondary");
       }
     }
-  }
-
-  if (BootOption->ImageType != EnumImageTypeAndroid) {
-    // currently these command line parameters are tested only with Android OS.
-    return EFI_SUCCESS;
   }
 
   //
@@ -324,16 +317,6 @@ AddSblCommandLine (
 
     AsciiSPrint (ParamValue, sizeof (ParamValue), " ramoops.mem_size=0x%x", OsConfigData->OsCrashMemorySize);
     AsciiStrCatS (CommandLine, MaxCmdSize, ParamValue);
-  }
-
-  // Add serial number
-  LoaderPlatformInfo = (LOADER_PLATFORM_INFO *)GetLoaderPlatformInfoPtr();
-  if (LoaderPlatformInfo != NULL) {
-    SerialNumberLength = (UINT32)AsciiStrLen (LoaderPlatformInfo->SerialNumber);
-    if (SerialNumberLength > 0 && SerialNumberLength <= MAX_SERIAL_NUMBER_LENGTH) {
-      AsciiSPrint (ParamValue, sizeof (ParamValue), " androidboot.serialno=%a", LoaderPlatformInfo->SerialNumber);
-      AsciiStrCatS (CommandLine, MaxCmdSize, ParamValue);
-    }
   }
 
   // Add reset reason
