@@ -205,8 +205,8 @@ class BaseBoard(object):
         self.BOOT_POLICY_SIZE      = 0
         self.BOOT_POLICY_ADDRESS   = 0
 
-        self.SPI_IAS1_SIZE         = 0
-        self.SPI_IAS2_SIZE         = 0
+        self.SPI_CONTAINER1_SIZE   = 0
+        self.SPI_CONTAINER2_SIZE   = 0
 
         self.KM_SIZE               = 0x1000 # valid only if ACM_SIZE > 0
         self.BPM_SIZE              = 0x1000 # valid only if ACM_SIZE > 0
@@ -1437,12 +1437,12 @@ class Build(object):
                 os.path.join(self._fv_dir, srcfile),
                 os.path.join(self._fv_dir, "FWUPDATE.bin"))
 
-        # create SPI IAS image if required
-        if self._board.SPI_IAS1_SIZE > 0 or self._board.SPI_IAS2_SIZE > 0:
+        # create SPI CONTAINER image if required
+        if self._board.SPI_CONTAINER1_SIZE > 0 or self._board.SPI_CONTAINER2_SIZE > 0:
             for idx in range (1, 3):
-                file_path  = os.path.join('Platform', self._board.BOARD_PKG_NAME, 'SpiIasBin', 'iasimage%d.bin' % idx)
-                file_space = getattr(self._board, 'SPI_IAS%d_SIZE' % idx)
-                gen_ias_file (file_path, file_space, os.path.join(self._fv_dir, "SPI_IAS%d.bin" % idx))
+                file_path  = os.path.join('Platform', self._board.BOARD_PKG_NAME, 'SpiContainerBin', 'containerimage%d.bin' % idx)
+                file_space = getattr(self._board, 'SPI_CONTAINER%d_SIZE' % idx)
+                gen_container_file (file_path, file_space, os.path.join(self._fv_dir, "SPI_CONTAINER%d.bin" % idx))
 
         # generate container images
         if getattr(self._board, "GetContainerList", None):

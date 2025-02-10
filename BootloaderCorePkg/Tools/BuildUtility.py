@@ -516,13 +516,13 @@ def gen_pub_key_hash_store (signing_key, pub_key_hash_list, hash_alg, sign_schem
     gen_container_bin ([hash_store], out_dir, out_dir, '', '')
 
 
-def gen_ias_file (rel_file_path, file_space, out_file):
+def gen_container_file (rel_file_path, file_space, out_file):
     bins = bytearray()
     file_path = os.path.join(os.environ['PLT_SOURCE'], rel_file_path)
     if os.path.exists(file_path):
-        ias_fh   = open (file_path, 'rb')
-        file_bin = ias_fh.read()
-        ias_fh.close ()
+        container_fh   = open (file_path, 'rb')
+        file_bin = container_fh.read()
+        container_fh.close ()
     else:
         file_bin = bytearray ()
     file_size = len(file_bin)

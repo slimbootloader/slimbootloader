@@ -36,7 +36,7 @@
 #ifndef __MULTIBOOT_LIB_H__
 #define __MULTIBOOT_LIB_H__
 
-#include <Library/IasImageLib.h>
+#include <Library/ContainerLib.h>
 
 #define KB_(n)  ((UINT32) (n) * 1024)
 #define MB_(n)  ((UINT32) (n) * 1024 * 1024)
@@ -64,7 +64,7 @@ typedef struct {
 #define MULTIBOOT_HEADER_HAS_VBE        0x00000004
 #define MULTIBOOT_HEADER_HAS_ADDR       0x00010000
 
-/* Indicator for ACPI binary blob inside IAS image */
+/* Indicator for ACPI binary blob inside Container image */
 #define MULTIBOOT_SPECIAL_MODULE_MAGIC  0xacb10086
 
 typedef struct {

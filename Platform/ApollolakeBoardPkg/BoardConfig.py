@@ -171,9 +171,9 @@ class Board(BaseBoard):
         self.SBLRSVD_SIZE         = 0x00001000
 
         if len(self._PAYLOAD_NAME.split(';')) > 1:
-            self.SPI_IAS1_SIZE    = 0x00001000
+            self.SPI_CONTAINER1_SIZE    = 0x00001000
         else:
-            self.SPI_IAS1_SIZE    = 0x00150000
+            self.SPI_CONTAINER1_SIZE    = 0x00150000
 
         self._CFGDATA_INT_FILE = ['CfgData_Int_LeafHill.dlt']
         self._CFGDATA_EXT_FILE = ['CfgData_Ext_Gpmrb.dlt', 'CfgData_Ext_Up2.dlt','CfgData_Ext_OxbHill.dlt','CfgData_Ext_MB3.dlt','CfgData_Ext_JuniperHill.dlt']
@@ -279,7 +279,7 @@ class Board(BaseBoard):
         return pub_key_list
 
     def GetImageLayout (self):
-        ias1_flag = 0 if self.SPI_IAS1_SIZE > 0 else STITCH_OPS.MODE_FILE_IGNOR
+        container1_flag = 0 if self.SPI_CONTAINER1_SIZE > 0 else STITCH_OPS.MODE_FILE_IGNOR
         fwu_flag = 0 if self.ENABLE_FWU else STITCH_OPS.MODE_FILE_IGNOR
         img_list  = []
         img_list.extend ([
@@ -297,7 +297,7 @@ class Board(BaseBoard):
                         ('FWUPDATE.bin' ,  'Lzma', self.FWUPDATE_SIZE, STITCH_OPS.MODE_FILE_PAD | fwu_flag, STITCH_OPS.MODE_POS_TAIL)]
                     ),
                     ('Stitch_FB.bin', [
-                        ('SPI_IAS1.bin',  '',    self.SPI_IAS1_SIZE,  STITCH_OPS.MODE_FILE_PAD | ias1_flag, STITCH_OPS.MODE_POS_TAIL)]
+                        ('SPI_CONTAINER1.bin', '', self.SPI_CONTAINER1_SIZE,  STITCH_OPS.MODE_FILE_PAD | container1_flag, STITCH_OPS.MODE_POS_TAIL)]
                     ),
                     ('Stitch_PLD.bin', [
                         ('PAYLOAD.bin',  'Lz4', self.PAYLOAD_SIZE,   STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL)]

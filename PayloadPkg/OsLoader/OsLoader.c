@@ -390,7 +390,7 @@ ParseContainerImage (
   Status = UnregisterContainer (ContainerHdr->Signature);
   DEBUG ((DEBUG_INFO, "Unregister done - %r!\n", Status));
 
-  // Mask upper nibble in ImageType so that UpdateLoadedImage() supports both IAS and CONTAINER Image types
+  // Mask upper nibble in ImageType so that UpdateLoadedImage() supports CONTAINER Image types
   Status = UpdateLoadedImage (Index, File, LoadedImage, ContainerHdr->ImageType & 0xF);
 
   if (EFI_ERROR (Status)) {

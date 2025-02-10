@@ -59,7 +59,6 @@
   FileSystemLib
   PlatformHookLib
   ShellLib
-  IasImageLib
   MultibootLib
   PartitionLib
   DebugPrintErrorLevelLib

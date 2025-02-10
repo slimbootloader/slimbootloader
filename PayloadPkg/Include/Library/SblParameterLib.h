@@ -8,7 +8,7 @@
 
 #include <PiPei.h>
 #include <Guid/OsBootOptionGuid.h>
-#include <Library/IasImageLib.h>
+#include <Library/ContainerLib.h>
 
 #ifndef __SBL_PARAMETER_LIB_H__
 #define __SBL_PARAMETER_LIB_H__

@@ -161,8 +161,8 @@ class Board(BaseBoard):
             acm_btm = (acm_btm & 0xFFFE0000)
             self.ACM_SIZE     = acm_top - acm_btm
 
-        self.CFGDATA_REGION_TYPE  = FLASH_REGION_TYPE.BIOS
-        self.SPI_IAS_REGION_TYPE  = FLASH_REGION_TYPE.BIOS
+        self.CFGDATA_REGION_TYPE        = FLASH_REGION_TYPE.BIOS
+        self.SPI_CONTAINER_REGION_TYPE  = FLASH_REGION_TYPE.BIOS
 
         self.CFG_DATABASE_SIZE    = self.CFGDATA_SIZE + 0x4000
         self._CFGDATA_INT_FILE    = ['CfgDataInt_Cfls.dlt', 'CfgDataInt_Cflh.dlt', 'CfgDataInt_Whl.dlt']
