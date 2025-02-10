@@ -3,7 +3,7 @@
   NVM Express specification.
 
   (C) Copyright 2014 Hewlett-Packard Development Company, L.P.<BR>
-  Copyright (c) 2013 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2013 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -648,6 +648,19 @@ NvmExpressPassThru (
     // Copy the Respose Queue entry for this command to the callers response buffer
     //
     CopyMem (Packet->NvmeCompletion, Cq, sizeof (EFI_NVM_EXPRESS_COMPLETION));
+  } else {
+    //
+    // Timeout occurs for an NVMe command. Reset the controller to abort the
+    // outstanding commands.
+    //
+    DEBUG ((DEBUG_WARN, "NvmExpressPassThru: Timeout occurs for an NVMe command.\n"));
+    Status = NvmeControllerInit (Private);
+    if (!EFI_ERROR (Status)) {
+      Status = EFI_TIMEOUT;
+    } else {
+      Status = EFI_DEVICE_ERROR;
+    }
+    goto EXIT;
   }
 
   if ((Private->CqHdbl[QueueId].Cqh ^= 1) == 0) {
