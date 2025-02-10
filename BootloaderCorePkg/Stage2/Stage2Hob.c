@@ -295,7 +295,7 @@ BuildBaseInfoHob (
   LoaderFspInfo = BuildGuidHob (&gLoaderFspInfoGuid, sizeof (LOADER_FSP_INFO));
   if (LoaderFspInfo != NULL) {
     LoaderFspInfo->FspsBase   = PCD_GET32_WITH_ADJUST (PcdFSPSBase);
-    LoaderFspInfo->FspHobList = LdrGlobal->FspHobList;
+    LoaderFspInfo->FspHobList = (UINT32)(UINTN)LdrGlobal->FspHobList;
   }
 
   // Build serial port hob

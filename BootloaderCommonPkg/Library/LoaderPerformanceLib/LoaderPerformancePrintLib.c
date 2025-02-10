@@ -391,7 +391,7 @@ PrintFspPerfData (
   FspInfo = GET_GUID_HOB_DATA (FspInfo);
 
   FspFirmwarePerformance = NULL;
-  GuidHob = GetNextGuidHob (&gEdkiiFpdtExtendedFirmwarePerformanceGuid, FspInfo->FspHobList);
+  GuidHob = GetNextGuidHob (&gEdkiiFpdtExtendedFirmwarePerformanceGuid, (VOID*)(UINTN)FspInfo->FspHobList);
   while (GuidHob != NULL) {
     FspFirmwarePerformance   = (UINT8*)GET_GUID_HOB_DATA (GuidHob);
     FspPerformanceLogHeader = (FPDT_PEI_EXT_PERF_HEADER *)FspFirmwarePerformance;
