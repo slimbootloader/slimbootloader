@@ -76,7 +76,6 @@
 #define GPT_PART_ENTRIES_MAX     4
 
 // For LOADED_IMAGE Flags
-#define LOADED_IMAGE_IAS         BIT0
 #define LOADED_IMAGE_MULTIBOOT   BIT1
 #define LOADED_IMAGE_LINUX       BIT2
 #define LOADED_IMAGE_PE          BIT3

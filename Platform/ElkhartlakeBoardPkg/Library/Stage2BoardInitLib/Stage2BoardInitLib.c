@@ -1084,7 +1084,7 @@ UpdateFspConfig (
   UINT32      Index;
   UINT32      BaseAddress;
   UINT32      TotalSize;
-  UINT32      SpiIasBase;
+  UINT32      SpiContainerBase;
   UINT32      *TsnMacAddrBase;
   UINT32      TsnMacAddrSize;
   UINT32      *PseTsnIpConfigBase;
@@ -1094,7 +1094,7 @@ UpdateFspConfig (
   UINT32      *ChipsetInitBinPtr;
   UINT32      ChipsetInitBinSize;
   BOOLEAN     BiosProtected;
-  BOOLEAN     IasProtected;
+  BOOLEAN     ContainerProtected;
   EFI_STATUS  Status;
   FLASH_REGION_TYPE  RegionType;
   FSPS_UPD           *FspsUpd;
@@ -1145,7 +1145,7 @@ UpdateFspConfig (
 
   if (GetBootMode () != BOOT_ON_FLASH_UPDATE) {
     BiosProtected = FALSE;
-    IasProtected  = FALSE;
+    ContainerProtected  = FALSE;
     Status = SpiGetRegionAddress (FlashRegionBios, &BaseAddress, &TotalSize);
     if (!EFI_ERROR (Status)) {
       BiosProtected = TRUE;
@@ -1159,33 +1159,33 @@ UpdateFspConfig (
       Fspscfg->PchProtectedRangeBase[0]    = (UINT16) (BaseAddress >> 12);
       Fspscfg->PchProtectedRangeLimit[0]   = (UINT16) ((BaseAddress + TotalSize - 1) >> 12);
 
-      RegionType = (FLASH_REGION_TYPE) PcdGet32 (PcdSpiIasImageRegionType);
+      RegionType = (FLASH_REGION_TYPE) PcdGet32 (PcdSpiContainerImageRegionType);
       if (RegionType < FlashRegionMax) {
         if (RegionType != FlashRegionBios) {
-          Status = GetComponentInfo (FLASH_MAP_SIG_SPI_IAS1, &SpiIasBase, NULL);
+          Status = GetComponentInfo (FLASH_MAP_SIG_SPI_CONTAINER1, &SpiContainerBase, NULL);
           if (EFI_ERROR (Status)) {
             return;
           }
-          SpiIasBase &= 0xFFFF;
+          SpiContainerBase &= 0xFFFF;
           Status = SpiGetRegionAddress (RegionType, &BaseAddress, &TotalSize);
           if (!EFI_ERROR (Status)) {
-            if ((PcdGet32 (PcdSpiIasImage1RegionSize) + PcdGet32 (PcdSpiIasImage2RegionSize)) <= TotalSize) {
-              IasProtected = TRUE;
+            if ((PcdGet32 (PcdSpiContainerImage1RegionSize) + PcdGet32 (PcdSpiContainerImage2RegionSize)) <= TotalSize) {
+              ContainerProtected = TRUE;
               Fspscfg->PchWriteProtectionEnable[1] = TRUE;
               Fspscfg->PchReadProtectionEnable[1]  = FALSE;
-              Fspscfg->PchProtectedRangeBase[1]    = (UINT16) ((BaseAddress + SpiIasBase) >> 12);
-              Fspscfg->PchProtectedRangeLimit[1]   = (UINT16) ((BaseAddress + SpiIasBase +
-                                                          PcdGet32 (PcdSpiIasImage1RegionSize) +
-                                                          PcdGet32 (PcdSpiIasImage2RegionSize) - 1) >> 12);
+              Fspscfg->PchProtectedRangeBase[1]    = (UINT16) ((BaseAddress + SpiContainerBase) >> 12);
+              Fspscfg->PchProtectedRangeLimit[1]   = (UINT16) ((BaseAddress + SpiContainerBase +
+                                                          PcdGet32 (PcdSpiContainerImage1RegionSize) +
+                                                          PcdGet32 (PcdSpiContainerImage2RegionSize) - 1) >> 12);
             }
           }
         } else {
-          IasProtected = TRUE;
+          ContainerProtected = TRUE;
         }
       }
     }
     DEBUG (((BiosProtected) ? DEBUG_INFO : DEBUG_WARN, "BIOS SPI region will %a protected\n", (BiosProtected) ? "be" : "NOT BE"));
-    DEBUG (((IasProtected)  ? DEBUG_INFO : DEBUG_WARN, "IAS  SPI region will %a protected\n", (IasProtected)  ? "be" : "NOT BE"));
+    DEBUG (((ContainerProtected)  ? DEBUG_INFO : DEBUG_WARN, "Container  SPI region will %a protected\n", (ContainerProtected)  ? "be" : "NOT BE"));
   }
 
   Fspscfg->EnableTcoTimer    = 0;

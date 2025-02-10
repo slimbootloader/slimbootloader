@@ -214,7 +214,7 @@ def replace_ibb_partition (bios_image, ifwi_image, output_image, bios_path, ifwi
     return 0
 
 
-def padding_ias_image (ibbl_image):
+def padding_container_image (ibbl_image):
     fd = open(ibbl_image, "rb")
     ibbl_img_data = bytearray(fd.read())
     fd.close()
@@ -225,22 +225,22 @@ def padding_ias_image (ibbl_image):
     entry_num  = (fla_map_str.length - sizeof(FLASH_MAP)) // sizeof(FLASH_MAP_DESC)
     for idx in range (entry_num):
         desc  = FLASH_MAP_DESC.from_buffer (ibbl_img_data, fla_map_off + sizeof(FLASH_MAP) + idx * sizeof(FLASH_MAP_DESC))
-        if desc.sig != 'IAS1' :
+        if desc.sig != 'CTR1' :
             continue
-        ias1name  = os.path.join(os.path.dirname (ibbl_image), 'Stitch_FB.bin')
-        if not os.path.exists(ias1name):
-            ias1size = 0
+        container1name  = os.path.join(os.path.dirname (ibbl_image), 'Stitch_FB.bin')
+        if not os.path.exists(container1name):
+            container1size = 0
             mode     = 'wb'
         else:
-            ias1size = os.path.getsize(ias1name)
+            container1size = os.path.getsize(container1name)
             mode     = 'r+b'
-        if desc.size > ias1size:
-            ias_fh = open (ias1name, mode)
-            ias_fh.seek (ias1size)
-            ias_fh.write ('\xff' * (desc.size - ias1size))
-            ias_fh.close()
-        if desc.size < ias1size:
-            raise Exception("ERROR: IAS1 image 0x%x bigger than size 0x%x in FlashMap!" % (ias1size, desc.size))
+        if desc.size > container1size:
+            container_fh = open (container1name, mode)
+            container_fh.seek (container1size)
+            container_fh.write ('\xff' * (desc.size - container1size))
+            container_fh.close()
+        if desc.size < container1size:
+            raise Exception("ERROR: CONTAINER1 image 0x%x bigger than size 0x%x in FlashMap!" % (container1size, desc.size))
 
     return 0
 
@@ -451,8 +451,8 @@ def stitch (stitch_dir, stitch_zip, btg_profile, spi_quad_mode, platform_data, f
 
     os.chdir(stitch_dir)
 
-    print ("\nPadding IAS image size ...")
-    ret = padding_ias_image ('%s/Stitch_IBBL.bin' % cfg_var['fitinput'])
+    print ("\nPadding CONTAINER image size ...")
+    ret = padding_container_image ('%s/Stitch_IBBL.bin' % cfg_var['fitinput'])
     if ret:
         raise Exception ("Failed with error %d !" % ret)
 

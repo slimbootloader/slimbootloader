@@ -65,8 +65,6 @@ GetBootImageFromIfwiContainer (
 
   if ( *((UINT32 *) Buffer) == CONTAINER_BOOT_SIGNATURE ) {
     LoadedImage->Flags      |= LOADED_IMAGE_CONTAINER;
-  } else if ( *((UINT32 *) Buffer) == IAS_MAGIC_PATTERN ) {
-    LoadedImage->Flags      |= LOADED_IMAGE_IAS;
   }
 
   DEBUG ((DEBUG_ERROR, "Loaded component (%x/%x) success.\n", Image->ContainerSig, Image->ComponentName));
@@ -84,8 +82,8 @@ GetBootImageFromIfwiContainer (
   @param[in]      BootOption      Current boot option
   @param[in, out] LoadedImage     Loaded Image information.
 
-  @retval  RETURN_SUCCESS     If IAS image was loaded successfully
-  @retval  Others             If IAS image was not loaded.
+  @retval  RETURN_SUCCESS     If Container image was loaded successfully
+  @retval  Others             If Container image was not loaded.
 **/
 STATIC
 EFI_STATUS
@@ -148,11 +146,11 @@ GetBootImageFromRawPartition (
   }
 
   //
-  // Read the IAS Header first to get total size of the IAS image.
+  // Read the Container Header first to get total size of the Container image.
   // Make sure to round the Header size to be block aligned in bytes.
   //
   BlockSize = BlockInfo.BlockSize;
-  AlignedHeaderBlkCnt = (sizeof (IAS_HEADER) + (BlockSize - 1)) / BlockSize;
+  AlignedHeaderBlkCnt = (sizeof (CONTAINER_HDR) + (BlockSize - 1)) / BlockSize;
   AlignedHeaderSize = AlignedHeaderBlkCnt * BlockSize;
 
   BlockData = AllocatePages (EFI_SIZE_TO_PAGES (AlignedHeaderSize));
@@ -180,8 +178,6 @@ GetBootImageFromRawPartition (
   ContainerHdr = (CONTAINER_HDR *)BlockData;
   if (ContainerHdr->Signature == CONTAINER_BOOT_SIGNATURE) {
     ImageSize = ContainerHdr->DataOffset + ContainerHdr->DataSize;
-  } else if (ContainerHdr->Signature == IAS_MAGIC_PATTERN) {
-    ImageSize = IAS_IMAGE_SIZE ((IAS_HEADER *) BlockData);
   } else {
     DEBUG ((DEBUG_INFO, "No valid image header found !\n"));
     return EFI_LOAD_ERROR;
@@ -197,9 +193,9 @@ GetBootImageFromRawPartition (
   AlignedImageSize = ((ImageSize % BlockSize) == 0) ? \
                      ImageSize : \
                      ((ImageSize / BlockSize) + 1) * BlockSize;
-  if (AlignedImageSize > MAX_IAS_IMAGE_SIZE) {
+  if (AlignedImageSize > MAX_CONTAINER_IMAGE_SIZE) {
     DEBUG ((DEBUG_INFO, "Image is bigger than limitation (0x%x). ImageSize=0x%x\n",
-            MAX_IAS_IMAGE_SIZE, AlignedImageSize));
+            MAX_CONTAINER_IMAGE_SIZE, AlignedImageSize));
     //
     // Free temporary pages used for image header
     //
@@ -220,7 +216,7 @@ GetBootImageFromRawPartition (
   FreePages (BlockData, EFI_SIZE_TO_PAGES (AlignedHeaderSize));
 
   //
-  // Read the rest of the IAS image into the buffer
+  // Read the rest of the Container image into the buffer
   //
   Address =  LogicBlkDev.StartBlock + LbaAddr + AlignedHeaderBlkCnt;
 
@@ -242,8 +238,6 @@ GetBootImageFromRawPartition (
   LoadedImage->ImageData.AllocType = ImageAllocateTypePage;
   if ( *((UINT32 *) Buffer) == CONTAINER_BOOT_SIGNATURE ) {
     LoadedImage->Flags      |= LOADED_IMAGE_CONTAINER;
-  } else if ( *((UINT32 *) Buffer) == IAS_MAGIC_PATTERN ) {
-    LoadedImage->Flags      |= LOADED_IMAGE_IAS;
   }
   return EFI_SUCCESS;
 }
@@ -357,8 +351,6 @@ GetBootImageFromFs (
   LoadedImage->ImageData.AllocType = ImageAllocateTypePage;
   if ( *((UINT32 *) Image) == CONTAINER_BOOT_SIGNATURE ) {
     LoadedImage->Flags      |= LOADED_IMAGE_CONTAINER;
-  } else if ( *((UINT32 *) Image) == IAS_MAGIC_PATTERN ) {
-    LoadedImage->Flags      |= LOADED_IMAGE_IAS;
   }
 
 Done:
@@ -467,8 +459,8 @@ Done:
   @param[in]  FsHandle        File system handle used to read file
   @param[out] LinuxImage      Used to save loaded Image information.
 
-  @retval  RETURN_SUCCESS     If IAS image was loaded successfully
-  @retval  Others             If IAS image was not loaded.
+  @retval  RETURN_SUCCESS     If Container image was loaded successfully
+  @retval  Others             If Container image was not loaded.
 **/
 STATIC
 EFI_STATUS

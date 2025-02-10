@@ -55,7 +55,7 @@ AddSpiPartition (
 /**
   This function finds SPI partitions from BIOS region.
 
-  This function gets flash IAS regoins from flash map for block read/write.
+  This function gets flash Container regoins from flash map for block read/write.
   It will takes every region as a separate software partition.
 
   @param[in, out]  PartBlockDev   Parition block device pointer
@@ -71,8 +71,8 @@ FindSpiPartitions (
   )
 {
   EFI_STATUS                Status;
-  UINT32                    IasRegionBase;
-  UINT32                    IasRegionSize;
+  UINT32                    ContainerRegionBase;
+  UINT32                    ContainerRegionSize;
   DEVICE_BLOCK_INFO         *DevBlockInfo;
 
   DevBlockInfo = &PartBlockDev->BlockInfo;
@@ -83,18 +83,18 @@ FindSpiPartitions (
   PartBlockDev->PartitionChecked = FALSE;
   PartBlockDev->BlockDeviceCount = 0;
 
-  // Get first IAS region as partition
-  Status = GetComponentInfo (FLASH_MAP_SIG_SPI_IAS1, &IasRegionBase, &IasRegionSize);
+  // Get first Container region as partition
+  Status = GetComponentInfo (FLASH_MAP_SIG_SPI_CONTAINER1, &ContainerRegionBase, &ContainerRegionSize);
   if (!EFI_ERROR(Status)) {
-    AddSpiPartition (PartBlockDev, IasRegionBase, IasRegionSize);
+    AddSpiPartition (PartBlockDev, ContainerRegionBase, ContainerRegionSize);
   } else {
-    AddSpiPartition (PartBlockDev, IasRegionBase, 0);
+    AddSpiPartition (PartBlockDev, ContainerRegionBase, 0);
   }
 
-  // Check if the second IAS region exists.
-  Status = GetComponentInfo (FLASH_MAP_SIG_SPI_IAS2, &IasRegionBase, &IasRegionSize);
+  // Check if the second Container region exists.
+  Status = GetComponentInfo (FLASH_MAP_SIG_SPI_CONTAINER2, &ContainerRegionBase, &ContainerRegionSize);
   if (!EFI_ERROR(Status)) {
-    AddSpiPartition (PartBlockDev, IasRegionBase, IasRegionSize);
+    AddSpiPartition (PartBlockDev, ContainerRegionBase, ContainerRegionSize);
   }
 
   DEBUG ((DEBUG_INFO, "SPI BIOS region: (%d logical partitions)\n", \

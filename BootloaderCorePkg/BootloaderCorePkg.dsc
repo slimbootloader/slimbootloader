@@ -100,7 +100,6 @@
   UsbHostCtrlLib|BootloaderCommonPkg/Library/XhciLib/XhciLib.inf
   UsbBusLib|BootloaderCommonPkg/Library/UsbBusLib/UsbBusLib.inf
   UsbBlockIoLib|BootloaderCommonPkg/Library/UsbBlockIoLib/UsbBlockIoLib.inf
-  IasImageLib|BootloaderCommonPkg/Library/IasImageLib/IasImageLib.inf
   MultibootLib|BootloaderCommonPkg/Library/MultibootLib/MultibootLib.inf
   MediaAccessLib|BootloaderCommonPkg/Library/MediaAccessLib/MediaAccessLib.inf
   ResetSystemLib|BootloaderCommonPkg/Library/ResetSystemLib/ResetSystemLib.inf
@@ -251,11 +250,11 @@
   gPlatformModuleTokenSpaceGuid.PcdVerifiedBootStage1B   | $(VERIFIED_BOOT_STAGE_1B)
   gPlatformCommonLibTokenSpaceGuid.PcdCryptoShaOptMask    | $(ENABLE_CRYPTO_SHA_OPT)
 
-  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImageRegionType    | $(SPI_IAS_REGION_TYPE)
-  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImage1RegionBase   | $(SPI_IAS1_BASE)
-  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImage1RegionSize   | $(SPI_IAS1_SIZE)
-  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImage2RegionBase   | $(SPI_IAS2_BASE)
-  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImage2RegionSize   | $(SPI_IAS2_SIZE)
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiContainerImageRegionType    | $(SPI_CONTAINER_REGION_TYPE)
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiContainerImage1RegionBase   | $(SPI_CONTAINER1_BASE)
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiContainerImage1RegionSize   | $(SPI_CONTAINER1_SIZE)
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiContainerImage2RegionBase   | $(SPI_CONTAINER2_BASE)
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiContainerImage2RegionSize   | $(SPI_CONTAINER2_SIZE)
 
   gPlatformCommonLibTokenSpaceGuid.PcdSupportedMediaTypeMask   | $(BOOT_MEDIA_SUPPORT_MASK)
   gPlatformCommonLibTokenSpaceGuid.PcdSupportedFileSystemMask  | $(FILE_SYSTEM_SUPPORT_MASK)

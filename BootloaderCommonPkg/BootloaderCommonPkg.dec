@@ -186,13 +186,13 @@
   # @Prompt Mmio base address of pci-based UFS host controller.
   gPlatformCommonLibTokenSpaceGuid.PcdUfsPciHostControllerMmioBase|0xd0000000|UINT32|0x20000185
 
-  ## These PCDs specify the details of the SPI flash region used to store IAS images.
-  # This includes the type of the flash region, the base address and size for IAS image 1 & 2
-  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImageRegionType    |0x00000000|UINT32|0x2000018C
-  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImage1RegionBase   |0x00000000|UINT32|0x20000190
-  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImage1RegionSize   |0x00000000|UINT32|0x20000194
-  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImage2RegionBase   |0x00000000|UINT32|0x20000198
-  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImage2RegionSize   |0x00000000|UINT32|0x2000019C
+  ## These PCDs specify the details of the SPI flash region used to store Container images.
+  # This includes the type of the flash region, the base address and size for Container image 1 & 2
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiContainerImageRegionType    |0x00000000|UINT32|0x2000018C
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiContainerImage1RegionBase   |0x00000000|UINT32|0x20000190
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiContainerImage1RegionSize   |0x00000000|UINT32|0x20000194
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiContainerImage2RegionBase   |0x00000000|UINT32|0x20000198
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiContainerImage2RegionSize   |0x00000000|UINT32|0x2000019C
 
   ## This PCD controls enabled debug output devcie
   gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask    |0x00000003|UINT32|0x20000400

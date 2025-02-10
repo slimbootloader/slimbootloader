@@ -363,7 +363,7 @@ def manipulate_ifwi (action, path, ifwi_data, file_name = '', before = '$'):
 def patch_flash_map (image_data, platform_data = 0xffffffff):
     comp_bpdt_dict = {
       b'RSVD' : "IFWI/BIOS/BP1/SBPDT/BpdtObb/RSVD",
-      b'IAS1' : "IFWI/BIOS/BP1/SBPDT/BpdtObb/FB",
+      b'CTR1' : "IFWI/BIOS/BP1/SBPDT/BpdtObb/FB",
       b'EPLD' : "IFWI/BIOS/BP1/SBPDT/BpdtObb/EPLD",
       b'UVAR' : "IFWI/BIOS/BP1/SBPDT/BpdtObb/UVAR",
       b'PYLD' : "IFWI/BIOS/BP0/BPDT/BpdtIbb/PLD",

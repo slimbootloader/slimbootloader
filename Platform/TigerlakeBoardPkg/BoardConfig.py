@@ -217,8 +217,8 @@ class Board(BaseBoard):
             acm_btm = (acm_btm & 0xFFFC0000)
             self.ACM_SIZE     = acm_top - acm_btm
 
-        self.CFGDATA_REGION_TYPE  = FLASH_REGION_TYPE.BIOS
-        self.SPI_IAS_REGION_TYPE  = FLASH_REGION_TYPE.BIOS
+        self.CFGDATA_REGION_TYPE        = FLASH_REGION_TYPE.BIOS
+        self.SPI_CONTAINER_REGION_TYPE  = FLASH_REGION_TYPE.BIOS
 
         self.LOADER_RSVD_MEM_SIZE = 0x500000
 

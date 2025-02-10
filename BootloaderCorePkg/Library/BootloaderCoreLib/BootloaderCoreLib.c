@@ -115,13 +115,13 @@ GetComponentPcdInfo (
     PcdBase = PCD_GET32_WITH_ADJUST (PcdPayloadBase);
     PcdSize = PcdGet32 (PcdPayloadSize);
     break;
-  case FLASH_MAP_SIG_SPI_IAS1:
-    PcdBase = PCD_GET32_WITH_ADJUST (PcdSpiIasImage1RegionBase);
-    PcdSize = PcdGet32 (PcdSpiIasImage1RegionSize);
+  case FLASH_MAP_SIG_SPI_CONTAINER1:
+    PcdBase = PCD_GET32_WITH_ADJUST (PcdSpiContainerImage1RegionBase);
+    PcdSize = PcdGet32 (PcdSpiContainerImage1RegionSize);
     break;
-  case FLASH_MAP_SIG_SPI_IAS2:
-    PcdBase = PCD_GET32_WITH_ADJUST (PcdSpiIasImage2RegionBase);
-    PcdSize = PcdGet32 (PcdSpiIasImage2RegionSize);
+  case FLASH_MAP_SIG_SPI_CONTAINER2:
+    PcdBase = PCD_GET32_WITH_ADJUST (PcdSpiContainerImage2RegionBase);
+    PcdSize = PcdGet32 (PcdSpiContainerImage2RegionSize);
     break;
   case FLASH_MAP_SIG_FWUPDATE:
     PcdBase = PCD_GET32_WITH_ADJUST (PcdFwuPayloadBase);

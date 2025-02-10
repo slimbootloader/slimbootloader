@@ -178,11 +178,11 @@ class Board(BaseBoard):
             acm_btm = (acm_btm & 0xFFFE0000)
             self.ACM_SIZE     = acm_top - acm_btm
 
-        self.CFGDATA_REGION_TYPE  = FLASH_REGION_TYPE.BIOS
-        self.SPI_IAS_REGION_TYPE  = FLASH_REGION_TYPE.BIOS
+        self.CFGDATA_REGION_TYPE        = FLASH_REGION_TYPE.BIOS
+        self.SPI_CONTAINER_REGION_TYPE  = FLASH_REGION_TYPE.BIOS
 
-        self.SPI_IAS1_SIZE        = 0x0
-        self.SPI_IAS2_SIZE        = 0x0
+        self.SPI_CONTAINER1_SIZE  = 0x0
+        self.SPI_CONTAINER2_SIZE  = 0x0
 
         self.PLD_HEAP_SIZE        = 0x0C000000
         self.PLD_STACK_SIZE       = 0x00020000
@@ -346,8 +346,8 @@ class Board(BaseBoard):
     def GetImageLayout (self):
 
         acm_flag = 0 if self.ACM_SIZE > 0 else STITCH_OPS.MODE_FILE_IGNOR
-        ias1_flag = 0 if self.SPI_IAS1_SIZE > 0 else STITCH_OPS.MODE_FILE_IGNOR
-        ias2_flag = 0 if self.SPI_IAS2_SIZE > 0 else STITCH_OPS.MODE_FILE_IGNOR
+        container1_flag = 0 if self.SPI_CONTAINER1_SIZE > 0 else STITCH_OPS.MODE_FILE_IGNOR
+        container2_flag = 0 if self.SPI_CONTAINER2_SIZE > 0 else STITCH_OPS.MODE_FILE_IGNOR
         fwu_flag = 0 if self.ENABLE_FWU else STITCH_OPS.MODE_FILE_IGNOR
         if len(self._CFGDATA_EXT_FILE) > 0 and self.CFGDATA_REGION_TYPE == FLASH_REGION_TYPE.BIOS:
             cfg_flag = 0
@@ -372,14 +372,14 @@ class Board(BaseBoard):
                     ]
                 ),
                 ('NON_REDUNDANT.bin', [
-                    ('SIIPFW.bin'   ,  ''        , self.SIIPFW_SIZE,   STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
-                    ('SPI_IAS2.bin' ,  ''        , self.SPI_IAS2_SIZE, STITCH_OPS.MODE_FILE_PAD | ias2_flag, STITCH_OPS.MODE_POS_TAIL),
-                    ('SPI_IAS1.bin' ,  ''        , self.SPI_IAS1_SIZE, STITCH_OPS.MODE_FILE_PAD | ias1_flag, STITCH_OPS.MODE_POS_TAIL),
-                    ('VARIABLE.bin' ,  ''        , self.VARIABLE_SIZE, STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
-                    ('MRCDATA.bin'  ,  ''        , self.MRCDATA_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
-                    ('EPAYLOAD.bin' ,  ''        , self.EPAYLOAD_SIZE, STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
-                    ('UEFIVARIABLE.bin', ''      , self.UEFI_VARIABLE_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
-                    ('PAYLOAD.bin'  ,  'Lzma'    , self.PAYLOAD_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+                    ('SIIPFW.bin'         ,  ''     , self.SIIPFW_SIZE,   STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+                    ('SPI_CONTAINER2.bin' ,  ''     , self.SPI_CONTAINER2_SIZE, STITCH_OPS.MODE_FILE_PAD | container2_flag, STITCH_OPS.MODE_POS_TAIL),
+                    ('SPI_CONTAINER1.bin' ,  ''     , self.SPI_CONTAINER1_SIZE, STITCH_OPS.MODE_FILE_PAD | container1_flag, STITCH_OPS.MODE_POS_TAIL),
+                    ('VARIABLE.bin'       ,  ''     , self.VARIABLE_SIZE, STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
+                    ('MRCDATA.bin'        ,  ''     , self.MRCDATA_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
+                    ('EPAYLOAD.bin'       ,  ''     , self.EPAYLOAD_SIZE, STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+                    ('UEFIVARIABLE.bin'   ,  ''     , self.UEFI_VARIABLE_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
+                    ('PAYLOAD.bin'        ,  'Lzma' , self.PAYLOAD_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
                     ]
                 ),
                 ('REDUNDANT_A.bin', [
