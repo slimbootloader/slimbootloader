@@ -340,7 +340,7 @@ UpdatePchSbRegBar (
 
   FspInfo = (LOADER_FSP_INFO *)GetGuidHobData (NULL, NULL, &gLoaderFspInfoGuid);
   ASSERT (FspInfo != NULL);
-  PchConfig = (MTL_PCH_CONFIGURATION *) GetGuidHobData (FspInfo->FspHobList, NULL, &gFspPchConfigGuid);
+  PchConfig = (MTL_PCH_CONFIGURATION *) GetGuidHobData ((VOID*)(UINTN)FspInfo->FspHobList, NULL, &gFspPchConfigGuid);
   if (PchConfig != NULL) {
     GpioPad    = GPIOV2_PAD_ID(0, GPIOV2_MTL_PCH_S_CHIPSET_ID, 0, 0, 0, 0);
     Controller = GpioGetController (GpioPad);

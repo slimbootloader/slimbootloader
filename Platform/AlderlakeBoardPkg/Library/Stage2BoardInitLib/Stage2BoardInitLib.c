@@ -202,8 +202,6 @@ ProgramSecuritySetting (
 
   // Set the BIOS Lock Enable and EISS bits
   MmioOr8 (SpiBaseAddress + R_SPI_CFG_BC, (UINT8) (B_SPI_CFG_BC_LE | B_SPI_CFG_BC_EISS));
-
-  ClearFspHob ();
 }
 
 /**
@@ -675,6 +673,7 @@ BoardInit (
     }
     break;
   case EndOfFirmware:
+    ClearFspHob ();
     break;
   default:
     break;

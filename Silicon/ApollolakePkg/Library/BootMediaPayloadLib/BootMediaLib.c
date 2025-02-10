@@ -45,7 +45,7 @@ GetBootMediaType (
   ASSERT(FspInfo != NULL);
   FspInfo = GET_GUID_HOB_DATA(FspInfo);
 
-  GuidHob = GetNextGuidHob(&gEfiBootMediaHobGuid, FspInfo->FspHobList);
+  GuidHob = GetNextGuidHob(&gEfiBootMediaHobGuid, (VOID*)(UINTN)FspInfo->FspHobList);
   ASSERT (GuidHob != NULL);
   BootMediaData = (CURRENT_BOOT_MEDIA *)GET_GUID_HOB_DATA (GuidHob);
 
@@ -84,7 +84,7 @@ GetBootPartition (
   ASSERT(FspInfo != NULL);
   FspInfo = GET_GUID_HOB_DATA(FspInfo);
 
-  GuidHob = GetNextGuidHob(&gEfiBootMediaHobGuid, FspInfo->FspHobList);
+  GuidHob = GetNextGuidHob(&gEfiBootMediaHobGuid, (VOID*)(UINTN)FspInfo->FspHobList);
   ASSERT (GuidHob != NULL);
   BootMediaData = (CURRENT_BOOT_MEDIA *)GET_GUID_HOB_DATA (GuidHob);
 
