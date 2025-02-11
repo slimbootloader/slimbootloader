@@ -16,11 +16,8 @@ import zipfile
 import shutil
 import glob
 import shlex
-import subprocess
-import xml.etree.ElementTree as ET
-from   xml.dom import minidom
+import defusedxml.lxml as ET
 from   ctypes  import *
-from   subprocess   import call
 from   StitchLoader import *
 from   security_stitch_help  import *
 sys.dont_write_bytecode = True
