@@ -27,7 +27,7 @@ class Board(ArrowlakeBoardConfig.Board):
 
         self.VERINFO_IMAGE_ID     = 'SB_ARLU'
         self.BOARD_NAME           = 'arlu'
-        self.MICROCODE_INF_FILE   = 'Platform/ArrowlakeBoardPkg/Arlp/Microcode/MicrocodeArlu.inf'
+        self.MICROCODE_INF_FILE   = 'Silicon/ArrowlakePkg/Arlh/Microcode/MicrocodeArlu.inf'
         self._ACM_CPU_FMS = [
                                     0xF3FFB065,
                                     0xF3FFA06A,
