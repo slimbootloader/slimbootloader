@@ -33,9 +33,10 @@ class Board(BaseBoard):
         self.BOARD_PKG_NAME       = 'ArrowlakeBoardPkg'
         self.SILICON_PKG_NAME     = 'ArrowlakePkg'
         self.FSP_IMAGE_ID         = '$MTLFSP$'
-        self._EXTRA_INC_PATH      = ['Platform/ArrowlakeBoardPkg/Arlp/Fsp']
-        self._FSP_PATH_NAME       = 'Platform/ArrowlakeBoardPkg/Arlp/Fsp'
-        self.MICROCODE_INF_FILE   = 'Platform/ArrowlakeBoardPkg/Arlp/Microcode/Microcode.inf'
+        self._EXTRA_INC_PATH      = ['Silicon/ArrowlakePkg/Arlh/Fsp']
+        self._FSP_PATH_NAME       = 'Silicon/ArrowlakePkg/Arlh/Fsp'
+        self.FSP_INF_FILE         = 'Silicon/ArrowlakePkg/Arlh/Fsp/FspBin.inf'
+        self.MICROCODE_INF_FILE   = 'Silicon/ArrowlakePkg/Arlh/Microcode/Microcode.inf'
         self.ACPI_TABLE_INF_FILE  = 'Platform/ArrowlakeBoardPkg/AcpiTables/AcpiTablesP.inf'
 
         self.PCI_EXPRESS_BASE     = 0xC0000000
