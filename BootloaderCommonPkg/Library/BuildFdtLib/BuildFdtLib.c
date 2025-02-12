@@ -868,6 +868,8 @@ PrintFdt (
   INT32                 Depth;
   FDT_NODE_HEADER       *NodePtr;
 
+  Depth = 0;
+
   for (Node = FdtNextNode (Fdt, 0, &Depth); Node >= 0; Node = FdtNextNode (Fdt, Node, &Depth)) {
     NodePtr = (FDT_NODE_HEADER *)((CONST CHAR8 *)Fdt + Node + Fdt32ToCpu (((FDT_HEADER *)Fdt)->OffsetDtStruct));
     PreNode = Node;
