@@ -1,0 +1,26 @@
+## @file
+#  File to describe FSP repo information
+#
+#  Copyright (c) 2025, Intel Corporation. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+
+[UserExtensions.SBL."CloneRepo"]
+  REPO    = https://github.com/intel/FSP.git
+  COMMIT  = d746b5b938061b73aa2a4288183992e194f184ca
+
+[UserExtensions.SBL."CopyList"]
+  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Fsp.fd                 : Silicon/ArrowLakePkg/Arls/Fsp/FspRel.bin
+  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Fsp.fd                 : Silicon/ArrowLakePkg/Arls/Fsp/FspDbg.bin
+  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Fsp.bsf                : Silicon/ArrowLakePkg/Arls/Fsp/Fsp.bsf
+  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Include/FspUpd.h       : Silicon/ArrowLakePkg/Arls/Fsp/FspUpd.h
+  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Include/FsptUpd.h      : Silicon/ArrowLakePkg/Arls/Fsp/FsptUpd.h
+  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Include/FspmUpd.h      : Silicon/ArrowLakePkg/Arls/Fsp/FspmUpd.h
+  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Include/FspsUpd.h      : Silicon/ArrowLakePkg/Arls/Fsp/FspsUpd.h
+  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Include/MemInfoHob.txt   : Silicon/ArrowLakePkg/Arls/Fsp/MemInfoHob.h
+  FSP_License.pdf                                          : Silicon/ArrowLakePkg/Arls/Fsp/FSP_License.pdf
+  ArrowLakeFspBinPkg/IoT/ArrowLakeS/VbtBin/Vbt.json        : Platform/ArrowLakeBoardPkg/VbtBin/Vbt_arls.json
