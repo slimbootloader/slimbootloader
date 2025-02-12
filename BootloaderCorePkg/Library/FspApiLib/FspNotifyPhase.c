@@ -65,6 +65,7 @@ CallFspNotifyPhase (
     Status = NotifyPhase (&NotifyPhaseParams);
   } else if (!IS_X64 && FspIsx64) {
     // This should not be reachable because CallFspMemoryInit() will halt.
+    Status = EFI_UNSUPPORTED;
     CpuHalt("64-bit FSP not supported in 32-bit Slimbootloader build.\n");
   } else {
     Status = Execute32BitCode ((UINTN)NotifyPhase, (UINTN)&NotifyPhaseParams, (UINTN)0, FALSE);
