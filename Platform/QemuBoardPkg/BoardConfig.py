@@ -279,7 +279,7 @@ class Board(BaseBoard):
               ('MPYM',       mpy_path,       'Lzma',      'SHA2_384',         '',     0,              0x12000,   0),   # Component 1
               ('STPY',      sbl_setup,       'Lz4',       'SHA2_384',         '',     0,              0x06000,   0),   # Component 2
               ('CFGJ',    'CfgDataDef.json', 'Lzma',      'SHA2_384',         '',     0,              0x06000,   0),   # Component 3
-              ('CFGD',          '',          'Dummy',             '',         '',     0,              0x01000,   0),   # Component 4
+              ('CFGD',          '',          'Dummy',     'SHA2_384',         '',     0,              0x01000,   0),   # Component 4
           ])
 
         return container_list
