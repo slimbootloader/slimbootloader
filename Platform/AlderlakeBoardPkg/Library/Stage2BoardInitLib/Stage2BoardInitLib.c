@@ -602,7 +602,6 @@ BoardInit (
         TriggerPayloadSwSmi (BlSwSmiInfo->BlSwSmiHandlerInput);
       }
     }
-    InterruptRoutingInit ();
     break;
   case PrePayloadLoading:
     Status = FixUpFlashMapEntry();
