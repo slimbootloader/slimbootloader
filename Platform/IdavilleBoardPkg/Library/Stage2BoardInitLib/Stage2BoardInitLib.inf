@@ -22,7 +22,6 @@
 [Sources]
   Stage2BoardInitLib.h
   Stage2BoardInitLib.c
-  InterruptInit.c
   SmbiosInit.c
   MiscInit.c
   AcpiTablesInit.c

@@ -139,15 +139,6 @@ GpioInit (
   );
 
 /**
-  Initialize Interrupt Routing
-
-**/
-VOID
-InterruptRoutingInit (
-  VOID
-  );
-
-/**
   Initialize necessary information for Smbios
 
   @retval EFI_SUCCESS             Initialized necessary information successfully
