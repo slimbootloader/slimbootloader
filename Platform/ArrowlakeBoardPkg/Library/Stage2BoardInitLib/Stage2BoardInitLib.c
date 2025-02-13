@@ -381,7 +381,6 @@ BoardInit (
     if (EFI_ERROR(Status)) {
       DEBUG ((DEBUG_INFO, "Failed to set GFX framebuffer as WC\n"));
     }
-    InterruptRoutingInit ();
     break;
   case PrePayloadLoading:
     ///
