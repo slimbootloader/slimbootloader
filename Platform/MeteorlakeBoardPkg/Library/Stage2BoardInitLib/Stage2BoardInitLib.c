@@ -391,7 +391,6 @@ BoardInit (
       }
     }
 
-    InterruptRoutingInit ();
     break;
   case PrePayloadLoading:
     ///
