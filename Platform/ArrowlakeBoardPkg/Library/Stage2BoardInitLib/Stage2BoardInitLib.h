@@ -50,7 +50,6 @@
 #include <ConfigDataCommonStruct.h>
 #include <FspsUpd.h>
 #include <GlobalNvsAreaDef.h>
-#include "InterruptInit.h"
 #include <Register/SaRegsHostBridge.h>
 #include <Register/PmcRegs.h>
 #include <PlatformBase.h>
@@ -194,14 +193,6 @@ EnableLegacyRegions (
   VOID
 );
 
-/**
-  Initialize Interrupt Routing
-
-**/
-VOID
-InterruptRoutingInit (
-  VOID
-  );
 
 /**
   Initialize necessary information for Smbios
