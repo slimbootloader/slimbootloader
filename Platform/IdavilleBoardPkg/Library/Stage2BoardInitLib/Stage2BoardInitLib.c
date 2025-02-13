@@ -171,7 +171,6 @@ BoardInit (
     break;
   case PostPciEnumeration:
     PlatformPostPciEnumeration ();
-    InterruptRoutingInit ();
     InitializeBmcVideo ();
     break;
   case PrePayloadLoading:
