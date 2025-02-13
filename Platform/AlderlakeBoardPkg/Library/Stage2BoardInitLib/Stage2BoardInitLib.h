@@ -51,7 +51,6 @@
 #include <ConfigDataCommonStruct.h>
 #include <FspsUpd.h>
 #include <GlobalNvsAreaDef.h>
-#include "InterruptInit.h"
 #include <Register/SaRegsHostBridge.h>
 #include <Register/PmcRegs.h>
 #include <PlatformBase.h>
@@ -174,14 +173,6 @@ GetCoreRatioAndNum (
   IN OUT ADL_MSR_ATOM_TURBO_RATIO_LIMIT_CORES_REGISTER *AtomNumCore
 );
 
-/**
-  Initialize Interrupt Routing
-
-**/
-VOID
-InterruptRoutingInit (
-  VOID
-  );
 
 /**
   Initialize necessary information for Smbios

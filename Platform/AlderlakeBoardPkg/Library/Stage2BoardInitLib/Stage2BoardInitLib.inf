@@ -21,10 +21,8 @@
 
 [Sources]
   GpioTableAdlTsn.h
-  InterruptInit.h
   Stage2BoardInitLib.h
   Stage2BoardInitLib.c
-  InterruptInit.c
   SmbiosInit.c
   MiscInit.c
   LowPowerSupport.c
