@@ -2075,7 +2075,11 @@ def rebuild_cfgs (cfg_win, pages, page_id):
                 combo = ComboBox(cfg_win, rc)
                 combo.set_text(cfg['name'])
                 ops_list = get_cfg_item_options (cfg)
-                value = int(cfg['value'], 0)
+                try:
+                    value = int(cfg['value'], 0)
+                except:
+                    print('Conversion error: %s - %s' % (cfg['path'], cfg['value']))
+                    value = 0
                 combo.add ([i[1] for i in ops_list])
                 combo.set_select_by_value (value)
                 combo.set_help (cfg['help'])
