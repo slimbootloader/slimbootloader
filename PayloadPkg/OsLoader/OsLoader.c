@@ -805,7 +805,7 @@ StartBooting (
       (SWITCH_STACK_ENTRY_POINT)(UINTN)MultiBoot->BootState.EntryPoint,
       (VOID *)(UINTN)PcdGet32 (PcdPayloadHobList),
       FeaturePcdGet (PcdPayloadModuleEnabled) ? &PldModParam : NULL,
-      (VOID *)((UINT8 *)mEntryStack + 8)
+      (VOID *)ALIGN_DOWN(((UINTN)mEntryStack + 8), CPU_STACK_ALIGNMENT)
       );
     Status = EFI_DEVICE_ERROR;
 
