@@ -163,6 +163,30 @@ jobs:
         Build.Name:   "mtlps"
         Build.Arch:   ""
         Build.Target: "-r"
+      ARLS_X64_DEBUG:
+        Build.Name:   "arls"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      ARLS_X64_RELEASE:
+        Build.Name:   "arls"
+        Build.Arch:   "-a x64"
+        Build.Target: "-r"
+      ARLH_X64_DEBUG:
+        Build.Name:   "arlh"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      ARLH_X64_RELEASE:
+        Build.Name:   "arlh"
+        Build.Arch:   "-a x64"
+        Build.Target: "-r"
+      ARLU_X64_DEBUG:
+        Build.Name:   "arlu"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      ARLU_X64_RELEASE:
+        Build.Name:   "arlu"
+        Build.Arch:   "-a x64"
+        Build.Target: "-r"
 
   pool:
     vmImage: 'ubuntu-22.04'
@@ -330,6 +354,30 @@ jobs:
         Build.Target: "-r"
       MTLPS_X64_DEBUG:
         Build.Name:   "mtlps"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      ARLS_X64_RELEASE:
+        Build.Name:   "arls"
+        Build.Arch:   "-a x64"
+        Build.Target: "-r"
+      ARLS_X64_DEBUG:
+        Build.Name:   "arls"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      ARLH_X64_RELEASE:
+        Build.Name:   "arlh"
+        Build.Arch:   "-a x64"
+        Build.Target: "-r"
+      ARLH_X64_DEBUG:
+        Build.Name:   "arlh"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      ARLU_X64_RELEASE:
+        Build.Name:   "arlu"
+        Build.Arch:   "-a x64"
+        Build.Target: "-r"
+      ARLU_X64_DEBUG:
+        Build.Name:   "arlu"
         Build.Arch:   "-a x64"
         Build.Target: ""
   pool:
