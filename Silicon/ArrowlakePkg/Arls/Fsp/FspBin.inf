@@ -14,13 +14,13 @@
   COMMIT  = d746b5b938061b73aa2a4288183992e194f184ca
 
 [UserExtensions.SBL."CopyList"]
-  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Fsp.fd                 : Silicon/ArrowLakePkg/Arls/Fsp/FspRel.bin
-  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Fsp.fd                 : Silicon/ArrowLakePkg/Arls/Fsp/FspDbg.bin
-  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Fsp.bsf                : Silicon/ArrowLakePkg/Arls/Fsp/Fsp.bsf
-  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Include/FspUpd.h       : Silicon/ArrowLakePkg/Arls/Fsp/FspUpd.h
-  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Include/FsptUpd.h      : Silicon/ArrowLakePkg/Arls/Fsp/FsptUpd.h
-  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Include/FspmUpd.h      : Silicon/ArrowLakePkg/Arls/Fsp/FspmUpd.h
-  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Include/FspsUpd.h      : Silicon/ArrowLakePkg/Arls/Fsp/FspsUpd.h
-  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Include/MemInfoHob.txt   : Silicon/ArrowLakePkg/Arls/Fsp/MemInfoHob.h
-  FSP_License.pdf                                          : Silicon/ArrowLakePkg/Arls/Fsp/FSP_License.pdf
-  ArrowLakeFspBinPkg/IoT/ArrowLakeS/VbtBin/Vbt.json        : Platform/ArrowLakeBoardPkg/VbtBin/Vbt_arls.json
+  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Fsp.fd                 : Silicon/ArrowlakePkg/Arls/Fsp/FspRel.bin
+  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Fsp.fd                 : Silicon/ArrowlakePkg/Arls/Fsp/FspDbg.bin
+  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Fsp.bsf                : Silicon/ArrowlakePkg/Arls/Fsp/Fsp.bsf
+  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Include/FspUpd.h       : Silicon/ArrowlakePkg/Arls/Fsp/FspUpd.h
+  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Include/FsptUpd.h      : Silicon/ArrowlakePkg/Arls/Fsp/FsptUpd.h
+  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Include/FspmUpd.h      : Silicon/ArrowlakePkg/Arls/Fsp/FspmUpd.h
+  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Include/FspsUpd.h      : Silicon/ArrowlakePkg/Arls/Fsp/FspsUpd.h
+  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Include/MemInfoHob.txt : Silicon/ArrowlakePkg/Arls/Fsp/MemInfoHob.h
+  FSP_License.pdf                                          : Silicon/ArrowlakePkg/Arls/Fsp/FSP_License.pdf
+  ArrowLakeFspBinPkg/IoT/ArrowLakeS/VbtBin/Vbt.json        : Platform/ArrowlakeBoardPkg/VbtBin/Vbt_arls.json
