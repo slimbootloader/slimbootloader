@@ -11,16 +11,16 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = e369d3f2c21bae99da3bde0688cd323542b9af61
+  COMMIT  = 29e0f7ae5d26d827089a2e6446cda0852ac2146f
 
 [UserExtensions.SBL."CopyList"]
-  ArrowLakeFspBinPkg/IoT/ArrowLakeUH/Fsp.fd                 : Silicon/ArrowLakePkg/Arlh/Fsp/FspRel.bin
-  ArrowLakeFspBinPkg/IoT/ArrowLakeUH/Fsp.fd                 : Silicon/ArrowLakePkg/Arlh/Fsp/FspDbg.bin
-  ArrowLakeFspBinPkg/IoT/ArrowLakeUH/Fsp.bsf                : Silicon/ArrowLakePkg/Arlh/Fsp/Fsp.bsf
-  ArrowLakeFspBinPkg/IoT/ArrowLakeUH/Include/FspUpd.h       : Silicon/ArrowLakePkg/Arlh/Fsp/FspUpd.h
-  ArrowLakeFspBinPkg/IoT/ArrowLakeUH/Include/FsptUpd.h      : Silicon/ArrowLakePkg/Arlh/Fsp/FsptUpd.h
-  ArrowLakeFspBinPkg/IoT/ArrowLakeUH/Include/FspmUpd.h      : Silicon/ArrowLakePkg/Arlh/Fsp/FspmUpd.h
-  ArrowLakeFspBinPkg/IoT/ArrowLakeUH/Include/FspsUpd.h      : Silicon/ArrowLakePkg/Arlh/Fsp/FspsUpd.h
-  ArrowLakeFspBinPkg/IoT/ArrowLakeUH/Include/MemInfoHob.h   : Silicon/ArrowLakePkg/Arlh/Fsp/MemInfoHob.h
-  FSP_License.pdf                                           : Silicon/ArrowLakePkg/Arlh/Fsp/FSP_License.pdf
-  ArrowLakeFspBinPkg/IoT/ArrowLakeUH/Vbt/Vbt.json           : Platform/ArrowLakeBoardPkg/VbtBin/Vbt_arlh.json
+  ArrowLakeFspBinPkg/IoT/ArrowLakeUH/Fsp.fd                 : Silicon/ArrowlakePkg/Arlh/Fsp/FspRel.bin
+  ArrowLakeFspBinPkg/IoT/ArrowLakeUH/Fsp.fd                 : Silicon/ArrowlakePkg/Arlh/Fsp/FspDbg.bin
+  ArrowLakeFspBinPkg/IoT/ArrowLakeUH/Fsp.bsf                : Silicon/ArrowlakePkg/Arlh/Fsp/Fsp.bsf
+  ArrowLakeFspBinPkg/IoT/ArrowLakeUH/Include/FspUpd.h       : Silicon/ArrowlakePkg/Arlh/Fsp/FspUpd.h
+  ArrowLakeFspBinPkg/IoT/ArrowLakeUH/Include/FsptUpd.h      : Silicon/ArrowlakePkg/Arlh/Fsp/FsptUpd.h
+  ArrowLakeFspBinPkg/IoT/ArrowLakeUH/Include/FspmUpd.h      : Silicon/ArrowlakePkg/Arlh/Fsp/FspmUpd.h
+  ArrowLakeFspBinPkg/IoT/ArrowLakeUH/Include/FspsUpd.h      : Silicon/ArrowlakePkg/Arlh/Fsp/FspsUpd.h
+  ArrowLakeFspBinPkg/IoT/ArrowLakeUH/Include/MemInfoHob.h   : Silicon/ArrowlakePkg/Arlh/Fsp/MemInfoHob.h
+  FSP_License.pdf                                           : Silicon/ArrowlakePkg/Arlh/Fsp/FSP_License.pdf
+  ArrowLakeFspBinPkg/IoT/ArrowLakeUH/Vbt/Vbt.json           : Platform/ArrowlakeBoardPkg/VbtBin/Vbt_arlh.json
