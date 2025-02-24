@@ -2118,22 +2118,31 @@ def rebuild_cfgs (cfg_win, pages, page_id):
         state = evaluate_condition (cfg, pages.get_cfg_list())
         if itype == 'Combo' :
             if state == 1 :
-                combo = ComboBox(cfg_win, rc)
-                combo.set_text(cfg['name'])
-                ops_list = get_cfg_item_options (cfg)
-                try:
-                    value = int(cfg['value'], 0)
-                except:
-                    print('Conversion error: %s - %s' % (cfg['path'], cfg['value']))
-                    value = 0
-                combo.add ([i[1] for i in ops_list])
-                combo.set_select_by_value (value)
-                combo.set_help (cfg['help'])
-                combo.set_data(cfg)
-                if cfg['path'] == 'PLATFORMID_CFG_DATA.PlatformId':
-                    combo.set_enable (0)
-                combo.show ()
-                rc.adjust (0, rc.h + 1, 0, 0)
+                value_str = cfg['value'].strip()
+                if value_str[0] == '{' and value_str[-1] == '}':
+                    value_str = value_str[1:-1]
+                    value_list = value_str.split(',')
+                else:
+                    value_list = [value_str]
+
+                for index, item in enumerate(value_list):
+                    combo = ComboBox(cfg_win, rc)
+                    name = cfg['name'] if len(value_list) == 1 else cfg['name'] + " [" + str(index) + "]"
+                    combo.set_text(name)
+                    ops_list = get_cfg_item_options (cfg)
+                    try:
+                        value = int(item, 0)
+                    except:
+                        print('Conversion error: %s - %s' % (cfg['path'], cfg['value']))
+                        value = 0
+                    combo.add ([i[1] for i in ops_list])
+                    combo.set_select_by_value (value)
+                    combo.set_help (cfg['help'])
+                    combo.set_data(cfg)
+                    if cfg['path'] == 'PLATFORMID_CFG_DATA.PlatformId':
+                        combo.set_enable (0)
+                    combo.show ()
+                    rc.adjust (0, rc.h + 1, 0, 0)
 
         elif itype in ["EditNum", "EditText"]:
             if state == 1:
