@@ -25,6 +25,11 @@ except:
     import win32pipe, win32file, win32con
     is_micro_py = False
 
+CDATA_FLAG_TYPE_MASK    = (3 << 0)
+CDATA_FLAG_TYPE_NORMAL  = (0 << 0)
+CDATA_FLAG_TYPE_ARRAY   = (1 << 0)
+CDATA_FLAG_TYPE_REFER   = (2 << 0)
+
 class TERM:
     # bit0: GFX   bit1: TXT
     SCREEN_MODE    = 3
@@ -1871,8 +1876,19 @@ def bytes_to_cfghdr(data, offset):
         for i in range(cfghdr['ConditionNum']):
             condition_bytes = data[offset + 4 + (4*i):offset + 4 + (4*i) + 4]
             cfghdr['Condition'].append(int.from_bytes(condition_bytes, 'little'))
+    if (cfghdr['Flags'] & CDATA_FLAG_TYPE_MASK) == CDATA_FLAG_TYPE_REFER:
+        cfghdr['Refer_Tag'] = int.from_bytes(data[offset + 4 + (4*cfghdr['ConditionNum'])+2:offset + 4 + (4*cfghdr['ConditionNum']) + 4], 'little') & 0xFFF
 
     return cfghdr
+
+def cfghdr_to_bytes(Length, ConditionNum, Flags, Version, Tag):
+    # Update Length and flags from referral cfg
+    Header = bytearray(4)
+    Header[0] = ConditionNum | (Length & 0xFC)
+    Header[1] = (Flags << 4) | (Length >> 8)
+    Header[2] = Version | ((Tag & 0xF) << 4)
+    Header[3] = (Tag >> 4) & 0xFF
+    return Header
 
 def load_data_tree(cfg_tree, data):
     cdata = []
@@ -1906,19 +1922,49 @@ def update_values (cfg_tree,  data, data_tree):
             if curr_offset_delta != 0xFFFFFFFF:
                 cfg['offset_delta'] = curr_offset_delta
 
-    def _write_values_to_cfg():
-        for cfg in cfgs:
+    def _write_values_to_cfg(top = None):
+        def __write_values_to_cfg(cfg):
             offset = cfg['offset']
             if 'offset_delta' in cfg:
                 offset += cfg['offset_delta']
             value = get_bits_from_bytes (data, offset, cfg['length'])
             cfg['value'] = format_value_to_str (value, cfg['length'], cfg['value'])
+        if top is None:
+            top = cfgs
+        if isinstance(top, list):
+            for cfg in top:
+                __write_values_to_cfg(cfg)
+        else:
+            __write_values_to_cfg(top)
+
+    def _fixup_refer_cfg():
+        for cfg in cfgs:
+            if cfg['cname'] == 'CfgHeader':
+                for cfg_hdr in data_tree:
+                    if cfg_hdr['Tag'] == cfg['tag']:
+                        if 'Refer_Tag' in cfg_hdr:
+                            for refer_cfg_hdr in data_tree:
+                                if refer_cfg_hdr['Tag'] == cfg_hdr['Refer_Tag']:
+                                    # Update Length and flags from referral cfg
+                                    HdrBytes = cfghdr_to_bytes(refer_cfg_hdr['Length'], cfg_hdr['ConditionNum'], refer_cfg_hdr['Flags'], cfg_hdr['Version'], cfg_hdr['Tag'])
+                                    cfg['value'] = format_value_to_str(int.from_bytes(HdrBytes, 'little'), 32, '{')
+                                    for child_cfg in cfgs:
+                                        if child_cfg['path'].startswith(cfg['path'].split('.')[0]):
+                                            if child_cfg['cname'] not in ['CfgHeader', 'CondValue']:
+                                                child_cfg['offset_delta'] = refer_cfg_hdr['Offset'] - cfg['offset']
+                                                _write_values_to_cfg(child_cfg)
+                                    break
+                        break
 
     cfgs = cfg_tree['_cfg_list']
 
     _update_cfg_delta()
 
     _write_values_to_cfg()
+
+    # Cfg headers with the "refer" flag set just copy data from another cfg header tag.
+    # These need to be expanded in setup so they can be modified independently.
+    _fixup_refer_cfg()
 
     for cfg in cfgs:
         if 'order' not in cfg:
