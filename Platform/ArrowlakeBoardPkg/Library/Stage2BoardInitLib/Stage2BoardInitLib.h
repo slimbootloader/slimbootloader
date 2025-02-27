@@ -130,7 +130,7 @@
 #define CMOS_EXTENDED_OFFSET_20     0x20
 #define CMOS_EXTENDED_OFFSET_21     0x21
 #define CMOS_VALUE_SWITCH_PLD       0x5A
-
+#define PCH_SERIAL_IO_BASE_ADDRESS  0xFE020000
 /**
   Time spent in the Package C-State.  It is given in units compatible to P1 clock frequency (Guaranteed / Maximum Core Non-Turbo Frequency).
   This time will be updated by PCODE only after the C-State exit (the update of this register has lower priority than actually ensuring that the C-State exit occurs).
@@ -300,5 +300,10 @@ BOOLEAN
 IsHeteroCoreSupported (
   VOID
   );
+
+typedef struct {
+  UINT32 Bar0;
+  UINT32 Bar1;
+} SERIAL_IO_CONTROLLER_DESCRIPTOR;
 
 #endif // __STAGE2_BOARD_INIT_LIB_H__
