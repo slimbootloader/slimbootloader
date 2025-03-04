@@ -1183,7 +1183,16 @@ UpdateSblComponent (
   //
   if (IsRedundantComponent(ImageHdr->UpdateHardwareInstance)) {
     DEBUG ((DEBUG_INFO, "Redundant component update requested! \n"));
-    Status = UpdateSystemFirmware(ImageHdr, FwPolicy);
+    if (((UINT32) ImageHdr->UpdateHardwareInstance) == FLASH_MAP_SIG_PAYLOAD ||
+        ((UINT32) ImageHdr->UpdateHardwareInstance) == FLASH_MAP_SIG_FWUPDATE ||
+        ((UINT32) ImageHdr->UpdateHardwareInstance) == FLASH_MAP_SIG_STAGE2 ||
+        ((UINT32) ImageHdr->UpdateHardwareInstance) == FLASH_MAP_SIG_EMPTY) {
+        DEBUG((DEBUG_ERROR, "FirmwareUpdate is not allowed for the following Redundant regions on their own: SG02, PYLD, FWUP, EMTY!\n"));
+        Status = EFI_UNSUPPORTED;
+        return Status;
+    } else {
+        Status = UpdateSystemFirmware(ImageHdr, FwPolicy);
+    }
   } else {
     DEBUG ((DEBUG_INFO, "Non redundant component update requested! \n"));
     Status = UpdateNonRedundantComp(ImageHdr);
