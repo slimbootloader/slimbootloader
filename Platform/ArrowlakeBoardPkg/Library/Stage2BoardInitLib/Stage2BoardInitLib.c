@@ -52,7 +52,12 @@ STATIC S3_SAVE_REG mS3SaveReg = {
   { { REG_TYPE_IO, WIDE32, { 0, 0}, (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN), 0x00000000 } }
 };
 
-
+GLOBAL_REMOVE_IF_UNREFERENCED SERIAL_IO_CONTROLLER_DESCRIPTOR mMtlPchLpssUartFixedOffset [] = {
+  { 0xC000,   0xD000},
+  { 0xE000,   0xF000},
+  { 0x10000,  0x11000},
+  { 0x12000,  0x13000}
+};
 
 
 
@@ -974,6 +979,24 @@ VOID UpdLpiStat (
 }
 
 /**
+  Gets Fixed Address used for Pci Config Space manipulation
+
+  @param[in] UartNumber              Serial IO device UART number
+
+  @retval                            Pci Config Address
+**/
+UINT32
+MtlPchGetLpssUartFixedPciCfgOffset (
+  IN UINT8       UartNumber
+  )
+{
+  if (UartNumber < ARRAY_SIZE (mMtlPchLpssUartFixedOffset)) {
+    return mMtlPchLpssUartFixedOffset[UartNumber].Bar1;
+  }
+  return 0x0;
+}
+
+/**
   Update PCH NVS and SA NVS area address and size in ACPI table.
 
   @param[in] Current    Pointer to ACPI description header
@@ -1544,6 +1567,9 @@ PlatformUpdateAcpiGnvs (
       if (MtlPchNvs->UM0[Index] == 0x1) {
         MtlPchNvs->UC0[Index] = MtlPchSerialIoUartPciCfgBase (Index);
       }
+      if (MtlPchNvs->UM0[Index] == 0x3) {
+        MtlPchNvs->UC0[Index] = 0xBE000000  /*PchConfig->ReservedMmioBase */ + MTL_PCH_SERIAL_IO_OFFSET + MtlPchGetLpssUartFixedPciCfgOffset(Index);
+      }
       MtlPchNvs->UD0[Index] = FspsConfig->SerialIoUartDmaEnable[Index];
       MtlPchNvs->UP0[Index] = FspsConfig->SerialIoUartPowerGating[Index];
       MtlPchNvs->UI0[Index] = GetUartInterrupt (Index);
@@ -1684,7 +1710,12 @@ PlatformUpdateAcpiGnvs (
     Length = GetPchMaxSerialIoUartControllersNum ();
     for (Index = 0; Index < Length ; Index++) {
       PchNvs->UM0[Index] = FspsConfig->SerialIoUartMode[Index];
-      PchNvs->UC0[Index] = SerialIoUartPciCfgBase(Index);
+      if (FspsConfig->SerialIoUartMode[Index] == 1) {
+        PchNvs->UC0[Index] = SerialIoUartPciCfgBase(Index);
+      }
+      if (FspsConfig->SerialIoUartMode[Index] == 3) {
+        PchNvs->UC0[Index] = PCH_SERIAL_IO_BASE_ADDRESS + MtlPchGetLpssUartFixedPciCfgOffset(Index);
+      }
       PchNvs->UD0[Index] = FspsConfig->SerialIoUartDmaEnable[Index];
       PchNvs->UP0[Index] = FspsConfig->SerialIoUartPowerGating[Index];
       PchNvs->UI0[Index] = mPchSSerialIoUartMode[Index].SerialIoUARTIrq;
