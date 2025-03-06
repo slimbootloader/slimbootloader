@@ -345,3 +345,6 @@
   gPlatformCommonLibTokenSpaceGuid.PcdCpuX2ApicEnabled            | FALSE  | BOOLEAN | 0x20000220
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled                  | FALSE  | BOOLEAN | 0x20000221
   gPlatformCommonLibTokenSpaceGuid.PcdFspNoEop                    | FALSE  | BOOLEAN | 0x20000223
+
+[PcdsFixedAtBuild]
+  gPlatformCommonLibTokenSpaceGuid.PcdFipsSupport     | FALSE      | BOOLEAN | 0x20000226

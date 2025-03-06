@@ -58,6 +58,7 @@
   ExtraBaseLib
   StageLib
   TopSwapLib
+  CryptoLib
 
 [Guids]
   gPlatformModuleTokenSpaceGuid
@@ -91,6 +92,9 @@
   gPlatformCommonLibTokenSpaceGuid.PcdPcdLibId
   gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg
   gPlatformModuleTokenSpaceGuid.PcdIdenticalTopSwapsBuilt
+
+[FixedPcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdFipsSupport
 
 [Depex]
   TRUE
