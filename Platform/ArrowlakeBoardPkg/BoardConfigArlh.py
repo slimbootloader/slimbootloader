@@ -73,6 +73,7 @@ class Board(BaseBoard):
         self.ENABLE_SMM_REBASE    = 2
         # 0: Disable 1: Enable IPP Crypto performance mesurement
         self.ENABLE_IPP_CRYPTO_PERF = 0
+        self.ENABLE_FIPS_SELFTEST   = 0
 
         # 0 - PCH UART0, 1 - PCH UART1, 2 - PCH UART2, 0xFF - EC UART 0x3F8
         self.DEBUG_PORT_NUMBER = 0xFF
@@ -123,6 +124,8 @@ class Board(BaseBoard):
         self.STAGE2_XIP           = 0
 
         self.STAGE1A_SIZE         = 0x00020000
+        if self.ENABLE_FIPS_SELFTEST:
+            self.STAGE1A_SIZE       += 0x0000A000
         self.STAGE1_STACK_SIZE    = 0x00003000
         self.STAGE1_DATA_SIZE     = 0x00014000
         self.FSP_M_STACK_TOP      = 0xFEFDFF00
@@ -172,7 +175,7 @@ class Board(BaseBoard):
 
         # If BUILD_IDENTICAL_TS is 0, the flash map sizings and layout
         # will need to be adjusted so that uCode and Stage 1B are in
-        # redudant partition
+        # redundant partition
         self.BUILD_IDENTICAL_TS    = 1
 
         # If ENABLE_SBL_RESILIENCY is 1, BiosRedAssistance FIT strap setting
@@ -406,6 +409,10 @@ class Board(BaseBoard):
 
         dsc['PcdsFixedAtBuild'] = ['gPlatformModuleTokenSpaceGuid.PcdAcpiTablesMaxEntry | 40']
 
+        if self.ENABLE_FIPS_SELFTEST:
+            dsc['PcdsFixedAtBuild'].append ('gPlatformCommonLibTokenSpaceGuid.PcdFipsSupport | TRUE')
+
+        dsc['PcdsFixedAtBuild'].append ('gPlatformCommonLibTokenSpaceGuid.PcdIppcrypto2Lib | TRUE')
 
         return dsc
 

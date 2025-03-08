@@ -73,7 +73,7 @@
   $(IPP_PATH)/sources/ippcp/pcprsa_initpublickey.c
   $(IPP_PATH)/sources/ippcp/pcprsa_setpublickey.c
   $(IPP_PATH)/sources/ippcp/pcprsa_sizeof_pubkey.h
-  $(IPP_PATH)/sources/ippcp/pcprsaverifyhash_pkcs1v15_rmf.c
+  $(IPP_PATH)/sources/ippcp/pcprsaverify_pkcs1v15_rmf.c
   $(IPP_PATH)/sources/ippcp/pcprsaverify_pss_rmf.c
   $(IPP_PATH)/sources/ippcp/pcprsa_gspub_cipher.c
   $(IPP_PATH)/sources/ippcp/gsmodmethod_rsa.c
@@ -81,12 +81,14 @@
   $(IPP_PATH)/sources/ippcp/pcprsa_gsmethod__gpr_public.c
 
   # Hash source files
-  $(IPP_PATH)/sources/ippcp/pcphashmessage_rmf.c
-  $(IPP_PATH)/sources/ippcp/pcphashinit_rmf.c
-  $(IPP_PATH)/sources/ippcp/pcphashupdate_rmf.c
-  $(IPP_PATH)/sources/ippcp/pcphashfinal_rmf.c
-  $(IPP_PATH)/sources/ippcp/pcphashca_rmf.c
-  $(IPP_PATH)/sources/ippcp/sm3/pcpsm3stuff.h
+  $(IPP_PATH)/sources/ippcp/hash/pcphashmessage_rmf.c
+  $(IPP_PATH)/sources/ippcp/hash/pcphashinit_rmf.c
+  $(IPP_PATH)/sources/ippcp/hash/pcphashupdate_rmf.c
+  $(IPP_PATH)/sources/ippcp/hash/pcphashfinal_rmf.c
+  $(IPP_PATH)/sources/ippcp/hash/pcphashca_rmf.c
+  $(IPP_PATH)/sources/ippcp/hash/sm3/pcpsm3stuff.h
+  $(IPP_PATH)/sources/ippcp/hash/sha256/pcpsha256stuff.h
+  $(IPP_PATH)/sources/ippcp/hash/sha512/pcpsha512stuff.h
 
   # HMAC source files
   $(IPP_PATH)/sources/ippcp/pcphmacmessage_rmf.c
@@ -95,11 +97,70 @@
   $(IPP_PATH)/sources/ippcp/pcphmacupdate_rmf.c
   $(IPP_PATH)/sources/ippcp/pcphmacfinal_rmf.c
 
+  # FIPS source files
+  fips.c
+  $(IPP_PATH)/include/ippcp/fips_cert.h
+  $(IPP_PATH)/sources/ippcp/fips_cert/common.c
+  $(IPP_PATH)/sources/ippcp/fips_cert/selftest_rsa_sign_verify_pkcs_v15.c
+  $(IPP_PATH)/sources/ippcp/pcprsaverify_pkcs1v15_rmf.c
+  $(IPP_PATH)/sources/ippcp/pcprsa_getbuffersizeprivatekey.c
+  $(IPP_PATH)/sources/ippcp/pcprsa_setprivatekeytype1.c
+  $(IPP_PATH)/sources/ippcp/pcprsa_initprivatekeytype1.c
+  $(IPP_PATH)/sources/ippcp/pcprsa_getsizeprivatekeytype1.c
+  $(IPP_PATH)/sources/ippcp/pcpbnsetwords.c
+  $(IPP_PATH)/sources/ippcp/pcprsasign_pkcs1v15_rmf.c
+  $(IPP_PATH)/sources/ippcp/hash/sha256/pcphashmethodset_sha256_tt.c
+  $(IPP_PATH)/sources/ippcp/pcprsa_gsmethod__gpr_private.c
+  $(IPP_PATH)/sources/ippcp/pcprsa_gsprv_cipher_crt.c
+  $(IPP_PATH)/sources/ippcp/pcprsa_gsprv_cipher.c
+  $(IPP_PATH)/sources/ippcp/pcpngmontexpstuff_win_sscm.c
+  $(IPP_PATH)/sources/ippcp/pcpngmontexpstuff_win.c
+  $(IPP_PATH)/sources/ippcp/gsscramble.c
+  $(IPP_PATH)/sources/ippcp/gsscramble_sscm.c
+  $(IPP_PATH)/sources/ippcp/fips_cert/selftest_hash_msg_upd_sha.c
+  $(IPP_PATH)/sources/ippcp/hash/sha512/pcphashmethodset_sha512.c
+  $(IPP_PATH)/sources/ippcp/hash/pcphashgetsize_rmf.c
+  $(IPP_PATH)/sources/ippcp/hash/pcphashgettag_rmf.c
+  $(IPP_PATH)/sources/ippcp/fips_cert/selftest_aes_upd_hmac.c
+  $(IPP_PATH)/sources/ippcp/pcphmacgettag_rmf.c
+  $(IPP_PATH)/sources/ippcp/pcphmacduplicate_rmf.c
+  $(IPP_PATH)/sources/ippcp/hash/pcphashcnt.c
+  $(IPP_PATH)/sources/ippcp/hash/pcphashduplicate_rmf.c
+  $(IPP_PATH)/sources/ippcp/fips_cert/selftest_rsa_sign_verify_pss.c
+  $(IPP_PATH)/sources/ippcp/cpinit.c
+  $(IPP_PATH)/sources/ippcp/pcprsasign_pss_rmf.c
+  $(IPP_PATH)/sources/ippcp/pcprsa_generatekeys.c
+  $(IPP_PATH)/sources/ippcp/pcprsa_initprivatekeytype2.c
+  $(IPP_PATH)/sources/ippcp/pcprsa_getsizeprivatekeytype2.c
+  $(IPP_PATH)/sources/ippcp/pcpprimeginitca.c
+  $(IPP_PATH)/sources/ippcp/pcpprimegetsize.c
+  $(IPP_PATH)/sources/ippcp/pcpprngenca.c
+  $(IPP_PATH)/sources/ippcp/pcpprnginitca.c
+  $(IPP_PATH)/sources/ippcp/pcpprnggetsize.c
+  $(IPP_PATH)/sources/ippcp/pcpprngen_range.c
+  $(IPP_PATH)/sources/ippcp/pcpprngen_pattern.c
+  $(IPP_PATH)/sources/ippcp/pcpprime_mimimaltest.c
+  $(IPP_PATH)/sources/ippcp/pcpbn_val3.c
+  $(IPP_PATH)/sources/ippcp/pcpbn_val1.c
+  $(IPP_PATH)/sources/ippcp/pcpbnu_lsr.c
+  $(IPP_PATH)/sources/ippcp/pcpbnu_ntz.c
+  $(IPP_PATH)/sources/ippcp/pcpbnu_arith_minv.c
+  $(IPP_PATH)/sources/ippcp/pcpbnarithgcd.c
+  $(IPP_PATH)/sources/ippcp/gsmodmethod_mont.c
+  $(IPP_PATH)/sources/ippcp/pcpprng_gen.c
+  $(IPP_PATH)/sources/ippcp/pcpbnu_arith_gcd.c
+  $(IPP_PATH)/sources/ippcp/pcpbnu32_arith_muldigit.c
+  $(IPP_PATH)/sources/ippcp/hash/pcphashmethodgetsize.c
+
 [Sources.X64]
   $(IPP_PATH)/sources/ippcp/asm_ia32/pcpvariant_xmm7560.inc
   # U8 files
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha256u8as.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsm3u8as.nasm
+  # FIPS
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha1u8as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnumaconem7as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/cpinitas.nasm
   # m7 files
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha512m7as.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnuaddm7as.nasm
@@ -124,6 +185,9 @@
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnusqrschoolm7as.asm   : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnusqrschoolm7as.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpmontreductionm7as.asm  : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpmontreductionm7as.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcppurgeblkm7as.asm       : $(IPP_PATH)/sources/ippcp/asm_intel64/pcppurgeblkm7as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha1u8as.asm           : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha1u8as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnumaconem7as.asm      : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnumaconem7as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/cpinitas.asm              : $(IPP_PATH)/sources/ippcp/asm_intel64/cpinitas.nasm
 
 
 [Packages]
@@ -139,10 +203,12 @@
   gPlatformCommonLibTokenSpaceGuid.PcdCryptoShaOptMask
   gPlatformCommonLibTokenSpaceGuid.PcdIppHashLibSupportedMask
   gPlatformCommonLibTokenSpaceGuid.PcdCompSignSchemeSupportedMask
+  gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg
+  gPlatformCommonLibTokenSpaceGuid.PcdCompSignType
 
 [BuildOptions]
-  MSFT:*_*_*_CC_FLAGS = -D_ABL_ -D_U8 /GL-
+  MSFT:*_*_*_CC_FLAGS = -D_ABL_ -D_U8 -DIPPCP_FIPS_MODE -D_ARCH_EM64T -D_NO_IPP_DEPRECATED /GL-
   MSFT:*_*_X64_NASM_FLAGS = -D_ABL_ -D_U8 -DWIN32E
   GCC:*_*_X64_NASM_FLAGS = -D_ABL_ -D_U8 -DLINUX32E
-  GCC:*_*_*_CC_FLAGS  = -D_ABL_ -D_U8 -w -Wformat -Wformat-security
+  GCC:*_*_*_CC_FLAGS  = -D_ABL_ -D_U8 -w -Wformat -Wformat-security -DIPPCP_FIPS_MODE -DMBX_FIPS_MODE -D_ARCH_EM64T -D_NO_IPP_DEPRECATED
 
