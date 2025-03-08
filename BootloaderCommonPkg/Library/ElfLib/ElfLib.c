@@ -1,7 +1,7 @@
 /** @file
   ELF library
 
-  Copyright (c) 2019 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -242,6 +242,7 @@ ParseElfImage (
   UINTN          End;
   UINTN          Base;
   UINTN          FileOffset;
+  UINTN          SegAlignment;
   UINT8          *CurrentLoadAddress;
 
   if (ElfCt == NULL) {
@@ -309,7 +310,8 @@ ParseElfImage (
 
     if (Base > (SegInfo.MemAddr & ~(SegInfo.Alignment - 1))) {
       Base = SegInfo.MemAddr & ~(SegInfo.Alignment - 1);
-      FileOffset = SegInfo.Offset;
+      FileOffset   = SegInfo.Offset;
+      SegAlignment = SegInfo.Alignment;
     }
     if (End < ALIGN_VALUE (SegInfo.MemAddr + SegInfo.MemLen, SegInfo.Alignment) - 1) {
       End = ALIGN_VALUE (SegInfo.MemAddr + SegInfo.MemLen, SegInfo.Alignment) - 1;
@@ -321,13 +323,14 @@ ParseElfImage (
   ElfCt->ImageSize             = End - Base + 1;
   ElfCt->PreferredImageAddress = (VOID *) Base;
   CurrentLoadAddress           = ElfCt->FileBase + FileOffset;
-  if (ElfCt->PreferredImageAddress != CurrentLoadAddress) {
+
+  // check if CurrentLoadAddress meets load alignment requirement.
+  if ( ((UINTN)CurrentLoadAddress & ~(SegAlignment - 1)) != (UINTN)CurrentLoadAddress) {
     ElfCt->ReloadRequired = TRUE;
   }
-  if (ElfCt->ReloadRequired) {
-    ElfCt->ImageAddress = NULL;
-  } else {
-      ElfCt->ImageAddress = CurrentLoadAddress;
+  if (!ElfCt->ReloadRequired) {
+    // Don't need reload. Relocation will be check late.
+    ElfCt->ImageAddress = CurrentLoadAddress;
   }
 
   CalculateElfFileSize (ElfCt, &ElfCt->FileSize);
