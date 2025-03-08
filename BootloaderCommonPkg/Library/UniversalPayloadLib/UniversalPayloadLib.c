@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -78,9 +78,8 @@ LoadElfPayload (
     }
   }
 
-  // Always try to run at preferred address
   if (Context.ReloadRequired) {
-    Context.ImageAddress = Context.PreferredImageAddress;
+    Context.ImageAddress = AllocatePages (EFI_SIZE_TO_PAGES (Context.ImageSize));
   }
 
   // Load ELF into the required base
