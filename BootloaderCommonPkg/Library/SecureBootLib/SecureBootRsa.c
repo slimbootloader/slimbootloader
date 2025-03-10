@@ -86,7 +86,12 @@ DoRsaVerify (
       CopyMem (OutHash, Digest, DigestSize);
     }
 
+#if FixedPcdGetBool(PcdIppcrypto2Lib)
+    // RSA Pkcs 1.5 requires to pass message to be verified
+    Status = RsaVerify2_Pkcs_1_5 (PublicKey, SignatureHdr, Data, Length);
+#else
     Status = RsaVerify_Pkcs_1_5 (PublicKey, SignatureHdr, Digest);
+#endif
 
   } else if(SignatureHdr->SigType == SIGNING_TYPE_RSA_PSS) {
 

@@ -182,6 +182,7 @@ class BaseBoard(object):
         self.ENABLE_SMM_REBASE     = 0
         self.ENABLE_IPP_CRYPTO_PERF = 0
         self.ENABLE_UPL_HANDOFF_FDT = 0
+        self.ENABLE_FIPS_SELFTEST   = 0
 
         self.SUPPORT_ARI           = 0
         self.SUPPORT_SR_IOV        = 0
