@@ -37,7 +37,6 @@
 #include <ScRegs/RegsPcie.h>
 #include <ScRegs/RegsGpio.h>
 #include <ScRegs/RegsPcr.h>
-#include <ScRegs/RegsSmbus.h>
 
 #define SC_PCIE_ROOT_PORT_BUS(RpNumber)       ((RpNumber < 2) ? PCI_DEVICE_NUMBER_SC_PCIE_DEVICE_1 : PCI_DEVICE_NUMBER_SC_PCIE_DEVICE_2)
 #define SC_PCIE_ROOT_PORT_FUNC(RpNumber)      ((RpNumber < 2) ? RpNumber : RpNumber - 2)
