@@ -13,7 +13,6 @@
 #include <PchAccess.h>
 #include <Library/PchInfoLib.h>
 #include <Library/PchPcrLib.h>
-#include <Library/PchP2sbLib.h>
 #include <Library/PchCycleDecodingLib.h>
 #include <Library/BaseMemoryLib.h>
 
