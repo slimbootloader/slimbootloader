@@ -37,6 +37,9 @@
 #include "TsnSubRegion.h"
 #include <Library/MtlSocInfoLib.h>
 #include <Library/PciePm.h>
+#include "HdaVerbTable.h"
+#include <Library/MemoryAllocationLib.h>
+#include <Library/BlMemoryAllocationLib.h>
 
 #define CPU_PCIE_DT_HALO_MAX_ROOT_PORT     3
 #define CPU_PCIE_ULT_ULX_MAX_ROOT_PORT     3
@@ -337,6 +340,8 @@ UpdateFspConfig (
   EFI_STATUS                  Status;
   VBIOS_VBT_STRUCTURE         *VbtPtr;
   UINT8                       Usb2PortCount;
+  UINT32                      *HdaVerbTablePtr;
+  UINT8                       HdaVerbTableNum;
 
   Address              = 0;
   FspsUpd              = (FSPS_UPD *) FspsUpdPtr;
@@ -848,6 +853,15 @@ UpdateFspConfig (
         FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[Index] = 0x5;
         FspsConfig->PcieGen4EqPh3Preset3List[Index] = 0x7;
       }
+      case PLATFORM_ID_ARL_H_Island:
+        HdaVerbTablePtr = (UINT32 *) AllocateZeroPool (2 * sizeof (UINT32));  // max 6 tables supported for now
+        if (HdaVerbTablePtr != NULL) {
+          HdaVerbTableNum = 0;
+          HdaVerbTablePtr[HdaVerbTableNum++]   = (UINT32)(UINTN) &HdaVerbTableAlc897;
+          FspsConfig->PchHdaVerbTablePtr      = (UINT32)(UINTN) HdaVerbTablePtr;
+          FspsConfig->PchHdaVerbTableEntryNum = HdaVerbTableNum;
+          DEBUG ((DEBUG_INFO, "Island set verb alc897 table.\n"));
+        }
   }
 
   if (FeaturePcdGet (PcdEnablePciePm)) {

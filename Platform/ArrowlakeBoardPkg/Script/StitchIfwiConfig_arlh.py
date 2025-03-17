@@ -92,6 +92,7 @@ def check_parameter(para_list):
         'lp5'    : {},
         'crb'    : {},
         'rvp'    : {},
+        'isd'    : {},
        }
 
     para_help = \
@@ -101,6 +102,7 @@ def check_parameter(para_list):
         'lp5'    -- Enable LPDDR5 Board configuration
         'crb'    -- Enable CRB Board configuration
         'rvp'    -- Enable RVP Board configuration
+        'isd'    -- Enable Island Board configuration
         """
     for para in para_list:
         if para == '':
@@ -298,6 +300,67 @@ def get_xml_change_list (platform, plt_params_list):
             ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort3RetimerConfigType',            '2 Re-Timers'),
             ('./FlexIO/PowerDelivery_PdControllerConfiguration/USB2PortForTypeCPort4',                  'USB2 Port 4'),
             ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort4RetimerConfigType',            '2 Re-Timers'),
+    ])
+
+    if 'isd' in plt_params_list:
+        print ("Applying changes to enable Island")
+        xml_change_list.append ([
+            ('./FlashLayout/EcRegion/Enabled',                                                          'Disabled'),
+            ('./FlashLayout/GbeRegion/Enabled',                                                         'Disabled'),
+            ('./FlashSettings/FlashConfiguration/FastReadClockFreq',                                    '33MHz'),
+            ('./FlashSettings/FlashConfiguration/WriteEraseClockFreq',                                  '33MHz'),
+            ('./FlashSettings/FlashConfiguration/ReadIdAndReadStatClkFreq',                             '33MHz'),
+            ('./Icc/SocClkOutCfg/BUFF_EN_SRC3',                                                         'enable'),
+            ('./Icc/SocClkOutCfg/BUFF_EN_SRC4',                                                         'enable'),
+            ('./Icc/SocClkOutCfg/BUFF_EN_SRC5',                                                         'enable'),
+            ('./Icc/SocClkOutCfg/SSC_en',                                                               'enable'),
+            ('./Icc/IoeClkOutCfg/IOE_BUFF_EN_SRC1',                                                     'enable'),
+            ('./Icc/IoeClkOutCfg/IOE_SSC_en',                                                           'enable'),
+            ('./NetworkingConnectivity/WiredLanConfiguration/PhyConnected',                             'No PHY Connected'),
+            ('./NetworkingConnectivity/WiredLanConfiguration/LanEnable',                                'No'),
+            ('./NetworkingConnectivity/WiredLanConfiguration/GbeMacSmbAddrsEn',                         'No'),
+            ('./NetworkingConnectivity/WiredLanConfiguration/LanPhyPwrCtrlGppv11Config',                'Enable as GPP_V11'),
+            ('./NetworkingConnectivity/WiredLanConfiguration/SlpLanGppv12Config',                       'Enable as GPP_V12'),
+            ('./InternalPchBuses/SmbusSmlinkConfiguration/SLink0MctpAddress',                           '0x62'),
+            ('./InternalPchBuses/SmbusSmlinkConfiguration/SLink0MctpEnable',                            'Yes'),
+            ('./InternalPchBuses/SmbusSmlinkConfiguration/SLink1freq',                                  '100 KHz'),
+            ('./FlexIO/PciePortConfiguration/PCIeController1',                                          '4x1'),
+            ('./FlexIO/PciePortConfiguration/PCIeGen5Controller6Config',                                '1x8 Lane Reversed'),
+            ('./FlexIO/SataPcieComboPortConfiguration/SataPcieComboPorts0',                             'SATA'),
+            ('./FlexIO/SataPcieComboPortConfiguration/SataPcieComboPorts1',                             'SATA'),
+            ('./FlexIO/Usb3PortConfiguration/Usb32Port1and2SpdselPair',                                 'USB 3.2 Port 1 and 2 Gen 2x1'),
+            ('./FlexIO/Usb2PortConfiguration/USB2Prt1ConTypeSel',                                       'Type A / Type C'),
+            ('./FlexIO/Usb2PortConfiguration/USB2Prt3ConTypeSel',                                       'Type C'),
+            ('./FlexIO/Usb2PortConfiguration/USB2Prt4ConTypeSel',                                       'Type C'),
+            ('./FlexIO/Type-CSubsystemConfiguration/TypeCPort1Config',                                  'No Thunderbolt'),
+            ('./FlexIO/Type-CSubsystemConfiguration/TypeCPort2Config',                                  'No Restrictions'),
+            ('./FlexIO/Type-CSubsystemConfiguration/TypeCPort3Config',                                  'DP Fixed Connection'),
+            ('./FlexIO/Type-CSubsystemConfiguration/TypeCPort4Config',                                  'DP Fixed Connection'),
+            ('./FlexIO/Type-CSubsystemConfiguration/XdciSplitDieConfig',                                'xDCI Split Die Disabled'),
+            ('./FlexIO/Type-CSubsystemConfiguration/TboltPort12Retimer',                                'Port 2 Retimer Enabled'),
+            ('./FlexIO/Type-CSubsystemConfiguration/TboltPort34Retimer',                                'No Retimers'),
+            ('./FlexIO/TypeCPortConfiguration/TypeCPorts1and2SpdselPair',                               'Type C Port 1 Gen 2x1 Port 2 Gen 2x2'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort1Mode',                         'Yes'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort1RetimerEnabled',               'Yes'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort1RetimerConfig',                'Yes'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort1SmbusAddr',                    '0x20'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort1Mode',                         'No'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort1RetimerEnabled',               'No'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort1RetimerConfig',                'No'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort2Mode',                         'Yes'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort2RetimerEnabled',               'Yes'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort2RetimerConfig',                'Yes'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort2SMBusAddr',                    '0x23'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort3Mode',                         'No'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort3RetimerEnabled',               'No'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort3RetimerConfig',                'No'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort3SMBusAddr',                    '0x0'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/USB2PortForTypeCPort3',                  'USB2 Port 3'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort4Mode',                         'No'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort4RetimerEnabled',               'No'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort4RetimerConfig',                'No'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort4SMBusAddr',                    '0x0'),
+            ('./FlexIO/PowerDelivery_PdControllerConfiguration/USB2PortForTypeCPort4',                  'USB2 Port 4'),
     ])
 
     return xml_change_list

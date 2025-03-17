@@ -236,13 +236,13 @@ class Board(BaseBoard):
         #   the ImageId field in the VBT container.
         # VbtFileName is the VBT file name. It needs to be located under platform
         #   VbtBin folder.
-        self._MULTI_VBT_FILE      = {1:'VbtArlhCrb.dat', 2:'VbtArlhRvp.dat'}
+        self._MULTI_VBT_FILE      = {1:'VbtArlhCrb.dat', 2:'VbtArlhRvp.dat', 3:'VbtArlhIsd.dat'}
 
         self.CFG_DATABASE_SIZE    = self.CFGDATA_SIZE
         self._generated_cfg_file_prefix = 'Autogen_'
 
         self._CFGDATA_INT_FILE = []
-        self._CFGDATA_EXT_FILE = [self._generated_cfg_file_prefix + 'CfgDataInt_Arlp_Sodimm_Crb.dlt', self._generated_cfg_file_prefix + 'CfgDataInt_Arlp_Sodimm_Rvp.dlt',self._generated_cfg_file_prefix + 'CfgDataInt_Arlp_Lpddr5_Rvp.dlt']
+        self._CFGDATA_EXT_FILE = [self._generated_cfg_file_prefix + 'CfgDataInt_Arlp_Sodimm_Crb.dlt', self._generated_cfg_file_prefix + 'CfgDataInt_Arlp_Sodimm_Rvp.dlt',self._generated_cfg_file_prefix + 'CfgDataInt_Arlp_Lpddr5_Rvp.dlt',self._generated_cfg_file_prefix + 'CfgDataInt_Arlp_Sodimm_Island.dlt']
 
     def GetCopyList (self,driver_inf):
         fd = open (driver_inf, 'r')
