@@ -1,4 +1,4 @@
-From c8546b2fdc73eb435ce9db96917d845af56edf17 Mon Sep 17 00:00:00 2001
+From 3564c621f1cce667d0e1380687ab13096ef784dc Mon Sep 17 00:00:00 2001
 From: Aiden Park <aiden.park@intel.com>
 Date: Wed, 11 Dec 2019 10:00:41 -0800
 Subject: [PATCH] Build QEMU FSP 2.0 binaries
@@ -10,13 +10,13 @@ Signed-off-by: Maurice Ma <maurice.ma@intel.com>
  BaseTools/Source/C/Makefile                   |   2 -
  BaseTools/Source/C/Makefiles/NmakeSubdirs.py  |   2 +-
  BuildFsp.py                                   | 394 +++++++++
- IntelFsp2Pkg/Tools/PatchFv.py                 |   7 +
+ IntelFsp2Pkg/Tools/PatchFv.py                 |   9 +-
  QemuFspPkg/BuildFv.cmd                        | 248 ++++++
  QemuFspPkg/FspDescription/FspDescription.inf  |  29 +
  QemuFspPkg/FspDescription/FspDescription.txt  |   2 +
  QemuFspPkg/FspHeader/FspHeader.aslc           |  90 ++
  QemuFspPkg/FspHeader/FspHeader.inf            |  49 ++
- QemuFspPkg/FspmInit/FspmInit.c                | 802 ++++++++++++++++++
+ QemuFspPkg/FspmInit/FspmInit.c                | 800 ++++++++++++++++++
  QemuFspPkg/FspmInit/FspmInit.h                |  77 ++
  QemuFspPkg/FspmInit/FspmInit.inf              |  67 ++
  QemuFspPkg/FspsInit/FspsInit.c                | 234 +++++
@@ -47,7 +47,7 @@ Signed-off-by: Maurice Ma <maurice.ma@intel.com>
  QemuFspPkg/QemuVideo/QemuVideo.c              | 780 +++++++++++++++++
  QemuFspPkg/QemuVideo/QemuVideo.h              | 116 +++
  QemuFspPkg/QemuVideo/QemuVideo.inf            |  56 ++
- 41 files changed, 6067 insertions(+), 5 deletions(-)
+ 41 files changed, 6066 insertions(+), 6 deletions(-)
  create mode 100644 BuildFsp.py
  create mode 100644 QemuFspPkg/BuildFv.cmd
  create mode 100644 QemuFspPkg/FspDescription/FspDescription.inf
@@ -526,10 +526,15 @@ index 0000000000..c1475be22a
 +if __name__ == '__main__':
 +    sys.exit(Main())
 diff --git a/IntelFsp2Pkg/Tools/PatchFv.py b/IntelFsp2Pkg/Tools/PatchFv.py
-index 112de4077a..fe6d29426e 100644
+index 112de4077a..8bb296563d 100644
 --- a/IntelFsp2Pkg/Tools/PatchFv.py
 +++ b/IntelFsp2Pkg/Tools/PatchFv.py
-@@ -423,6 +423,13 @@ class Symbols:
+@@ -419,10 +419,17 @@ class Symbols:
+         if reportLine.strip().find("Archive member included") != -1:
+             #GCC
+             #                0x0000000000001d55                IoRead8
+-            patchMapFileMatchString = "\s+(0x[0-9a-fA-F]{16})\s+([^\s][^0x][_a-zA-Z0-9\-]+)\s"
++            patchMapFileMatchString = "\s+(0x[0-9a-fA-F]{8,16})\s+([^\s][^0x][_a-zA-Z0-9\-]+)\s"
              matchKeyGroupIndex = 2
              matchSymbolGroupIndex  = 1
              prefix = '_'
@@ -993,7 +998,7 @@ index 0000000000..d5ffe3d433
 +  gIntelFsp2PkgTokenSpaceGuid.PcdFspMaxPatchEntry
 diff --git a/QemuFspPkg/FspmInit/FspmInit.c b/QemuFspPkg/FspmInit/FspmInit.c
 new file mode 100644
-index 0000000000..9420bba30d
+index 0000000000..edfbdfd50c
 --- /dev/null
 +++ b/QemuFspPkg/FspmInit/FspmInit.c
 @@ -0,0 +1,800 @@
@@ -6423,5 +6428,5 @@ index 0000000000..4c6bc6a0f1
 +  TRUE
 +
 -- 
-2.30.2.windows.1
+2.48.1.windows.1
 
