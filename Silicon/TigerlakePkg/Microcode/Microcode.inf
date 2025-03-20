@@ -14,14 +14,14 @@
   VERSION_STRING       = 1.0
 
 [Sources]
-  m_80_806c1_000000b8.mcb
+  m_80_806c1_000000bc.mcb
   m_c2_806d1_00000052.mcb
 
 [UserExtensions.SBL."CloneRepo"]
   REPO   = https://github.com/slimbootloader/firmwareblob.git
-  COMMIT = eb5921d4b53d119994a3e5730febe9198df9ad84
+  COMMIT = 2235a0676dcc83fe5fea16b1ad6999ab97c89cf3
 
 [UserExtensions.SBL."CopyList"]
-  Microcode/TigerLake/m_80_806c1_000000b8.pdb  : Silicon/TigerlakePkg/Microcode/m_80_806c1_000000b8.mcb
+  Microcode/TigerLake/m_80_806c1_000000bc.pdb  : Silicon/TigerlakePkg/Microcode/m_80_806c1_000000bc.mcb
   Microcode/TigerLake/m_c2_806d1_00000052.pdb  : Silicon/TigerlakePkg/Microcode/m_c2_806d1_00000052.mcb
 
