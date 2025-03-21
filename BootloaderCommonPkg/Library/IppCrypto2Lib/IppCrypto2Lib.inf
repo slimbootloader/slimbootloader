@@ -68,7 +68,6 @@
   $(IPP_PATH)/sources/ippcp/pcprsa_initpublickey.c
   $(IPP_PATH)/sources/ippcp/pcprsa_setpublickey.c
   $(IPP_PATH)/sources/ippcp/pcprsa_sizeof_pubkey.h
-  $(IPP_PATH)/sources/ippcp/pcprsaverifyhash_pkcs1v15_rmf.c
   $(IPP_PATH)/sources/ippcp/pcprsaverify_pss_rmf.c
   $(IPP_PATH)/sources/ippcp/pcprsa_gspub_cipher.c
   $(IPP_PATH)/sources/ippcp/gsmodmethod_rsa.c
@@ -76,17 +75,18 @@
   $(IPP_PATH)/sources/ippcp/pcprsa_gsmethod__gpr_public.c
 
   # Hash source files
-  $(IPP_PATH)/sources/ippcp/pcphashmethod_sha256.c
-  $(IPP_PATH)/sources/ippcp/pcphashsha256px.c
-  $(IPP_PATH)/sources/ippcp/pcphashmethod_sha384.c
-  $(IPP_PATH)/sources/ippcp/pcphashsha512px.c
-  $(IPP_PATH)/sources/ippcp/sm3/pcphashmethod_sm3.c
-  $(IPP_PATH)/sources/ippcp/sm3/pcphashsm3px.c
-  $(IPP_PATH)/sources/ippcp/pcphashmessage_rmf.c
-  $(IPP_PATH)/sources/ippcp/pcphashinit_rmf.c
-  $(IPP_PATH)/sources/ippcp/pcphashupdate_rmf.c
-  $(IPP_PATH)/sources/ippcp/pcphashfinal_rmf.c
-  $(IPP_PATH)/sources/ippcp/pcphashca_rmf.c
+  $(IPP_PATH)/sources/ippcp/hash/sha256/pcphashmethod_sha256.c
+  $(IPP_PATH)/sources/ippcp/hash/sha256/pcphashsha256px.c
+  $(IPP_PATH)/sources/ippcp/hash/sha384/pcphashmethod_sha384.c
+  $(IPP_PATH)/sources/ippcp/hash/sha512/pcphashsha512px.c
+  $(IPP_PATH)/sources/ippcp/hash/sm3/pcphashmethod_sm3.c
+  $(IPP_PATH)/sources/ippcp/hash/sm3/pcphashsm3px.c
+  $(IPP_PATH)/sources/ippcp/hash/pcphashmessage_rmf.c
+  $(IPP_PATH)/sources/ippcp/hash/pcphashinit_rmf.c
+  $(IPP_PATH)/sources/ippcp/hash/pcphashupdate_rmf.c
+  $(IPP_PATH)/sources/ippcp/hash/pcphashfinal_rmf.c
+  $(IPP_PATH)/sources/ippcp/hash/pcphashca_rmf.c
+  $(IPP_PATH)/sources/ippcp/pcprsaverify_pkcs1v15_rmf.c
 
   # HMAC source files
   $(IPP_PATH)/sources/ippcp/pcphmacmessage_rmf.c
@@ -108,6 +108,8 @@
   gPlatformCommonLibTokenSpaceGuid.PcdCryptoShaOptMask
   gPlatformCommonLibTokenSpaceGuid.PcdIppHashLibSupportedMask
   gPlatformCommonLibTokenSpaceGuid.PcdCompSignSchemeSupportedMask
+  gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg
+  gPlatformCommonLibTokenSpaceGuid.PcdCompSignType
 
 [BuildOptions]
   MSFT:*_*_*_CC_FLAGS = -D_ABL_ /GL-
