@@ -197,6 +197,10 @@ def BuildFspBins (fsp_dir, sbl_dir, fsp_inf, silicon_pkg_name, flag):
     ret = subprocess.call(cmd.split(' '), cwd=fsp_dir)
     if ret:
         Fatal ('Failed to apply QEMU FSP patch !')
+    cmd = 'git am --keep-cr --whitespace=nowarn %s/0002-BaseTools-GCC-newer-versions-fix-Synced-with-EDK2.patch' % patch_dir
+    ret = subprocess.call(cmd.split(' '), cwd=fsp_dir)
+    if ret:
+        Fatal ('Failed to apply QEMU FSP BuildTools patch !')
     print ('Done\n')
 
     print ('Compiling QEMU FSP source ...')
