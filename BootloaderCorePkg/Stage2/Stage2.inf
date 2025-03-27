@@ -112,6 +112,7 @@
   gTpmEventLogInfoGuid
   gSecureBootInfoGuid
   gUniversalPayloadBaseGuid
+  gSmmBaseHobGuid
 
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdMaxLibraryDataEntry
@@ -160,6 +161,7 @@
   gPlatformModuleTokenSpaceGuid.PcdEnableFwuNotify
   gPlatformCommonLibTokenSpaceGuid.PcdEnableCryptoPerfTest
   gPlatformCommonLibTokenSpaceGuid.PcdHandOffFdtEnable
-
+  gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase
+  gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize
 [Depex]
   TRUE
