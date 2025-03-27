@@ -541,12 +541,18 @@ SecStartup (
     }
   }
 
-  // Skip SMM rebase if booting UEFI payload when AUTO mode is used
   SmmRebaseMode = PcdGet8 (PcdSmmRebaseMode);
-  if (SmmRebaseMode == SMM_REBASE_AUTO) {
+  if ((SmmRebaseMode == SMM_REBASE_AUTO) || (SmmRebaseMode == SMM_REBASE_AUTO_NOSMRR)) {
     if (GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE) {
-      SmmRebaseMode = SMM_REBASE_DISABLE;
+      if (SmmRebaseMode == SMM_REBASE_AUTO_NOSMRR) {
+        // Enable SMM rebase, but does set SMRR if booting UEFI payload
+        SmmRebaseMode = SMM_REBASE_ENABLE_NOSMRR;
+      } else {
+        // Skip SMM rebase if booting UEFI payload
+        SmmRebaseMode = SMM_REBASE_DISABLE;
+      }
     } else {
+      // Enable SMM rebase and set SMRR to prevent SMRAM access out of SMM.
       SmmRebaseMode = SMM_REBASE_ENABLE;
     }
     (VOID) PcdSet8S (PcdSmmRebaseMode, SmmRebaseMode);

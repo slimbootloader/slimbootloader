@@ -10,6 +10,9 @@
 
 #include <Guid/MpCpuTaskInfoHob.h>
 
+#define SMM_BASE_MIN_SIZE          0x10000
+#define SMM_BASE_GAP               0x2000
+
 typedef enum {
   EnumMpInitNull   = 0x00,
   EnumMpInitWakeup = 0x01,
