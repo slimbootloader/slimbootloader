@@ -37,9 +37,6 @@
 
 #define   RSM_SIG                  0x9090AA0F  /// Opcode for 'rsm'
 
-#define SMM_BASE_GAP               0x1000
-#define SMM_BASE_MIN_SIZE          0x10000
-
 #pragma pack(1)
 typedef struct {
   UINT16            CSSelector;
