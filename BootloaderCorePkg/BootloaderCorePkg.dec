@@ -211,6 +211,7 @@
   gPlatformModuleTokenSpaceGuid.PcdPayloadReservedMemSize | 0x00004000 | UINT32 | 0x20000195
 
   # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
+  # 3: Enable SMM rebase without setting SMRR  4:Auto without Setting SMRR
   gPlatformModuleTokenSpaceGuid.PcdSmmRebaseMode          | 0x00000000 | UINT8  | 0x20000196
 
   gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesBase       | 0x00000000 | UINT32 | 0x20000197
