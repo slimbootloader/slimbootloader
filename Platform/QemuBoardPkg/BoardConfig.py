@@ -106,7 +106,7 @@ class Board(BaseBoard):
         if self.NO_OPT_MODE:
             self.STAGE1A_SIZE    += 0x1000
         self.STAGE1B_SIZE         = 0x00030000
-        self.STAGE2_SIZE          = 0x0001C000
+        self.STAGE2_SIZE          = 0x0001D000
 
         self.TEST_SIZE            = 0x00001000
         self.SIIPFW_SIZE          = 0x00010000
@@ -116,7 +116,7 @@ class Board(BaseBoard):
         self.KEYHASH_SIZE         = 0x00001000
         self.VARIABLE_SIZE        = 0x00002000
         self.SBLRSVD_SIZE         = 0x00001000
-        self.FWUPDATE_SIZE        = 0x00018000 if self.ENABLE_FWU else 0
+        self.FWUPDATE_SIZE        = 0x00019000 if self.ENABLE_FWU else 0
         self.SETUP_SIZE           = 0x00020000 if self.ENABLE_SBL_SETUP else 0
 
         self._REDUNDANT_LAYOUT    = 1
