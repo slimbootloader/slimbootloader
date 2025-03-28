@@ -1071,6 +1071,42 @@
                      Reserved for CPU Post-Mem Production
       length       : 0x8
       value        : {0x00}
+  - OcLock :
+      name         : Over clocking Lock
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Lock Overclocking. 0: Disable; <b>1: Enable
+      length       : 0x01
+      value        : 0x01
+  - TurboRatioLimitRatio :
+      name         : Turbo Ratio Limit Ratio array
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     TurboRatioLimitRatio[7-0] will pair with TurboRatioLimitNumCore[7-0] to determine the active core ranges for each frequency point.
+      length       : 0x08
+      value        : {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - TurboRatioLimitNumCore :
+      name         : Turbo Ratio Limit Num Core array
+      type         : EditNum, HEX, (0x00, 0xFFFFFFFF)
+      help         : >
+                     TurboRatioLimitNumCore[7-0] will pair with TurboRatioLimitRatio[7-0] to determine the active core ranges for each frequency point.
+      length       : 0x08
+      value        : {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - AtomTurboRatioLimitRatio :
+      name         : Turbo Ratio Limit Ratio array
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     AtomTurboRatioLimitRatio[7-0] will pair with AtomTurboRatioLimitNumCore[7-0] to determine the active core ranges for each frequency point.
+      length       : 0x08
+      value        : {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+  - AtomTurboRatioLimitNumCore :
+      name         : Turbo Ratio Limit Ratio array
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     AtomTurboRatioLimitNumCore[7-0] will pair with AtomTurboRatioLimitRatio[7-0] to determine the active core ranges for each frequency point.
+      length       : 0x08
+      value        : {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
   - Dummy        :
-      length       : 0x2
+      length       : 0x1
       value        : 0x0
