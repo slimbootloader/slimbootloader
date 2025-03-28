@@ -2,7 +2,7 @@
 #
 #  Platform Configuration Delta File.
 #
-#  Copyright (c) 2021 - 2024, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2021 - 2025, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 #
@@ -82,8 +82,6 @@ SILICON_CFG_DATA.Usb2PhyPredeemp                | {0x03, 0x03, 0x03, 0x03, 0x03,
 SILICON_CFG_DATA.PchSerialIoI2cPadsTermination  | {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01}
 SILICON_CFG_DATA.SataLedEnable                  | 0
 SILICON_CFG_DATA.EcAvailable                    | 0
-SILICON_CFG_DATA.TurboRatioLimitRatio           | {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
-SILICON_CFG_DATA.AtomTurboRatioLimitRatio       | {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 SILICON_CFG_DATA.PchPmSlpSusMinAssert           | 0x0
 SILICON_CFG_DATA.PchPmSlpS3MinAssert            | 0x0
 SILICON_CFG_DATA.PchIshI3cEnable                | 1

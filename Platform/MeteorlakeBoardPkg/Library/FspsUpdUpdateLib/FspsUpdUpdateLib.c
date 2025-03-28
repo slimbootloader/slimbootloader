@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2024, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -586,17 +586,11 @@ UpdateFspConfig (
     FspsConfig->PcieGen3EqPh3Preset4List[11]               = 0x9;
     FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[11]         = 0x5;
 
-    for (Index = 0; Index < 8; Index++) {
-      FspsConfig->TurboRatioLimitRatio[Index]                = SiCfgData->TurboRatioLimitRatio[Index];
-      FspsConfig->AtomTurboRatioLimitRatio[Index]            = SiCfgData->AtomTurboRatioLimitRatio[Index];
-    }
   } //End of SiCfgData Ptr
 
   for (Index = 0; Index < 8; Index++) {
     FspsConfig->PcieRpSnoopLatencyOverrideMode[Index]      = 0x2;
     FspsConfig->PcieRpNonSnoopLatencyOverrideMode[Index]   = 0x2;
-    FspsConfig->TurboRatioLimitNumCore[Index]              = 0x0;
-    FspsConfig->AtomTurboRatioLimitNumCore[Index]          = 0x0;
   }
 
   // Set VerbTable is disabled by default. Enable it only when specified by config data.
@@ -757,6 +751,13 @@ UpdateFspConfig (
     FspsConfig->ConfigTdpLevel                = PowerCfgData->ConfigTdpLevel;
     FspsConfig->RaceToHalt                    = PowerCfgData->RaceToHalt;
     FspsConfig->PkgCStateLimit                = PowerCfgData->PkgCStateLimit;
+
+    for (Index = 0; Index < 8; Index++) {
+      FspsConfig->TurboRatioLimitRatio[Index]                = PowerCfgData->TurboRatioLimitRatio[Index];
+      FspsConfig->TurboRatioLimitNumCore[Index]              = PowerCfgData->TurboRatioLimitNumCore[Index];
+      FspsConfig->AtomTurboRatioLimitRatio[Index]            = PowerCfgData->AtomTurboRatioLimitRatio[Index];
+      FspsConfig->AtomTurboRatioLimitNumCore[Index]          = PowerCfgData->AtomTurboRatioLimitNumCore[Index];
+    }
   }
 
   //Misc Fsps Upd

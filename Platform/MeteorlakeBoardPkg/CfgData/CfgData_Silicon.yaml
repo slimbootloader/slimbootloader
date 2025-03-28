@@ -2,7 +2,7 @@
 #
 #  Slim Bootloader CFGDATA Option File.
 #
-#  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2025, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -436,20 +436,6 @@
                      Determines ISH GP GPIO Pin muxing. See GPIO_*_MUXING_ISH_GP_x_GPIO_*. 'x' are GP_NUMBER
       length       : 0x0C
       value        : {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}
-  - TurboRatioLimitRatio :
-      name         : Turbo Ratio Limit Num Core array
-      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFF)
-      help         : >
-                     Performance-core Turbo Ratio Limit Ratio0-7 (TRLR) defines the turbo ratio (max is 85 in normal mode and 120 in core extension mode). Ratio[0]: This Turbo Ratio Limit Ratio0 must be greater than or equal all other ratio values. If this value is invalid, thn set all other active cores to minimum. Otherwise, align the Ratio Limit to 0. Please check each active cores. Ratio[1~7]: This Turbo Ratio Limit Ratio1 must be <= to Turbo Ratio Limit Ratio0~6."
-      length       : 0x08
-      value        : {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}
-  - AtomTurboRatioLimitRatio :
-      name         : ATOM Turbo Ratio Limit Ratio array
-      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFF)
-      help         : >
-                     Efficient-core Turbo Ratio Limit Ratio0-7 defines the turbo ratio (max is 85 irrespective of the core extension mode), the core range is defined in E-core Turbo Ratio Limit CoreCount0-7.
-      length       : 0x08
-      value        : {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}
   - IomTypeCPortPadCfg :
       name         : TypeC port GPIO setting
       type         : Table

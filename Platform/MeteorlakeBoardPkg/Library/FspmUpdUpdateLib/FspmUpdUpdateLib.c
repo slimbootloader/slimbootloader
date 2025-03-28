@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2024, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -233,7 +233,6 @@ UpdateFspConfig (
   CopyMem (Fspmcfg->PchHdaAudioLinkDmicClockSelect, MemCfgData->PchHdaAudioLinkDmicClockSelect, sizeof(MemCfgData->PchHdaAudioLinkDmicClockSelect));
 
   Fspmcfg->SkipMbpHob = 0;
-
   // Gfx
   GfxCfgData = (GRAPHICS_CFG_DATA *)FindConfigDataByTag (CDATA_GRAPHICS_TAG);
   if (GfxCfgData != NULL) {
@@ -406,6 +405,7 @@ UpdateFspConfig (
     Fspmcfg->TdcTimeWindow[0]                                     = 0x3e8;
     Fspmcfg->TdcTimeWindow[1]                                     = 0x3e8;
     Fspmcfg->TdcTimeWindow[2]                                     = 0x3e8;
+    Fspmcfg->OcLock                                               = PowerCfgData->OcLock;
   }
 
   Fspmcfg->ActiveCoreCount                                      = MemCfgData->ActiveCoreCount;//0x4;
