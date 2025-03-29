@@ -29,7 +29,7 @@ FspResetHandler (
     } else if (Status == FSP_STATUS_RESET_REQUIRED_COLD){
       ResetSystem(EfiResetCold);
     } else {
-      PcdSet32S(PcdFspResetStatus, (UINT32)Status);
+      PcdSet64S(PcdFspResetStatus, Status);
       ResetSystem(EfiResetPlatformSpecific);
     }
     CpuDeadLoop ();

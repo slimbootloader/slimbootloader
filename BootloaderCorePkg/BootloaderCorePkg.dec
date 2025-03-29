@@ -256,4 +256,4 @@
   gPlatformModuleTokenSpaceGuid.PcdEnableFwuNotify        | FALSE      | BOOLEAN | 0x20000225
 
 [PcdsDynamic]
-  gPlatformModuleTokenSpaceGuid.PcdFspResetStatus         | 0          | UINT32 | 0x20000224
+  gPlatformModuleTokenSpaceGuid.PcdFspResetStatus         | 0          | UINT64 | 0x20000224

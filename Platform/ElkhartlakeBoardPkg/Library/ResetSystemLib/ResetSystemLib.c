@@ -139,7 +139,7 @@ ResetSystem (
     break;
 
   case EfiResetPlatformSpecific:
-    FspResetRequest = (EFI_STATUS)PcdGet32(PcdFspResetStatus);
+    FspResetRequest = (EFI_STATUS)PcdGet64(PcdFspResetStatus);
     if (FspResetRequest == FSP_STATUS_RESET_REQUIRED_3) {
       ResetPchGlobal ();
     }
