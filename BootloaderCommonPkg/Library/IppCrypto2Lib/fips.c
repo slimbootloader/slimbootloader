@@ -112,11 +112,14 @@ IppCrypto2LibFipsSelftestSHA384 ()
     return RETURN_SUCCESS;
 }
 
-/* SM3 is not supported by FIPS
+/* SM3 is not supported by FIPS.
+ *  Here It is used for negative testcase execution
+ */
 RETURN_STATUS
 EFIAPI
 IppCrypto2LibFipsSelftestSM3 ()
 {
+    DEBUG ((DEBUG_INFO, "FipsSelftestSM3\n"));
     // 1. check that the function is FIPS-approved:
     if(!ippcp_is_fips_approved_func(HashMessage_rmf)) {
       return RETURN_UNSUPPORTED; // cannot use this function in FIPS mode.
@@ -141,6 +144,7 @@ RETURN_STATUS
 EFIAPI
 IppCrypto2LibFipsSelftestSM3Update ()
 {
+    DEBUG ((DEBUG_INFO, "SelftestSM3Update\n"));
     //------ FIPS-required part
     // 1. check that the function is FIPS-approved:
     if(!ippcp_is_fips_approved_func(HashUpdate_rmf)) {
@@ -171,7 +175,7 @@ IppCrypto2LibFipsSelftestSM3Update ()
     FreeTemporaryMemory(pBuffer);
     return RETURN_SUCCESS;
 }
-*/
+
 
 RETURN_STATUS
 EFIAPI
@@ -376,15 +380,20 @@ RunFipsSelftests ()
             return RETURN_UNSUPPORTED;
         }
     }
-/* SM3 is not supported by FIPS
+
+/* SM3 is not supported by FIPS.
+ * Here It is used for negative testcase execution.
+ */
     // Run the selftests for SM3
-    if (EFI_ERROR(IppCrypto2LibFipsSelftestSM3())) {
-        //return RETURN_UNSUPPORTED;
+    if (FixedPcdGet8(PcdIppHashLibSupportedMask) & IPP_HASHLIB_SM3_256) {
+        if (EFI_ERROR(IppCrypto2LibFipsSelftestSM3())) {
+            return RETURN_UNSUPPORTED;
+        }
+        if (EFI_ERROR(IppCrypto2LibFipsSelftestSM3Update())) {
+            return RETURN_UNSUPPORTED;
+        }
     }
-    if (EFI_ERROR(IppCrypto2LibFipsSelftestSM3Update())) {
-        //return RETURN_UNSUPPORTED;
-    }
-*/
+
 /* HMAC is not being used yet
     // Run the selftests for HMAC
     if (EFI_ERROR(IppCrypto2LibFipsSelftestHMAC())) {

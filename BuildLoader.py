@@ -183,6 +183,7 @@ class BaseBoard(object):
         self.ENABLE_IPP_CRYPTO_PERF = 0
         self.ENABLE_UPL_HANDOFF_FDT = 0
         self.ENABLE_FIPS_SELFTEST   = 0
+        self.FIPS_SELFTEST_NEGATIVE_TEST = 0
 
         self.SUPPORT_ARI           = 0
         self.SUPPORT_SR_IOV        = 0
