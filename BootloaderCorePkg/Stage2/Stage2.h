@@ -78,6 +78,7 @@
 #include <Guid/CsmePerformanceInfoGuid.h>
 #include <Guid/TpmEventLogInfoGuid.h>
 #include <Guid/SecureBootInfoGuid.h>
+#include <Guid/SmmBaseHob.h>
 #include <Library/IppCryptoPerfLib.h>
 #include <Library/BuildFdtLib.h>
 

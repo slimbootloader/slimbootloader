@@ -157,7 +157,7 @@ SmmRebase (
     SmmEntry = (UINT8 *)(UINTN)SmmBase + 0x8000;
     // Write default handler at new SMM handler entry
     MtrrCap.Uint64 = AsmReadMsr64 (MSR_IA32_MTRRCAP);
-    if (MtrrCap.Bits.SMRR == 0) {
+    if ((MtrrCap.Bits.SMRR == 0) || (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE_NOSMRR)) {
       // No SMRR support, fill "RSM" at the entry instead.
       DefEntry = (UINT8 *)&mDefaultSmiHandlerRet;
     } else {
@@ -235,7 +235,7 @@ CpuInit (
         break;
       }
     }
-  } else if (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE) {
+  } else if ((PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE) || (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE_NOSMRR)) {
     SmmRebase (Index, ApicId, 0);
   }
 
@@ -334,7 +334,8 @@ BspInit (
   DEBUG ((DEBUG_INFO, " BSP APIC ID: %d\n", mSysCpuInfo.CpuInfo[0].ApicId));
 
 
-  if ((PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE) || (mMpDataStruct.SmmRebaseDoneCounter > 0)) {
+  if ((PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE) || (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE_NOSMRR) ||
+    (mMpDataStruct.SmmRebaseDoneCounter > 0)) {
     // Check SMM rebase result
     if (mMpDataStruct.SmmRebaseDoneCounter != 1) {
       CpuHalt ("CPU SMM rebase failed!\n");
@@ -539,7 +540,8 @@ MpInit (
         DEBUG ((DEBUG_INFO, " CPU %2d APIC ID: %d\n", Index, mSysCpuInfo.CpuInfo[Index].ApicId));
       }
 
-      if ((PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE) || (mMpDataStruct.SmmRebaseDoneCounter > 0)) {
+      if ((PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE) || (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE_NOSMRR) ||
+        (mMpDataStruct.SmmRebaseDoneCounter > 0)) {
         // Check SMM rebase result
         if (mMpDataStruct.SmmRebaseDoneCounter != CpuCount) {
           CpuHalt ("CPU SMM rebase failed!\n");

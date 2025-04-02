@@ -648,6 +648,10 @@ BuildSmmVariableHobs (
   NV_VARIABLE_INFO                     *NvVariableHob;
   UINT32                               Base;
   PLD_S3_COMMUNICATION                 *S3CommunicationHob;
+  SMM_BASE_HOB_DATA                    *SmmBaseHob;
+  SYS_CPU_INFO                         *SysCpuInfo;
+  UINT32                               Index;
+  UINT32                               Size;
 
   SmmInfoHob   = NULL;
   PlatformInfo = NULL;
@@ -713,31 +717,62 @@ BuildSmmVariableHobs (
     }
   }
 
+  // SMM rebase HOB
+  if (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE_NOSMRR) {
+    SysCpuInfo = MpGetInfo ();
+    Length = sizeof (SMM_BASE_HOB_DATA) + SysCpuInfo->CpuCount * sizeof (UINT64);
+    SmmBaseHob = BuildGuidHob (&gSmmBaseHobGuid, Length);
+    if (SmmBaseHob != NULL) {
+      SmmBaseHob->ProcessorIndex     = 0;
+      SmmBaseHob->NumberOfProcessors = SysCpuInfo->CpuCount;
+      for (Index = 0; Index < SysCpuInfo->CpuCount; Index++) {
+        SmmBaseHob->SmBase[Index] = PcdGet32 (PcdSmramTsegBase) + PcdGet32 (PcdSmramTsegSize) - (SMM_BASE_MIN_SIZE + Index * SMM_BASE_GAP);
+        DEBUG ((DEBUG_INFO, "SmmBaseHob->SmBase[%d]=0x%x\n", Index, SmmBaseHob->SmBase[Index]));
+      }
+    }
+  }
+
   // SMM memory HOB
   Length = sizeof (EFI_SMRAM_HOB_DESCRIPTOR_BLOCK) + sizeof (EFI_SMRAM_DESCRIPTOR);
+  if (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE_NOSMRR) {
+    Length += sizeof (EFI_SMRAM_DESCRIPTOR);
+  }
   SmmMemoryHob = BuildGuidHob (&gEfiSmmSmramMemoryGuid, Length);
-  if (SmmMemoryHob != NULL) {
+  if ((SmmMemoryHob != NULL) && (SmmInfoHob != NULL)) {
     ZeroMem (SmmMemoryHob, Length);
     PlatformUpdateHobInfo (&gEfiSmmSmramMemoryGuid, SmmMemoryHob);
-    if (((PcdGet8(PcdBuildSmmHobs) & BIT0) != 0) && (SmmInfoHob != NULL)) {
+    Index  = 0;
+    Size   = 0;
+    Length = 0;
+    if ((PcdGet8(PcdBuildSmmHobs) & BIT0) != 0) {
       // Initialize the HOB using other HOBs
-      SmmMemoryHob->NumberOfSmmReservedRegions  = 1;
+      SmmMemoryHob->NumberOfSmmReservedRegions  = 0;
       if ((SmmInfoHob->Flags & SMM_FLAGS_4KB_COMMUNICATION) != 0){
-        SmmMemoryHob->NumberOfSmmReservedRegions  += 1;
-        SmmMemoryHob->Descriptor[0].CpuStart      = SmmInfoHob->SmmBase;
-        SmmMemoryHob->Descriptor[0].PhysicalStart = SmmInfoHob->SmmBase;
-        SmmMemoryHob->Descriptor[0].PhysicalSize  = SIZE_4KB;
-        SmmMemoryHob->Descriptor[0].RegionState   = EFI_ALLOCATED;
-        SmmMemoryHob->Descriptor[1].CpuStart      = SmmInfoHob->SmmBase + SIZE_4KB;
-        SmmMemoryHob->Descriptor[1].PhysicalStart = SmmInfoHob->SmmBase + SIZE_4KB;
-        SmmMemoryHob->Descriptor[1].PhysicalSize  = SmmInfoHob->SmmSize - SIZE_4KB;
-        SmmMemoryHob->Descriptor[1].RegionState   = 0;
-      } else {
-        SmmMemoryHob->Descriptor[0].CpuStart      = SmmInfoHob->SmmBase;
-        SmmMemoryHob->Descriptor[0].PhysicalStart = SmmInfoHob->SmmBase;
-        SmmMemoryHob->Descriptor[0].PhysicalSize  = SmmInfoHob->SmmSize;
-        SmmMemoryHob->Descriptor[0].RegionState   = 0;
+        SmmMemoryHob->Descriptor[Index].CpuStart      = SmmInfoHob->SmmBase;
+        SmmMemoryHob->Descriptor[Index].PhysicalStart = SmmInfoHob->SmmBase;
+        SmmMemoryHob->Descriptor[Index].PhysicalSize  = SIZE_4KB;
+        SmmMemoryHob->Descriptor[Index].RegionState   = EFI_ALLOCATED;
+        Index++;
+        Size = SIZE_4KB;
       }
+
+      if (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE_NOSMRR) {
+        Length = SMM_BASE_MIN_SIZE + SysCpuInfo->CpuCount * SMM_BASE_GAP;
+      }
+      SmmMemoryHob->Descriptor[Index].CpuStart      = SmmInfoHob->SmmBase + Size;
+      SmmMemoryHob->Descriptor[Index].PhysicalStart = SmmInfoHob->SmmBase + Size;
+      SmmMemoryHob->Descriptor[Index].PhysicalSize  = SmmInfoHob->SmmSize - Size - Length;
+      SmmMemoryHob->Descriptor[Index].RegionState   = 0;
+      Index++;
+
+      if (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE_NOSMRR) {
+        SmmMemoryHob->Descriptor[Index].CpuStart      = SmmInfoHob->SmmBase + SmmInfoHob->SmmSize - Length;
+        SmmMemoryHob->Descriptor[Index].PhysicalStart = SmmInfoHob->SmmBase + SmmInfoHob->SmmSize - Length;
+        SmmMemoryHob->Descriptor[Index].PhysicalSize  = Length;
+        SmmMemoryHob->Descriptor[Index].RegionState   = EFI_ALLOCATED;
+        Index++;
+      }
+      SmmMemoryHob->NumberOfSmmReservedRegions = Index;
     }
   }
 
