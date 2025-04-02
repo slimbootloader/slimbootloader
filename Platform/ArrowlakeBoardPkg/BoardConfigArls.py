@@ -75,6 +75,10 @@ class Board(BaseBoard):
         # 0: Disable 1: Enable IPP Crypto performance mesurement
         self.ENABLE_IPP_CRYPTO_PERF = 0
         self.ENABLE_FIPS_SELFTEST   = 0
+        self.FIPS_SELFTEST_NEGATIVE_TEST = 0
+
+        if self.FIPS_SELFTEST_NEGATIVE_TEST:
+            self.ENABLE_FIPS_SELFTEST   = 1
 
         # 0 - PCH UART0, 1 - PCH UART1, 2 - PCH UART2, 0xFF - EC UART 0x3F8
         self.DEBUG_PORT_NUMBER = 0x2
@@ -105,6 +109,9 @@ class Board(BaseBoard):
         self.ENABLE_CRYPTO_SHA_OPT  = IPP_CRYPTO_OPTIMIZATION_MASK['X64_Y8']
 
         if self.ENABLE_IPP_CRYPTO_PERF:
+            self.IPP_HASH_LIB_SUPPORTED_MASK |= IPP_CRYPTO_ALG_MASK['SM3_256']
+
+        if self.FIPS_SELFTEST_NEGATIVE_TEST:
             self.IPP_HASH_LIB_SUPPORTED_MASK |= IPP_CRYPTO_ALG_MASK['SM3_256']
 
         # Key configuration
