@@ -686,7 +686,7 @@
       help         : >
                      Intel Turbo Boost Max Technology 3.0. 0- Disabled; <b>1- Enabled</b>
       length       : 0x01
-      value        : 0x01
+      value        : 0x00
   - C1StateAutoDemotion :
       name         : Enable or Disable C1 Cstate Demotion
       type         : Combo

@@ -7,12 +7,14 @@
 
 #define AP_SCOPE_CPC_METHOD(INDEX, INDEX_VALUE) \
   External(\_SB.PR##INDEX, DeviceObj) \
+  External (P1##INDEX) \
+  External (IS##INDEX) \
   If (CondRefOf (\_SB.PR##INDEX)) { \
     Scope(\_SB.PR##INDEX) \
     { \
       Method(_CPC,0) \
       { \
-        Return(\_SB.PR00.GCPC(INDEX_VALUE)) \
+        Return(\_SB.PR00.GCPC(INDEX_VALUE, P1##INDEX, IS##INDEX)) \
       } \
     } \
   }
