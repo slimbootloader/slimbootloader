@@ -666,4 +666,291 @@ typedef union {
 
 } ADL_MSR_ATOM_TURBO_RATIO_LIMIT_CORES_REGISTER;
 
+/**
+  This MSR indicates the factory configured values for active core ranges (1-8) and not active cores. Each field in MSR_TURBO_RATIO_LIMIT_CORES (MSR 1AEh) denotes
+  the active core count.
+  Software can configure these limits when PLATFORM_INFO MSR 0CEh[28]==1.
+  Instead of specifying a ratio for each active core count (legacy behavior), active core counts with an identical turbo ratio limit belong to a single active core range that act as a turbo limit for that entire range of active cores.
+  Example: configure turbo ratio limits for a 10-Core model:
+  [list]
+  [*]Active Cores 1,2,3 to turbo ratio 40
+  [*]Active Cores 4,5,6,7 to turbo ratio 39
+  [*]Active Cores 8 to turbo ratio 38
+  [*]Active Cores 9,10 to turbo ratio 36
+  [/list]
+  The ranges are programmed as follows:
+  [list]
+  [*]1ADh[7:0] = 40, 1AEh[7:0] = 3
+  [*]1ADh[15:8] = 39, 1AEh[15:8] = 7
+  [*]1ADh[23:16] = 38, 1AEh[23:16] = 8
+  [*]1ADh[31:24] = 36, 1AEh[31:24] = 10
+  [*]Recommended: pad both registers with zero. 1ADh[63:32] = 0, 1AEh[63:32] = 0
+  [/list]
+**/
+#define ADL_MSR_ATOM_TURBO_RATIO_LIMIT 0x00000650
+typedef union
+{
+   ///
+   /// Individual bit fields
+   ///
+   struct
+   {
+      UINT64 Rsvd70 : 8; /**< Reserved */
+
+      /* Bits[7:0], Access Type=NA, default=0x00000000*/
+
+      /* Reserved */
+
+      UINT64 MaxNonTurboLimRatio : 8; /**< Maximum Non Turbo Limit Ratio */
+
+      /* Bits[15:8], Access Type=NA, default=0x00000000*/
+
+      /* The Maximum Non-Turbo Ratio */
+
+      UINT64 SmmSaveCap : 1; /**< SMM Save Capability */
+
+      /* Bits[16:16], Access Type=NA, default=0x00000001*/
+
+      /*
+         When set to '1' indicates this feature exists
+         and is configured by SMM_SAVE_CONTROL
+      */
+
+      UINT64 RarEn : 1; /**< RAR Enable */
+
+      /* Bits[17:17], Access Type=NA, default=0x00000000*/
+
+      /* When set to '1' indicates RAR feature exists */
+
+      UINT64 Rsvd2218 : 5; /**< Reserved */
+
+      /* Bits[22:18], Access Type=NA, default=0x00000000*/
+
+      /* Reserved */
+
+      UINT64 PpinCap : 1; /**< PPIN Capable */
+
+      /* Bits[23:23], Access Type=NA, default=0x00000000*/
+
+      /*
+         When set to 1, indicates that this part supports
+         the Protected Processor Inventory Number (PPIN)
+         feature.
+      */
+
+      UINT64 OcvoltOvrdAvail : 1; /**< Overclocking - Voltage Override Support */
+
+      /* Bits[24:24], Access Type=NA, default=0x00000000*/
+
+      /*
+         0b  Indicates that the part does not support
+         Voltage override overclocking.
+         1b  Indicates that the part supports Voltage
+         override overclocking.
+      */
+
+      UINT64 FivrRfiTuningAvail : 1; /**< FIVR RFI Tuning Support */
+
+      /* Bits[25:25], Access Type=NA, default=0x00000000*/
+
+      /* FIVR RFI Tuning Support */
+
+      UINT64 Dcu16kModeAvail : 1; /**< DCU 16K Mode Support */
+
+      /* Bits[26:26], Access Type=NA, default=0x00000000*/
+
+      /*
+         0b  Indicates that the part does not support
+         the 16K DCU mode. 1b  Indicates that the part
+         supports 16K DCU mode.
+      */
+
+      UINT64 SamplePart : 1; /**< Sample Part */
+
+      /* Bits[27:27], Access Type=NA, default=0x00000000*/
+
+      /*
+         A value of 1 indicates the processor is a
+         preproduction sample and a property of Intel,
+         a value of 0 indicates the part is intended
+         for production.
+      */
+
+      UINT64 PrgTurboRatioEn : 1; /**< Programmable Ratio Limits for Turbo Mode */
+
+      /* Bits[28:28], Access Type=NA, default=0x00000001*/
+
+      /*
+         Programmable Turbo Ratios per number of Active
+         Cores 0 = Programming Not Allowed 1 = Programming
+         Allowed
+      */
+
+      UINT64 PrgTdpLimEn : 1; /**< Programmable TDP Limits Enable */
+
+      /* Bits[29:29], Access Type=NA, default=0x00000001*/
+
+      /*
+         Programmable TDP Limits for Turbo Mode. 0
+         = Programming Not Allowed 1 = Programming
+         Allowed
+      */
+
+      UINT64 PrgTjOffsetEn : 1; /**< Programmable TJ Offset Enable */
+
+      /* Bits[30:30], Access Type=NA, default=0x00000001*/
+
+      /*
+         Programmable TJ Offset Enable. 0 = Programming
+         Not Allowed 1 = Programming Allowed
+      */
+
+      UINT64 CpuidFaultingEn : 1; /**< CPUID Faulting Enabled */
+
+      /* Bits[31:31], Access Type=NA, default=0x00000001*/
+
+      /*
+         When set to 1 indicates that the processor
+         supports raising a #GP if CPUID is executed
+         when not in SMM and the CPL > 0. When this
+         bit is set, it indicates that MISC_FEATURE_ENABLES[0]
+         can be written by a VMM.
+      */
+
+      UINT64 LpmSupport : 1; /**< LPM supported */
+
+      /* Bits[32:32], Access Type=NA, default=0x00000000*/
+
+      /*
+         0 - Low Power Mode not Supported 1 - Low Power
+         Mode Supported
+      */
+
+      UINT64 ConfigTdpLevels : 2; /**< Configurable TDP Levels */
+
+      /* Bits[34:33], Access Type=NA, default=0x00000000*/
+
+      /*
+         Configurable TDP Levels 00 Config TDP not
+         supported 01 One additional TDP level supported
+         10 Two additional TDP levels supported 11
+         Reserved
+      */
+
+      UINT64 PfatEnable : 1; /**< PFAT Enable */
+
+      /* Bits[35:35], Access Type=NA, default=0x00000000*/
+
+      /*
+         BIOS GUARD (PFAT) Enable. 0 = PFAT is disabled
+         1 = PFAT is enabled
+      */
+
+      UINT64 Peg2dmidisEn : 1; /**< PEG2DMIDIS Enable */
+
+      /* Bits[36:36], Access Type=NA, default=0x00000001*/
+
+      /*
+         0 = PEG2DMIDIS is disabled 1 = PEG2DMIDIS
+         is enabled
+      */
+
+      UINT64 TimedMwaitEnable : 1; /**< Timed MWAIT Enable */
+
+      /* Bits[37:37], Access Type=NA, default=0x00000000*/
+
+      /*
+         Timed MWAIT Enable.           0 = Timed MWAIT
+         is disabled           1 = Timed MWAIT is enabled
+      */
+
+      UINT64 AsaEn : 1; /**< ASA Enable */
+
+      /* Bits[38:38], Access Type=NA, default=0x00000001*/
+
+      /*
+         ASA Enable. 0 = ASA is disabled 1 = ASA is
+         enabled
+      */
+
+      UINT64 Rsvd39 : 1; /**< Reserved */
+
+      /* Bits[39:39], Access Type=NA, default=0x00000000*/
+
+      /* Reserved */
+
+      UINT64 MaxEfficiencyRatio : 8; /**< Maximum Efficiency Ratio */
+
+      /* Bits[47:40], Access Type=NA, default=0x00000000*/
+
+      /*
+         Maximum Efficiency Ratio. This is given in
+         units of 100 MHz.
+      */
+
+      UINT64 MinOperatingRatio : 8; /**< Minimum Operating Ratio Supported */
+
+      /* Bits[55:48], Access Type=NA, default=0x00000008*/
+
+      /* Minimum Supported Ratio in units of 100MHz */
+
+      UINT64 Rsvd56 : 1; /**< Reserved */
+
+      /* Bits[56:56], Access Type=NA, default=0x00000000*/
+
+      /* Reserved */
+
+      UINT64 EdramEnable : 1; /**< EDRAM Enabled */
+
+      /* Bits[57:57], Access Type=NA, default=0x00000000*/
+
+      /*
+         Indicates to BIOS that memory-side ACPI tables
+         can be used
+      */
+
+      UINT64 Sxp2lmEnable : 1; /**< SXP_2LM Enabled */
+
+      /* Bits[58:58], Access Type=NA, default=0x00000000*/
+
+      /*
+         Indicates to BIOS that the FME_ACTIVATE MSR
+         can be setup                      Indicates
+         to BIOS that the FZM functionality can be
+         enabled
+      */
+
+      UINT64 SmmSupovrStateLockEnable : 1; /**< SMM_SUPOVR_STATE_LOCK Enabled */
+
+      /* Bits[59:59], Access Type=NA, default=0x00000001*/
+
+      /*
+         Indicates to BIOS that the SMM_SUPOVR_STATE_LOCK
+         MSR can be setup. This bit is unconditionally
+         set. [IntelRsvd]This bit is unconditionally
+         set for SoCs that support SNC[/IntelRsvd]
+      */
+
+      UINT64 TioEnable : 1; /**< TIO enable fuse */
+
+      /* Bits[60:60], Access Type=NA, default=0x00000000*/
+
+      /*
+         Indicates to BIOS that the Trusted IO (TIO)
+         MSRs can be accessed                     Indicates
+         to BIOS that the Trusted IO (TIO) functionality
+         can be enabled                      The value
+         of this bit is the same as FUSE_TIO
+      */
+
+      UINT64 Rsvd61 : 3; /**< Undefined - auto filled rsvd_[63:61] */
+
+      /* Bits[63:61], Access Type=RO, default=None*/
+
+      /* Reserved */
+
+   } Bits;
+   UINT32 Uint32;
+   UINT64 Uint64;
+} MSR_PLATFORM_INFO_REGISTER;
 #endif
