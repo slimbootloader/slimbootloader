@@ -1,0 +1,28 @@
+## @file
+#  File to describe FSP repo information
+#
+#  Copyright (c) 2025 Intel Corporation. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+
+[UserExtensions.SBL."CloneRepo"]
+  REPO    = https://github.com/intel/FSP.git
+  COMMIT  = dd1c93bf0af489a17ece8c1594443d5e23aada87
+
+[UserExtensions.SBL."CopyList"]
+# For BTL-S
+  BartlettLakeFspBinPkg/IoT/FSP.fd                                         : Silicon/RaptorlakePkg/Btls/Fsp/FspDbg.bin
+  BartlettLakeFspBinPkg/IoT/FSP.fd                                         : Silicon/RaptorlakePkg/Btls/Fsp/FspRel.bin
+  BartlettLakeFspBinPkg/IoT/FSP.bsf                                        : Silicon/RaptorlakePkg/Btls/Fsp/Fsp.bsf
+  BartlettLakeFspBinPkg/IoT/Include/FspUpd.h                               : Silicon/RaptorlakePkg/Btls/Fsp/FspUpd.h
+  BartlettLakeFspBinPkg/IoT/Include/FsptUpd.h                              : Silicon/RaptorlakePkg/Btls/Fsp/FsptUpd.h
+  BartlettLakeFspBinPkg/IoT/Include/FspmUpd.h                              : Silicon/RaptorlakePkg/Btls/Fsp/FspmUpd.h
+  BartlettLakeFspBinPkg/IoT/Include/FspsUpd.h                              : Silicon/RaptorlakePkg/Btls/Fsp/FspsUpd.h
+  BartlettLakeFspBinPkg/IoT/Include/MemInfoHob.h                           : Silicon/RaptorlakePkg/Btls/Fsp/MemInfoHob.h
+  BartlettLakeFspBinPkg/IoT/RaptorLakeS/Vbt/Vbt.bin                        : Platform/RaptorlakeBoardPkg/VbtBin/Vbt_rpls.dat
+  BartlettLakeFspBinPkg/IoT/RaptorLakeS/Vbt/Vbt.json                       : Platform/RaptorlakeBoardPkg/VbtBin/Vbt.json
+  FSP_License.pdf                                                          : Silicon/RaptorlakePkg/Btls/Fsp/FSP_License.pdf

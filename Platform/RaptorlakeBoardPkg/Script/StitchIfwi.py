@@ -203,7 +203,7 @@ def get_para_list (plt_para):
 def main():
     hexstr = lambda x: int(x, 16)
     ap = argparse.ArgumentParser()
-    ap.add_argument('-p', dest='platform', choices = ['rpls', 'rplp', 'rplps'], default = 'rpls', help='specify platform sku to stitch')
+    ap.add_argument('-p', dest='platform', choices = ['rpls', 'rplp', 'rplps', 'btls'], default = 'rpls', help='specify platform sku to stitch')
     ap.add_argument('-w', dest='work_dir', default = '', help='specify stitch workspace directory, CSME tools and ingredients should be here')
     ap.add_argument('-c', dest='config_file', type=str, required=True, help='specify the platform specific stitch config file')
     ap.add_argument('-s', dest='sbl_file', type=str, default='stitch_Components.zip', help='specify slim bootloader file or generate zip file')
