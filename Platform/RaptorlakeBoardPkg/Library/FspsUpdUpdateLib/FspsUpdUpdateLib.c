@@ -617,7 +617,7 @@ UpdateFspConfig (
     }
 
     // TSN feature support
-#if PLATFORM_RPLS || PLATFORM_RPLP || PLATFORM_RPLPS || PLATFORM_ADLP || PLATFORM_ADLPS || PLATFORM_ADLS
+#if PLATFORM_RPLS || PLATFORM_RPLP || PLATFORM_RPLPS || PLATFORM_ADLP || PLATFORM_ADLPS || PLATFORM_ADLS || PLATFORM_BTLS
     FspsConfig->PchTsnEnable[0] = SiCfgData->PchTsnEnable;
     FspsConfig->PchTsnEnable[1] = SiCfgData->PchTsnEnable;
 #else

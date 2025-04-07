@@ -1,0 +1,26 @@
+## @file
+#
+#  Copyright (c) 2025, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+[Defines]
+  INF_VERSION          = 0x00010005
+  BASE_NAME            = Microcode
+  FILE_GUID            = 197DB236-F856-4924-90F8-CDF12FB875F3
+  MODULE_TYPE          = USER_DEFINED
+  VERSION_STRING       = 1.0
+
+[Sources]
+  m_32_b0671_0000012e.mcb  # BTL-S Hybrid Prod
+  m_07_90672_0000003a.mcb  # BTL-S Hybrid Prod
+
+[UserExtensions.SBL."CloneRepo"]
+  REPO   = https://github.com/slimbootloader/firmwareblob.git
+  COMMIT = 28366c91cb96ab3a3381c9584d15d5fdf23d116c
+
+[UserExtensions.SBL."CopyList"]
+  Microcode/RaptorLake/m_32_b0671_0000012e.pdb  : Silicon/RaptorlakePkg/Btls/Microcode/m_32_b0671_0000012e.mcb
+  Microcode/AlderLake/m_07_90672_0000003a.pdb   : Silicon/RaptorlakePkg/Btls/Microcode/m_07_90672_0000003a.mcb
