@@ -541,11 +541,42 @@ SecStartup (
     }
   }
 
-  // Skip SMM rebase if booting UEFI payload when AUTO mode is used
+  //
+  // Update SMM_REBASE_AUTO and SMM_REBASE_AUTO_NOSMRR to specific rebase modes
+  // Currently, there are three types of payloads:
+  //
+  // Payload A: Payload without SMM support
+  //            Examples: OsLoader payload, UEFI payload without SMM feature support.
+  //
+  // Payload B: Payload with full SMM support
+  //            Examples: UEFI payload built with EDK2 PiSmmCpuDxeSmm that supports SMM relocation.
+  //
+  // Payload C: Payload with partial SMM support (excluding SMM rebase)
+  //            Examples: UEFI payload with EDK2 PiSmmCpuDxeSmm relying on gSmmBaseHobGuid HOB.
+  //                      Note: Starting in 2024, EDK2 PiSmmCpuDxeSmm removed SMM relocation
+  //                      and now depends on the bootloader to handle SMM rebasing and to build
+  //                      a gSmmBaseHobGuid HOB.
+  //  +------------+--------------------------+---------------------------------------------------+
+  //  |   Type     | Expected Rebase Mode     | Comments                                          |
+  //  +------------+--------------------------+---------------------------------------------------+
+  //  | Payload A  | SMM_REBASE_ENABLE        | SBL rebases SMM and configures SMRRs              |
+  //  +------------+--------------------------+---------------------------------------------------+
+  //  | Payload B  | SMM_REBASE_DISABLE       | Payload handles SMM rebasing and configures SMRRs |
+  //  +------------+--------------------------+---------------------------------------------------+
+  //  | Payload C  | SMM_REBASE_ENABLE_NOSMRR | SBL rebases SMM, while the payload configures SMRR|
+  //  +------------+--------------------------+---------------------------------------------------+
+  //
+  // Based on the information above, the UEFI payload can be built into different types of payloads.
+  // SBL must set PcdSmmRebaseMode appropriately according to the type of payload.
+  //
   SmmRebaseMode = PcdGet8 (PcdSmmRebaseMode);
-  if (SmmRebaseMode == SMM_REBASE_AUTO) {
+  if ((SmmRebaseMode == SMM_REBASE_AUTO) || (SmmRebaseMode == SMM_REBASE_AUTO_NOSMRR)) {
     if (GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE) {
-      SmmRebaseMode = SMM_REBASE_DISABLE;
+      if (SmmRebaseMode == SMM_REBASE_AUTO_NOSMRR) {
+        SmmRebaseMode = SMM_REBASE_ENABLE_NOSMRR;
+      } else {
+        SmmRebaseMode = SMM_REBASE_DISABLE;
+      }
     } else {
       SmmRebaseMode = SMM_REBASE_ENABLE;
     }
