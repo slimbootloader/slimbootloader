@@ -20,15 +20,14 @@ External(\_SB.PR00, DeviceObj)
 External(\TCNT, FieldUnitObj)
 External(\_SB.HWPV, IntObj)
 External(\_SB.CFGD, IntObj)
-External(\_SB.LMPS, IntObj)
-External(\_SB.ITBM, IntObj)
 External(\_SB.OSCP, IntObj)
 External(\_SB.HWPE, IntObj)
 External (CORE)
-External (SFBC)
-External (SFSC)
-External (NMFQ)
 External (RPEF)
+External (MXP1)
+External (BSFQ)
+External (P100)
+External (IS00)
 
 // _CPC (Continuous Performance Control)
 //  _CPC is a per-processor ACPI object that declares an interface for OSPM to
@@ -71,39 +70,9 @@ Scope(\_SB.PR00)
     //
     // Describe processor capabilities
     //
-    ResourceTemplate() {Register(FFixedHW, 8, 0, 0x771, 4)}, // HighestPerformance
-    ResourceTemplate() {Register(FFixedHW, 8, 8, 0xCE, 4)},  // Nominal Performance - Maximum Non Turbo Ratio
-    ResourceTemplate() {Register(FFixedHW, 8, 16, 0x771, 4)},//Lowest nonlinear Performance
-    ResourceTemplate() {Register(FFixedHW, 8, 24, 0x771, 4)}, // LowestPerformance
-    ResourceTemplate() {Register(FFixedHW, 8, 8, 0x0771, 4)}, // Guaranteed Performance
-    ResourceTemplate() {Register(FFixedHW, 8, 16, 0x0774, 4)}, // Desired PerformanceRegister
-    ResourceTemplate() {Register(FFixedHW, 8, 0, 0x774, 4)}, // Minimum PerformanceRegister
-    ResourceTemplate() {Register(FFixedHW, 8, 8, 0x774, 4)}, // Maximum PerformanceRegister
-    ResourceTemplate() {Register(SystemMemory, 0, 0, 0, 0)}, // Performance ReductionToleranceRegister (Null)
-    ResourceTemplate() {Register(SystemMemory, 0, 0, 0, 0)}, // Time window  register(Null)
-    ResourceTemplate() {Register(SystemMemory, 0, 0, 0, 0)}, // Counter wrap around time(Null)
-    ResourceTemplate() {Register(FFixedHW, 64, 0, 0xE7, 4)}, // Reference counter register (PPERF)
-    ResourceTemplate() {Register(FFixedHW, 64, 0, 0xE8, 4)}, // Delivered counter register (APERF)
-    ResourceTemplate() {Register(FFixedHW, 2, 1, 0x777, 4)}, // Performance limited register
-    ResourceTemplate() {Register(FFixedHW, 1, 0, 0x770, 4)}, // Enable register
-    1, // Autonomous selection enable register (Exclusively autonomous)
-    ResourceTemplate() {Register(FFixedHW, 10, 32, 0x774, 4)}, // Autonomous activity window register
-    ResourceTemplate() {Register(FFixedHW, 8, 24, 0x774, 4)}, // Autonomous energy performance preference register
-    0, // Reference performance (not supported)
-    0, // Lowest Frequency (not supported)
-    0, // Nominal Frequency
-  })
-
-  Name (CPC4, Package ()
-  {
-    25, // Number of entries
-    04, // Revision
-    //
-    // Describe processor capabilities
-    //
     ResourceTemplate () {Register (FFixedHW, 8, 0, 0x771, 4)},   // HighestPerformance
-    ResourceTemplate () {Register (FFixedHW, 8, 8, 0xCE, 4)},    // Nominal Performance - Maximum Non Turbo Ratio
-    ResourceTemplate () {Register (FFixedHW, 8, 16, 0x771, 4)},  //Lowest nonlinear Performance
+    ResourceTemplate () {Register (FFixedHW, 8, 8, 0xCE, 4)},    // Nominal Performance = P1Ratio[i] * IpcScaling[i] / 100
+    ResourceTemplate () {Register (FFixedHW, 8, 16, 0x771, 4)},  // Lowest nonlinear Performance
     ResourceTemplate () {Register (FFixedHW, 8, 24, 0x771, 4)},  // LowestPerformance
     ResourceTemplate () {Register (FFixedHW, 8, 8, 0x0771, 4)},  // Guaranteed Performance
     ResourceTemplate () {Register (FFixedHW, 8, 16, 0x0774, 4)}, // Desired PerformanceRegister
@@ -119,70 +88,98 @@ Scope(\_SB.PR00)
     1, // Autonomous selection enable register (Exclusively autonomous)
     ResourceTemplate () {Register (FFixedHW, 10, 32, 0x774, 4)}, // Autonomous activity window register
     ResourceTemplate () {Register (FFixedHW, 8, 24, 0x774, 4)},  // Autonomous energy performance preference register
-    0, // Reference performance (not supported)
+    0, // Reference Performance = MaxNonTurboRatio * IpcScaling[i] / 100
     0, // Lowest Frequency (not supported)
-    0, // Nominal Frequency
+    0, // Nominal Frequency = P1Ratio[i] * BusFrequency
+  })
+
+  Name (CPC4, Package ()
+  {
+    25, // Number of entries
+    04, // Revision
+    //
+    // Describe processor capabilities
+    //
+    ResourceTemplate () {Register (FFixedHW, 8, 0, 0x771, 4)},   // HighestPerformance
+    ResourceTemplate () {Register (FFixedHW, 8, 8, 0xCE, 4)},    // Nominal Performance = P1Ratio[i] * IpcScaling[i] / 100
+    ResourceTemplate () {Register (FFixedHW, 8, 16, 0x771, 4)},  // Lowest nonlinear Performance
+    ResourceTemplate () {Register (FFixedHW, 8, 24, 0x771, 4)},  // LowestPerformance
+    ResourceTemplate () {Register (FFixedHW, 8, 8, 0x0771, 4)},  // Guaranteed Performance
+    ResourceTemplate () {Register (FFixedHW, 8, 16, 0x0774, 4)}, // Desired PerformanceRegister
+    ResourceTemplate () {Register (FFixedHW, 8, 0, 0x774, 4)},   // Minimum PerformanceRegister
+    ResourceTemplate () {Register (FFixedHW, 8, 8, 0x774, 4)},   // Maximum PerformanceRegister
+    ResourceTemplate () {Register (SystemMemory, 0, 0, 0, 0)},   // Performance ReductionToleranceRegister (Null)
+    ResourceTemplate () {Register (SystemMemory, 0, 0, 0, 0)},   // Time window  register (Null)
+    ResourceTemplate () {Register (SystemMemory, 0, 0, 0, 0)},   // Counter wrap around time (Null)
+    ResourceTemplate () {Register (FFixedHW, 64, 0, 0xE7, 4)},   // Reference counter register (PPERF)
+    ResourceTemplate () {Register (FFixedHW, 64, 0, 0xE8, 4)},   // Delivered counter register (APERF)
+    ResourceTemplate () {Register (FFixedHW, 2, 1, 0x777, 4)},   // Performance limited register
+    ResourceTemplate () {Register (FFixedHW, 1, 0, 0x770, 4)},   // Enable register
+    1, // Autonomous selection enable register (Exclusively autonomous)
+    ResourceTemplate () {Register (FFixedHW, 10, 32, 0x774, 4)}, // Autonomous activity window register
+    ResourceTemplate () {Register (FFixedHW, 8, 24, 0x774, 4)},  // Autonomous energy performance preference register
+    0, // Reference Performance = MaxNonTurboRatio * IpcScaling[i] / 100
+    0, // Lowest Frequency (not supported)
+    0, // Nominal Frequency = P1Ratio[i] * BusFrequency
     0, // OSPMNominalPerformanceRegister
     //
     // Resource Priority Feature
     //
     Package () {
-      Package() {0x00000003, 0x00000004, 0x00000005},//ControlledResources
-      1, //Enable Value
-      ResourceTemplate () {Register (FFixedHW, 1, 0, 0xC88, 4)}, //Enable Register
-      4, //Priority Count
-      ResourceTemplate () {Register (FFixedHW, 32, 32, 0xC8F, 4)}// Priority Register
+      Package() {
+        Package(0x3) {0x00000003, 0x00000004, 0x00000005},//ControlledResources
+        1, //Enable Value
+        ResourceTemplate () {Register (FFixedHW, 0x1, 0x0, 0xC88, 0x4)}, //Enable Register
+        4, //Priority Count
+        ResourceTemplate () {Register (FFixedHW, 0x04, 0x20, 0xC8F, 0x4)}// Priority Register
+      }
     }
   })
 
-  Method (GCPC,1)
+  //
+  // GCPC (Index, P1Ratio, IpcScaling)
+  //
+  Method (GCPC,3)
   {
     //
-    // Update nominal frequency and ratio for big core or small core
+    // ReferencePerformance = MaxNonTurboRatio * IpcScaling[i] / 100
     //
-    If (RPEF) {
-      Store (NMFQ, Index (CPC4, 22))
-      If (And (ShiftRight (CORE, Arg0), BIT0)) {
-        Store (SFBC, Index (CPC4, 3))
-      } Else {
-        Store (SFSC, Index (CPC4, 3))
-      }
-    } Else {
-      Store (NMFQ, Index (CPC3, 22))
-      If (And (ShiftRight (CORE, Arg0), BIT0)) {
-        Store (SFBC, Index (CPC3, 3))
-      } Else {
-        Store (SFSC, Index (CPC3, 3))
-      }
-    }
+    Local0 = MXP1 * Arg2
+    Local0 /= 100
+    //ADBG(Concatenate("  _CPC.ReferencePerformance (Max P1 * Scaling / 100) = ", ToDecimalString (Local0)))
+    Store (Local0, Index (CPC3, 20))
+    Store (Local0, Index (CPC4, 20))
+
+    //
+    // NominalFrequency = P1Ratio[i] * BusFrequency
+    //
+    Local0 = Arg1 * BSFQ
+    //ADBG(Concatenate("  _CPC.NominalFrequency (P1 * BusFrequency) =", ToDecimalString(Local0)))
+    Store (Local0, Index (CPC3, 22))
+    Store (Local0, Index (CPC4, 22))
+
+    //
+    // NominalPerformance = PerCoreP1Ratio[i] * IpcScaling[i] / 100
+    //
+    Local0 = Arg1 * Arg2
+    Local0 /= 100
+    //ADBG(Concatenate("  _CPC.NominalPerformance (P1 * Scaling / 100) = ", ToDecimalString(Local0)))
+    Store (Local0, Index (CPC3, 3))
+    Store (Local0, Index (CPC4, 3))
 
     //
     // Must return different values for HighestPerformance with the conditions as below:
     //  ==============================================================================================
     // | OC Enabled:                                  | OC Disabled:                                  |
     // |   - ITBM3 Supported                          |  - ITBM3 Supported                            |
-    // |      - ITBM3 Enabled                         |    - ITBM3 Enabled                            |
-    // |        - _CPC Native ITBM3 : MSR 0x771       |      - _CPC Native ITBM3 : MSR 0x771          |
-    // |      - ITBM3 Disabled                        |    - ITBM3 Disabled  (only for Big core)      |
-    // |        - _CPC : (Max Perf = 255)             |      - _CPC : (MAX Perf = LowestMaxPerf)      |
+    // |     - _CPC Native ITBM3 : MSR 0x771          |    - _CPC Native ITBM3 : MSR 0x771            |
     // |   - ITBM3 Not supported : (Max Perf = 255)   |  - ITBM3 Not supported : MSR 0x771            |
     //  ==============================================================================================
     //
     If (And (\_SB.CFGD, PPM_OC_UNLOCKED)) {  // OC enabled
-      If (LOr(LEqual (And (\_SB.CFGD, PPM_TURBO_BOOST_MAX), 0), LEqual (\_SB.ITBM,0))) { // ITBM3 unsupported or ITBM3 disabled
+      If (LEqual (And (\_SB.CFGD, PPM_TURBO_BOOST_MAX), 0)) { // ITBM3 unsupported
         Store (0xFF, Index (CPC3, 2))
         Store (0xFF, Index (CPC4, 2))
-      }
-    } Else {  // OC disabled
-      If (LEqual (\_SB.ITBM, 0)) { // ITBM3 disabled
-        //
-        // Intel Turbo Boost Max Technology 3.0 is available and when policy is disabled
-        // Here the _CPC object will report the highest performance of the slowest core. (only for Big core)
-        //
-        If (LAnd(LNotEqual (\_SB.LMPS, 0), LEqual (And (ShiftRight (CORE, Arg0), BIT0),1))) {
-          Store (LMPS, Index (CPC3, 2))
-          Store (LMPS, Index (CPC4, 2))
-        }
       }
     }
 
@@ -193,10 +190,10 @@ Scope(\_SB.PR00)
     }
   }
 
-  Method(_CPC,0)
+  Method (_CPC,0)
   {
-    Return(GCPC(0))
+    Return (GCPC (0, P100, IS00))
   }
-}// end Scope(\_SB.PR00)
+}// end Scope (\_SB.PR00)
 
 }// end of definition block

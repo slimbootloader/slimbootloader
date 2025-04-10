@@ -903,6 +903,7 @@ AcpiPatchPss (
   MsrValue.Qword = AsmReadMsr64 (MSR_PLATFORM_INFO);
   PssParams.MaxBusRatio = MsrValue.Bytes.SecondByte;
   PssParams.MinBusRatio = MsrValue.Bytes.SixthByte;
+
   if ((GlobalNvs->CpuNvs.PpmFlags & PPM_TURBO) != 0) {
     MsrValue.Qword = AsmReadMsr64 (MSR_TURBO_RATIO_LIMIT);
     PssParams.TurboBusRatio = (UINT8)(MsrValue.Dwords.Low & 0xFF);
@@ -1197,6 +1198,9 @@ UpdateCpuNvs (
   UINT16                      C9Latency = 0;
   UINT16                      C10Latency = 0;
   UINT8                       Index;
+  CPUID_PROCESSOR_FREQUENCY_ECX  ProcessorFreq;
+  MSR_PLATFORM_INFO_REGISTER     PlatformInfoMsr;
+  CPU_POWER_MANAGEMENT_DATA_HOB  *CpuPowerMgmtDataHob;
 
   if (CpuNvs == NULL) {
     DEBUG ((DEBUG_ERROR, "Invalid Cpu Nvs pointer!!!\n"));
@@ -1218,6 +1222,14 @@ UpdateCpuNvs (
 
   CpuInitDataHob = GET_GUID_HOB_DATA (GuidHob);
 
+  ///
+  /// Get CPU Power Management Data Hob
+  ///
+  CpuPowerMgmtDataHob = GetNextGuidHob (&gCpuPowerManagementDataHobGuid, FspHobList);
+  if (CpuPowerMgmtDataHob == NULL) {
+    DEBUG ((DEBUG_ERROR, "CPU Power Management Data Hob not available\n"));
+    return;
+  }
   ///
   /// Update NVS ASL items.
   ///
@@ -1371,15 +1383,17 @@ UpdateCpuNvs (
     CpuNvs->CtdpCtc[Index] = CpuInitDataHob->CtdpCtc[Index];                             /// CTDP Levels CTC
     CpuNvs->CtdpPpc[Index] = CpuInitDataHob->CtdpPpc[Index];                             /// CTDP Levels PPC
   }
-  CpuNvs->EnableItbm = CpuInitDataHob->EnableItbm;                                         /// Enable/Disable Intel Turbo Boost Max Technology 3.0.
-  CpuNvs->LowestMaxPerf = CpuInitDataHob->LowestMaxPerf;                                   /// Max ratio of the slowest core
+
   CpuNvs->ConfigurablePpc = CpuInitDataHob->ConfigurablePpc;                               /// Max ratio of the slowest core
+  CpuNvs->EnableRp        = CpuPowerMgmtDataHob->EnableRp;                                           /// Enable/Disable Resource Priority Feature
   CpuNvs->CoreType       = 0xFF00;
   CpuNvs->HeteroStatus   = IsHeteroCoreSupported();
-  CpuNvs->ScalingFactorSmallCore=12;
-  CpuNvs->ScalingFactorBigCore=15;
-  //DEBUG ((DEBUG_INFO, "BigCore Count %d SmallCore Count %d\n",CpuNvs->BigCoreCount, CpuNvs->SmallCoreCount));
 
+  AsmCpuid (CPUID_PROCESSOR_FREQUENCY, NULL, NULL, &ProcessorFreq.Uint32, NULL);
+  CpuNvs->BusFrequency = (UINT16) ProcessorFreq.Bits.BusFrequency;
+
+  PlatformInfoMsr.Uint64 = AsmReadMsr64 (MSR_PLATFORM_INFO);
+  CpuNvs->MaxP1Ratio     = (UINT8) PlatformInfoMsr.Bits.MaxNonTurboLimRatio;
   DEBUG ((DEBUG_INFO, "Update Cpu Nvs Done\n"));
 }
 

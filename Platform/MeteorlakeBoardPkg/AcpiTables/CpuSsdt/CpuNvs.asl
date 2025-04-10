@@ -57,9 +57,7 @@
   Offset(54),     CDPW, 16, // Offset(54),    Power value for C8/C9/C10
   Offset(56),     MPMF, 8,  // Offset(56),    MiscPowerManagementFlags
   Offset(57),     HWPV, 8,  // Offset(57),    HWP Version
-  Offset(85),               // Offset(58) : Offset(84), Reserved bytes
-  Offset(85),     LMPS, 8,  // Offset(85),    Max ratio of the slowest core.
-  Offset(86),     ITBM, 8,  // Offset(86),    Enable/Disable Intel Turbo Boost Max Technology 3.0.
+  Offset(87),               // Offset(58) : Offset(86), Reserved bytes
   Offset(87),     OBIN, 8,  // Offset(87),    Indicates bins of Oc support. MSR 194h FLEX_RATIO Bits (19:17)
   Offset(88),     HWPE, 8,  // Offset(88),    HWP Enable
   Offset(89),     HTRO, 8,  // Offset(89),    Indicates whether Hetero is supported by SoC
@@ -128,8 +126,135 @@
   Offset(152),    CM62, 8,  // Offset(152),   Indicates the number of cores in a module and module ID of Processor 62. 07:4 - Number of cores in a module. 3:0 - ModuleID
   Offset(153),    CM63, 8,  // Offset(153),   Indicates the number of cores in a module and module ID of Processor 63. 07:4 - Number of cores in a module. 3:0 - ModuleID
   Offset(154),    CORE, 64, // Offset(154),   Each bit indicates the core type
-  Offset(162),    SFSC, 16, // Offset(162),   Indicates the Scaling Factor for Small Core
-  Offset(164),    SFBC, 16, // Offset(164),   Indicates the Scaling Factor for Big Core
-  Offset(166),    NMFQ, 16, // Offset(166),   Nominal Frequency
-  Offset(168),    RPEF, 8,  // Offset(168),   Enable/Disable Resource Priority Feature
+  Offset(162),    P100, 8,  // Offset(162),   Indicate the P1 ratio of core 0
+  Offset(163),    P101, 8,  // Offset(163),   Indicate the P1 ratio of core 1
+  Offset(164),    P102, 8,  // Offset(164),   Indicate the P1 ratio of core 2
+  Offset(165),    P103, 8,  // Offset(165),   Indicate the P1 ratio of core 3
+  Offset(166),    P104, 8,  // Offset(166),   Indicate the P1 ratio of core 4
+  Offset(167),    P105, 8,  // Offset(167),   Indicate the P1 ratio of core 5
+  Offset(168),    P106, 8,  // Offset(168),   Indicate the P1 ratio of core 6
+  Offset(169),    P107, 8,  // Offset(169),   Indicate the P1 ratio of core 7
+  Offset(170),    P108, 8,  // Offset(170),   Indicate the P1 ratio of core 8
+  Offset(171),    P109, 8,  // Offset(171),   Indicate the P1 ratio of core 9
+  Offset(172),    P110, 8,  // Offset(172),   Indicate the P1 ratio of core 10
+  Offset(173),    P111, 8,  // Offset(173),   Indicate the P1 ratio of core 11
+  Offset(174),    P112, 8,  // Offset(174),   Indicate the P1 ratio of core 12
+  Offset(175),    P113, 8,  // Offset(175),   Indicate the P1 ratio of core 13
+  Offset(176),    P114, 8,  // Offset(176),   Indicate the P1 ratio of core 14
+  Offset(177),    P115, 8,  // Offset(177),   Indicate the P1 ratio of core 15
+  Offset(178),    P116, 8,  // Offset(178),   Indicate the P1 ratio of core 16
+  Offset(179),    P117, 8,  // Offset(179),   Indicate the P1 ratio of core 17
+  Offset(180),    P118, 8,  // Offset(180),   Indicate the P1 ratio of core 18
+  Offset(181),    P119, 8,  // Offset(181),   Indicate the P1 ratio of core 19
+  Offset(182),    P120, 8,  // Offset(182),   Indicate the P1 ratio of core 20
+  Offset(183),    P121, 8,  // Offset(183),   Indicate the P1 ratio of core 21
+  Offset(184),    P122, 8,  // Offset(184),   Indicate the P1 ratio of core 22
+  Offset(185),    P123, 8,  // Offset(185),   Indicate the P1 ratio of core 23
+  Offset(186),    P124, 8,  // Offset(186),   Indicate the P1 ratio of core 24
+  Offset(187),    P125, 8,  // Offset(187),   Indicate the P1 ratio of core 25
+  Offset(188),    P126, 8,  // Offset(188),   Indicate the P1 ratio of core 26
+  Offset(189),    P127, 8,  // Offset(189),   Indicate the P1 ratio of core 27
+  Offset(190),    P128, 8,  // Offset(190),   Indicate the P1 ratio of core 28
+  Offset(191),    P129, 8,  // Offset(191),   Indicate the P1 ratio of core 29
+  Offset(192),    P130, 8,  // Offset(192),   Indicate the P1 ratio of core 30
+  Offset(193),    P131, 8,  // Offset(193),   Indicate the P1 ratio of core 31
+  Offset(194),    P132, 8,  // Offset(194),   Indicate the P1 ratio of core 32
+  Offset(195),    P133, 8,  // Offset(195),   Indicate the P1 ratio of core 33
+  Offset(196),    P134, 8,  // Offset(196),   Indicate the P1 ratio of core 34
+  Offset(197),    P135, 8,  // Offset(197),   Indicate the P1 ratio of core 35
+  Offset(198),    P136, 8,  // Offset(198),   Indicate the P1 ratio of core 36
+  Offset(199),    P137, 8,  // Offset(199),   Indicate the P1 ratio of core 37
+  Offset(200),    P138, 8,  // Offset(200),   Indicate the P1 ratio of core 38
+  Offset(201),    P139, 8,  // Offset(201),   Indicate the P1 ratio of core 39
+  Offset(202),    P140, 8,  // Offset(202),   Indicate the P1 ratio of core 40
+  Offset(203),    P141, 8,  // Offset(203),   Indicate the P1 ratio of core 41
+  Offset(204),    P142, 8,  // Offset(204),   Indicate the P1 ratio of core 42
+  Offset(205),    P143, 8,  // Offset(205),   Indicate the P1 ratio of core 43
+  Offset(206),    P144, 8,  // Offset(206),   Indicate the P1 ratio of core 44
+  Offset(207),    P145, 8,  // Offset(207),   Indicate the P1 ratio of core 45
+  Offset(208),    P146, 8,  // Offset(208),   Indicate the P1 ratio of core 46
+  Offset(209),    P147, 8,  // Offset(209),   Indicate the P1 ratio of core 47
+  Offset(210),    P148, 8,  // Offset(210),   Indicate the P1 ratio of core 48
+  Offset(211),    P149, 8,  // Offset(211),   Indicate the P1 ratio of core 49
+  Offset(212),    P150, 8,  // Offset(212),   Indicate the P1 ratio of core 50
+  Offset(213),    P151, 8,  // Offset(213),   Indicate the P1 ratio of core 51
+  Offset(214),    P152, 8,  // Offset(214),   Indicate the P1 ratio of core 52
+  Offset(215),    P153, 8,  // Offset(215),   Indicate the P1 ratio of core 53
+  Offset(216),    P154, 8,  // Offset(216),   Indicate the P1 ratio of core 54
+  Offset(217),    P155, 8,  // Offset(217),   Indicate the P1 ratio of core 55
+  Offset(218),    P156, 8,  // Offset(218),   Indicate the P1 ratio of core 56
+  Offset(219),    P157, 8,  // Offset(219),   Indicate the P1 ratio of core 57
+  Offset(220),    P158, 8,  // Offset(220),   Indicate the P1 ratio of core 58
+  Offset(221),    P159, 8,  // Offset(221),   Indicate the P1 ratio of core 59
+  Offset(222),    P160, 8,  // Offset(222),   Indicate the P1 ratio of core 60
+  Offset(223),    P161, 8,  // Offset(223),   Indicate the P1 ratio of core 61
+  Offset(224),    P162, 8,  // Offset(224),   Indicate the P1 ratio of core 62
+  Offset(225),    P163, 8,  // Offset(225),   Indicate the P1 ratio of core 63
+  Offset(226),    IS00, 8,  // Offset(226),   Indicate the IPC scaling of core 0
+  Offset(227),    IS01, 8,  // Offset(227),   Indicate the IPC scaling of core 1
+  Offset(228),    IS02, 8,  // Offset(228),   Indicate the IPC scaling of core 2
+  Offset(229),    IS03, 8,  // Offset(229),   Indicate the IPC scaling of core 3
+  Offset(230),    IS04, 8,  // Offset(230),   Indicate the IPC scaling of core 4
+  Offset(231),    IS05, 8,  // Offset(231),   Indicate the IPC scaling of core 5
+  Offset(232),    IS06, 8,  // Offset(232),   Indicate the IPC scaling of core 6
+  Offset(233),    IS07, 8,  // Offset(233),   Indicate the IPC scaling of core 7
+  Offset(234),    IS08, 8,  // Offset(234),   Indicate the IPC scaling of core 8
+  Offset(235),    IS09, 8,  // Offset(235),   Indicate the IPC scaling of core 9
+  Offset(236),    IS10, 8,  // Offset(236),   Indicate the IPC scaling of core 10
+  Offset(237),    IS11, 8,  // Offset(237),   Indicate the IPC scaling of core 11
+  Offset(238),    IS12, 8,  // Offset(238),   Indicate the IPC scaling of core 12
+  Offset(239),    IS13, 8,  // Offset(239),   Indicate the IPC scaling of core 13
+  Offset(240),    IS14, 8,  // Offset(240),   Indicate the IPC scaling of core 14
+  Offset(241),    IS15, 8,  // Offset(241),   Indicate the IPC scaling of core 15
+  Offset(242),    IS16, 8,  // Offset(242),   Indicate the IPC scaling of core 16
+  Offset(243),    IS17, 8,  // Offset(243),   Indicate the IPC scaling of core 17
+  Offset(244),    IS18, 8,  // Offset(244),   Indicate the IPC scaling of core 18
+  Offset(245),    IS19, 8,  // Offset(245),   Indicate the IPC scaling of core 19
+  Offset(246),    IS20, 8,  // Offset(246),   Indicate the IPC scaling of core 20
+  Offset(247),    IS21, 8,  // Offset(247),   Indicate the IPC scaling of core 21
+  Offset(248),    IS22, 8,  // Offset(248),   Indicate the IPC scaling of core 22
+  Offset(249),    IS23, 8,  // Offset(249),   Indicate the IPC scaling of core 23
+  Offset(250),    IS24, 8,  // Offset(250),   Indicate the IPC scaling of core 24
+  Offset(251),    IS25, 8,  // Offset(251),   Indicate the IPC scaling of core 25
+  Offset(252),    IS26, 8,  // Offset(252),   Indicate the IPC scaling of core 26
+  Offset(253),    IS27, 8,  // Offset(253),   Indicate the IPC scaling of core 27
+  Offset(254),    IS28, 8,  // Offset(254),   Indicate the IPC scaling of core 28
+  Offset(255),    IS29, 8,  // Offset(255),   Indicate the IPC scaling of core 29
+  Offset(256),    IS30, 8,  // Offset(256),   Indicate the IPC scaling of core 30
+  Offset(257),    IS31, 8,  // Offset(257),   Indicate the IPC scaling of core 31
+  Offset(258),    IS32, 8,  // Offset(258),   Indicate the IPC scaling of core 32
+  Offset(259),    IS33, 8,  // Offset(259),   Indicate the IPC scaling of core 33
+  Offset(260),    IS34, 8,  // Offset(260),   Indicate the IPC scaling of core 34
+  Offset(261),    IS35, 8,  // Offset(261),   Indicate the IPC scaling of core 35
+  Offset(262),    IS36, 8,  // Offset(262),   Indicate the IPC scaling of core 36
+  Offset(263),    IS37, 8,  // Offset(263),   Indicate the IPC scaling of core 37
+  Offset(264),    IS38, 8,  // Offset(264),   Indicate the IPC scaling of core 38
+  Offset(265),    IS39, 8,  // Offset(265),   Indicate the IPC scaling of core 39
+  Offset(266),    IS40, 8,  // Offset(266),   Indicate the IPC scaling of core 40
+  Offset(267),    IS41, 8,  // Offset(267),   Indicate the IPC scaling of core 41
+  Offset(268),    IS42, 8,  // Offset(268),   Indicate the IPC scaling of core 42
+  Offset(269),    IS43, 8,  // Offset(269),   Indicate the IPC scaling of core 43
+  Offset(270),    IS44, 8,  // Offset(270),   Indicate the IPC scaling of core 44
+  Offset(271),    IS45, 8,  // Offset(271),   Indicate the IPC scaling of core 45
+  Offset(272),    IS46, 8,  // Offset(272),   Indicate the IPC scaling of core 46
+  Offset(273),    IS47, 8,  // Offset(273),   Indicate the IPC scaling of core 47
+  Offset(274),    IS48, 8,  // Offset(274),   Indicate the IPC scaling of core 48
+  Offset(275),    IS49, 8,  // Offset(275),   Indicate the IPC scaling of core 49
+  Offset(276),    IS50, 8,  // Offset(276),   Indicate the IPC scaling of core 50
+  Offset(277),    IS51, 8,  // Offset(277),   Indicate the IPC scaling of core 51
+  Offset(278),    IS52, 8,  // Offset(278),   Indicate the IPC scaling of core 52
+  Offset(279),    IS53, 8,  // Offset(279),   Indicate the IPC scaling of core 53
+  Offset(280),    IS54, 8,  // Offset(280),   Indicate the IPC scaling of core 54
+  Offset(281),    IS55, 8,  // Offset(281),   Indicate the IPC scaling of core 55
+  Offset(282),    IS56, 8,  // Offset(282),   Indicate the IPC scaling of core 56
+  Offset(283),    IS57, 8,  // Offset(283),   Indicate the IPC scaling of core 57
+  Offset(284),    IS58, 8,  // Offset(284),   Indicate the IPC scaling of core 58
+  Offset(285),    IS59, 8,  // Offset(285),   Indicate the IPC scaling of core 59
+  Offset(286),    IS60, 8,  // Offset(286),   Indicate the IPC scaling of core 60
+  Offset(287),    IS61, 8,  // Offset(287),   Indicate the IPC scaling of core 61
+  Offset(288),    IS62, 8,  // Offset(288),   Indicate the IPC scaling of core 62
+  Offset(289),    IS63, 8,  // Offset(289),   Indicate the IPC scaling of core 63
+  Offset(290),    MXP1, 8,  // Offset(290),   Indicate the max P1 ratio of all cores
+  Offset(291),    BSFQ, 16, // Offset(291),   Bus frequency
+  Offset(293),    RPEF, 8,  // Offset(293),   Enable/Disable Resource Priority Feature
   }

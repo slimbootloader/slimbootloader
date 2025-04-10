@@ -94,7 +94,7 @@ POWER_CFG_DATA.Cx                             | 0x0
 POWER_CFG_DATA.C1e                            | 0x0
 POWER_CFG_DATA.TimedMwait                     | 1
 POWER_CFG_DATA.PkgCStateLimit                 | 0
-POWER_CFG_DATA.Eist                           | 0
+POWER_CFG_DATA.Eist                           | 1
 POWER_CFG_DATA.Hwp                            | 1
 POWER_CFG_DATA.EnableHwpAutoEppGrouping       | 1
 

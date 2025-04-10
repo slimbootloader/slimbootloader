@@ -65,4 +65,9 @@ typedef struct {
   **/
   UINT8                  PerAtomClusterRatio[CPU_MAX_ATOM_CLUSTERS];
 } CPU_INIT_DATA_HOB;
+
+typedef struct {
+  UINT8                         Revision;
+  UINT8                         EnableRp;                                         /// Enable/Disable Resource Priority Feature
+} CPU_POWER_MANAGEMENT_DATA_HOB;
 #endif
