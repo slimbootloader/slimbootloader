@@ -842,6 +842,14 @@ UpdateFspConfig (
   FspsConfig->SerialIoSpiMosiPinMux[0] = 0x14a48d;
   FspsConfig->DmiPowerGatingDis = 0x0;
 
+  switch (GetPlatformId ()) {
+    case BoardIdMtlPUpXtremei14:
+      FspsConfig->GnaEnable = 0x0;
+      break;
+    default:
+      break;
+    }
+
   // EndOfPost Upd
   FspsUpd->FspsConfig.EndOfPostMessage = 1;
   if (FeaturesCfgData != NULL) {
