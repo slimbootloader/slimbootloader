@@ -211,7 +211,8 @@ class Board(BaseBoard):
         self._CFGDATA_INT_FILE = []
         self._CFGDATA_EXT_FILE = [self._generated_cfg_file_prefix + 'CfgData_Int_Mtlp_DDR5_Rvp.dlt', self._generated_cfg_file_prefix + 'CfgData_Int_Mtlps_DDR5_RVP.dlt',
                                   self._generated_cfg_file_prefix + 'CfgData_Int_Mtlps_DDR5_CRB.dlt', self._generated_cfg_file_prefix + 'CfgData_Int_Mtlp_LPDDR5_Rvp.dlt',
-                                  self._generated_cfg_file_prefix + 'CfgData_Int_Mtlp_DDR5_CRB.dlt', self._generated_cfg_file_prefix + 'CfgData_Int_Mtlp_DDR5_MCL.dlt']
+                                  self._generated_cfg_file_prefix + 'CfgData_Int_Mtlp_DDR5_CRB.dlt', self._generated_cfg_file_prefix + 'CfgData_Int_Mtlp_DDR5_MCL.dlt',
+                                  self._generated_cfg_file_prefix + 'CfgData_Ext_Upx14.dlt']
 
     def PlatformBuildHook (self, build, phase):
         if phase == 'pre-build:before':

@@ -131,6 +131,8 @@ UpdateFspConfig (
   //Update if embedded memory needed
   ZeroMem (SpdData, sizeof(SpdData));
   SpdData[1] = (UINT32)(UINTN) (((MEM_SPD0_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD0_TAG))->MemorySpdPtr0);
+  SpdData[2] = (UINT32)(UINTN) (((MEM_SPD1_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD1_TAG))->MemorySpdPtr1);
+
   Fspmcfg->MemorySpdPtr000  = SpdData[MemCfgData->SpdDataSel000];
   Fspmcfg->MemorySpdPtr001  = SpdData[MemCfgData->SpdDataSel001];
   Fspmcfg->MemorySpdPtr010  = SpdData[MemCfgData->SpdDataSel010];
@@ -340,6 +342,11 @@ UpdateFspConfig (
   case BoardIdMtlPDdr5SODimmSbsRvp:
     DEBUG((DEBUG_INFO, "BoardIdMtlPDdr5SODimmSbsRvp board Id %x .....\n", BoardId));
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mMtlPDdr5SODimmSbsRvpRowDisplayDdiConfig, sizeof(mMtlPDdr5SODimmSbsRvpRowDisplayDdiConfig));
+    break;
+  case BoardIdMtlPUpXtremei14:
+    DEBUG((DEBUG_INFO, "BoardIdMtlPUpXtremei14 board Id %x .....\n", BoardId));
+    CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mMtlPDdr5SODimmSbsRvpRowDisplayDdiConfig, sizeof(mMtlPDdr5SODimmSbsRvpRowDisplayDdiConfig));
+    Fspmcfg->Lp5CccConfig = 0x5E;
     break;
   case BoardIdMtlPLp5xT3Rvp:
     DEBUG((DEBUG_INFO, "BoardIdMtlPDdr5SODimmSbsRvp board Id %x .....\n", BoardId));
