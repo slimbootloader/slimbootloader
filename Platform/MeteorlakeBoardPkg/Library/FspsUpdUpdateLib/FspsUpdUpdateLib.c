@@ -553,6 +553,9 @@ UpdateFspConfig (
     CopyMem (&FspsConfig->PcieRpAdvancedErrorReporting, SiCfgData->PcieRpAdvancedErrorReporting, sizeof(SiCfgData->PcieRpAdvancedErrorReporting));
     CopyMem (&FspsConfig->PtmEnabled, SiCfgData->PtmEnabled, sizeof(SiCfgData->PtmEnabled));
 
+    // NPU
+    FspsConfig->GnaEnable = SiCfgData->GnaEnable;
+
     MaxPcieRootPorts = GetPchMaxPciePortNum ();
     for (Index = 0; Index < MaxPcieRootPorts; Index++) {
       FspsConfig->PcieRpLtrMaxSnoopLatency[Index]           = 0x100F;

@@ -42,6 +42,9 @@ Defines Platform BoardIds
 
 #define BoardIdMtlPDdr5MemSolderDowndTBTRvp   0x05
 
+#define BoardIdMtlPUpXtremei14                0x09
+#define PLATFORM_ID_MTL_P_UPXI14              0x09
+
 // MTL M Board Id's
 #define BoardIdMtlMLp5xConf1Erb               0x0E
 #define BoardIdMtlMLp5xConf1Rvp               0x06

@@ -36,6 +36,7 @@
       help         : >
                      Pointer to SPD data in Memory
       length       : 0x200
+      value        : {FILE: Spd_Data_MtlP_Upx14.bin}
 
 - MEM_SPD2_CFG_DATA :
   - !expand { CFGHDR_TMPL : [ MEM_SPD2_CFG_DATA, 0x8F2, 0, 0 ] }
