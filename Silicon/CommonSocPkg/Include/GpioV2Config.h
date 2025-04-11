@@ -21,17 +21,23 @@ typedef UINT32  GPIOV2_PAD_GROUP;
 
 #define GPIO_STATE(Val)  (UINT32) ((Val >> 1) & 0x01)
 
-#define GPIOV2_PAD_MASK_CHIPSETID              (0xFF)
-#define GPIOV2_PAD_POS_CHIPSETID               (16)
-#define GPIOV2_PAD_MASK_COMMUNITY_INDEX        (0xF)
-#define GPIOV2_PAD_POS_COMMUNITY_INDEX         (12)
-#define GPIOV2_PAD_MASK_GROUP_INDEX            (0xF)
-#define GPIOV2_PAD_POS_GROUP_INDEX             (8)
-#define GPIOV2_PAD_MASK_PAD_INDEX              (0xFF)
+#define GPIOV2_PAD_MASK_FUNCTIONALITY          (0x3FF)
+#define GPIOV2_PAD_POS_FUNCTIONALITY           (22)
+#define GPIOV2_PAD_MASK_CHIPSETID              (0x1F)
+#define GPIOV2_PAD_POS_CHIPSETID               (17)
+#define GPIOV2_PAD_MASK_NATIVE_FUNCTION        (0xF)
+#define GPIOV2_PAD_POS_NATIVE_FUNCTION         (13)
+#define GPIOV2_PAD_MASK_COMMUNITY_INDEX        (0x7)
+#define GPIOV2_PAD_POS_COMMUNITY_INDEX         (10)
+#define GPIOV2_PAD_MASK_GROUP_INDEX            (0x7)
+#define GPIOV2_PAD_POS_GROUP_INDEX             (7)
+#define GPIOV2_PAD_MASK_PAD_INDEX              (0x7F)
 #define GPIOV2_PAD_POS_PAD_INDEX               (0)
 
 #define GPIOV2_PAD_ID(Functionality, ChipsetId, NativeFunction, CommunityIndex, GroupIndex, PadIndex) \
-        ( ((ChipsetId & GPIOV2_PAD_MASK_CHIPSETID) << GPIOV2_PAD_POS_CHIPSETID) |\
+        ( ((Functionality & GPIOV2_PAD_MASK_FUNCTIONALITY) << GPIOV2_PAD_POS_FUNCTIONALITY) |\
+          ((ChipsetId & GPIOV2_PAD_MASK_CHIPSETID) << GPIOV2_PAD_POS_CHIPSETID) |\
+          ((NativeFunction & GPIOV2_PAD_MASK_NATIVE_FUNCTION) << GPIOV2_PAD_POS_NATIVE_FUNCTION) |\
           ((CommunityIndex & GPIOV2_PAD_MASK_COMMUNITY_INDEX) << GPIOV2_PAD_POS_COMMUNITY_INDEX) |\
           ((GroupIndex & GPIOV2_PAD_MASK_GROUP_INDEX) << GPIOV2_PAD_POS_GROUP_INDEX) |\
           ((PadIndex & GPIOV2_PAD_MASK_PAD_INDEX) << GPIOV2_PAD_POS_PAD_INDEX) \
