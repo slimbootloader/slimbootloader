@@ -25,7 +25,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
-  Silicon/ArrowlakePkg/ArrowlakePkg.dec
+  Silicon/MeteorlakePkg/MeteorlakePkg.dec
   Silicon/CommonSocPkg/CommonSocPkg.dec
 
 [LibraryClasses]

@@ -717,14 +717,14 @@ Scope(\_SB)
             // standby state with very limited SW activities
             \_SB.PC00.RP01.DL23()
 #if FixedPcdGetBool(PcdMtlPSSupport) == 1
-            Store(0x14040B, Index(RSTG, 0))
+            Store(0x1100B, Index(RSTG, 0)) // GPIOV2_MTL_SOC_M_GPP_A11
             Store(0x0, Index(RSTG, 1))
-            Store(0x14080B, Index(PWRG, 0))
+            Store(0x1200B, Index(PWRG, 0)) // GPIOV2_MTL_SOC_M_GPP_H11
             Store(0x1, Index(PWRG, 1))
 #else
-            Store(0x141082, Index(RSTG, 0))
+            Store(0x14102, Index(RSTG, 0)) // GPIOV2_MTL_SOC_M_GPP_D2
             Store(0x0, Index(RSTG, 1))
-            Store(0x140805, Index(PWRG, 0))
+            Store(0x12005, Index(PWRG, 0)) // GPIOV2_MTL_SOC_M_GPP_H5
             Store(0x1, Index(PWRG, 1))
 #endif
             \PIN.ON(RSTG)
@@ -734,9 +734,9 @@ Scope(\_SB)
             \_SB.SHPO (0, 0)
 
             \_SB.PC00.RP09.DL23()
-            Store(0x14040D, Index(RSTG, 0))
+            Store(0x1100D, Index(RSTG, 0)) // GPIOV2_MTL_SOC_M_GPP_A13
             Store(0x0, Index(RSTG, 1))
-            Store(0x141081, Index(PWRG, 0))
+            Store(0x14101, Index(PWRG, 0)) // GPIOV2_MTL_SOC_M_GPP_D1
             Store(0x1, Index(PWRG, 1))
             \PIN.ON(RSTG)
             \_SB.PSD3 (1)
@@ -745,9 +745,9 @@ Scope(\_SB)
             \_SB.SHPO (0, 0)
 
             \_SB.PC00.RP10.DL23()
-            Store(0x140894, Index(RSTG, 0))
+            Store(0x12114, Index(RSTG, 0)) // GPIOV2_MTL_SOC_M_GPP_F20
             Store(0x0, Index(RSTG, 1))
-            Store(0x140885, Index(PWRG, 0))
+            Store(0x12105, Index(PWRG, 0)) // GPIOV2_MTL_SOC_M_GPP_F5
             Store(0x1, Index(PWRG, 1))
             \PIN.ON(RSTG)
             \_SB.PSD3 (1)
@@ -756,9 +756,9 @@ Scope(\_SB)
             \_SB.SHPO (0, 0)
 
             \_SB.PC00.RP11.DL23()
-            Store(0x14040E, Index(RSTG, 0))
+            Store(0x1100E, Index(RSTG, 0)) // GPIOV2_MTL_SOC_M_GPP_A14
             Store(0x0, Index(RSTG, 1))
-            Store(0x141086, Index(PWRG, 0))
+            Store(0x14106, Index(PWRG, 0)) // GPIOV2_MTL_SOC_M_GPP_D6
             Store(0x1, Index(PWRG, 1))
             \PIN.ON(RSTG)
             \_SB.PSD3 (1)
@@ -797,14 +797,14 @@ Scope(\_SB)
             // call method specific to CS platforms when the system is in a
             // standby state with very limited SW activities
 #if FixedPcdGetBool(PcdMtlPSSupport) == 1
-            Store(0x14040B, Index(RSTG, 0))
+            Store(0x1100B, Index(RSTG, 0)) // GPIOV2_MTL_SOC_M_GPP_A11
             Store(0x0, Index(RSTG, 1))
-            Store(0x14080B, Index(PWRG, 0))
+            Store(0x1200B, Index(PWRG, 0)) // GPIOV2_MTL_SOC_M_GPP_H11
             Store(0x1, Index(PWRG, 1))
 #else
-            Store(0x141082, Index(RSTG, 0))
+            Store(0x14102, Index(RSTG, 0)) // GPIOV2_MTL_SOC_M_GPP_D2
             Store(0x0, Index(RSTG, 1))
-            Store(0x140805, Index(PWRG, 0))
+            Store(0x12005, Index(PWRG, 0)) // GPIOV2_MTL_SOC_M_GPP_H5
             Store(0x1, Index(PWRG, 1))
 #endif
             \_SB.SHPO (0, 1)
@@ -816,9 +816,9 @@ Scope(\_SB)
             \PIN.OFF (RSTG)
             \_SB.PC00.RP01.L23D()
 
-            Store(0x14040D, Index(RSTG, 0))
+            Store(0x1100D, Index(RSTG, 0)) // GPIOV2_MTL_SOC_M_GPP_A13
             Store(0x0, Index(RSTG, 1))
-            Store(0x141081, Index(PWRG, 0))
+            Store(0x14101, Index(PWRG, 0)) // GPIOV2_MTL_SOC_M_GPP_D1
             Store(0x1, Index(PWRG, 1))
             \_SB.SHPO (0, 1)
             \_SB.CAGS (0)
@@ -830,9 +830,9 @@ Scope(\_SB)
             \_SB.PC00.RP09.L23D()
 
 
-            Store(0x140894, Index(RSTG, 0))
+            Store(0x12114, Index(RSTG, 0)) // GPIOV2_MTL_SOC_M_GPP_F20
             Store(0x0, Index(RSTG, 1))
-            Store(0x140885, Index(PWRG, 0))
+            Store(0x12105, Index(PWRG, 0)) // GPIOV2_MTL_SOC_M_GPP_F5
             Store(0x1, Index(PWRG, 1))
             \_SB.SHPO (0, 1)
             \_SB.CAGS (0)
@@ -844,9 +844,9 @@ Scope(\_SB)
             \_SB.PC00.RP10.L23D()
 
 
-            Store(0x14040E, Index(RSTG, 0))
+            Store(0x1100E, Index(RSTG, 0)) // GPIOV2_MTL_SOC_M_GPP_A14
             Store(0x0, Index(RSTG, 1))
-            Store(0x141086, Index(PWRG, 0))
+            Store(0x14106, Index(PWRG, 0)) // GPIOV2_MTL_SOC_M_GPP_D6
             Store(0x1, Index(PWRG, 1))
             \_SB.SHPO (0, 1)
             \_SB.CAGS (0)
