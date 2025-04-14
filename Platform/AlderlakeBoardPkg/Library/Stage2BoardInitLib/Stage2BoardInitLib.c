@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -458,13 +458,13 @@ BoardInit (
   switch (InitPhase) {
   case PreSiliconInit:
     EnableLegacyRegions ();
+    ConfigureGpio (CDATA_GPIO_TAG, 0, NULL);
     switch (GetPlatformId ()) {
       case PLATFORM_ID_ADL_N_LPDDR5_RVP:
       case PLATFORM_ID_ADL_N_UP7EN50:
         ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePostMemAdlNLpddr5Rvp) / sizeof (mGpioTablePostMemAdlNLpddr5Rvp[0]), (UINT8*)mGpioTablePostMemAdlNLpddr5Rvp);
         break;
       default:
-        ConfigureGpio (CDATA_GPIO_TAG, 0, NULL);
         break;
     }
     if (GetBootMode() != BOOT_ON_FLASH_UPDATE) {

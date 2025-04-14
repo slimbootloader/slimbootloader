@@ -37,6 +37,7 @@
 #include <IndustryStandard/UefiTcgPlatform.h>
 #include <Library/TpmLib.h>
 #include <Library/FusaConfigLib.h>
+#include <GpioPinsVer2Lp.h>
 
 #define CPU_PCIE_DT_HALO_MAX_ROOT_PORT     3
 #define CPU_PCIE_ULT_ULX_MAX_ROOT_PORT     3
@@ -1124,6 +1125,18 @@ UpdateFspConfig (
         FspsConfig->Device4Enable = 0x0;
         FspsConfig->CnviBtAudioOffload = 0x1;
         FspsConfig->VccInAuxImonSlope = 0x64;
+        break;
+      case PLATFORM_ID_RPL_P_RKI:
+        FspsConfig->IomTypeCPortPadCfg[0] = 0;
+        FspsConfig->IomTypeCPortPadCfg[1] = 0;
+        FspsConfig->IomTypeCPortPadCfg[2] = 0;
+        FspsConfig->IomTypeCPortPadCfg[3] = 0;
+        FspsConfig->IomTypeCPortPadCfg[4] = GPIO_VER2_LP_GPP_E22;
+        FspsConfig->IomTypeCPortPadCfg[5] = GPIO_VER2_LP_GPP_E23;
+        FspsConfig->IomTypeCPortPadCfg[6] = GPIO_VER2_LP_GPP_H15;
+        FspsConfig->IomTypeCPortPadCfg[7] = GPIO_VER2_LP_GPP_H17;
+        FspsConfig->TcssAuxOri = BIT4 | BIT6;
+        FspsConfig->TcssHslOri = 0;
         break;
       default:
         break;
