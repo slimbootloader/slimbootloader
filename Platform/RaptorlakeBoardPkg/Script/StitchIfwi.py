@@ -1,7 +1,7 @@
 ## @ StitchIfwi.py
 #  This is a python stitching script for Slim Bootloader RPL build
 #
-# Copyright (c) 2020 - 2024, Intel Corporation. All rights reserved. <BR>
+# Copyright (c) 2020 - 2025, Intel Corporation. All rights reserved. <BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -21,6 +21,7 @@ import xml.etree.ElementTree as ET
 from   xml.dom import minidom
 from   ctypes  import *
 from   subprocess   import call
+from   StitchLoader import *
 
 sblopen_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../'))
 if not os.path.exists (sblopen_dir):

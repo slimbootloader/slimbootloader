@@ -1,7 +1,7 @@
 /**@file
   GPIO pins for ADL-PCH-LP,
 
-  Copyright (c) 2022 - 2024, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2022 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -135,7 +135,7 @@
 #define GPIO_VER2_LP_GPP_H11                 0x0907000B
 #define GPIO_VER2_LP_GPP_H12                 0x0907000C
 #define GPIO_VER2_LP_GPP_H13                 0x0907000D
-#define GPIO_VER2_LP_GPP_H15                 0x0907000E
+#define GPIO_VER2_LP_GPP_H15                 0x0907000F
 #define GPIO_VER2_LP_GPP_H17                 0x09070011
 #define GPIO_VER2_LP_GPP_H18                 0x09070012
 #define GPIO_VER2_LP_GPP_H19                 0x09070013
