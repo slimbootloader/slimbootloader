@@ -479,7 +479,6 @@ UpdateFspConfig (
       Fspmcfg->TcssItbtPcie2En    = 0;
       Fspmcfg->TcssItbtPcie3En    = 0;
       Fspmcfg->PchHdaDspEnable    = 0;
-       Fspmcfg->InternalGfx       = 0;
       Fspmcfg->PchHdaAudioLinkHdaEnable  = 0;
       ZeroMem (Fspmcfg->PchHdaAudioLinkDmicEnable, sizeof (Fspmcfg->PchHdaAudioLinkDmicEnable));
       DEBUG ((DEBUG_INFO, "Stage 1B S0ix config applied.\n"));
