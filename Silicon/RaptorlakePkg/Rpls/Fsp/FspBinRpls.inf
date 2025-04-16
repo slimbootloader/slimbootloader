@@ -1,7 +1,7 @@
 ## @file
 #  File to describe FSP repo information
 #
-#  Copyright (c) 2020 - 2024, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2025, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -11,7 +11,7 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = d9d0cfbdf26b16a7cbc61e0a7a9a2d17532a8654
+  COMMIT  = 85a0b8abf54c9a90d283cc396588a82e2436c683
 
 [UserExtensions.SBL."CopyList"]
 # For RPL-S
