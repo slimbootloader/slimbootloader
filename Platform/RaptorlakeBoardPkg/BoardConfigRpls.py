@@ -1,7 +1,7 @@
 ## @file
 # This file is used to provide board specific image information.
 #
-#  Copyright (c) 2021 - 2024, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2021 - 2025, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -24,7 +24,7 @@ class Board(BaseBoard):
 
         self.VERINFO_IMAGE_ID     = 'SB_RPLS'
         self.VERINFO_PROJ_MAJOR_VER = 1
-        self.VERINFO_PROJ_MINOR_VER = 5
+        self.VERINFO_PROJ_MINOR_VER = 6
         self.VERINFO_SVN            = 1
         self.VERINFO_BUILD_DATE     = time.strftime("%m/%d/%Y")
 
