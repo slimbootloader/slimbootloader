@@ -37,7 +37,7 @@ class Board(AlderlakeBoardConfig.Board):
         self._CFGDATA_EXT_FILE    = ['CfgDataInt_Rplps_Crb_Ddr5.dlt', 'CfgDataInt_Rplps_Rvp_Ddr5.dlt']
         self._MULTI_VBT_FILE      = {1:'VbtRplPsRvp.dat', 2:'VbtRplPsCrb.dat'}
         self._LP_SUPPORT          = True
-        self.EPAYLOAD_SIZE        = 0x230000
+        self.EPAYLOAD_SIZE        = 0x240000
         self.OS_LOADER_FD_SIZE    = 0x00059000
         self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
         # 0 - PCH UART0, 1 - PCH UART1, 2 - PCH UART2, 0xFF - EC UART 0x3F8
