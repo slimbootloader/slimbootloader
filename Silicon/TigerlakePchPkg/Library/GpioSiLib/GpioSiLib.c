@@ -23,8 +23,8 @@
 #include <Register/PchRegsPcr.h>
 #include <Register/GpioRegsVer2.h>
 #include <Register/GpioRegs.h>
-#include <Pins/GpioPinsVer2Lp.h>
-#include <Pins/GpioPinsVer2H.h>
+#include <GpioPinsVer2Lp.h>
+#include <GpioPinsVer2H.h>
 #include <PmcRegsVer2.h>
 #include <GpioPinsVer2K.h>
 //#include <ConfigDataStruct.h>
