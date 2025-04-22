@@ -124,7 +124,7 @@ class Board(BaseBoard):
             self.STAGE2_SIZE += 0x4000
 
         self.PAYLOAD_SIZE         = 0x00030000
-        self.EPAYLOAD_SIZE        = 0x00230000
+        self.EPAYLOAD_SIZE        = 0x00240000
 
         self.OS_LOADER_FD_SIZE    = 0x0005C000
         self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
