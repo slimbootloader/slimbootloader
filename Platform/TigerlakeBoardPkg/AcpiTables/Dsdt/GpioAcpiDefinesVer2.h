@@ -11,8 +11,8 @@
 #ifndef _GPIO_ACPI_DEFINES_VER2_
 #define _GPIO_ACPI_DEFINES_VER2_
 
-#include "Pins/GpioPinsVer2Lp.h"
-#include "Pins/GpioPinsVer2H.h"
+#include "GpioPinsVer2Lp.h"
+#include "GpioPinsVer2H.h"
 
 #define GPIO_VER2_LP_ACPI_HID "INT34C5"
 #define GPIO_VER2_H_ACPI_HID  "INT34C6"
