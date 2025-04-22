@@ -13,6 +13,9 @@
 #include <Library/IoLib.h>
 #include <RegAccess.h>
 #include <PlatformHookSupport.h>
+#include <GpioDefines.h>
+#include <Library/GpioLib.h>
+#include <Library/GpioLibApl.h>
 #include <Library/BootloaderCommonLib.h>
 
 typedef struct {

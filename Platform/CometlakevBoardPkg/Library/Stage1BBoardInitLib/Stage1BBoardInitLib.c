@@ -344,7 +344,7 @@ SpiControllerInitialize (
   @retval  others             Error happening.
 **/
 EFI_STATUS
-SetBootPartition (
+SetBootPartitionInTopSwapReg (
   IN BOOT_PARTITION  Partition
   )
 {
@@ -440,12 +440,12 @@ FwuTopSwapSetting (
     DEBUG ((DEBUG_INFO, "TopSwapReg=0x%x\n",  Data32));
     if (pFwUpdStatus->StateMachine == 0x7E) {
       if (GetCurrentBootPartition() == 0) {
-        SetBootPartition(1);
+        SetBootPartitionInTopSwapReg(1);
         ResetSystem(EfiResetCold);
       }
     } else if (pFwUpdStatus->StateMachine == 0x7D) {
       if (GetCurrentBootPartition() == 1) {
-        SetBootPartition(0);
+        SetBootPartitionInTopSwapReg(0);
         ResetSystem(EfiResetCold);
       }
     }
@@ -465,7 +465,6 @@ PlatformFeaturesInit (
   )
 {
   FEATURES_CFG_DATA           *FeaturesCfgData;
-  LOADER_GLOBAL_DATA          *LdrGlobal;
   UINT32                       Features;
   PLATFORM_DATA               *PlatformData;
   UINTN                        HeciBaseAddress;
@@ -512,10 +511,8 @@ PlatformFeaturesInit (
     DEBUG ((DEBUG_INFO, "FEATURES CFG DATA NOT FOUND!\n"));
   }
 
-  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-  LdrGlobal->LdrFeatures = Features;
-
-  DEBUG ((DEBUG_INFO, "PlatformFeaturesInit: LdrGlobal->LdrFeatures 0x%x\n",LdrGlobal->LdrFeatures));
+  SetFeatureCfg (Features);
+  DEBUG ((DEBUG_INFO, "PlatformFeaturesInit: Features 0x%x\n", GetFeatureCfg ()));
 }
 
 /**
@@ -529,7 +526,7 @@ TpmInitialize (
   EFI_STATUS                   Status;
   UINT8                        BootMode;
   PLATFORM_DATA               *PlatformData;
-  LOADER_GLOBAL_DATA          *LdrGlobal;
+  UINT32                       Features;
 
   PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
 
@@ -538,6 +535,12 @@ TpmInitialize (
   if ((PlatformData != NULL) && (PlatformData->BtGuardInfo.MeasuredBoot == 1) &&
       (PlatformData->BtGuardInfo.DisconnectAllTpms == 0) &&
       ((PlatformData->BtGuardInfo.TpmType == dTpm20) || (PlatformData->BtGuardInfo.TpmType == Ptt))) {
+
+    //  As per PC Client spec, SRTM should perform a host platform reset
+    if (PlatformData->BtGuardInfo.TpmStartupFailureOnS3 == TRUE) {
+      ResetSystem(EfiResetCold);
+      CpuDeadLoop ();
+    }
     // Initialize TPM if it has not already been initialized by BootGuard component (i.e. ACM)
     Status = TpmInit(PlatformData->BtGuardInfo.BypassTpmInit, BootMode);
 
@@ -552,8 +555,9 @@ TpmInitialize (
   } else {
     DisableTpm();
 
-    LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-    LdrGlobal->LdrFeatures &= ~FEATURE_MEASURED_BOOT;
+    Features  = GetFeatureCfg ();
+    Features &= (UINT32)(~FEATURE_MEASURED_BOOT);
+    SetFeatureCfg (Features);
   }
 
 }
@@ -740,8 +744,10 @@ DEBUG_CODE_END();
     break;
   case PreMemoryInit:
     GpioConfigurePads (sizeof (mGpioTableCmlS82Ddr4PreMem) / sizeof (GPIO_INIT_CONFIG), mGpioTableCmlS82Ddr4PreMem );
+    break;
   case PostMemoryInit:
     DEBUG ((DEBUG_INFO, "PostMemoryInit called\n"));
+    UpdateMemoryInfo ();
     break;
   case PreTempRamExit:
     break;

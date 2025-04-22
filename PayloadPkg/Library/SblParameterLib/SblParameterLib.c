@@ -1,46 +1,12 @@
 /** @file
   SBL parameters for specific OS.
 
-  Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
 #include "SblParameter.h"
-
-/**
-  Decodes reset reason.
-
-  @param[in]    ResetReason  reset reason id or enum
-
-  @retval   String reset reason string
-**/
-STATIC
-CHAR8 *
-EFIAPI
-GetResetReasonStr (
-  IN  UINT8     ResetReason
-  )
-{
-  // default reason string order for now if multiple reasons are set
-  if ((ResetReason & ResetTcoWdt) != 0) {
-    return "watchdog";
-  } else if ((ResetReason & ResetWakeS3) != 0) {
-    return "ResetWakeS3";
-  } else if ((ResetReason & ResetWarm) != 0) {
-    return "warm";
-  } else if ((ResetReason & ResetCold) != 0) {
-    return "cold";
-  } else if ((ResetReason & ResetGlobal) != 0) {
-    return "global";
-  } else if ((ResetReason & ResetPowerOn) != 0) {
-    return "power-on";
-  } else if ((ResetReason & ResetUnknown) != 0) {
-    return "unknown";
-  } else {
-    return "unspecified";
-  }
-}
 
 
 /**
@@ -265,16 +231,6 @@ AddSblCommandLine (
   IN OUT RESERVED_CMDLINE_DATA  *ReservedCmdlineData
   )
 {
-  EFI_STATUS                Status;
-  OS_CONFIG_DATA_HOB        *OsConfigData;
-  LOADER_PLATFORM_INFO      *LoaderPlatformInfo;
-  VOID                      *Buffer;
-  CHAR8                     ParamValue[64];
-  OS_BOOT_OPTION_LIST       *OsBootOptionList;
-  UINT8                     ResetReason;
-  UINT32                    SerialNumberLength;
-  UINT8                     Data8;
-  UINT32                    DiskBus;
   UINT32                    MaxCmdSize;
 
   MaxCmdSize = *CommandLineSize;
@@ -284,118 +240,16 @@ AddSblCommandLine (
   //
   if ((BootOption->BootFlags & BOOT_FLAGS_MENDER) != 0) {
     if ((BootOption->BootFlags & LOAD_IMAGE_FROM_BACKUP) == 0) {
-      AsciiStrCatS (CommandLine, MaxCmdSize, " root=PARTLABEL=primary");
+      if (AsciiStrStr (CommandLine, " root=PARTLABEL=primary") == NULL) {
+        AsciiStrCatS (CommandLine, MaxCmdSize, " root=PARTLABEL=primary");
+      }
     } else {
-      AsciiStrCatS (CommandLine, MaxCmdSize, " root=PARTLABEL=secondary");
+      if (AsciiStrStr (CommandLine, " root=PARTLABEL=secondary") == NULL) {
+        AsciiStrCatS (CommandLine, MaxCmdSize, " root=PARTLABEL=secondary");
+      }
     }
   }
 
-  if (BootOption->ImageType != EnumImageTypeAdroid) {
-    // currently these command line parameters are tested only with Android OS.
-    return EFI_SUCCESS;
-  }
-
-  //
-  // Allocate the reserved memory and update command line parameters
-  //
-  OsConfigData = (OS_CONFIG_DATA_HOB *) GetGuidHobData (NULL, NULL, &gOsConfigDataGuid);
-  if ((OsConfigData != NULL) && (OsConfigData->OsCrashMemorySize != 0)) {
-    Buffer = AllocateReservedPages (EFI_SIZE_TO_PAGES (OsConfigData->OsCrashMemorySize));
-    if (Buffer == NULL) {
-      DEBUG ((DEBUG_INFO, "Memory allocation error for OS crash memory\n"));
-      return EFI_OUT_OF_RESOURCES;
-    }
-
-    //
-    // Update OsCrashMemory Info
-    //
-    ReservedCmdlineData->OsCrashMemoryData.Addr = Buffer;
-    ReservedCmdlineData->OsCrashMemoryData.Size = OsConfigData->OsCrashMemorySize;
-    ReservedCmdlineData->OsCrashMemoryData.AllocType = ImageAllocateTypePage;
-
-    AsciiSPrint (ParamValue, sizeof (ParamValue), " ramoops.mem_address=0x%p", Buffer);
-    AsciiStrCatS (CommandLine, MaxCmdSize, ParamValue);
-
-    AsciiSPrint (ParamValue, sizeof (ParamValue), " ramoops.mem_size=0x%x", OsConfigData->OsCrashMemorySize);
-    AsciiStrCatS (CommandLine, MaxCmdSize, ParamValue);
-  }
-
-  // Add serial number
-  LoaderPlatformInfo = (LOADER_PLATFORM_INFO *)GetLoaderPlatformInfoPtr();
-  if (LoaderPlatformInfo != NULL) {
-    SerialNumberLength = (UINT32)AsciiStrLen (LoaderPlatformInfo->SerialNumber);
-    if (SerialNumberLength > 0 && SerialNumberLength <= MAX_SERIAL_NUMBER_LENGTH) {
-      AsciiSPrint (ParamValue, sizeof (ParamValue), " androidboot.serialno=%a", LoaderPlatformInfo->SerialNumber);
-      AsciiStrCatS (CommandLine, MaxCmdSize, ParamValue);
-    }
-  }
-
-  // Add reset reason
-  ResetReason = 0;
-  OsBootOptionList = GetBootOptionList ();
-  if (OsBootOptionList != NULL) {
-    ResetReason = OsBootOptionList->ResetReason;
-  }
-  AsciiSPrint (ParamValue, sizeof (ParamValue), " reset=%a", GetResetReasonStr (ResetReason));
-  AsciiStrCatS (CommandLine, MaxCmdSize, ParamValue);
-
-  //
-  // Add Crash mode parameter
-  //
-  if ((OsConfigData != NULL) && (OsConfigData->EnableCrashMode != 0)) {
-    Data8 = (UINT8)~(ResetCold | ResetPowerOn | ResetGlobal | ResetWakeS3);
-    if ((ResetReason & Data8) != 0) {
-      AsciiStrCatS (CommandLine, MaxCmdSize, " boot_target=CRASHMODE");
-    }
-  }
-
-  //
-  // Add OS A/B boot info parameter
-  //
-  if ((BootOption->BootFlags & BOOT_FLAGS_MISC) != 0) {
-    if ((BootOption->BootFlags & LOAD_IMAGE_FROM_BACKUP) == 0) {
-      AsciiStrCatS (CommandLine, MaxCmdSize, " suffix=0");
-    } else {
-      AsciiStrCatS (CommandLine, MaxCmdSize, " suffix=1");
-    }
-  }
-
-  //
-  // Add boot media info
-  //
-  AsciiSPrint (ParamValue, sizeof (ParamValue), " bdev=%a", GetBootDeviceNameString (BootOption->DevType));
-  AsciiStrCatS (CommandLine, MaxCmdSize, ParamValue);
-
-  DiskBus = GetDeviceAddr (BootOption->DevType, BootOption->DevInstance);
-  AsciiSPrint (ParamValue, sizeof (ParamValue), " diskbus=0x%x", DiskBus);
-  AsciiStrCatS (CommandLine, MaxCmdSize, ParamValue);
-
-  //
-  // Add performance data parameters
-  //
-  Status = AddTimeStampsCommandLine (CommandLine, MaxCmdSize, ReservedCmdlineData);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  //
-  // Add boot device list command line to OS from SPI flash (for fastboot).
-  //
-  Status = AppendBootDevices (BootOption, CommandLine, MaxCmdSize, ReservedCmdlineData);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  //
-  // Add boot mode command line
-  //
-  Status = AddBootModeCommandLine (CommandLine, MaxCmdSize);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  *CommandLineSize = (UINT32)AsciiStrLen (CommandLine);
-
-  return Status;
+  return EFI_SUCCESS;
 }
 

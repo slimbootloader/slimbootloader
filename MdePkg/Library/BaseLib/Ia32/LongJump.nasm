@@ -1,6 +1,6 @@
 ;------------------------------------------------------------------------------
 ;
-; Copyright (c) 2006 - 2019, Intel Corporation. All rights reserved.<BR>
+; Copyright (c) 2006 - 2022, Intel Corporation. All rights reserved.<BR>
 ; SPDX-License-Identifier: BSD-2-Clause-Patent
 ;
 ; Module Name:

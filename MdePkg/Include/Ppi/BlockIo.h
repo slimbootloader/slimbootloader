@@ -15,7 +15,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
   @par Revision Reference:
   This PPI is defined in UEFI Platform Initialization Specification 1.2 Volume 1:
-  Pre-EFI Initalization Core Interface.
+  Pre-EFI Initialization Core Interface.
 
 **/
 
@@ -33,24 +33,24 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 ///
 /// The forward declaration for EFI_PEI_RECOVERY_BLOCK_IO_PPI.
 ///
-typedef struct _EFI_PEI_RECOVERY_BLOCK_IO_PPI  EFI_PEI_RECOVERY_BLOCK_IO_PPI;
+typedef struct _EFI_PEI_RECOVERY_BLOCK_IO_PPI EFI_PEI_RECOVERY_BLOCK_IO_PPI;
 
 ///
 /// All blocks on the recovery device are addressed with a 64-bit Logical Block Address (LBA).
 ///
-typedef UINT64  EFI_PEI_LBA;
+typedef UINT64 EFI_PEI_LBA;
 
 ///
 /// EFI_PEI_BLOCK_DEVICE_TYPE
 ///
 typedef enum {
-  LegacyFloppy  = 0,   ///< The recovery device is a floppy.
-  IdeCDROM      = 1,   ///< The recovery device is an IDE CD-ROM
-  IdeLS120      = 2,   ///< The recovery device is an IDE LS-120
-  UsbMassStorage= 3,   ///< The recovery device is a USB Mass Storage device
-  SD            = 4,   ///< The recovery device is a Secure Digital device
-  EMMC          = 5,   ///< The recovery device is a eMMC device
-  UfsDevice     = 6,   ///< The recovery device is a Universal Flash Storage device
+  LegacyFloppy   = 0,  ///< The recovery device is a floppy.
+  IdeCDROM       = 1,  ///< The recovery device is an IDE CD-ROM
+  IdeLS120       = 2,  ///< The recovery device is an IDE LS-120
+  UsbMassStorage = 3,  ///< The recovery device is a USB Mass Storage device
+  SD             = 4,  ///< The recovery device is a Secure Digital device
+  EMMC           = 5,  ///< The recovery device is a eMMC device
+  UfsDevice      = 6,  ///< The recovery device is a Universal Flash Storage device
   MaxDeviceType
 } EFI_PEI_BLOCK_DEVICE_TYPE;
 
@@ -58,7 +58,7 @@ typedef enum {
 /// Specification inconsistency here:
 /// PEI_BLOCK_IO_MEDIA has been changed to EFI_PEI_BLOCK_IO_MEDIA.
 /// Inconsistency exists in UEFI Platform Initialization Specification 1.2
-/// Volume 1: Pre-EFI Initalization Core Interface, where all referrences to
+/// Volume 1: Pre-EFI Initialization Core Interface, where all references to
 /// this structure name are with the "EFI_" prefix, except for the definition
 /// which is without "EFI_".  So the name of PEI_BLOCK_IO_MEDIA is taken as the
 /// exception, and EFI_PEI_BLOCK_IO_MEDIA is used to comply with most of
@@ -68,20 +68,20 @@ typedef struct {
   ///
   /// The type of media device being referenced by DeviceIndex.
   ///
-  EFI_PEI_BLOCK_DEVICE_TYPE  DeviceType;
+  EFI_PEI_BLOCK_DEVICE_TYPE    DeviceType;
   ///
   /// A flag that indicates if media is present. This flag is always set for
   /// nonremovable media devices.
   ///
-  BOOLEAN                    MediaPresent;
+  BOOLEAN                      MediaPresent;
   ///
   /// The last logical block that the device supports.
   ///
-  UINTN                      LastBlock;
+  UINTN                        LastBlock;
   ///
   /// The size of a logical block in bytes.
   ///
-  UINTN                      BlockSize;
+  UINTN                        BlockSize;
 } EFI_PEI_BLOCK_IO_MEDIA;
 
 /**
@@ -214,19 +214,19 @@ struct _EFI_PEI_RECOVERY_BLOCK_IO_PPI {
   ///
   /// Gets the number of block I/O devices that the specific block driver manages.
   ///
-  EFI_PEI_GET_NUMBER_BLOCK_DEVICES      GetNumberOfBlockDevices;
+  EFI_PEI_GET_NUMBER_BLOCK_DEVICES        GetNumberOfBlockDevices;
 
   ///
   /// Gets the specified media information.
   ///
-  EFI_PEI_GET_DEVICE_MEDIA_INFORMATION  GetBlockDeviceMediaInfo;
+  EFI_PEI_GET_DEVICE_MEDIA_INFORMATION    GetBlockDeviceMediaInfo;
 
   ///
   /// Reads the requested number of blocks from the specified block device.
   ///
-  EFI_PEI_READ_BLOCKS                   ReadBlocks;
+  EFI_PEI_READ_BLOCKS                     ReadBlocks;
 };
 
-extern EFI_GUID gEfiPeiVirtualBlockIoPpiGuid;
+extern EFI_GUID  gEfiPeiVirtualBlockIoPpiGuid;
 
 #endif

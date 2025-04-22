@@ -21,6 +21,7 @@
 [Sources]
   SmbiosTables.h
   SmbiosInitLib.c
+  SmbiosTemplate.c
 
 [Packages]
   MdePkg/MdePkg.dec

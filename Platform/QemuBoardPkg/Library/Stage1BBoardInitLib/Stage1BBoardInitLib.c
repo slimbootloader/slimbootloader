@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -21,10 +21,14 @@
 #include <Library/ConfigDataLib.h>
 #include <Library/SpiFlashLib.h>
 #include <Library/VariableLib.h>
+#include <Library/FspSupportLib.h>
 #include <Library/BootloaderCoreLib.h>
 #include <Library/BoardSupportLib.h>
+#include <Library/PciCf8Lib.h>
+#include <Library/SocInitLib.h>
 #include <FspmUpd.h>
 #include <BlCommon.h>
+#include <PlatformBase.h>
 #include <ConfigDataDefs.h>
 #include "GpioTbl.h"
 
@@ -33,7 +37,8 @@ CONST PLT_DEVICE  mPlatformDevices[]= {
   {{0x00000300}, OsBootDeviceSd    , 0 },
   {{0x00000300}, OsBootDeviceNvme  , 0 },
   {{0x00000400}, OsBootDeviceUsb   , 0 },
-  {{0x01000000}, OsBootDeviceMemory, 0 }
+  {{0x01000000}, OsBootDeviceMemory, 0 },
+  {{0x00000000}, PlatformDeviceGraphics, 0},
 };
 
 /**
@@ -87,18 +92,18 @@ TestVariableService (
 
   Data       = 0;
   DataSize   = sizeof(Data);
-  Status   = GetVariable ("VARTST0", NULL, &DataSize, &Data);
+  Status   = GetVariable (L"VARTST0", NULL, NULL, &DataSize, &Data);
   if (!EFI_ERROR(Status) && (Data == 0x55667788) && (sizeof(Data) == DataSize)) {
     return EFI_SUCCESS;
   }
 
   Data       = 0x11223344;
-  Status     = SetVariable ("VARTST0", 0, sizeof(Data), &Data);
+  Status     = SetVariable (L"VARTST0", NULL, 0, sizeof(Data), &Data);
 
   Data       = 0;
   DataSize   = sizeof(Data);
   if (!EFI_ERROR(Status)) {
-    Status   = GetVariable ("VARTST0", NULL, &DataSize, &Data);
+    Status   = GetVariable (L"VARTST0", NULL, NULL, &DataSize, &Data);
   }
 
   if (!EFI_ERROR(Status) && (Data == 0x11223344) && (sizeof(Data) == DataSize)) {
@@ -147,23 +152,32 @@ VOID BoardDetection (
 )
 {
   UINT8  BoardId;
-
-  //
-  // Reuse CMOS 0x38 BIT0 as board ID
-  //   [0]  Board ID (0, 1)
-  //          0: BoardID 1
-  //          1: BoardID 31
-  //   Use '-no-fd-bootchk' to select board 31
-  //   By default, it is board 1
-  //   BoardID 0 is already reserved for default
-  //
-  IoWrite8 (0x70, 0x38);
-  BoardId = IoRead8  (0x71) & BIT0;
-
-  if (BoardId > 0) {
-    BoardId = 31;
+  UINT16 mHostBridgeDevId;
+  IoWrite32 (0xCF8, PCI_TO_CF8_ADDRESS(PCI_CF8_LIB_ADDRESS (0, 0, 0, 0)));
+  mHostBridgeDevId = (IoRead32 (0xCFC) >> 16);
+  DEBUG ((DEBUG_INFO, "Host Bridge Device ID:0x%X\n", mHostBridgeDevId));
+  if (mHostBridgeDevId == INTEL_X58_ICH10_DEVICE_ID) {
+    BoardId = 2; //Simics QSP board
+    DEBUG ((DEBUG_INFO, "Board ID:0x%X - Loading Simics QSP!\n", BoardId));
   } else {
-    BoardId = 1;
+    //
+    // Reuse CMOS 0x38 BIT0 as board ID
+    //   [0]  Board ID (0, 1)
+    //          0: BoardID 1
+    //          1: BoardID 31
+    //   Use '-no-fd-bootchk' to select board 31
+    //   By default, it is board 1
+    //   BoardID 0 is already reserved for default
+    //
+    IoWrite8 (0x70, 0x38);
+    BoardId = IoRead8  (0x71) & BIT0;
+
+    if (BoardId > 0) {
+      BoardId = 31;
+    } else {
+      BoardId = 1;
+    }
+    DEBUG ((DEBUG_INFO, "Board ID:0x%X - Loading QEMU!\n", BoardId));
   }
 
   SetPlatformId (BoardId);
@@ -184,8 +198,9 @@ BoardInit (
   IN  BOARD_INIT_PHASE  InitPhase
 )
 {
-  EFI_STATUS            Status;
+  EFI_STATUS             Status;
   PLT_DEVICE_TABLE      *PltDeviceTable;
+  VOID                  *FspHob;
 
   switch (InitPhase) {
   case PreConfigInit:
@@ -196,17 +211,27 @@ BoardInit (
     BoardDetection ();
     UpdateBootMode ();
     if (!FeaturePcdGet (PcdStage1BXip)) {
-      SpiConstructor ();
-      VariableConstructor (PcdGet32 (PcdVariableRegionBase), PcdGet32 (PcdVariableRegionSize));
-      Status = TestVariableService ();
-      ASSERT_EFI_ERROR (Status);
+      if (GetPlatformId () != PLATFORM_ID_QSP_SIMICS) {
+        SpiConstructor ();
+        VariableConstructor (PcdGet32 (PcdVariableRegionBase), PcdGet32 (PcdVariableRegionSize));
+        Status = TestVariableService ();
+        ASSERT_EFI_ERROR (Status);
+      }
     }
     break;
   case PostConfigInit:
     PlatformNameInit ();
     break;
-  case PreMemoryInit:
+
   case PostMemoryInit:
+    FspHob = GetFspHobListPtr ();
+    if (FspHob != NULL) {
+      DumpFspResourceHob (FspHob);
+    }
+    UpdateMemoryInfo ();
+    break;
+
+  case PreMemoryInit:
   case PreTempRamExit:
   case PostTempRamExit:
     break;

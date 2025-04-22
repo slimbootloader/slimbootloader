@@ -307,6 +307,8 @@ typedef struct {
   UINT16   IclkPid;                                 ///< Offset 719     Iclk PID number
   UINT16   CnviPortId;                              ///< Offset 721     CNVi sideband port id
   UINT32   HybridStorageLocation;                   ///< Offset 723
+  UINT8    SataPortPresence;                        ///< Offset 727     Holds information from SATA PCS register about SATA ports which recieved COMINIT from connected devices.
+
 } PCH_NVS_AREA;
 
 #pragma pack(pop)

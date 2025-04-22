@@ -4,7 +4,7 @@
 
   It would expose EFI_SD_MMC_PASS_THRU_PROTOCOL for upper layer use.
 
-  Copyright (c) 2015 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2015 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -140,9 +140,6 @@ SdMmcHcRwMmio (
       MmioWrite64 (Address + Offset, * (UINT64 *)Data);
     }
     break;
-  default:
-    ASSERT (FALSE);
-    return EFI_INVALID_PARAMETER;
   }
 
   return EFI_SUCCESS;
@@ -644,8 +641,8 @@ SdMmcHcClockSupply (
     return EFI_INVALID_PARAMETER;
   }
 
-  if (ClockFreq > (BaseClkFreq * 1000)) {
-    ClockFreq = BaseClkFreq * 1000;
+  if (ClockFreq > ((UINT64)BaseClkFreq * 1000)) {
+    ClockFreq = (UINT64)BaseClkFreq * 1000;
   }
 
   //
@@ -1395,7 +1392,7 @@ SdMmcExecTrb (
   SdMmcHcLedOnOff (Address, TRUE);
 
   if (Trb->Mode == SdMmcSdmaMode) {
-    if ((UINT64) (UINTN)Trb->DataPhy >= 0x100000000ul) {
+    if (Trb->DataPhy >= 0x100000000ul) {
       return EFI_INVALID_PARAMETER;
     }
 

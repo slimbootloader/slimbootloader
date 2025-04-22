@@ -1,0 +1,311 @@
+/** @file
+
+  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+#include <Acpi/AcpiTablePlatform.h>
+
+External(\_SB.WERR, DeviceObj)
+
+//  General Purpose Event
+
+Scope (\_GPE) {
+/* This below is required by WHQL but somehow SVOS breaks when we add this
+  Method (_L21, 0x0, NotSerialized) {
+    Store (0x21, IO80)
+  }
+  Method (_L22, 0x0, NotSerialized) {
+    Store (0x22, IO80)
+  }
+  Method (_L23, 0x0, NotSerialized) {
+    Store (0x23, IO80)
+  }
+  Method (_L24, 0x0, NotSerialized) {
+    Store (0x24, IO80)
+  }
+  Method (_L26, 0x0, NotSerialized) {
+    Store (0x26, IO80)
+  }
+  Method (_L27, 0x0, NotSerialized) {
+    Store (0x27, IO80)
+  }
+  Method (_L28, 0x0, NotSerialized) {
+    Store (0x28, IO80)
+  }
+  Method (_L29, 0x0, NotSerialized) {
+    Store (0x29, IO80)
+  }
+  Method (_L2A, 0x0, NotSerialized) {
+    Store (0x2A, IO80)
+  }
+  Method (_L2B, 0x0, NotSerialized) {
+    Store (0x2B, IO80)
+  }
+  Method (_L2C, 0x0, NotSerialized) {
+    Store (0x2C, IO80)
+  }
+  Method (_L2D, 0x0, NotSerialized) {
+    Store (0x2D, IO80)
+  }
+  Method (_L2E, 0x0, NotSerialized) {
+    Store (0x2E, IO80)
+  }
+  Method (_L2F, 0x0, NotSerialized) {
+    Store (0x2F, IO80)
+  }
+  Method (_L30, 0x0, NotSerialized) {
+    Store (0x30, IO80)
+  }
+  Method (_L31, 0x0, NotSerialized) {
+    Store (0x31, IO80)
+  }
+  Method (_L32, 0x0, NotSerialized) {
+    Store (0x32, IO80)
+  }
+  Method (_L33, 0x0, NotSerialized) {
+    Store (0x33, IO80)
+  }
+  Method (_L34, 0x0, NotSerialized) {
+    Store (0x34, IO80)
+  }
+  Method (_L35, 0x0, NotSerialized) {
+    Store (0x35, IO80)
+  }
+  Method (_L36, 0x0, NotSerialized) {
+    Store (0x36, IO80)
+  }
+  Method (_L37, 0x0, NotSerialized) {
+    Store (0x37, IO80)
+  }
+  Method (_L38, 0x0, NotSerialized) {
+    Store (0x38, IO80)
+  }
+  Method (_L39, 0x0, NotSerialized) {
+    Store (0x39, IO80)
+  }
+  Method (_L3A, 0x0, NotSerialized) {
+    Store (0x3A, IO80)
+  }
+  Method (_L3B, 0x0, NotSerialized) {
+    Store (0x3B, IO80)
+  }
+  Method (_L3C, 0x0, NotSerialized) {
+    Store (0x3C, IO80)
+  }
+  Method (_L3D, 0x0, NotSerialized) {
+    Store (0x3D, IO80)
+  }
+  Method (_L3E, 0x0, NotSerialized) {
+    Store (0x3E, IO80)
+  }
+  Method (_L3F, 0x0, NotSerialized) {
+    Store (0x3F, IO80)
+  }
+*/
+
+  // Based on Socket ID to be notified, evaluate appropriate devices.
+  Method(NTFC, 2){
+    If(And(Arg0, 0x01)){
+      Notify(\_SB.SCK0, Arg1)
+    }
+
+  } //End Method NTFC
+
+  Method(NTFI, 2){
+  } //End Method NTFI
+
+  // Tell OS to run thru the new status of this device (Software SCI generated from SMM for all Hot plug events)
+  Method (_L62, 0x0, NotSerialized) {
+    if(LEqual(SCI0, 3)) { // Device ejection (Invoked with _EJ0 method called)
+      //NTFM  (SCI1, 3)
+      NTFC  (SCI2, 3)
+      Store (0, SCI0)
+    } else {              // Device check (OS can still reject online request based on resources and capability)
+      NTFC (CPHP, 0)
+      NTFI (IIOP, 0)
+      Store (0, CPHP)
+      Store (0, IIOP)
+    }
+    Store (0, SGPC)
+    Store (1, SGPS)
+
+    Store (0, GPEC)
+
+    if(LEqual(WSCI, 0x1)) {
+      Store(0, WSCI)
+      if(LEqual(DBGM, 0x01)){
+        Store (0x4A, IO80)
+      }
+      If (CondRefOf (\_SB.WERR)) {
+        Notify (\_SB.WERR, 0x80)
+      }
+    }
+
+    //
+    //  Handle eDPC SWGPE event
+    //
+    #include "IioPcieEdpcGpe.asi"
+  }
+
+  // PME supported for Slots, use GPE 9 for PME
+  // Hot plug on all slots for now, change later.
+  // Slot numbers on silk screen might be different than the port number, currently use port numbers.
+  //
+  // IIO PCI_E Slot Hotplug GPE Event
+  //
+  Method (_L61, 0, NotSerialized) {
+    //
+    // Delay introduced as initial delay after entering ACPI hotplug method
+    //
+    Sleep (200)
+    Store (0x01, IO80)
+    Sleep (10)
+    Store (0,Local1)
+    //
+    // PC01 Port A PCI-Ex Hot Plug
+    // If PM_PME event clear INTs and AttnBtnPressed
+    //
+    If (LEqual(\_SB.PC01.RP1A.PMEP, 1)) {
+      Store(\_SB.PC01.RP1A.PMEH(1), Local0)
+    } else {
+      Store(\_SB.PC01.RP1A.HPEH(1), Local0)
+    }
+    If (LNot(LEqual(Local0, 0xFF))) {
+      Store(1, Local1)
+      Notify(\_SB.PC01.RP1A, Local0)
+    }
+    //
+    // PC01 Port B PCI-Ex Hot Plug
+    // If PM_PME event clear INTs and AttnBtnPressed
+    //
+    If (LEqual(\_SB.PC01.RP1B.PMEP, 1)) {
+      Store(\_SB.PC01.RP1B.PMEH(2), Local0)
+    } else {
+      Store(\_SB.PC01.RP1B.HPEH(2), Local0)
+    }
+    If (LNot(LEqual(Local0, 0xFF))) {
+      Store(2, Local1)
+      Notify(\_SB.PC01.RP1B, Local0)
+    }
+    //
+    // PC01 Port C PCI-Ex Hot Plug
+    // If PM_PME event clear INTs and AttnBtnPressed
+    //
+    If (LEqual(\_SB.PC01.RP1C.PMEP, 1)) {
+      Store(\_SB.PC01.RP1C.PMEH(3), Local0)
+    } else {
+      Store(\_SB.PC01.RP1C.HPEH(3), Local0)
+    }
+    If (LNot(LEqual(Local0, 0xFF))) {
+      Store(3, Local1)
+      Notify(\_SB.PC01.RP1C, Local0)
+    }
+    //
+    // PC01 Port D PCI-Ex Hot Plug
+    // If PM_PME event clear INTs and AttnBtnPressed
+    //
+    If (LEqual(\_SB.PC01.RP1D.PMEP, 1)) {
+      Store(\_SB.PC01.RP1D.PMEH(4), Local0)
+    } else {
+      Store(\_SB.PC01.RP1D.HPEH(4), Local0)
+    }
+    If (LNot(LEqual(Local0, 0xFF))) {
+      Store(4, Local1)
+      Notify(\_SB.PC01.RP1D, Local0)
+    }
+    //
+    // PC05 Port A PCI-Ex Hot Plug
+    If (LEqual(\_SB.PC05.RP5A.PMEP, 1)) {
+      Store(\_SB.PC05.RP5A.PMEH(5), Local0)
+    } else {
+      Store(\_SB.PC05.RP5A.HPEH(5), Local0)
+    }
+    If (LNot(LEqual(Local0, 0xFF))) {
+      Store(5, Local1)
+      Notify(\_SB.PC05.RP5A, Local0)
+    }
+    //
+    // PC05 Port B PCI-Ex Hot Plug
+    // If PM_PME event clear INTs and AttnBtnPressed
+    //
+    If (LEqual(\_SB.PC05.RP5B.PMEP, 1)) {
+      Store(\_SB.PC05.RP5B.PMEH(6), Local0)
+    } else {
+      Store(\_SB.PC05.RP5B.HPEH(6), Local0)
+    }
+    If (LNot(LEqual(Local0, 0xFF))) {
+      Store(6, Local1)
+      Notify(\_SB.PC05.RP5B, Local0)
+    }
+    //
+    // PC05 Port C PCI-Ex Hot Plug
+    // If PM_PME event clear INTs and AttnBtnPressed
+    //
+    If (LEqual(\_SB.PC05.RP5C.PMEP, 1)) {
+      Store(\_SB.PC05.RP5C.PMEH(7), Local0)
+    } else {
+      Store(\_SB.PC05.RP5C.HPEH(7), Local0)
+    }
+    If (LNot(LEqual(Local0, 0xFF))) {
+      Store(7, Local1)
+      Notify(\_SB.PC05.RP5C, Local0)
+    }
+    //
+    // PC05 Port D PCI-Ex Hot Plug
+    // If PM_PME event clear INTs and AttnBtnPressed
+    //
+    If (LEqual(\_SB.PC05.RP5D.PMEP, 1)) {
+      Store(\_SB.PC05.RP5D.PMEH(8), Local0)
+    } else {
+      Store(\_SB.PC05.RP5D.HPEH(8), Local0)
+    }
+    If (Lnot(LEqual(Local0, 0xFF))) {
+      Store(8, Local1)
+      Notify(\_SB.PC05.RP5D, Local0)
+    }
+    //
+    // If a hotplug event was serviced check if this was generated by PM_PME
+    If (LNot(LEqual(Local0, 0))) {
+      //
+      // Clear the status bit 16 of PMEStatus
+      // Clear the PME Pending bit 17 of PMEStatus
+      //
+      If (LEqual(Local1, 1)) {
+        Store(1, \_SB.PC01.RP1A.PMES)
+        Store(1, \_SB.PC01.RP1A.PMEP)
+      }
+      If (LEqual(Local1, 2)) {
+        Store(1, \_SB.PC01.RP1B.PMES)
+        Store(1, \_SB.PC01.RP1B.PMEP)
+      }
+      If (LEqual(Local1, 3)) {
+        Store(1, \_SB.PC01.RP1C.PMES)
+        Store(1, \_SB.PC01.RP1C.PMEP)
+      }
+      If (LEqual(Local1, 4)) {
+        Store(1, \_SB.PC01.RP1D.PMES)
+        Store(1, \_SB.PC01.RP1D.PMEP)
+      }
+      If (LEqual(Local1, 5)) {
+        Store(1, \_SB.PC05.RP5A.PMES)
+        Store(1, \_SB.PC05.RP5A.PMEP)
+      }
+      If (LEqual(Local1, 6)) {
+        Store(1, \_SB.PC05.RP5B.PMES)
+        Store(1, \_SB.PC05.RP5B.PMEP)
+      }
+      If (LEqual(Local1, 7)) {
+        Store(1, \_SB.PC05.RP5C.PMES)
+        Store(1, \_SB.PC05.RP5C.PMEP)
+      }
+      If (LEqual(Local1, 8)) {
+        Store(1, \_SB.PC05.RP5D.PMES)
+        Store(1, \_SB.PC05.RP5D.PMEP)
+      }
+      Store(0x01, PEES)  // Clear bit 9 of Status
+      Store(0x00, PMEE)  // Clear bit 9 of GPE0_EN
+    }
+  }// end of _L61 GPE Method
+}// end of _GPE scope.

@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -13,6 +13,8 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PagingLib.h>
+
+VOID    *mPageTablesX64;
 
 //
 // Global Descriptor Table (GDT)
@@ -37,6 +39,47 @@ GLOBAL_REMOVE_IF_UNREFERENCED CONST IA32_DESCRIPTOR gGdt = {
   sizeof (gGdtEntries) - 1,
   (UINTN) gGdtEntries
   };
+
+/**
+  Load page table for long mode.
+
+**/
+VOID
+EFIAPI
+LoadPageTableForLongMode (
+  VOID
+  )
+{
+  VOID                     *PageTables;
+  UINTN                     PageTblSize;
+
+  //
+  // Load the GDT of Go64. Since the GDT of 32-bit Tiano locates in the BS_DATA
+  // memory, it may be corrupted when copying FV to high-end memory
+  //
+  AsmWriteGdtr (&gGdt);
+
+  //
+  // Create page table and save PageMapLevel4 to CR3
+  //
+  if (mPageTablesX64 == NULL) {
+    PageTblSize = GetPageTablesMemorySize (TRUE);
+    PageTables  = AllocatePages (EFI_SIZE_TO_PAGES(PageTblSize));
+    ASSERT (PageTables != NULL);
+    Create4GbPageTables (PageTables, TRUE);
+    DEBUG ((DEBUG_VERBOSE, "PageTables 0x%X\n", PageTables));
+    mPageTablesX64 = PageTables;
+  } else {
+    PageTables = mPageTablesX64;
+  }
+
+  //
+  // Paging might be already enabled. To avoid conflict configuration,
+  // disable paging first anyway.
+  //
+  AsmWriteCr0 (AsmReadCr0 () & (~BIT31));
+  AsmWriteCr3 ((UINTN)PageTables);
+}
 
 /**
   Create 64-bit pagetables, enable long mode and jump to 64-bit entrypoint.
@@ -76,35 +119,12 @@ JumpToLongMode (
   IN  UINT64                NewStack
   )
 {
-  VOID                     *PageTables;
-  UINTN                     PageTblSize;
-
   ASSERT (!IsLongModeEnabled ());
 
   DEBUG ((DEBUG_VERBOSE, "EntryPoint 0x%lX, Context1 0x%lX, Context2 0x%lX, "
     "NewStack 0x%lX\n", EntryPoint, Context1, Context2, NewStack));
 
-  //
-  // Load the GDT of Go64. Since the GDT of 32-bit Tiano locates in the BS_DATA
-  // memory, it may be corrupted when copying FV to high-end memory
-  //
-  AsmWriteGdtr (&gGdt);
-
-  //
-  // Create page table and save PageMapLevel4 to CR3
-  //
-  PageTblSize = GetPageTablesMemorySize (TRUE);
-  PageTables  = AllocatePages (EFI_SIZE_TO_PAGES(PageTblSize));
-  ASSERT (PageTables != NULL);
-  Create4GbPageTables (PageTables, TRUE);
-  DEBUG ((DEBUG_VERBOSE, "PageTables 0x%X\n", PageTables));
-
-  //
-  // Paging might be already enabled. To avoid conflict configuration,
-  // disable paging first anyway.
-  //
-  AsmWriteCr0 (AsmReadCr0 () & (~BIT31));
-  AsmWriteCr3 ((UINTN)PageTables);
+  LoadPageTableForLongMode ();
 
   //
   // Go to Long Mode and transfer control to EntryPoint.

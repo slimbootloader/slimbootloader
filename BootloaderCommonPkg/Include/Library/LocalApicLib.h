@@ -1,10 +1,10 @@
 /** @file
   Public include file for Local APIC library.
 
-  Local APIC library assumes local APIC is enabled. It does not handles cases
-  where local APIC is disabled.
+  Local APIC library assumes local APIC is enabled. It does not
+  handles cases where local APIC is disabled.
 
-  Copyright (c) 2010 - 2015, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2010 - 2019, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -405,5 +405,53 @@ GetApicMsiValue (
   IN BOOLEAN  AssertionLevel
   );
 
+/**
+  Get Package ID/Core ID/Thread ID of a processor.
+
+  The algorithm assumes the target system has symmetry across physical
+  package  boundaries with respect to the number of logical processors
+  per package,  number of cores per package.
+
+  @param[in]  InitialApicId  Initial APIC ID of the target logical processor.
+  @param[out]  Package       Returns the processor package ID.
+  @param[out]  Core          Returns the processor core ID.
+  @param[out]  Thread        Returns the processor thread ID.
+**/
+VOID
+EFIAPI
+GetProcessorLocationByApicId (
+  IN  UINT32  InitialApicId,
+  OUT UINT32  *Package  OPTIONAL,
+  OUT UINT32  *Core    OPTIONAL,
+  OUT UINT32  *Thread  OPTIONAL
+  );
+
+/**
+  Get Package ID/Module ID/Tile ID/Die ID/Core ID/Thread ID of a processor.
+
+  The algorithm assumes the target system has symmetry across physical
+  package boundaries with respect to the number of threads per core, number of
+  cores per module, number of modules per tile, number of tiles per die, number
+  of dies per package.
+
+  @param[in]   InitialApicId Initial APIC ID of the target logical processor.
+  @param[out]  Package       Returns the processor package ID.
+  @param[out]  Die           Returns the processor die ID.
+  @param[out]  Tile          Returns the processor tile ID.
+  @param[out]  Module        Returns the processor module ID.
+  @param[out]  Core          Returns the processor core ID.
+  @param[out]  Thread        Returns the processor thread ID.
+**/
+VOID
+EFIAPI
+GetProcessorLocation2ByApicId (
+  IN  UINT32  InitialApicId,
+  OUT UINT32  *Package  OPTIONAL,
+  OUT UINT32  *Die      OPTIONAL,
+  OUT UINT32  *Tile     OPTIONAL,
+  OUT UINT32  *Module   OPTIONAL,
+  OUT UINT32  *Core     OPTIONAL,
+  OUT UINT32  *Thread   OPTIONAL
+  );
 #endif
 

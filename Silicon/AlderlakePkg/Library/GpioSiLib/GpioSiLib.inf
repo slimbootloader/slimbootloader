@@ -1,0 +1,41 @@
+## @file
+#
+#  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = GpioSiLib
+  FILE_GUID                      = E2A7C749-62AC-49F4-B4FA-26189C164E05
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = GpioSiLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  GpioSiLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/AlderlakePkg/AlderlakePkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  IoLib
+  PciLib
+  PchInfoLib
+
+[Pcd]
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+
+[FixedPcd]
+  gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport

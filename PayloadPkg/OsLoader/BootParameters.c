@@ -1,13 +1,13 @@
 /** @file
 
-  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
 #include "OsLoader.h"
 
-CONST CHAR8 *mMmcDllStr = "MMCDLL";
+CONST CHAR16 *mMmcDllStr = L"MMCDLL";
 
 CONST CHAR8 *mAppendCmdLineParams = NULL;
 
@@ -134,20 +134,28 @@ UpdateOsMemMap (
   MULTIBOOT_IMAGE            *MultiBoot;
   OS_CONFIG_DATA_HOB         *OsConfigData;
   UINT32                     TempMemorySize;
+  BOOLEAN                    CrashModeDisabled;
 
   OsConfigData = (OS_CONFIG_DATA_HOB *) GetGuidHobData (NULL, NULL, &gOsConfigDataGuid);
-  if ((OsConfigData == NULL) || (OsConfigData->EnableCrashMode == 0)) {
+  CrashModeDisabled = (OsConfigData == NULL || OsConfigData->EnableCrashMode == 0);
+
+  GetPayloadReservedRamRegion (&RsvdMemBase, &RsvdMemSize);
+  TempMemorySize  = ALIGN_UP (PcdGet32 (PcdPayloadStackSize), EFI_PAGE_SIZE);
+  TempMemorySize += ALIGN_UP (PcdGet32 (PcdPayloadHeapSize),  EFI_PAGE_SIZE);
+
+  if ((LoadedImage->Flags & LOADED_IMAGE_MULTIBOOT2) != 0) {
+    UpdateMultiboot2MemInfo (&LoadedImage->Image.MultiBoot, RsvdMemBase, RsvdMemSize, CrashModeDisabled ? 0 : TempMemorySize);
+    return;
+  }
+  if (CrashModeDisabled) {
     UpdateOsMemSize (LoadedImage);
     return;
   }
 
   //
-  // Crash mode is enabled, make sure the memory used by payload is set to
+  // If crash mode is enabled, make sure the memory used by payload is set to
   // reserved memory to avoid overriding OS memory in next boot.
   //
-  GetPayloadReservedRamRegion (&RsvdMemBase, &RsvdMemSize);
-  TempMemorySize  = ALIGN_UP (PcdGet32 (PcdPayloadStackSize), EFI_PAGE_SIZE);
-  TempMemorySize += ALIGN_UP (PcdGet32 (PcdPayloadHeapSize),  EFI_PAGE_SIZE);
 
   //
   // Linux E820 Mmap is very similar with multiboot MMAP
@@ -200,6 +208,9 @@ DEBUG_CODE_BEGIN ();
   if ((LoadedImage->Flags & LOADED_IMAGE_MULTIBOOT) != 0) {
     DumpMbInfo (&LoadedImage->Image.MultiBoot.MbInfo);
     DumpMbBootState (&LoadedImage->Image.MultiBoot.BootState);
+  } else if ((LoadedImage->Flags & LOADED_IMAGE_MULTIBOOT2) != 0) {
+    DumpMb2Info (LoadedImage->Image.MultiBoot.Mb2Info.StartTag);
+    DumpMbBootState (&LoadedImage->Image.MultiBoot.BootState);
   } else if ((LoadedImage->Flags & LOADED_IMAGE_LINUX) != 0) {
     DumpLinuxBootParams (GetLinuxBootParams ());
   }
@@ -214,7 +225,7 @@ DEBUG_CODE_END ();
 
   @param[in]     CurrentBootOption Current boot option
   @param[in,out] LoadedImage       Normal OS boot image
-  @param[in,out] LoadedTrustyImage Trusty OS image
+  @param[in,out] LoadedPreOsImage  Pre-OS image
   @param[in,out] LoadedExtraImages Extra OS images
 
   @retval   RETURN_SUCCESS         If update OS parameter success
@@ -224,7 +235,7 @@ EFI_STATUS
 UpdateOsParameters (
   IN     OS_BOOT_OPTION      *CurrentBootOption,
   IN OUT LOADED_IMAGE        *LoadedImage,
-  IN OUT LOADED_IMAGE        *LoadedTrustyImage,
+  IN OUT LOADED_IMAGE        *LoadedPreOsImage,
   IN OUT LOADED_IMAGE        *LoadedExtraImages
   )
 {
@@ -282,35 +293,20 @@ UpdateOsParameters (
   }
 
   //
-  // Update Trusty image if it is loaded.
+  // Update PreOS image if it is loaded.
   //
-  if ((CurrentBootOption->BootFlags & BOOT_FLAGS_TRUSTY) != 0) {
+  if (((CurrentBootOption->BootFlags & BOOT_FLAGS_PREOS) != 0) && (LoadedPreOsImage != NULL)) {
     LoadedImage->Image.MultiBoot.CmdBufferSize       = CMDLINE_LENGTH_MAX;
-    if (LoadedTrustyImage != NULL) {
-      LoadedTrustyImage->Image.MultiBoot.CmdBufferSize = CMDLINE_LENGTH_MAX;
-      Status = SetupTrustyBoot (&LoadedTrustyImage->Image.MultiBoot, &LoadedImage->Image.MultiBoot);
-      if (EFI_ERROR (Status)) {
-        DEBUG ((DEBUG_ERROR, "ERROR Setting up Trusty Boot!\n"));
-        return Status;
-      }
-    } else {
-      DEBUG ((DEBUG_ERROR, "ERROR Setting up Trusty Boot!\n"));
-      return Status;
-    }
-    UpdateOsMemMap (LoadedTrustyImage);
-    DEBUG ((DEBUG_INFO, "\nDump trusty image info:\n"));
-    DisplayInfo (LoadedTrustyImage);
+    UpdateOsMemMap (LoadedPreOsImage);
+    DEBUG ((DEBUG_INFO, "\nDump PreOs image info:\n"));
+    DisplayInfo (LoadedPreOsImage);
   }
 
   if ((CurrentBootOption->BootFlags & BOOT_FLAGS_EXTRA) != 0) {
-    //
-    // TODO:
-    // Extra image is loaded in LoadedExtraImages
-    // update OS boot parameter here.
-    //
-    DEBUG ((DEBUG_ERROR, "Warning: Extra image parameters are not handled yet.\n"));
-    if (LoadedExtraImages == NULL) {
-      DEBUG ((DEBUG_ERROR, "Warning: Extra image not loaded.\n"));
+    if ((LoadedExtraImages != NULL) && ((LoadedExtraImages->Flags & LOADED_IMAGE_RUN_EXTRA) != 0)) {
+      DEBUG ((DEBUG_INFO, "Extra image is loaded and will run before OS.\n"));
+    } else {
+      DEBUG ((DEBUG_ERROR, "Warning: Extra image not loaded, or need pass it to OS in boot parameter.\n"));
     }
   }
 
@@ -320,6 +316,7 @@ UpdateOsParameters (
   }
   DEBUG ((DEBUG_INFO, "\nDump normal boot image info:\n"));
   DisplayInfo (LoadedImage);
+  AddMeasurePoint(0x40E0);
 
   return Status;
 }

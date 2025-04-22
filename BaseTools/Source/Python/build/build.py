@@ -2,9 +2,9 @@
 # build a platform or a module
 #
 #  Copyright (c) 2014, Hewlett-Packard Development Company, L.P.<BR>
-#  Copyright (c) 2007 - 2020, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2007 - 2021, Intel Corporation. All rights reserved.<BR>
 #  Copyright (c) 2018, Hewlett Packard Enterprise Development, L.P.<BR>
-#  Copyright (c) 2020, ARM Limited. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2021, ARM Limited. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -62,13 +62,10 @@ from AutoGen.ModuleAutoGenHelper import WorkSpaceInfo, PlatformInfo
 from GenFds.FdfParser import FdfParser
 from AutoGen.IncludesAutoGen import IncludesAutoGen
 from GenFds.GenFds import resetFdsGlobalVariable
+from AutoGen.AutoGen import CalculatePriorityValue
 
 ## standard targets of build command
 gSupportedTarget = ['all', 'genc', 'genmake', 'modules', 'libraries', 'fds', 'clean', 'cleanall', 'cleanlib', 'run']
-
-## build configuration file
-gBuildConfiguration = "target.txt"
-gToolsDefinition = "tools_def.txt"
 
 TemporaryTablePattern = re.compile(r'^_\d+_\d+_[a-fA-F0-9]+$')
 TmpTableDict = {}
@@ -196,7 +193,7 @@ def ReadMessage(From, To, ExitFlag,MemTo=None):
                 To(LineStr)
         else:
             break
-        if ExitFlag.isSet():
+        if ExitFlag.is_set():
             break
 
 class MakeSubProc(Popen):
@@ -208,7 +205,7 @@ class MakeSubProc(Popen):
 #
 # This method will call subprocess.Popen to execute an external program with
 # given options in specified directory. Because of the dead-lock issue during
-# redirecting output of the external program, threads are used to to do the
+# redirecting output of the external program, threads are used to do the
 # redirection work.
 #
 # @param  Command               A list or string containing the call of the program
@@ -240,8 +237,8 @@ def LaunchCommand(Command, WorkingDir,ModuleAuto = None):
         EndOfProcedure.clear()
         if Proc.stdout:
             StdOutThread = Thread(target=ReadMessage, args=(Proc.stdout, EdkLogger.info, EndOfProcedure,Proc.ProcOut))
-            StdOutThread.setName("STDOUT-Redirector")
-            StdOutThread.setDaemon(False)
+            StdOutThread.name = "STDOUT-Redirector"
+            StdOutThread.daemon = False
             StdOutThread.start()
 
 
@@ -432,8 +429,8 @@ class BuildTask:
     @staticmethod
     def StartScheduler(MaxThreadNumber, ExitFlag):
         SchedulerThread = Thread(target=BuildTask.Scheduler, args=(MaxThreadNumber, ExitFlag))
-        SchedulerThread.setName("Build-Task-Scheduler")
-        SchedulerThread.setDaemon(False)
+        SchedulerThread.name = "Build-Task-Scheduler"
+        SchedulerThread.daemon = False
         SchedulerThread.start()
         # wait for the scheduler to be started, especially useful in Linux
         while not BuildTask.IsOnGoing():
@@ -455,7 +452,7 @@ class BuildTask:
             # indicated to do so, or there's error in running thread
             #
             while (len(BuildTask._PendingQueue) > 0 or len(BuildTask._ReadyQueue) > 0 \
-                   or not ExitFlag.isSet()) and not BuildTask._ErrorFlag.isSet():
+                   or not ExitFlag.is_set()) and not BuildTask._ErrorFlag.is_set():
                 EdkLogger.debug(EdkLogger.DEBUG_8, "Pending Queue (%d), Ready Queue (%d)"
                                 % (len(BuildTask._PendingQueue), len(BuildTask._ReadyQueue)))
 
@@ -473,7 +470,7 @@ class BuildTask:
                 BuildTask._PendingQueueLock.release()
 
                 # launch build thread until the maximum number of threads is reached
-                while not BuildTask._ErrorFlag.isSet():
+                while not BuildTask._ErrorFlag.is_set():
                     # empty ready queue, do nothing further
                     if len(BuildTask._ReadyQueue) == 0:
                         break
@@ -497,12 +494,12 @@ class BuildTask:
                 time.sleep(0.01)
 
             # wait for all running threads exit
-            if BuildTask._ErrorFlag.isSet():
+            if BuildTask._ErrorFlag.is_set():
                 EdkLogger.quiet("\nWaiting for all build threads exit...")
-            # while not BuildTask._ErrorFlag.isSet() and \
+            # while not BuildTask._ErrorFlag.is_set() and \
             while len(BuildTask._RunningQueue) > 0:
                 EdkLogger.verbose("Waiting for thread ending...(%d)" % len(BuildTask._RunningQueue))
-                EdkLogger.debug(EdkLogger.DEBUG_8, "Threads [%s]" % ", ".join(Th.getName() for Th in threading.enumerate()))
+                EdkLogger.debug(EdkLogger.DEBUG_8, "Threads [%s]" % ", ".join(Th.name for Th in threading.enumerate()))
                 # avoid tense loop
                 time.sleep(0.1)
         except BaseException as X:
@@ -530,7 +527,7 @@ class BuildTask:
     #
     @staticmethod
     def IsOnGoing():
-        return not BuildTask._SchedulerStopped.isSet()
+        return not BuildTask._SchedulerStopped.is_set()
 
     ## Abort the build
     @staticmethod
@@ -546,7 +543,7 @@ class BuildTask:
     #
     @staticmethod
     def HasError():
-        return BuildTask._ErrorFlag.isSet()
+        return BuildTask._ErrorFlag.is_set()
 
     ## Get error message in running thread
     #
@@ -643,7 +640,7 @@ class BuildTask:
             # TRICK: hide the output of threads left running, so that the user can
             #        catch the error message easily
             #
-            if not BuildTask._ErrorFlag.isSet():
+            if not BuildTask._ErrorFlag.is_set():
                 GlobalData.gBuildingModule = "%s [%s, %s, %s]" % (str(self.BuildItem.BuildObject),
                                                                   self.BuildItem.BuildObject.Arch,
                                                                   self.BuildItem.BuildObject.ToolChain,
@@ -652,7 +649,7 @@ class BuildTask:
             EdkLogger.SetLevel(EdkLogger.ERROR)
             BuildTask._ErrorFlag.set()
             BuildTask._ErrorMessage = "%s broken\n    %s [%s]" % \
-                                      (threading.currentThread().getName(), Command, WorkingDir)
+                                      (threading.current_thread().name, Command, WorkingDir)
 
         # indicate there's a thread is available for another build task
         BuildTask._RunningQueueLock.acquire()
@@ -666,8 +663,8 @@ class BuildTask:
         EdkLogger.quiet("Building ... %s" % repr(self.BuildItem))
         Command = self.BuildItem.BuildCommand + [self.BuildItem.Target]
         self.BuildTread = Thread(target=self._CommandThread, args=(Command, self.BuildItem.WorkingDir))
-        self.BuildTread.setName("build thread")
-        self.BuildTread.setDaemon(False)
+        self.BuildTread.name = "build thread"
+        self.BuildTread.daemon = False
         self.BuildTread.start()
 
 ## The class contains the information related to EFI image
@@ -889,6 +886,49 @@ class Build():
         except:
             return False, UNKNOWN_ERROR
 
+    ## Add TOOLCHAIN and FAMILY declared in DSC [BuildOptions] to ToolsDefTxtDatabase.
+    #
+    # Loop through the set of build targets, tool chains, and archs provided on either
+    # the command line or in target.txt to discover FAMILY and TOOLCHAIN delclarations
+    # in [BuildOptions] sections that may be within !if expressions that may use
+    # $(TARGET), $(TOOLCHAIN), $(TOOLCHAIN_TAG), or $(ARCH) operands.
+    #
+    def GetToolChainAndFamilyFromDsc (self, File):
+        SavedGlobalDefines = GlobalData.gGlobalDefines.copy()
+        for BuildTarget in self.BuildTargetList:
+            GlobalData.gGlobalDefines['TARGET'] = BuildTarget
+            for BuildToolChain in self.ToolChainList:
+                GlobalData.gGlobalDefines['TOOLCHAIN']      = BuildToolChain
+                GlobalData.gGlobalDefines['TOOL_CHAIN_TAG'] = BuildToolChain
+                for BuildArch in self.ArchList:
+                    GlobalData.gGlobalDefines['ARCH'] = BuildArch
+                    dscobj = self.BuildDatabase[File, BuildArch]
+                    for KeyFamily, Key, KeyCodeBase in dscobj.BuildOptions:
+                        try:
+                            Target, ToolChain, Arch, Tool, Attr = Key.split('_')
+                        except:
+                            continue
+                        if ToolChain == TAB_STAR or Attr != TAB_TOD_DEFINES_FAMILY:
+                            continue
+                        try:
+                            Family = dscobj.BuildOptions[(KeyFamily, Key, KeyCodeBase)]
+                            Family = Family.strip().strip('=').strip()
+                        except:
+                            continue
+                        if TAB_TOD_DEFINES_FAMILY not in self.ToolDef.ToolsDefTxtDatabase:
+                            self.ToolDef.ToolsDefTxtDatabase[TAB_TOD_DEFINES_FAMILY] = {}
+                        if ToolChain not in self.ToolDef.ToolsDefTxtDatabase[TAB_TOD_DEFINES_FAMILY]:
+                            self.ToolDef.ToolsDefTxtDatabase[TAB_TOD_DEFINES_FAMILY][ToolChain] = Family
+                        if TAB_TOD_DEFINES_BUILDRULEFAMILY not in self.ToolDef.ToolsDefTxtDatabase:
+                            self.ToolDef.ToolsDefTxtDatabase[TAB_TOD_DEFINES_BUILDRULEFAMILY] = {}
+                        if ToolChain not in self.ToolDef.ToolsDefTxtDatabase[TAB_TOD_DEFINES_BUILDRULEFAMILY]:
+                            self.ToolDef.ToolsDefTxtDatabase[TAB_TOD_DEFINES_BUILDRULEFAMILY][ToolChain] = Family
+                        if TAB_TOD_DEFINES_TOOL_CHAIN_TAG not in self.ToolDef.ToolsDefTxtDatabase:
+                            self.ToolDef.ToolsDefTxtDatabase[TAB_TOD_DEFINES_TOOL_CHAIN_TAG] = []
+                        if ToolChain not in self.ToolDef.ToolsDefTxtDatabase[TAB_TOD_DEFINES_TOOL_CHAIN_TAG]:
+                            self.ToolDef.ToolsDefTxtDatabase[TAB_TOD_DEFINES_TOOL_CHAIN_TAG].append(ToolChain)
+        GlobalData.gGlobalDefines = SavedGlobalDefines
+
     ## Load configuration
     #
     #   This method will parse target.txt and get the build configurations.
@@ -909,6 +949,26 @@ class Build():
             self.ToolChainList = self.TargetTxt.TargetTxtDictionary[TAB_TAT_DEFINES_TOOL_CHAIN_TAG]
             if self.ToolChainList is None or len(self.ToolChainList) == 0:
                 EdkLogger.error("build", RESOURCE_NOT_AVAILABLE, ExtraData="No toolchain given. Don't know how to build.\n")
+
+        if not self.PlatformFile:
+            PlatformFile = self.TargetTxt.TargetTxtDictionary[TAB_TAT_DEFINES_ACTIVE_PLATFORM]
+            if not PlatformFile:
+                # Try to find one in current directory
+                WorkingDirectory = os.getcwd()
+                FileList = glob.glob(os.path.normpath(os.path.join(WorkingDirectory, '*.dsc')))
+                FileNum = len(FileList)
+                if FileNum >= 2:
+                    EdkLogger.error("build", OPTION_MISSING,
+                                    ExtraData="There are %d DSC files in %s. Use '-p' to specify one.\n" % (FileNum, WorkingDirectory))
+                elif FileNum == 1:
+                    PlatformFile = FileList[0]
+                else:
+                    EdkLogger.error("build", RESOURCE_NOT_AVAILABLE,
+                                    ExtraData="No active platform specified in target.txt or command line! Nothing can be built.\n")
+
+            self.PlatformFile = PathClass(NormFile(PlatformFile, self.WorkspaceDir), self.WorkspaceDir)
+
+        self.GetToolChainAndFamilyFromDsc (self.PlatformFile)
 
         # check if the tool chains are defined or not
         NewToolChainList = []
@@ -935,23 +995,6 @@ class Build():
                 ToolChainFamily.append(ToolDefinition[TAB_TOD_DEFINES_FAMILY][Tool])
         self.ToolChainFamily = ToolChainFamily
 
-        if not self.PlatformFile:
-            PlatformFile = self.TargetTxt.TargetTxtDictionary[TAB_TAT_DEFINES_ACTIVE_PLATFORM]
-            if not PlatformFile:
-                # Try to find one in current directory
-                WorkingDirectory = os.getcwd()
-                FileList = glob.glob(os.path.normpath(os.path.join(WorkingDirectory, '*.dsc')))
-                FileNum = len(FileList)
-                if FileNum >= 2:
-                    EdkLogger.error("build", OPTION_MISSING,
-                                    ExtraData="There are %d DSC files in %s. Use '-p' to specify one.\n" % (FileNum, WorkingDirectory))
-                elif FileNum == 1:
-                    PlatformFile = FileList[0]
-                else:
-                    EdkLogger.error("build", RESOURCE_NOT_AVAILABLE,
-                                    ExtraData="No active platform specified in target.txt or command line! Nothing can be built.\n")
-
-            self.PlatformFile = PathClass(NormFile(PlatformFile, self.WorkspaceDir), self.WorkspaceDir)
         self.ThreadNumber   = ThreadNum()
     ## Initialize build configuration
     #
@@ -1130,14 +1173,14 @@ class Build():
             EndOfProcedure.clear()
             if Process.stdout:
                 StdOutThread = Thread(target=ReadMessage, args=(Process.stdout, EdkLogger.info, EndOfProcedure))
-                StdOutThread.setName("STDOUT-Redirector")
-                StdOutThread.setDaemon(False)
+                StdOutThread.name = "STDOUT-Redirector"
+                StdOutThread.daemon = False
                 StdOutThread.start()
 
             if Process.stderr:
                 StdErrThread = Thread(target=ReadMessage, args=(Process.stderr, EdkLogger.quiet, EndOfProcedure))
-                StdErrThread.setName("STDERR-Redirector")
-                StdErrThread.setDaemon(False)
+                StdErrThread.name = "STDERR-Redirector"
+                StdErrThread.daemon = False
                 StdErrThread.start()
             # waiting for program exit
             Process.wait()
@@ -1170,14 +1213,14 @@ class Build():
             EndOfProcedure.clear()
             if Process.stdout:
                 StdOutThread = Thread(target=ReadMessage, args=(Process.stdout, EdkLogger.info, EndOfProcedure))
-                StdOutThread.setName("STDOUT-Redirector")
-                StdOutThread.setDaemon(False)
+                StdOutThread.name = "STDOUT-Redirector"
+                StdOutThread.daemon = False
                 StdOutThread.start()
 
             if Process.stderr:
                 StdErrThread = Thread(target=ReadMessage, args=(Process.stderr, EdkLogger.quiet, EndOfProcedure))
-                StdErrThread.setName("STDERR-Redirector")
-                StdErrThread.setDaemon(False)
+                StdErrThread.name = "STDERR-Redirector"
+                StdErrThread.daemon = False
                 StdErrThread.start()
             # waiting for program exit
             Process.wait()
@@ -1260,6 +1303,9 @@ class Build():
         # run
         if Target == 'run':
             return True
+
+        # Fetch the MakeFileName.
+        self.MakeFileName = AutoGenObject.MakeFileName
 
         # build modules
         if BuildModule:
@@ -2136,8 +2182,6 @@ class Build():
             Pa.CreateLibModuelDirs()
             # Fetch the MakeFileName.
             self.MakeFileName = Pa.MakeFileName
-            if not self.MakeFileName:
-                self.MakeFileName = Pa.MakeFile
 
             Pa.DataPipe.DataContainer = {"LibraryBuildDirectoryList":Pa.LibraryBuildDirectoryList}
             Pa.DataPipe.DataContainer = {"ModuleBuildDirectoryList":Pa.ModuleBuildDirectoryList}
@@ -2379,26 +2423,42 @@ class Build():
                 FvDir = Wa.FvDir
                 if not os.path.exists(FvDir):
                     continue
-
                 for Arch in self.ArchList:
-                    # Build up the list of supported architectures for this build
-                    prefix = '%s_%s_%s_' % (BuildTarget, ToolChain, Arch)
-
-                    # Look through the tool definitions for GUIDed tools
+                    guidList = []
+                    tooldefguidList = []
                     guidAttribs = []
-                    for (attrib, value) in self.ToolDef.ToolsDefTxtDictionary.items():
-                        if attrib.upper().endswith('_GUID'):
-                            split = attrib.split('_')
-                            thisPrefix = '_'.join(split[0:3]) + '_'
-                            if thisPrefix == prefix:
-                                guid = self.ToolDef.ToolsDefTxtDictionary[attrib]
-                                guid = guid.lower()
-                                toolName = split[3]
-                                path = '_'.join(split[0:4]) + '_PATH'
-                                path = self.ToolDef.ToolsDefTxtDictionary[path]
-                                path = self.GetRealPathOfTool(path)
-                                guidAttribs.append((guid, toolName, path))
-
+                    for Platform in Wa.AutoGenObjectList:
+                        if Platform.BuildTarget != BuildTarget:
+                            continue
+                        if Platform.ToolChain != ToolChain:
+                            continue
+                        if Platform.Arch != Arch:
+                            continue
+                        if hasattr (Platform, 'BuildOption'):
+                            for Tool in Platform.BuildOption:
+                                if 'GUID' in Platform.BuildOption[Tool]:
+                                    if 'PATH' in Platform.BuildOption[Tool]:
+                                        value = Platform.BuildOption[Tool]['GUID']
+                                        if value in guidList:
+                                            EdkLogger.error("build", FORMAT_INVALID, "Duplicate GUID value %s used with Tool %s in DSC [BuildOptions]." % (value, Tool))
+                                        path = Platform.BuildOption[Tool]['PATH']
+                                        guidList.append(value)
+                                        guidAttribs.append((value, Tool, path))
+                        for Tool in Platform.ToolDefinition:
+                            if 'GUID' in Platform.ToolDefinition[Tool]:
+                                if 'PATH' in Platform.ToolDefinition[Tool]:
+                                    value = Platform.ToolDefinition[Tool]['GUID']
+                                    if value in tooldefguidList:
+                                        EdkLogger.error("build", FORMAT_INVALID, "Duplicate GUID value %s used with Tool %s in tools_def.txt." % (value, Tool))
+                                    tooldefguidList.append(value)
+                                    if value in guidList:
+                                        # Already added by platform
+                                        continue
+                                    path = Platform.ToolDefinition[Tool]['PATH']
+                                    guidList.append(value)
+                                    guidAttribs.append((value, Tool, path))
+                    # Sort by GuidTool name
+                    guidAttribs = sorted (guidAttribs, key=lambda x: x[1])
                     # Write out GuidedSecTools.txt
                     toolsFile = os.path.join(FvDir, 'GuidedSectionTools.txt')
                     toolsFile = open(toolsFile, 'wt')
@@ -2694,6 +2754,7 @@ def Main():
             Conclusion = "Done"
         except:
             Conclusion = "Failed"
+            ReturnCode = POSTBUILD_ERROR
     elif ReturnCode == ABORT_ERROR:
         Conclusion = "Aborted"
     else:

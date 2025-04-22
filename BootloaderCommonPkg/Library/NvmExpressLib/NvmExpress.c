@@ -2,7 +2,7 @@
   NvmExpress driver is used to manage non-volatile memory subsystem which follows
   NVM Express specification.
 
-  Copyright (c) 2013 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2013 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -156,11 +156,11 @@ EnumerateNvmeDevNamespace (
     //
     // Dump NvmExpress Identify Namespace Data
     //
-    DEBUG ((DEBUG_INFO, " == NVME IDENTIFY NAMESPACE [%d] DATA ==\n", NamespaceId));
-    DEBUG ((DEBUG_INFO, "    NSZE        : 0x%x\n", NamespaceData->Nsze));
-    DEBUG ((DEBUG_INFO, "    NCAP        : 0x%x\n", NamespaceData->Ncap));
-    DEBUG ((DEBUG_INFO, "    NUSE        : 0x%x\n", NamespaceData->Nuse));
-    DEBUG ((DEBUG_INFO, "    LBAF0.LBADS : 0x%x\n", (NamespaceData->LbaFormat[0].Lbads)));
+    DEBUG ((DEBUG_VERBOSE, " == NVME IDENTIFY NAMESPACE [%d] DATA ==\n", NamespaceId));
+    DEBUG ((DEBUG_VERBOSE, "    NSZE        : 0x%x\n", NamespaceData->Nsze));
+    DEBUG ((DEBUG_VERBOSE, "    NCAP        : 0x%x\n", NamespaceData->Ncap));
+    DEBUG ((DEBUG_VERBOSE, "    NUSE        : 0x%x\n", NamespaceData->Nuse));
+    DEBUG ((DEBUG_VERBOSE, "    LBAF0.LBADS : 0x%x\n", (NamespaceData->LbaFormat[0].Lbads)));
 
     //
     // Build controller name for Component Name (2) protocol.
@@ -177,9 +177,6 @@ Exit:
     FreePool (NamespaceData);
   }
 
-  if (EFI_ERROR (Status) && (Device != NULL)) {
-    FreePool (Device);
-  }
   return Status;
 }
 
@@ -298,16 +295,25 @@ NvmeInitialize (
   EFI_STATUS                          Status;
   NVME_CONTROLLER_PRIVATE_DATA        *Private;
   EFI_PHYSICAL_ADDRESS                MappedAddr;
+  UINTN                               Index;
+  UINTN                               NameSpaceCnt;
+
+  DEBUG ((DEBUG_INFO, "%a NVMe controller\n", (NvmeInitMode == DevDeinit) ? "Deinit" : "Init"));
 
   if (NvmeInitMode == DevDeinit) {
     if (mNvmeCtrlPrivate != NULL) {
       NvmeDeInitialize (mNvmeCtrlPrivate);
+      // Disable Bus Master
+      MmioAnd16 (mNvmeCtrlPrivate->PciBaseAddr + PCI_COMMAND_OFFSET,
+                 (UINT16)~(EFI_PCI_COMMAND_IO_SPACE | EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER));
       mNvmeCtrlPrivate = NULL;
     }
     return EFI_SUCCESS;
   }
 
-  DEBUG ((DEBUG_INFO, "NvmExpressDriverBindingStart: start\n"));
+  // Enable Bus Master
+  MmioOr16 (NvmeHcPciBase + PCI_COMMAND_OFFSET,
+            (UINT16)(EFI_PCI_COMMAND_IO_SPACE | EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER));
 
   Private          = NULL;
 
@@ -315,9 +321,8 @@ NvmeInitialize (
   // Check EFI_ALREADY_STARTED to reuse the original NVME_CONTROLLER_PRIVATE_DATA.
   //
   Private = AllocateZeroPool (sizeof (NVME_CONTROLLER_PRIVATE_DATA));
-
   if (Private == NULL) {
-    DEBUG ((DEBUG_ERROR, "NvmExpressDriverBindingStart: allocating pool for Nvme Private Data failed!\n"));
+    DEBUG ((DEBUG_VERBOSE, "NvmExpressDriverBindingStart: allocating pool for Nvme Private Data failed!\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto Exit;
   }
@@ -345,6 +350,7 @@ NvmeInitialize (
   Private->BufferPciAddr             = (UINT8 *)(UINTN)MappedAddr;
   Private->Signature                 = NVME_CONTROLLER_PRIVATE_DATA_SIGNATURE;
   Private->NvmeHCBase                = MmioRead32 (NvmeHcPciBase + PCI_BASE_ADDRESSREG_OFFSET) & 0xFFFFF000;
+  Private->PciBaseAddr               = NvmeHcPciBase;
   Private->Passthru.Mode             = &Private->PassThruMode;
   Private->Passthru.PassThru         = NvmExpressPassThru;
   Private->Passthru.GetNextNamespace = NvmExpressGetNextNamespace;
@@ -362,7 +368,14 @@ NvmeInitialize (
              Private
              );
 
-  DEBUG ((DEBUG_INFO, "NvmExpressDriverBindingStart: end successfully\n"));
+  NameSpaceCnt = 0;
+  for (Index = 0; Index < ARRAY_SIZE (mMultiNvmeDrive); Index++) {
+    if (mMultiNvmeDrive[Index] != NULL) {
+      NameSpaceCnt++;
+    }
+  }
+
+  DEBUG ((DEBUG_INFO, "Found %d NVMe namespace\n", NameSpaceCnt));
   return EFI_SUCCESS;
 
 Exit:
@@ -376,7 +389,10 @@ Exit:
     }
   }
 
-  DEBUG ((DEBUG_INFO, "NvmExpressDriverBindingStart: end with %r\n", Status));
+  MmioAnd16 (NvmeHcPciBase + PCI_COMMAND_OFFSET,
+            (UINT16)~(EFI_PCI_COMMAND_IO_SPACE | EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER));
+
+  DEBUG ((DEBUG_INFO, "NVMe initialization failed - %r\n", Status));
 
   return Status;
 }
@@ -406,8 +422,15 @@ NvmeGetMediaInfo (
   OUT DEVICE_BLOCK_INFO              *DevBlockInfo
   )
 {
-  DevBlockInfo->BlockNum = 512;
-  DevBlockInfo->BlockSize = 512;
+  if (DeviceIndex >= ARRAY_SIZE (mMultiNvmeDrive)) {
+    return EFI_INVALID_PARAMETER;
+  }
+  if (mMultiNvmeDrive[DeviceIndex] == NULL) {
+    return EFI_NOT_FOUND;
+  }
+  DevBlockInfo->BlockNum  = mMultiNvmeDrive[DeviceIndex]->Media.LastBlock + 1;
+  DevBlockInfo->BlockSize = mMultiNvmeDrive[DeviceIndex]->Media.BlockSize;
+
   return EFI_SUCCESS;
 }
 
@@ -445,7 +468,14 @@ NvmeReadBlocks (
 {
   EFI_STATUS Status;
 
-  Status = NvmeBlockIoReadBlocks (&mMultiNvmeDrive[0]->BlockIo, 0, StartLBA, BufferSize, Buffer);
+  if (DeviceIndex >= ARRAY_SIZE (mMultiNvmeDrive)) {
+    return EFI_INVALID_PARAMETER;
+  }
+  if (mMultiNvmeDrive[DeviceIndex] == NULL) {
+    return EFI_NOT_FOUND;
+  }
+
+  Status = NvmeBlockIoReadBlocks (&mMultiNvmeDrive[DeviceIndex]->BlockIo, 0, StartLBA, BufferSize, Buffer);
 
   return Status;
 }
@@ -474,7 +504,14 @@ NvmeWriteBlocks (
 {
   EFI_STATUS Status;
 
-  Status = NvmeBlockIoWriteBlocks (&mMultiNvmeDrive[0]->BlockIo, 0, StartLBA, DataSize, DataAddress);
+  if (DeviceIndex >= ARRAY_SIZE (mMultiNvmeDrive)) {
+    return EFI_INVALID_PARAMETER;
+  }
+  if (mMultiNvmeDrive[DeviceIndex] == NULL) {
+    return EFI_NOT_FOUND;
+  }
+
+  Status = NvmeBlockIoWriteBlocks (&mMultiNvmeDrive[DeviceIndex]->BlockIo, 0, StartLBA, DataSize, DataAddress);
 
   return Status;
 }

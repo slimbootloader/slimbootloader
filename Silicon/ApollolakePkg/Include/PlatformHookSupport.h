@@ -9,7 +9,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #ifndef __PLATFORM_HOOK_SUPPORT_H__
 #define __PLATFORM_HOOK_SUPPORT_H__
 
-#include <Library/SiGpioLib.h>
 
 /**
   Get boot mode value from config data

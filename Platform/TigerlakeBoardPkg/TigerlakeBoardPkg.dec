@@ -1,0 +1,19 @@
+#/** @file
+# Platform Package
+#
+# Copyright (c) 2009 - 2017, Intel Corporation. All rights reserved.<BR>
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#**/
+
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = TigerlakeBoardPkg
+  PACKAGE_GUID                   = E0F11FC4-9850-44CC-A5F0-D2FFF80712CB
+  PACKAGE_VERSION                = 0.1
+
+[Guids]
+  gCpuInitDataHobGuid            = { 0x266e31cc, 0x13c5, 0x4807, {0xb9, 0xdc, 0x39, 0xa6, 0xba, 0x88, 0xff, 0x1a } }
+
+
+[Includes]
+  Include

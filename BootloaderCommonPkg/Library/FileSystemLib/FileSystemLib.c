@@ -381,7 +381,7 @@ EFI_STATUS
 EFIAPI
 ReadFile (
   IN  EFI_HANDLE                                  FileHandle,
-  OUT VOID                                      **FileBuffer,
+  OUT VOID                                       *FileBuffer,
   OUT UINTN                                      *FileSize
   )
 {
@@ -394,8 +394,8 @@ ReadFile (
     return EFI_INVALID_PARAMETER;
   }
 
-  ASSERT (*FileBuffer != NULL);
-  if (*FileBuffer == NULL) {
+  ASSERT (FileBuffer != NULL);
+  if (FileBuffer == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 

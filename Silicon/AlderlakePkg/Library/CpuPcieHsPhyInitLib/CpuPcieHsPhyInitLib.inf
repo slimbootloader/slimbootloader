@@ -1,0 +1,37 @@
+## @file
+#  Library description file for High Speed Phy Initialization Lib
+#
+#  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010017
+  BASE_NAME                      = CpuPcieHsPhyInitLib
+  FILE_GUID                      = 7b47b817-df61-4519-a7c9-885cbd3a943a
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = CpuPcieHsPhyInitLib
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  CpuPcieHsPhyInitLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/AlderlakePkg/AlderlakePkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  IoLib
+  PciLib
+  DebugLib
+  HeciLib
+  MemoryAllocationLib
+  SecureBootLib

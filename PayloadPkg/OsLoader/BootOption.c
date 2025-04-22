@@ -1,12 +1,47 @@
 /** @file
 
-  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
 #include "OsLoader.h"
+/**
+  Print Pre-OS or/and extra images.
 
+  @param[in] BootOption     the boot options
+  @param[in] Flags          the boot flags
+  @param[in] ImageType      the image types
+
+**/
+VOID
+PrintExtraImages (
+  OS_BOOT_OPTION *BootOption,
+  UINT8 Flags,
+  LOAD_IMAGE_TYPE ImageType
+  )
+{
+  BOOT_IMAGE *BootImage;
+
+  BootImage = &BootOption->Image[ImageType];
+  if ((BootOption->BootFlags & Flags) != 0){
+    if (BootImage->LbaImage.Valid == 1) {
+      DEBUG ((DEBUG_INFO, "                                %6a | %4a | %4x | 0x%x\n",
+              GetLoadedImageTypeNameString(ImageType),
+              "RAW",
+              BootImage->LbaImage.SwPart,
+              BootImage->LbaImage.LbaAddr
+            ));
+    } else if (BootImage->FileImage.FileName[0] != '\0') {
+      DEBUG ((DEBUG_INFO, "                                %6a | %4a | %4x | %a\n",
+              GetLoadedImageTypeNameString(ImageType),
+              GetFsTypeString(BootImage->FileImage.FsType),
+              BootImage->FileImage.SwPart,
+              BootImage->FileImage.FileName
+            ));
+    }
+  }
+}
 
 /**
   Print the OS boot option list.
@@ -27,8 +62,16 @@ PrintBootOptions (
   DEBUG ((DEBUG_INFO, "Idx|ImgType|DevType|DevNum|Flags|HwPart|FsType|SwPart|File/Lbaoffset\n"));
   for (Index = 0; Index < OsBootOptionList->OsBootOptionCount; Index++) {
     BootOption = &OsBootOptionList->OsBootOption[Index];
-    if (BootOption->FsType < EnumFileSystemMax) {
-      DEBUG ((DEBUG_INFO, "%3x|%7x| %5a | %4x | %3x | %4x | %4a | %4x | %a\n", \
+    if (BootOption->DevType == OsBootDeviceMemory) {
+      DEBUG ((DEBUG_INFO, "%3x|%7x| %5a |   -  | %3x |   -  |   -  |   -  | 0x%x", \
+                 Index, \
+                 BootOption->ImageType, \
+                 GetBootDeviceNameString(BootOption->DevType), \
+                 BootOption->BootFlags, \
+                 BootOption->Image[0].LbaImage.LbaAddr \
+                 ));
+    } else if (BootOption->FsType < EnumFileSystemMax) {
+      DEBUG ((DEBUG_INFO, "%3x|%7x| %5a | %4x | %3x | %4x | %4a | %4x | %a", \
                  Index, \
                  BootOption->ImageType, \
                  GetBootDeviceNameString(BootOption->DevType), \
@@ -36,11 +79,11 @@ PrintBootOptions (
                  BootOption->BootFlags, \
                  BootOption->HwPart,  \
                  GetFsTypeString (BootOption->FsType), \
-                 BootOption->SwPart,  \
-                 BootOption->Image[0].FileName \
+                 BootOption->Image[0].FileImage.SwPart,  \
+                 BootOption->Image[0].FileImage.FileName \
                  ));
     } else {
-      DEBUG ((DEBUG_INFO, "%3x|%7x| %5a | %4x | %3x | %4x | %4a | %4x | 0x%x\n", \
+      DEBUG ((DEBUG_INFO, "%3x|%7x| %5a | %4x | %3x | %4x | %4a | %4x | 0x%x", \
                  Index, \
                  BootOption->ImageType, \
                  GetBootDeviceNameString(BootOption->DevType), \
@@ -52,9 +95,23 @@ PrintBootOptions (
                  BootOption->Image[0].LbaImage.LbaAddr \
                  ));
     }
-  }
 
-  DEBUG ((DEBUG_INFO, "\n"));
+    if (Index == OsBootOptionList->CurrentBoot) {
+      DEBUG ((DEBUG_INFO," *Current"));
+    }
+    DEBUG ((DEBUG_INFO, "\n"));
+
+    //Print extra image filename
+    for (UINT8 Type = LoadImageTypeExtra0; Type < LoadImageTypeMax; Type++) {
+      PrintExtraImages (BootOption, BOOT_FLAGS_EXTRA, Type);
+    }
+
+    //Print Pre-OS image filename
+    PrintExtraImages (BootOption,BOOT_FLAGS_PREOS,LoadImageTypePreOs);
+
+    //Print misc image filename
+    PrintExtraImages (BootOption,BOOT_FLAGS_MISC,LoadImageTypeMisc);
+  }
 }
 
 

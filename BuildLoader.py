@@ -2,7 +2,7 @@
 ## @ BuildLoader.py
 # Build bootloader main script
 #
-# Copyright (c) 2016 - 2020, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2016 - 2024, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 
 ##
@@ -10,6 +10,7 @@
 #
 import os
 import sys
+import re
 
 tool_dir = os.path.join(os.path.dirname (os.path.realpath(__file__)), 'BootloaderCorePkg', 'Tools')
 sys.dont_write_bytecode = True
@@ -24,6 +25,7 @@ import multiprocessing
 from   ctypes import *
 from   BuildUtility import *
 
+import glob
 
 def rebuild_basetools ():
     exe_list = 'GenFfs  GenFv  GenFw  GenSec  Lz4Compress  LzmaCompress'.split()
@@ -38,7 +40,7 @@ def rebuild_basetools ():
 
         if not check_files_exist (exe_list, os.path.join(sblsource, 'BaseTools', 'Bin', 'Win32'), '.exe'):
             print ("Could not find pre-built BaseTools binaries, try to rebuild BaseTools ...")
-            ret = run_process (['BaseTools\\toolsetup.bat', 'forcerebuild'])
+            ret = run_process (['BaseTools\\toolsetup.bat', 'forcerebuild', os.environ['TOOL_CHAIN']])
 
     if ret:
         print ("Build BaseTools failed, please check required build environment and utilities !")
@@ -57,63 +59,22 @@ def create_conf (workspace, sbl_source):
                 os.path.join(workspace, 'Conf/%s.txt' % name))
 
 def prep_env ():
-    # check python version first
-    version = check_for_python ()
-    os.environ['PYTHON_COMMAND'] = '"' + sys.executable + '"'
-    print_tool_version_info(os.environ['PYTHON_COMMAND'], version.strip())
-
-    sblsource = os.path.dirname(os.path.abspath(__file__))
+    sblsource = os.environ['SBL_SOURCE']
     os.chdir(sblsource)
-    if sys.platform == 'darwin':
-        toolchain = 'XCODE5'
-        os.environ['PATH'] = os.environ['PATH'] + ':' + os.path.join(sblsource, 'BaseTools/BinWrappers/PosixLike')
-        clang_ver = run_process (['clang', '-dumpversion'], capture_out = True)
-        clang_ver = clang_ver.strip()
-        toolchain_ver = clang_ver
-    elif os.name == 'posix':
-        toolchain = 'GCC49'
-        gcc_ver = run_process (['gcc', '-dumpversion'], capture_out = True)
-        gcc_ver = gcc_ver.strip()
-        if int(gcc_ver.split('.')[0]) > 4:
-            toolchain = 'GCC5'
-        os.environ['PATH'] = os.environ['PATH'] + ':' + os.path.join(sblsource, 'BaseTools/BinWrappers/PosixLike')
-        toolchain_ver = gcc_ver
-    elif os.name == 'nt':
-        os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(sblsource, 'BaseTools\\Bin\\Win32')
-        os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(sblsource, 'BaseTools\\BinWrappers\\WindowsLike')
-        os.environ['PYTHONPATH'] = os.path.join(sblsource, 'BaseTools', 'Source', 'Python')
-
-        toolchain, toolchain_prefix, toolchain_path, toolchain_ver = get_visual_studio_info ()
-        if toolchain:
-            os.environ[toolchain_prefix] = toolchain_path
-        else:
-            print("Could not find supported Visual Studio version !")
-            sys.exit(1)
-        if 'NASM_PREFIX' not in os.environ:
-            os.environ['NASM_PREFIX'] = "C:\\Nasm\\"
-        if 'IASL_PREFIX' not in os.environ:
-            os.environ['IASL_PREFIX'] = "C:\\ASL\\"
-    else:
-        print("Unsupported operating system !")
-        sys.exit(1)
-
-    if 'SBL_KEY_DIR' not in os.environ:
-        os.environ['SBL_KEY_DIR'] = "../SblKeys/"
-
-    print_tool_version_info(toolchain, toolchain_ver)
-
-    check_for_openssl()
-    check_for_nasm()
-    check_for_git()
 
     # Update Environment vars
-    os.environ['SBL_SOURCE']     = sblsource
+    if os.name == 'nt':
+        os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(sblsource, 'BaseTools', 'Bin', 'Win32')
+        os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(sblsource, 'BaseTools', 'BinWrappers', 'WindowsLike')
+        os.environ['PYTHONPATH'] = os.path.join(sblsource, 'BaseTools', 'Source', 'Python')
+    else:
+        os.environ['PATH'] = os.environ['PATH'] + ':' + os.path.join(sblsource, 'BaseTools', 'BinWrappers', 'PosixLike')
+
     os.environ['EDK_TOOLS_PATH'] = os.path.join(sblsource, 'BaseTools')
     os.environ['BASE_TOOLS_PATH'] = os.path.join(sblsource, 'BaseTools')
-    if 'WORKSPACE' not in os.environ:
-        os.environ['WORKSPACE'] = sblsource
-    os.environ['CONF_PATH']     = os.path.join(os.environ['WORKSPACE'], 'Conf')
-    os.environ['TOOL_CHAIN']    = toolchain
+    os.environ['CONF_PATH'] = os.path.join(os.environ['WORKSPACE'], 'Conf')
+    if 'SBL_KEY_DIR' not in os.environ:
+        os.environ['SBL_KEY_DIR'] = os.path.join(sblsource, '..', 'SblKeys')
 
     create_conf (os.environ['WORKSPACE'], sblsource)
 
@@ -127,8 +88,8 @@ def get_board_config_file (check_dir, board_cfgs):
 
     board_pkgs = os.listdir(platform_dir)
     for pkg in board_pkgs:
-        cfgfile = os.path.join(platform_dir, pkg, 'BoardConfig.py')
-        if os.path.exists(cfgfile):
+        # Allow files starting with 'BoardConfig' only
+        for cfgfile in glob.glob(os.path.join(platform_dir, pkg, 'BoardConfig*.py')):
             board_cfgs.append(cfgfile)
 
 class BaseBoard(object):
@@ -154,8 +115,8 @@ class BaseBoard(object):
 
         self.VERINFO_IMAGE_ID       = 'SB_???? '
         self.VERINFO_PROJ_ID        = 1
-        self.VERINFO_CORE_MAJOR_VER = 0
-        self.VERINFO_CORE_MINOR_VER = 5
+        self.VERINFO_CORE_MAJOR_VER = 1
+        self.VERINFO_CORE_MINOR_VER = 0
 
         self.VERINFO_PROJ_MAJOR_VER = 0
         self.VERINFO_PROJ_MINOR_VER = 1
@@ -171,7 +132,9 @@ class BaseBoard(object):
 
         self.PCI_EXPRESS_BASE       = 0xE0000000
         self.ACPI_PM_TIMER_BASE     = 0x0408
+        self.ACPI_PROCESSOR_ID_BASE = 1
         self.USB_KB_POLLING_TIMEOUT = 1
+        self.USB_CMD_TIMEOUT        = 0x1000
 
         self.VERIFIED_BOOT_STAGE_1B   = 0x0
         self.BOOT_MEDIA_SUPPORT_MASK  = 0xFFFFFFFF
@@ -180,8 +143,10 @@ class BaseBoard(object):
         self.DEBUG_PORT_NUMBER        = 0x00000002
         self.CONSOLE_IN_DEVICE_MASK   = 0x00000001
         self.CONSOLE_OUT_DEVICE_MASK  = 0x00000001
+        self.BOOT_PERFORMANCE_MASK    = 0x00000001
 
         self.HAVE_VBT_BIN          = 0
+        self.HAVE_ACTM_BIN         = 0
         self.HAVE_FIT_TABLE        = 0
         self.HAVE_VERIFIED_BOOT    = 0
         self.HAVE_MEASURED_BOOT    = 0
@@ -189,6 +154,7 @@ class BaseBoard(object):
         self.HAVE_ACPI_TABLE       = 1
         self.HAVE_PSD_TABLE        = 0
         self.HAVE_SEED_LIST        = 0
+        self.HAVE_FIT4_ENTRY       = 0
 
         self.FIT_ENTRY_MAX_NUM     = 10
 
@@ -201,28 +167,35 @@ class BaseBoard(object):
         self.ENABLE_CRYPTO_SHA_OPT  = IPP_CRYPTO_OPTIMIZATION_MASK['SHA256_V8']
         self.ENABLE_FWU            = 0
         self.ENABLE_SOURCE_DEBUG   = 0
-        self.ENABLE_SMM_REBASE     = 0
         self.ENABLE_GRUB_CONFIG    = 0
         self.ENABLE_SMBIOS         = 0
         self.ENABLE_LINUX_PAYLOAD  = 0
-        self.ENABLE_CONTAINER_BOOT = 1
         self.ENABLE_CSME_UPDATE    = 0
         self.ENABLE_EMMC_HS400     = 1
         self.ENABLE_DMA_PROTECTION = 0
-        self.ENABLE_MULTI_USB_BOOT_DEV = 0
+        self.ENABLE_MULTI_USB_BOOT_DEV = 1
         self.ENABLE_SBL_SETUP      = 0
         self.ENABLE_PAYLOD_MODULE  = 0
         self.ENABLE_FAST_BOOT      = 0
         self.ENABLE_LEGACY_EF_SEG  = 1
+        # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
+        self.ENABLE_SMM_REBASE     = 0
+        self.ENABLE_IPP_CRYPTO_PERF = 0
+        self.ENABLE_UPL_HANDOFF_FDT = 0
+        self.ENABLE_FIPS_SELFTEST   = 0
 
         self.SUPPORT_ARI           = 0
         self.SUPPORT_SR_IOV        = 0
+        self.SUPPORT_X2APIC        = 0
 
         self.BUILD_CSME_UPDATE_DRIVER    = 0
 
         self.CPU_MAX_LOGICAL_PROCESSOR_NUMBER = 16
+        self.CPU_SORT_METHOD       = 0
+        self.CPU_AP_WAIT_TIME_US   = 0
 
         self.ACM_SIZE              = 0
+        self.ACM_FIT_VERISON       = 0x100
         self.DIAGNOSTICACM_SIZE    = 0
         self.UCODE_SIZE            = 0
         self.CFGDATA_SIZE          = 0
@@ -230,9 +203,11 @@ class BaseBoard(object):
         self.VARIABLE_SIZE         = 0
         self.UEFI_VARIABLE_SIZE    = 0
         self.FWUPDATE_SIZE         = 0
+        self.BOOT_POLICY_SIZE      = 0
+        self.BOOT_POLICY_ADDRESS   = 0
 
-        self.SPI_IAS1_SIZE         = 0
-        self.SPI_IAS2_SIZE         = 0
+        self.SPI_CONTAINER1_SIZE   = 0
+        self.SPI_CONTAINER2_SIZE   = 0
 
         self.KM_SIZE               = 0x1000 # valid only if ACM_SIZE > 0
         self.BPM_SIZE              = 0x1000 # valid only if ACM_SIZE > 0
@@ -241,6 +216,7 @@ class BaseBoard(object):
         self.FSP_M_STACK_TOP       = 0
         self.STAGE1A_XIP           = 1
         self.STAGE1B_XIP           = 1
+        self.REMAP_STAGE1B         = 0
         self.STAGE1_STACK_BASE_OFFSET = 0
         self.STAGE2_XIP            = 0
         self.STAGE2_LOAD_HIGH      = 1
@@ -253,7 +229,7 @@ class BaseBoard(object):
         self.FWUPDATE_LOAD_BASE    = 0
 
         # OS Loader FD/FV sizes
-        self.OS_LOADER_FD_SIZE     = 0x0004E000
+        self.OS_LOADER_FD_SIZE     = 0x00057000
 
         self.OS_LOADER_FD_NUMBLK   = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
@@ -274,15 +250,20 @@ class BaseBoard(object):
         self.MIN_FSP_REVISION      = 0
         self.FSP_IMAGE_ID          = ''
 
+        self.MAX_MEMORY_MAP_ENTRY_NUM = 0x20
+
         self.TOP_SWAP_SIZE         = 0
         self.REDUNDANT_SIZE        = 0
 
+        self._TOOL_CHAIN           = ''
         self._PAYLOAD_NAME         = ''
         self._FSP_PATH_NAME        = ''
         self._EXTRA_INC_PATH       = []
 
         self._PLATFORM_ID          = None
         self._MULTI_VBT_FILE       = {}
+        self._ACTM_BIN_FILE        = ''
+        self._CFGDATA_DEF_FILE     = ''
         self._CFGDATA_INT_FILE     = []
         self._CFGDATA_EXT_FILE     = []
 
@@ -291,9 +272,14 @@ class BaseBoard(object):
         self.HASH_STORE_SIZE       = 0x400  #Hash store size to be allocated in bootloader
 
         self.PCI_MEM64_BASE        = 0
-        self.BUILD_ARCH            = 'IA32'
+        self.BUILD_ARCH            = ''
         self.KEYH_SVN              = 0
         self.CFGDATA_SVN           = 0
+        self.BUILD_IDENTICAL_TS    = 0
+        self.ENABLE_SBL_RESILIENCY = 0
+        self._ACM_CPU_FMS          = []
+
+        self.RTCM_RSVD_SIZE        = 0xFF000
 
         for key, value in list(kwargs.items()):
             setattr(self, '%s' % key, value)
@@ -302,14 +288,12 @@ class BaseBoard(object):
 class Build(object):
 
     def __init__(self, board):
-        self._toolchain                    = os.environ['TOOL_CHAIN']
         self._workspace                    = os.environ['WORKSPACE']
         self._board                        = board
         self._image                        = "SlimBootloader.bin"
         self._arch                         = board.BUILD_ARCH
         self._target                       = 'RELEASE' if board.RELEASE_MODE  else 'NOOPT' if board.NO_OPT_MODE else 'DEBUG'
         self._fsp_basename                 = 'FspDbg'  if board.FSPDEBUG_MODE else 'FspRel'
-        self._fv_dir                       = os.path.join(self._workspace, 'Build', 'BootloaderCorePkg', '%s_%s' % (self._target, self._toolchain), 'FV')
         self._key_dir                      = self._board._KEY_DIR
         self._img_list                     = board.GetImageLayout()
         self._pld_list                     = get_payload_list (board._PAYLOAD_NAME.split(';'))
@@ -319,7 +303,8 @@ class Build(object):
         # enforce feature configs rules
         if self._board.ENABLE_SBL_SETUP:
             self._board.ENABLE_PAYLOD_MODULE = 1
-
+        if not hasattr(self._board, 'FSP_INF_FILE'):
+            self._board.FSP_INF_FILE  = 'Silicon/%s/FspBin/FspBin.inf' % self._board.SILICON_PKG_NAME
         if not hasattr(self._board, 'MICROCODE_INF_FILE'):
             self._board.MICROCODE_INF_FILE  = 'Silicon/%s/Microcode/Microcode.inf' % self._board.SILICON_PKG_NAME
         if not hasattr(self._board, 'ACPI_TABLE_INF_FILE'):
@@ -378,52 +363,67 @@ class Build(object):
         num_fit_entries = 0
         if self._board.UCODE_SIZE > 0:
             ucode_base = self._board.UCODE_BASE
-            ucode_offset = ucode_base - base;
-            if (ucode_offset < 0):
-                raise Exception ('  UCODE %x\n  UCODE address (0x%08X) out of range' % (base, ucode_base))
+            ucode_offset = ucode_base - base
+            if ucode_offset < 0:
+                raise Exception ('UCODE %x\n  UCODE address (0x%08X) out of range' % (base, ucode_base))
 
             # Collect all CPU uCode images
             u_code_images = []
-            while ucode_offset < len(rom):
-                ucode_hdr = UCODE_HEADER.from_buffer(rom, ucode_offset)
-                if ucode_hdr.header_version == 1:
-                    if ucode_hdr.total_size:
-                        ucode_size = ucode_hdr.total_size
+
+            if hasattr(self._board, 'UCODE_SLOT_SIZE'):
+                # Fill up with however many slots fit into the region
+                num_ucode = self._board.UCODE_SIZE // self._board.UCODE_SLOT_SIZE
+                ucode_end_offset = ucode_offset + num_ucode * self._board.UCODE_SLOT_SIZE
+                u_code_images = list(range(ucode_offset, ucode_end_offset, self._board.UCODE_SLOT_SIZE))
+            else:
+                while ucode_offset < len(rom):
+                    # Extract info from CPU uCode images
+                    ucode_hdr = UCODE_HEADER.from_buffer(rom, ucode_offset)
+                    if ucode_hdr.header_version == 1:
+                        u_code_images.append(ucode_offset)
+                        if ucode_hdr.total_size:
+                            ucode_offset += ucode_hdr.total_size
+                        else:
+                            ucode_offset += 0x0800
                     else:
-                        ucode_size = 0x0800
-                    u_code_images.append((ucode_offset, ucode_size))
-                    ucode_offset += ucode_size
-                    num_fit_entries += 1
-                else:
-                    break
+                        break
 
             # Patch FIT with addresses of uCode images
-            for i in range(0, num_fit_entries):
+            for i in range(0, len(u_code_images)):
                 fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (i+1)*16)
-                # uCode Update
-                if len(u_code_images) > 0:
-                    offset, size = u_code_images.pop(0)
-                    fit_entry.set_values(base + offset, 0, 0x100, 0x1, 0)
-                    print ('  Patching entry %d with 0x%08X - uCode' % (i, fit_entry.address))
-                else:
-                    print ('  Nullifying unused uCode patch entry %d' % i)
-                    fit_entry.type      = 0x7f
+                offset = u_code_images.pop(0)
+                fit_entry.set_values(base + offset, 0, 0x100, 0x1, 0)
+                print ('  Patching entry %d with 0x%08X - uCode' % (i, fit_entry.address))
+                num_fit_entries     += 1
 
-            if len(u_code_images) > 0:
-                raise Exception('  Insufficient uCode entries in FIT. Need %d more.' % len(u_code_images))
-
-            # ACM
+        # ACM
         if self._board.ACM_SIZE > 0:
-            fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
-            fit_entry.set_values(self._board.ACM_BASE, 0, 0x100, 0x2, 0)
-            print ('  Patching entry %d with 0x%08X:0x%08X - ACM' % (num_fit_entries, fit_entry.address, fit_entry.size))
-            num_fit_entries     += 1
+            # Add default enrty for ACM FIT Version 0x100
+            if self._board.ACM_FIT_VERISON == 0x100:
+                fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
+                fit_entry.set_values(self._board.ACM_BASE, 0, self._board.ACM_FIT_VERISON, 0x2, 0)
+                print ('  Patching entry %d with 0x%08X:0x%08X - ACM' % (num_fit_entries, fit_entry.address, fit_entry.size))
+                num_fit_entries     += 1
+            # Add all the CPUIDs for ACM FIT Version 0x200
+            if self._board.ACM_FIT_VERISON == 0x200:
+                for CPU_FMS in self._board._ACM_CPU_FMS :
+                    fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
+                    fit_entry.set_values(self._board.ACM_BASE, CPU_FMS, self._board.ACM_FIT_VERISON, 0x2, 0xF0)
+                    print ('  Patching entry %d with 0x%08X:0x%08X - ACM' % (num_fit_entries, fit_entry.address, fit_entry.size))
+                    num_fit_entries     += 1
 
             # Diagnostic ACM Fit entry should be in sequential order with/without BTG enabled
             # Save the next FIT entry for Diagnostic ACM here and set it later below
             if self._board.DIAGNOSTICACM_SIZE > 0:
                 diagnosticacm_index      = num_fit_entries
                 num_fit_entries          += 1
+
+            # Platform Boot Policy => FIT4
+            if self._board.HAVE_FIT4_ENTRY:
+                fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
+                fit_entry.set_values(self._board.BOOT_POLICY_ADDRESS, self._board.BOOT_POLICY_SIZE, 0x100, 0x4, 0)
+                print ('  Patching entry %d with 0x%08X:0x%08X - Platform Boot Policy' % (num_fit_entries, fit_entry.address, fit_entry.size))
+                num_fit_entries += 1
 
             # BIOS Module (IBB segment 0): from FIT table end to 4GB
             # Record it now and update later since the FIT size is unknown yet
@@ -542,7 +542,7 @@ class Build(object):
 
         hs_offset = stage1_bins.find (HashStoreTable.HASH_STORE_SIGNATURE)
         if hs_offset < 0:
-            raise Exceptoin ("HashStoreTable not found in '%s'!" % os.path.basename(img_file))
+            raise Exception ("HashStoreTable not found in '%s'!" % os.path.basename(img_file))
 
         comp_name, part_name = get_redundant_info (img_file)
         if part_name:
@@ -694,17 +694,28 @@ class Build(object):
         if self._arch == 'X64':
             # Find signature at top 4KB
             vtf_patch_data_base = get_vtf_patch_base (os.path.join(self._fv_dir, 'STAGE1A.fd'))
-            page_table_len = 0x8000
-            if self._board.STAGE1_DATA_SIZE < page_table_len:
-                raise Exception ("STAGE1_DATA_SIZE is too small to build x64 page table, "
-                                 "it requires at least 0x%X !" % page_table_len)
-            page_tbl_off = self._board.STAGE1_STACK_BASE_OFFSET + self._board.STAGE1_STACK_SIZE + \
-                           self._board.STAGE1_DATA_SIZE - page_table_len
-            extra_cmd.extend ([
-                "0x%08X, 0x%08X,                                        @Page Table Offset" % (vtf_patch_data_base + 0x00, page_tbl_off),
+            extra_cmd.append (
                 "0x%08X, _BASE_STAGE1A_ - _OFFS_STAGE1A_,                    @FSP-T Base" % (vtf_patch_data_base + 0x04),
-                "0x%08X, Stage1A:_TempRamInitParams,                         @FSP-T UPD"  % (vtf_patch_data_base + 0x0C),
-            ])
+            )
+
+
+            if self._board.FSP_T_64_BIT:
+                extra_cmd.append (
+                    "0x%08X, Stage1A:_TempRamInitParams,                         @FSP-T UPD"  % (vtf_patch_data_base + 0x10)
+                )
+            else:
+                # if FSP-T is 32-bit we can enter long mode after CAR is available
+                # and build page tables in CAR, saving flash space
+                page_table_len = 0x8000
+                if self._board.STAGE1_DATA_SIZE < page_table_len:
+                    raise Exception ("STAGE1_DATA_SIZE is too small to build x64 page table, "
+                                    "it requires at least 0x%X !" % page_table_len)
+                page_tbl_off = self._board.STAGE1_STACK_BASE_OFFSET + self._board.STAGE1_STACK_SIZE + \
+                            self._board.STAGE1_DATA_SIZE - page_table_len
+                extra_cmd.extend ([
+                    "0x%08X, Stage1A:_TempRamInitParams,                         @FSP-T UPD"  % (vtf_patch_data_base + 0x0C),
+                    "0x%08X, 0x%08X,                                        @Page Table Offset" % (vtf_patch_data_base + 0x00, page_tbl_off)
+                ])
 
         extra_cmd.append (
             "0xFFFFFFF8, {3CEA8EF3-95FC-476F-ABA5-7EC5DFA1D77B:0x1C}, @Patch FlashMap",
@@ -751,9 +762,10 @@ class Build(object):
                 "<Stage2:__gPcd_BinaryPatch_PcdAcpiTablesAddress>, {7E374E25-8E01-4FEE-87F2-390C23C606CD:0x1C}, @Patch ACPI",
             )
         if self._board.ENABLE_SPLASH:
-            extra_cmd.append (
-                "<Stage2:__gPcd_BinaryPatch_PcdSplashLogoAddress>, {5E2D3BE9-AD72-4D1D-AAD5-6B08AF921590:0x1C}, @Patch Logo",
-            )
+            extra_cmd.extend ([
+                "<Stage2:__gPcd_BinaryPatch_PcdSplashLogoAddress>, {5E2D3BE9-AD72-4D1D-AAD5-6B08AF921590:0x1C}, @Patch Logo Address",
+                "<Stage2:__gPcd_BinaryPatch_PcdSplashLogoSize>, ([5E2D3BE9-AD72-4D1D-AAD5-6B08AF921590:0x14] & 0xFFFFFF) - 0x1C, @Patch Logo Size",
+            ])
         patch_fv(
             self._fv_dir,
             "STAGE2:STAGE2",
@@ -902,6 +914,8 @@ class Build(object):
             'DOWNGRADE_MEM64',
             'DOWNGRADE_PMEM64',
             'DOWNGRADE_BUS0',
+            'FLAG_ALLOC_PMEM_FIRST',
+            'FLAG_ALLOC_ROM_BAR',
             'BUS_SCAN_TYPE',
             'BUS_SCAN_ITEMS'
         ]
@@ -910,12 +924,12 @@ class Build(object):
             policy_name = '_PCI_ENUM_%s' % policy_list
             policy_value = None
             if not hasattr(self._board, policy_name):
-                if policy_list == 'BUS_SCAN_TYPE':
-                    policy_value = 0
-                elif policy_list == 'BUS_SCAN_ITEMS':
+                if policy_list == 'BUS_SCAN_ITEMS':
                     policy_value = '0'
-                else:
+                elif 'DOWNGRADE' in policy_list:
                     policy_value = 1
+                else:
+                    policy_value = 0
             else:
                 policy_value = getattr(self._board, policy_name)
             pci_enum_policy_dict[policy_list] = policy_value
@@ -935,16 +949,51 @@ class Build(object):
             os.path.join(self._fv_dir, 'STAGE1A.fd'),
             os.path.join(self._fv_dir, 'STAGE1A_B.fd'))
 
-        # Patch flashmap to indicate boot parititon
         fo = open(os.path.join(self._fv_dir, 'STAGE1A_B.fd'), 'r+b')
         bins = bytearray(fo.read())
-        fmapoff = bytes_to_value(bins[-8:-4]) - bytes_to_value(bins[-4:]) + self._board.STAGE1A_FV_OFFSET
-        fmaphdr = FLASH_MAP.from_buffer (bins, fmapoff)
-        if fmaphdr.sig != FLASH_MAP.FLASH_MAP_SIGNATURE:
-            raise Exception ('Failed to locate flash map in STAGE1A_B.fd !')
-        fmaphdr.attributes |=  fmaphdr.FLASH_MAP_ATTRIBUTES['BACKUP_REGION']
-        fo.seek(fmapoff)
-        fo.write(fmaphdr)
+
+        # Patch flashmap to indicate boot partiton
+        if not self._board.BUILD_IDENTICAL_TS:
+            fmapoff = bytes_to_value(bins[-8:-4]) - bytes_to_value(bins[-4:]) + self._board.STAGE1A_FV_OFFSET
+            fmaphdr = FLASH_MAP.from_buffer (bins, fmapoff)
+            if fmaphdr.sig != FLASH_MAP.FLASH_MAP_SIGNATURE:
+                raise Exception ('Failed to locate flash map in STAGE1A_B.fd !')
+            fmaphdr.attributes |=  fmaphdr.FLASH_MAP_ATTRIBUTES['BACKUP_REGION']
+            fo.seek(fmapoff)
+            fo.write(fmaphdr)
+
+        # Patch microcode base in FSP-T UPD
+        if self._board.HAVE_FSP_BIN and self._board.TOP_SWAP_SIZE > 0:
+            fspt_bin = os.path.join(self._fv_dir, 'FSP_T.bin')
+            upd_sig  = get_fsp_upd_signature (fspt_bin)
+            upd_off  = bins.find (upd_sig, self._board.STAGE1A_FV_OFFSET)
+            if upd_off < 0:
+                raise Exception ('Could not find FSP-T UPD signatures in STAGE1A_B.fd !')
+            if bins.find (upd_sig, upd_off + 1) > 0:
+                raise Exception ('Found multiple FSP-T UPD signatures in STAGE1A_B.fd !')
+            upd_rev = bytes_to_value (bins[upd_off + 8 : upd_off + 9])
+            if upd_rev == 1:
+                # Platforms using FSP spec 2.0/2.1 (e.g. TGL) have revision 1 format
+                ucode_upd_off = upd_off + 0x20
+            elif upd_rev == 2:
+                # Platforms using FSP spec 2.2 (e.g. ADL) have revision 2 format
+                ucode_upd_off = upd_off + 0x40
+            else:
+                raise Exception ('Unrecognized FSP-T UPD rev !')
+            ucode_base = bytes_to_value (bins[ucode_upd_off + 0 : ucode_upd_off + 4])
+            ucode_size = bytes_to_value (bins[ucode_upd_off + 4 : ucode_upd_off + 8])
+            if ucode_size > 0 and ucode_base > 0:
+                if ucode_base != self._board.UCODE_BASE:
+                    raise Exception ('Incorrect microcode region base in FSP-T UPD parameter !')
+                if ucode_size != self._board.UCODE_SIZE:
+                    raise Exception ('Incorrect microcode region size in FSP-T UPD parameter !')
+                if ucode_base < 0x100000000 - self._board.TOP_SWAP_SIZE * 2:
+                    # Microcode is located outside of top swap region, patch it
+                    ucode_base -= self._board.REDUNDANT_SIZE
+                    print ('Patching UCODE base in FSP-T UPD parameter to 0x%08X for STAGE1A_B.fd' % ucode_base)
+                    fo.seek (ucode_upd_off)
+                    fo.write (value_to_bytes (ucode_base, 4))
+
         fo.close()
 
         # Stage 1B_B will be created during rebasing
@@ -955,7 +1004,7 @@ class Build(object):
         stage1b_path   = os.path.join(self._fv_dir, 'STAGE1B.fd')
         stage1b_b_path = os.path.join(self._fv_dir, 'STAGE1B_B.fd')
 
-        if self._board.STAGE1B_XIP:
+        if self._board.STAGE1B_XIP and not self._board.BUILD_IDENTICAL_TS:
             # Rebase stage1b.fd
             print("Rebasing STAGE1B_B")
             rebase_stage (stage1b_path, stage1b_b_path, -self._board.REDUNDANT_SIZE)
@@ -1071,11 +1120,7 @@ class Build(object):
         out_file = os.path.join("Outputs", self._board.BOARD_NAME, 'Stitch_Components.zip')
         copy_images_to_output (self._fv_dir, out_file, self._img_list, rgn_name_list, extra_list)
 
-
     def pre_build(self):
-        # Check if BaseTools has been compiled
-        rebuild_basetools ()
-
         # Update search path
         sbl_dir = os.environ['SBL_SOURCE']
         plt_dir = os.environ['PLT_SOURCE']
@@ -1127,7 +1172,22 @@ class Build(object):
         if self._board.HAVE_FSP_BIN:
             check_build_component_bin = os.path.join(tool_dir, 'PrepareBuildComponentBin.py')
             if os.path.exists(check_build_component_bin):
-                ret = subprocess.call([sys.executable, check_build_component_bin, work_dir, self._board.SILICON_PKG_NAME, '/d' if self._board.FSPDEBUG_MODE else '/r'])
+
+                # Create basic command
+                cmd = [ sys.executable,
+                        check_build_component_bin,
+                        work_dir,
+                        self._board.SILICON_PKG_NAME,
+                        self._board.FSP_INF_FILE,
+                        self._board.MICROCODE_INF_FILE]
+
+                # Add target
+                if (self._board.FSPDEBUG_MODE):
+                    cmd.append('/d')
+                else:
+                    cmd.append('/r')
+
+                ret = subprocess.call(cmd)
                 if ret:
                     raise Exception  ('Failed to prepare build component binaries !')
 
@@ -1153,6 +1213,9 @@ class Build(object):
                                     (self._board.MIN_FSP_REVISION, revision))
             setattr(self._board, '%s_SIZE' % each, get_fsp_size(fsp_bin) if self._board.HAVE_FSP_BIN else 0)
             setattr(self._board, '%s_UPD_SIZE' % each, get_fsp_upd_size(fsp_bin) if self._board.HAVE_FSP_BIN else 1)
+            setattr(self._board, '%s_64_BIT' % each, True if (self._board.HAVE_FSP_BIN and
+                (get_fsp_header_revision(fsp_bin) >= 7) and
+                (get_fsp_image_attribute(fsp_bin) & (1<<2))) else False)
 
         if self._board.BUILD_CSME_UPDATE_DRIVER:
             if os.name != 'nt':
@@ -1209,10 +1272,12 @@ class Build(object):
         ver_info_name = 'VerInfo'
         ver_bin_file = os.path.join(self._fv_dir, ver_info_name + '.bin')
         ver_txt_file = os.path.join(os.environ['PLT_SOURCE'], 'Platform', self._board.BOARD_PKG_NAME, ver_info_name + '.txt')
+        if hasattr(self._board, 'BOARD_PKG_NAME_OVERRIDE'):
+            ver_txt_file = os.path.join(os.environ['PLT_SOURCE'], 'Platform', self._board.BOARD_PKG_NAME_OVERRIDE, ver_info_name + '.txt')
 
         keys = ['VERINFO_IMAGE_ID', 'VERINFO_BUILD_DATE', 'VERINFO_PROJ_MINOR_VER',
-                        'VERINFO_PROJ_MAJOR_VER', 'VERINFO_CORE_MINOR_VER', 'VERINFO_CORE_MAJOR_VER',
-                        'VERINFO_SVN', 'FSPDEBUG_MODE', 'RELEASE_MODE']
+                'VERINFO_PROJ_MAJOR_VER', 'VERINFO_CORE_MINOR_VER', 'VERINFO_CORE_MAJOR_VER',
+                'VERINFO_SVN', 'FSPDEBUG_MODE', 'RELEASE_MODE', 'BUILD_ARCH']
         ver_dict = {}
         for key in keys:
             ver_dict[key] = getattr (self._board, key)
@@ -1225,7 +1290,17 @@ class Build(object):
 
         # create VBT file
         if self._board.HAVE_VBT_BIN:
-            gen_vbt_file (self._board.BOARD_PKG_NAME, self._board._MULTI_VBT_FILE, os.path.join(self._fv_dir, 'Vbt.bin'))
+            if hasattr(self._board, 'BOARD_PKG_NAME_OVERRIDE'):
+                gen_vbt_file (self._board.BOARD_PKG_NAME_OVERRIDE, self._board._MULTI_VBT_FILE, os.path.join(self._fv_dir, 'Vbt.bin'))
+            else:
+                gen_vbt_file (self._board.BOARD_PKG_NAME, self._board._MULTI_VBT_FILE, os.path.join(self._fv_dir, 'Vbt.bin'))
+
+        # create ACTM file
+        if self._board.HAVE_ACTM_BIN:
+            if hasattr(self._board, 'BOARD_PKG_NAME_OVERRIDE'):
+                gen_actm_file (self._board.BOARD_PKG_NAME_OVERRIDE, self._board._ACTM_BIN_FILE, os.path.join(self._fv_dir, 'ACTM.bin'))
+            else:
+                gen_actm_file (self._board.BOARD_PKG_NAME, self._board._ACTM_BIN_FILE, os.path.join(self._fv_dir, 'ACTM.bin'))
 
         # create platform include dsc file
         platform_dsc_path = os.path.join(sbl_dir, 'BootloaderCorePkg', 'Platform.dsc')
@@ -1247,18 +1322,38 @@ class Build(object):
         if self._board.CFGDATA_SIZE > 0:
             svn = self._board.CFGDATA_SVN
             # create config data files
-            gen_config_file (self._fv_dir, self._board.BOARD_PKG_NAME, self._board._PLATFORM_ID,
+            board_override_name = getattr(self._board, 'BOARD_PKG_NAME_OVERRIDE', '')
+            gen_config_file (self._fv_dir, board_override_name, self._board.BOARD_PKG_NAME, self._board._PLATFORM_ID,
                              self._board._CFGDATA_PRIVATE_KEY, self._board.CFG_DATABASE_SIZE, self._board.CFGDATA_SIZE,
-                             self._board._CFGDATA_INT_FILE, self._board._CFGDATA_EXT_FILE,
-                             self._board._SIGNING_SCHEME, HASH_VAL_STRING[self._board.SIGN_HASH_TYPE], svn)
+                             self._board._CFGDATA_DEF_FILE, self._board._CFGDATA_INT_FILE, self._board._CFGDATA_EXT_FILE,
+                             self._board._SIGNING_SCHEME, HASH_VAL_STRING[self._board.SIGN_HASH_TYPE], svn, self._board.BOARD_NAME)
 
         # rebuild reset vector
         vtf_dir = os.path.join('BootloaderCorePkg', 'Stage1A', 'Ia32', 'Vtf0')
-        x = subprocess.call([sys.executable, 'Build.py', self._arch.lower()],  cwd=vtf_dir)
+        cmdline = [sys.executable, 'Build.py', self._arch.lower()]
+        if self._board.FSP_T_64_BIT:
+            cmdline.append('fspt64')
+        x = subprocess.call(cmdline,  cwd=vtf_dir)
         if x: raise Exception ('Failed to build reset vector !')
+
+    def early_build_init(self):
+        toolchain_dict = None
+        if getattr(self._board, "GetPlatformToolchainVersions", None):
+            toolchain_dict = self._board.GetPlatformToolchainVersions()
+
+        # Verify toolchains first
+        verify_toolchains(self._board._TOOL_CHAIN, toolchain_dict)
+        self._toolchain = os.environ['TOOL_CHAIN']
+        self._fv_dir = os.path.join(self._workspace, 'Build', 'BootloaderCorePkg', '%s_%s' % (self._target, self._toolchain), 'FV')
+
+        # Check if BaseTools has been compiled
+        rebuild_basetools ()
 
     def build(self):
         print("Build [%s] ..." % self._board.BOARD_NAME)
+
+        # Run early build init
+        self.early_build_init()
 
         # Run pre-build
         self.board_build_hook ('pre-build:before')
@@ -1328,10 +1423,13 @@ class Build(object):
                 os.path.join(self._fv_dir, "UCODE.bin"))
 
         # generate payload
+        board_package_name = self._board.BOARD_PKG_NAME
+        if hasattr(self._board, 'BOARD_PKG_NAME_OVERRIDE'):
+            board_package_name = self._board.BOARD_PKG_NAME_OVERRIDE
         gen_payload_bin (self._fv_dir, self._arch, self._pld_list,
                          os.path.join(self._fv_dir, "PAYLOAD.bin"),
                          self._board._CONTAINER_PRIVATE_KEY, HASH_VAL_STRING[self._board.SIGN_HASH_TYPE],
-                         self._board._SIGNING_SCHEME, self._board.BOARD_PKG_NAME)
+                         self._board._SIGNING_SCHEME, board_package_name)
 
         # create firmware update key
         if self._board.ENABLE_FWU:
@@ -1340,12 +1438,12 @@ class Build(object):
                 os.path.join(self._fv_dir, srcfile),
                 os.path.join(self._fv_dir, "FWUPDATE.bin"))
 
-        # create SPI IAS image if required
-        if self._board.SPI_IAS1_SIZE > 0 or self._board.SPI_IAS2_SIZE > 0:
+        # create SPI CONTAINER image if required
+        if self._board.SPI_CONTAINER1_SIZE > 0 or self._board.SPI_CONTAINER2_SIZE > 0:
             for idx in range (1, 3):
-                file_path  = os.path.join('Platform', self._board.BOARD_PKG_NAME, 'SpiIasBin', 'iasimage%d.bin' % idx)
-                file_space = getattr(self._board, 'SPI_IAS%d_SIZE' % idx)
-                gen_ias_file (file_path, file_space, os.path.join(self._fv_dir, "SPI_IAS%d.bin" % idx))
+                file_path  = os.path.join('Platform', self._board.BOARD_PKG_NAME, 'SpiContainerBin', 'containerimage%d.bin' % idx)
+                file_space = getattr(self._board, 'SPI_CONTAINER%d_SIZE' % idx)
+                gen_container_file (file_path, file_space, os.path.join(self._fv_dir, "SPI_CONTAINER%d.bin" % idx))
 
         # generate container images
         if getattr(self._board, "GetContainerList", None):
@@ -1359,25 +1457,33 @@ class Build(object):
         # create redundant components
         self.create_redundant_components ()
 
+        # create FlashMap.txt
+        flash_map_text = ''
+        if len(self._comp_list) > 0:
+            print_addr = False if getattr(self._board, "GetFlashMapList", None) else True
+            flash_map_text = decode_flash_map (os.path.join(self._fv_dir, 'FlashMap.bin'), print_addr)
+            fd = open (os.path.join(self._fv_dir, 'FlashMap.txt'), 'w')
+            fd.write (flash_map_text)
+            fd.close ()
 
         # stitch all components
         layout_name = 'ImgStitch.txt'
         self.create_bootloader_image (layout_name)
 
         # print flash map
-        if len(self._comp_list) > 0:
-            print_addr = False if getattr(self._board, "GetFlashMapList", None) else True
-            flash_map_text = decode_flash_map (os.path.join(self._fv_dir, 'FlashMap.bin'), print_addr)
-            print('%s' % flash_map_text)
-            fd = open (os.path.join(self._fv_dir, 'FlashMap.txt'), 'w')
-            fd.write (flash_map_text)
-            fd.close ()
+        print('%s' % flash_map_text)
 
 
 def main():
-    prep_env ()
+
+    # Set SBL_SOURCE and WORKSPACE Environment variable at first
+    os.environ['SBL_SOURCE'] = os.path.dirname(os.path.abspath(__file__))
+    if 'WORKSPACE' not in os.environ:
+        os.environ['WORKSPACE'] = os.environ['SBL_SOURCE']
+
     board_cfgs   = []
     board_names  = []
+    module_names = []
 
     # Find all boards
     search_dir = os.environ['SBL_SOURCE']
@@ -1387,23 +1493,30 @@ def main():
     for pkg in board_pkgs:
         get_board_config_file (os.path.join (search_dir, pkg), board_cfgs)
 
+    board_cfgs.sort()
     for cfgfile in board_cfgs:
-        brdcfg = load_source ('BoardConfig', cfgfile)
-        board_names.append(brdcfg.Board().BOARD_NAME)
+        module_name = os.path.basename(os.path.dirname(cfgfile))[:-8] + os.path.basename(cfgfile)[:-3]
+        brdcfg = load_source(module_name, cfgfile)
+        if brdcfg.Board().BOARD_NAME:
+            board_names.append(brdcfg.Board().BOARD_NAME)
+            module_names.append(brdcfg)
 
     ap = argparse.ArgumentParser()
     sp = ap.add_subparsers(help='command')
 
     def cmd_build(args):
+        prep_env ()
+
         for index, name in enumerate(board_names):
             if args.board == name:
-                brdcfg = load_source('BoardConfig', board_cfgs[index])
+                brdcfg = module_names[index]
                 board  = brdcfg.Board(
                                         BUILD_ARCH        = args.arch.upper(), \
                                         RELEASE_MODE      = args.release,     \
                                         NO_OPT_MODE       = args.noopt,       \
                                         FSPDEBUG_MODE     = args.fspdebug,    \
                                         USE_VERSION       = args.usever,      \
+                                        _TOOL_CHAIN       = args.toolchain,   \
                                         _PAYLOAD_NAME     = args.payload,     \
                                         _FSP_PATH_NAME    = args.fsppath,     \
                                         KEY_GEN           = args.keygen
@@ -1422,6 +1535,7 @@ def main():
     buildp.add_argument('-p',  '--payload' , dest='payload', type=str, help='Payload file name', default ='OsLoader.efi')
     buildp.add_argument('board', metavar='board', choices=board_names, help='Board Name (%s)' % ', '.join(board_names))
     buildp.add_argument('-k', '--keygen', action='store_true', help='Generate default keys for signing')
+    buildp.add_argument('-t', '--toolchain', dest='toolchain', type=str, default='', help='Perferred toolchain name')
     buildp.set_defaults(func=cmd_build)
 
     def cmd_clean(args):
@@ -1442,6 +1556,74 @@ def main():
             files.extend ([
             ])
 
+        def GetCopyList (driver_inf):
+            fd = open (driver_inf, 'r')
+            lines = fd.readlines()
+            fd.close ()
+
+            have_copylist_section = False
+            copy_list      = []
+            for line in lines:
+                line = line.strip ()
+                if line.startswith('['):
+                    if line.startswith('[UserExtensions.SBL."CopyList"]'):
+                        have_copylist_section = True
+                    else:
+                        have_copylist_section = False
+
+                if have_copylist_section:
+                    match = re.match("^(.+)\\s*:\\s*(.+)", line)
+                    if match:
+                        copy_list.append((match.group(1).strip(), match.group(2).strip()))
+
+            return copy_list
+
+        if args.board:
+            for index, name in enumerate(board_names):
+                if args.board == name:
+
+                    board  = module_names[index].Board()
+                    if hasattr(board, 'FSP_INF_FILE'):
+                        fsp_inf = board.FSP_INF_FILE
+                    else:
+                        fsp_inf = 'Silicon/%s/FspBin/FspBin.inf' % board.SILICON_PKG_NAME
+
+                    fsp_inf_full_path = os.path.join(sbl_dir, fsp_inf)
+                    dest_dir = sbl_dir
+
+                    plt_dir = os.environ['PLT_SOURCE'] if 'PLT_SOURCE' in os.environ else None
+
+                    if not os.path.exists(fsp_inf_full_path) and plt_dir:
+                        fsp_inf_full_path = os.path.join(plt_dir, fsp_inf)
+                        dest_dir = plt_dir
+
+                    if os.path.exists(fsp_inf_full_path):
+                        for _, file in GetCopyList (fsp_inf_full_path):
+                            file_full_path = os.path.join(dest_dir, file)
+                            if os.path.exists(file_full_path):
+                                print('Removing %s' % file_full_path)
+                                os.remove(file_full_path)
+
+                    if hasattr(board, 'MICROCODE_INF_FILE'):
+                        microcode_inf = board.MICROCODE_INF_FILE
+                    else:
+                        microcode_inf = 'Silicon/%s/Microcode/Microcode.inf' % board.SILICON_PKG_NAME
+
+                    micorcode_inf_full_path = os.path.join(sbl_dir, microcode_inf)
+                    dest_dir = sbl_dir
+                    if not os.path.exists(micorcode_inf_full_path) and plt_dir:
+                        micorcode_inf_full_path = os.path.join(plt_dir, microcode_inf)
+                        dest_dir = plt_dir
+
+                    if os.path.exists(micorcode_inf_full_path):
+                        for _, file in GetCopyList (micorcode_inf_full_path):
+                            file_full_path = os.path.join(dest_dir, file)
+                            if os.path.exists(file_full_path):
+                                print('Removing %s' % file_full_path)
+                                os.remove(file_full_path)
+
+                    break
+
         for dir in dirs:
             dirpath = os.path.join (workspace, dir)
             print('Removing %s' % dirpath)
@@ -1461,9 +1643,15 @@ def main():
 
     cleanp = sp.add_parser('clean', help='clean build dir')
     cleanp.add_argument('-d',  '--distclean', action='store_true', help='Distribution clean')
+    cleanp.add_argument('board', nargs='?', metavar='board', choices=board_names, help='Board Name (%s)' % ', '.join(board_names))
     cleanp.set_defaults(func=cmd_clean)
 
     def cmd_build_dsc(args):
+        prep_env ()
+
+        # Verify toolchains first
+        verify_toolchains(args.toolchain)
+
         # Check if BaseTools has been compiled
         rebuild_basetools ()
 
@@ -1489,6 +1677,7 @@ def main():
     build_dscp.add_argument('-a',  '--arch', choices=['ia32', 'x64'], help='Specify the ARCH for build. Default is to build IA32 image.', default ='ia32')
     build_dscp.add_argument('-d',  '--define', action='append', help='Specify macros to be passed into DSC build')
     build_dscp.add_argument('-p',  '--dsc', type=str, required=True, help='Specify a DSC file path to build')
+    build_dscp.add_argument('-t',  '--toolchain', dest='toolchain', type=str, default='', help='Perferred toolchain name')
     build_dscp.set_defaults(func=cmd_build_dsc)
 
     args = ap.parse_args()
@@ -1501,4 +1690,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

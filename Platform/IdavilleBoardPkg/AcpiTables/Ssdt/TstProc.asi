@@ -1,0 +1,164 @@
+/** @file
+
+  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+  External (_PSS, MethodObj)
+  External (HWPS, FieldUnitObj) //HWPM
+  External (TYPE, FieldUnitObj)
+
+  Method(_TPC, 0)
+  {
+#if defined(ME_SPS_SUPPORT) && ME_SPS_SUPPORT
+    Or(PETE, 0x40, PETE) // Confirm P-states support on this system
+    Return(DeRefOf(Index(\TSLM, SCKN))) // P-state limit for this socket
+#else
+    Return(0)
+#endif
+  }
+
+  //
+  // T-State Control/Status interface
+  //
+  Method(_PTC, 0)
+  {
+    Return(Package() {
+      ResourceTemplate(){Register(FFixedHW, 0, 0, 0)},
+      ResourceTemplate(){Register(FFixedHW, 0, 0, 0)}
+    })
+  }
+
+  //
+  // _TSS package for MSR based T-State control
+  // "Power" fields are replaced with real values by the first
+  // call of _TSS method.
+  //
+  Name(TSSM, Package() {
+    Package(){100, 1000, 0, 0x00, 0},
+    Package(){ 94,  940, 0, 0x1F, 0},    // 93.75%
+    Package(){ 88,  880, 0, 0x1E, 0},    // 87.50%
+    Package(){ 82,  820, 0, 0x1D, 0},    // 81.25%
+    Package(){ 75,  760, 0, 0x1C, 0},    // 75.00%
+    Package(){ 69,  700, 0, 0x1B, 0},    // 68.75%
+    Package(){ 63,  640, 0, 0x1A, 0},    // 62.50%
+    Package(){ 57,  580, 0, 0x19, 0},    // 56.25%
+    Package(){ 50,  520, 0, 0x18, 0},    // 50.00%
+    Package(){ 44,  460, 0, 0x17, 0},    // 43.75%
+    Package(){ 38,  400, 0, 0x16, 0},    // 37.50%
+    Package(){ 32,  340, 0, 0x15, 0},    // 31.25%
+    Package(){ 25,  280, 0, 0x14, 0},    // 25.00%
+    Package(){ 19,  220, 0, 0x13, 0},    // 18.75%
+    Package(){ 13,  160, 0, 0x12, 0}     // 12.50%
+  })
+
+  Name(TSSI, Package() {
+    Package(){100, 1000, 0, 0x00, 0},
+    Package(){ 88,  880, 0, 0x1E, 0},    // 87.50%
+    Package(){ 75,  760, 0, 0x1C, 0},    // 75.00%
+    Package(){ 63,  640, 0, 0x1A, 0},    // 62.50%
+    Package(){ 50,  520, 0, 0x18, 0},    // 50.00%
+    Package(){ 38,  400, 0, 0x16, 0},    // 37.50%
+    Package(){ 25,  280, 0, 0x14, 0},    // 25.00%
+    Package(){ 13,  160, 0, 0x12, 0}     // 12.50%
+  })
+
+  Name(TSSA, Package() {
+    Package(){100, 1000, 0, 0x00, 0}
+  })
+
+  Name(TSSF, 0) // Flag for TSSI/TSSM initialization
+
+  Method(_TSS, 0)
+  {
+    //
+    // Update "Power" fields of TSSM with the LFM power data if _PSS is available
+    //
+    If (LAnd(LNot(TSSF),CondRefOf(_PSS)))
+    {
+      Store(_PSS, Local0)
+      Store(SizeOf(Local0), Local1) // _PSS size
+      Decrement(Local1)     // Index of LFM
+      Store(DerefOf(Index(DerefOf(Index(Local0,Local1)),1)), Local2) // LFM Power
+
+      Store(0, Local3)
+      While(LLess(Local3, SizeOf(TSSM)))
+      {
+        If (LEqual(And(TSEN, FGTS), 1)) //Tstates and FGTS are enabled
+        {
+          Store(Divide(Multiply(Local2,
+            Subtract(15, Local3)), 15), Local4) // Power for this TSSI/TSSM entry
+          Store(Local4,Index(DerefOf(Index(TSSM,Local3)),1))
+          Increment(Local3)
+        }
+        else
+        {
+          Store(Divide(Multiply(Local2, Subtract(8, Local3)), 8),
+            Local4) // Power for this TSSI/TSSM entry
+          Store(Local4,Index(DerefOf(Index(TSSM,Local3)),1))
+          Increment(Local3)
+        }
+      }
+      Store(Ones, TSSF)       // TSSI/TSSM are updated
+    }
+
+    If(LAnd(LEqual(HWEN,1), LEqual(HWPS,1))){ //if HWPM sets as "HWP native mode" and OS is HWPM capable
+      Return(TSSA)  // T-states is not published
+    }
+
+    If (PSEN)
+    {
+      If (LEqual(And(TSEN, FGTS), 1))
+      {
+        // If GV3 and T state are enabled, and PPM_TSTATE_FINE_GRAINED is set
+        Return(TSSM)
+      }
+    }
+    If (LEqual(TSEN, 0))
+    {
+      // If Software disable T-state
+      Return(TSSA)
+    }
+    If (LEqual(And(TSEN, FGTS), 1))
+    {
+      // If GV3 is disabled
+      Return(TSSA)
+    }
+    Return(TSSI) //if GV3 and T states enabled
+  }
+
+  Name (TSDC, Package()  //_TSD SW_ALL (0xFC)
+  {
+    Package(){0x00000005, 0x00000000, 0xFFFFFFFF, 0x000000FC, 0xFFFFFFFF}
+  })
+
+  Name (TSDD, Package()  //_TSD SW_ANY (0xFD)
+  {
+    Package(){0x00000005, 0x00000000, 0xFFFFFFFF, 0x000000FD, 0xFFFFFFFF}
+  })
+
+  //
+  // T-State Dependency
+  //
+  Method(_TSD, 0)
+  {
+    //
+    // IF !(direct access to MSR)
+    //    Report SW_ANY as the coordination type
+    // ELSE
+    //   Report SW_ALL as the coordination type
+    //
+    //  TYPE[2] = OSPM is capable of direct access to On
+    //    Demand throttling MSR
+    //
+    If (LNot(And(TYPE,4))) {
+      Return(TSDD)
+    }
+
+    Return(TSDC)
+  }
+
+
+
+

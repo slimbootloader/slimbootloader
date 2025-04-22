@@ -108,7 +108,7 @@ EFI_STATUS
 (EFIAPI *FS_READ_FILE) (
   IN  EFI_HANDLE                                  FsHandle,
   IN  EFI_HANDLE                                  FileHandle,
-  OUT VOID                                      **FileBuffer,
+  OUT VOID                                       *FileBuffer,
   OUT UINTN                                      *FileSize
   );
 
@@ -271,7 +271,7 @@ EFI_STATUS
 EFIAPI
 ReadFile (
   IN  EFI_HANDLE                                  FileHandle,
-  OUT VOID                                      **FileBuffer,
+  OUT VOID                                       *FileBuffer,
   OUT UINTN                                      *FileSize
   );
 

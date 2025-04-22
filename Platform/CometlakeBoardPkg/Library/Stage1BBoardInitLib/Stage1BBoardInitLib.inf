@@ -33,6 +33,7 @@
   Silicon/CommonSocPkg/CommonSocPkg.dec
   Platform/CommonBoardPkg/CommonBoardPkg.dec
   Platform/CometlakeBoardPkg/CometlakeBoardPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
 
 [LibraryClasses]
   BaseLib

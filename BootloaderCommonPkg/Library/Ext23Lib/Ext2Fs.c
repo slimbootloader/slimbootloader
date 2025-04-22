@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
   Copyright (c) 1997 Manuel Bouyer.
@@ -212,8 +212,7 @@ ReadInode (
   Fp = (FILE *)File->FileSystemSpecificData;
   FileSystem = Fp->SuperBlockPtr;
 
-  Ext2FsGrpDes = FileSystem->Ext2FsGrpDes;
-  Ext2FsGrpDes = (EXT2GD*)((UINTN)Ext2FsGrpDes + (INOTOCG(FileSystem, INumber) * FileSystem->Ext2FsGDSize));
+  Ext2FsGrpDes = &FileSystem->Ext2FsGrpDes[INOTOCG(FileSystem, INumber)];
 
   InodeSector = (DADDRESS) (Ext2FsGrpDes->Ext2BGDInodeTables + DivU64x32 (ModU64x32 ((INumber - 1), FileSystem->Ext2Fs.Ext2FsINodesPerGroup), FileSystem->Ext2FsInodesPerBlock));
 
@@ -295,6 +294,12 @@ BlockMap (
 
     while (Etable->Eheader.EhDepth > 0) {
       ExtIndex = NULL;
+
+      /* if only one entry exists, the first entry should be used */
+      if (Etable->Eheader.EhEntries == 1) {
+        ExtIndex = &(Etable->Enodes.Eindex[0]);
+      }
+
       for (Index=1; Index < Etable->Eheader.EhEntries; Index++) {
         ExtIndex = &(Etable->Enodes.Eindex[Index]);
         if (((UINT32) FileBlock) < ExtIndex->EiBlk) {
@@ -567,13 +572,100 @@ SearchDirectory (
         // found entry
         //
         *INumPtr = Dp->Ext2DirectInodeNumber;
-        File->FileNamePtr = Name;
+        AsciiStrCpyS (File->FileNameBuf, EXT2FS_MAXNAMLEN, Name);
         return 0;
       }
     }
     Fp->SeekPtr += BufSize;
   }
-  return EFI_UNSUPPORTED;
+  return EFI_NOT_FOUND;
+}
+
+/**
+  Validate EXT2 Superblock
+
+  @param[in]      FsHandle      EXT file system handle.
+  @param[in]      File          File for which super block needs to be read.
+  @param[out]     RExt2Fs       EXT2FS meta data to retreive.
+
+  @retval 0 if superblock validation is success
+  @retval other if error.
+**/
+RETURN_STATUS
+EFIAPI
+Ext2SbValidate (
+  IN CONST EFI_HANDLE  FsHandle,
+  IN CONST OPEN_FILE   *File     OPTIONAL,
+  OUT      EXT2FS      *RExt2Fs  OPTIONAL
+  )
+{
+  PEI_EXT_PRIVATE_DATA *PrivateData;
+  UINT8 *Buffer;
+  EXT2FS *Ext2Fs;
+  UINT32 BufSize;
+  RETURN_STATUS Rc;
+  UINT32 SbOffset;
+
+  Rc = 0;
+  Buffer = NULL;
+
+  if (FsHandle == NULL) {
+    Rc = RETURN_INVALID_PARAMETER;
+    goto Exit;
+  }
+
+  PrivateData = (PEI_EXT_PRIVATE_DATA *)FsHandle;
+
+  Buffer = AllocatePool ((PrivateData->BlockSize > SBSIZE) ? PrivateData->BlockSize : SBSIZE);
+  if (Buffer == NULL) {
+    Rc = EFI_OUT_OF_RESOURCES;
+    goto Exit;
+  }
+
+  if (File == NULL) {
+    Rc = BDevStrategy (PrivateData, F_READ,
+                       SBOFF / PrivateData->BlockSize, PrivateData->BlockSize, Buffer, &BufSize);
+  } else {
+    Rc = DEV_STRATEGY (File->DevPtr) (PrivateData, F_READ,
+                                      SBOFF / PrivateData->BlockSize, PrivateData->BlockSize,
+                                      Buffer, &BufSize);
+  }
+
+  if (Rc != 0) {
+    goto Exit;
+  }
+
+  SbOffset = (SBOFF < PrivateData->BlockSize) ? SBOFF : 0;
+  Ext2Fs = (EXT2FS *)(&Buffer[SbOffset]);
+  if (Ext2Fs->Ext2FsMagic != E2FS_MAGIC) {
+    Rc = EFI_UNSUPPORTED;
+    goto Exit;
+  }
+
+  if (Ext2Fs->Ext2FsRev > E2FS_REV1 ||
+      (Ext2Fs->Ext2FsRev == E2FS_REV1 &&
+       (Ext2Fs->Ext2FsFirstInode != EXT2_FIRSTINO ||
+        (Ext2Fs->Ext2FsInodeSize != 128 && Ext2Fs->Ext2FsInodeSize != 256) ||
+        Ext2Fs->Ext2FsFeaturesIncompat & ~EXT2F_INCOMPAT_SUPP))) {
+    Rc = EFI_UNSUPPORTED;
+    goto Exit;
+  }
+
+  if (Ext2Fs->Ext2FsRev == E2FS_REV0) {
+    Ext2Fs->Ext2FsFirstInode = 11;
+    Ext2Fs->Ext2FsInodeSize  = 128;
+  }
+
+  if (RExt2Fs != NULL) {
+    E2FS_SBLOAD ((VOID *)Ext2Fs, RExt2Fs);
+  }
+
+Exit:
+  if (Buffer != NULL) {
+    FreePool (Buffer);
+  }
+
+  return Rc;
 }
 
 /**
@@ -593,43 +685,17 @@ ReadSBlock (
   )
 {
   PEI_EXT_PRIVATE_DATA *PrivateData;
-  UINT8 *Buffer;
-  EXT2FS Ext2Fs;
-  UINT32 BufSize;
   RETURN_STATUS Rc;
-  UINT32 SbOffset;
 
   Rc = 0;
-  Buffer = NULL;
 
   PrivateData = (PEI_EXT_PRIVATE_DATA*) File->FileDevData;
 
-  Buffer = AllocatePool ((PrivateData->BlockSize > SBSIZE) ? PrivateData->BlockSize : SBSIZE);
-  if (Buffer == NULL) {
-    Rc = EFI_OUT_OF_RESOURCES;
+  Rc = Ext2SbValidate ((EFI_HANDLE)PrivateData, File, &FileSystem->Ext2Fs);
+  if (RETURN_ERROR (Rc)) {
     goto Exit;
   }
 
-  Rc = DEV_STRATEGY (File->DevPtr) (File->FileDevData, F_READ,
-                                    SBOFF / PrivateData->BlockSize, PrivateData->BlockSize, Buffer, &BufSize);
-  if (Rc != 0) {
-    goto Exit;
-  }
-  SbOffset = (SBOFF < PrivateData->BlockSize) ? SBOFF : 0;
-  E2FS_SBLOAD ((VOID *)(&Buffer[SbOffset]), &Ext2Fs);
-  if (Ext2Fs.Ext2FsMagic != E2FS_MAGIC) {
-    Rc = EFI_INVALID_PARAMETER;
-    goto Exit;
-  }
-  if (Ext2Fs.Ext2FsRev > E2FS_REV1 ||
-      (Ext2Fs.Ext2FsRev == E2FS_REV1 &&
-       (Ext2Fs.Ext2FsFirstInode != EXT2_FIRSTINO ||
-        (Ext2Fs.Ext2FsInodeSize != 128 && Ext2Fs.Ext2FsInodeSize != 256) ||
-        Ext2Fs.Ext2FsFeaturesIncompat & ~EXT2F_INCOMPAT_SUPP))) {
-    Rc = EFI_UNSUPPORTED;
-    goto Exit;
-  }
-  E2FS_SBLOAD ((VOID *)&Ext2Fs, &FileSystem->Ext2Fs);
   //
   // compute in-memory m_ext2fs values
   //
@@ -643,19 +709,15 @@ ReadSBlock (
   FileSystem->Ext2FsQuadBlockOffset   = FileSystem->Ext2FsBlockSize - 1;
   FileSystem->Ext2FsBlockOffset       = (UINT32)~FileSystem->Ext2FsQuadBlockOffset;
   FileSystem->Ext2FsGDSize            = 32;
-  if (Ext2Fs.Ext2FsFeaturesIncompat & EXT2F_INCOMPAT_64BIT) {
+  if (FileSystem->Ext2Fs.Ext2FsFeaturesIncompat & EXT2F_INCOMPAT_64BIT) {
     FileSystem->Ext2FsGDSize          = FileSystem->Ext2Fs.Ext2FsGDSize;
   }
   FileSystem->Ext2FsNumGrpDesBlock    =
     HOWMANY (FileSystem->Ext2FsNumCylinder, FileSystem->Ext2FsBlockSize / FileSystem->Ext2FsGDSize);
-  FileSystem->Ext2FsInodesPerBlock    = FileSystem->Ext2FsBlockSize / Ext2Fs.Ext2FsInodeSize;
+  FileSystem->Ext2FsInodesPerBlock    = FileSystem->Ext2FsBlockSize / FileSystem->Ext2Fs.Ext2FsInodeSize;
   FileSystem->Ext2FsInodesTablePerGrp = FileSystem->Ext2Fs.Ext2FsINodesPerGroup / FileSystem->Ext2FsInodesPerBlock;
 
 Exit:
-  if (Buffer != NULL) {
-    FreePool (Buffer);
-  }
-
   return Rc;
 }
 
@@ -679,6 +741,9 @@ ReadGDBlock (
   UINT32 RSize;
   UINT32 gdpb;
   INT32 Index;
+  INT32 Cnt;
+  INT32 i;
+  CHAR8 *Ptr;
   RETURN_STATUS Status;
 
   Fp = (FILE *)File->FileSystemSpecificData;
@@ -697,11 +762,25 @@ ReadGDBlock (
       return EFI_DEVICE_ERROR;
     }
 
-    E2FS_CGLOAD ((EXT2GD *)Fp->Buffer,
+    /* Ext2FsGDSize may not be sizeof Ext2FsGrpDes */
+    if (FileSystem->Ext2FsGDSize == sizeof(EXT2GD)) {
+      E2FS_CGLOAD ((EXT2GD *)Fp->Buffer,
                  &FileSystem->Ext2FsGrpDes[Index * gdpb],
                  (Index == (FileSystem->Ext2FsNumGrpDesBlock - 1)) ?
                  (FileSystem->Ext2FsNumCylinder - gdpb * Index) * FileSystem->Ext2FsGDSize :
                  FileSystem->Ext2FsBlockSize);
+    } else {
+      Cnt = (Index == (FileSystem->Ext2FsNumGrpDesBlock - 1)) ?
+            FileSystem->Ext2FsNumCylinder - gdpb * Index :
+            gdpb;
+
+      for (i = 0; i < Cnt; i++) {
+        Ptr = Fp->Buffer + (i * FileSystem->Ext2FsGDSize);
+        E2FS_CGLOAD (Ptr,
+                     &FileSystem->Ext2FsGrpDes[Index * gdpb + i],
+                     FileSystem->Ext2FsGDSize);
+      }
+    }
   }
 
   return RETURN_SUCCESS;
@@ -735,10 +814,11 @@ Ext2fsOpen (
 #ifndef LIBSA_NO_FS_SYMLINK
   INODE32 ParentInumber;
   INT32 Nlinks;
-  CHAR8 NameBuf[MAXPATHLEN + 1];
+  CHAR8 NameBuf[MAXPATHLEN+1];
   CHAR8 *Buf;
 
   Nlinks = 0;
+  CHAR8 SymFileNameBuf[EXT2FS_MAXNAMLEN];
 #endif
 
   INDPTR mult;
@@ -782,7 +862,7 @@ Ext2fsOpen (
   //
   // read group descriptor blocks
   //
-  FileSystem->Ext2FsGrpDes = AllocatePool (FileSystem->Ext2FsGDSize * FileSystem->Ext2FsNumCylinder);
+  FileSystem->Ext2FsGrpDes = AllocatePool (sizeof(EXT2GD) * FileSystem->Ext2FsNumCylinder);
   Status = ReadGDBlock (File, FileSystem);
   if (RETURN_ERROR (Status)) {
     goto out;
@@ -871,20 +951,25 @@ Ext2fsOpen (
       //
       // XXX should handle LARGEFILE
       //
-      INT32 LinkLength;
-      INT32 Len;
+      UINTN LinkLength;
+      UINTN Len;
 
       LinkLength = Fp->DiskInode.Ext2DInodeSize;
 
       Len = AsciiStrLen (Cp);
 
-      if (LinkLength + Len > MAXPATHLEN ||
-          ++Nlinks > MAXSYMLINKS) {
+      if (Nlinks == 0) {
+        /* copy the top-most filename */
+        AsciiStrCpyS (SymFileNameBuf, EXT2FS_MAXNAMLEN, Ncp);
+      }
+
+      if (((LinkLength + Len) > MAXPATHLEN) ||
+          ((++Nlinks) > MAXSYMLINKS)) {
         Status = RETURN_LOAD_ERROR;
         goto out;
       }
 
-      memmove (&NameBuf[LinkLength], Cp, Len + 1);
+      CopyMem (&NameBuf[LinkLength], Cp, Len + 1);
 
       if (LinkLength < EXT2_MAXSYMLINKLEN) {
         CopyMem (NameBuf, Fp->DiskInode.Ext2DInodeBlocks, LinkLength);
@@ -922,6 +1007,12 @@ Ext2fsOpen (
         INumber = (INODE32)EXT2_ROOTINO;
       }
 
+      if (Nlinks == 1) {
+        /* only show the dest name of the next link */
+        AsciiStrCatS (SymFileNameBuf, EXT2FS_MAXNAMLEN, " -> ");
+        AsciiStrCatS (SymFileNameBuf, EXT2FS_MAXNAMLEN, NameBuf);
+      }
+
       Status = ReadInode (INumber, File);
       if (RETURN_ERROR (Status)) {
         goto out;
@@ -951,6 +1042,12 @@ Ext2fsOpen (
 #endif // !LIBSA_FS_SINGLECOMPONENT
 
   Fp->SeekPtr = 0;        // reset seek pointer
+
+#ifndef LIBSA_NO_FS_SYMLINK
+  if (Nlinks > 0) {
+    AsciiStrCpyS (File->FileNameBuf, EXT2FS_MAXNAMLEN, SymFileNameBuf);
+  }
+#endif
 
 out:
   if (RETURN_ERROR (Status)) {

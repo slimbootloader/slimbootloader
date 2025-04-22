@@ -1,0 +1,35 @@
+## @file
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = UniversalPayloadLib
+  FILE_GUID                      = 481372D8-C944-41CC-A966-C3E00F1D00D8
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = UniversalPayloadLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF
+#
+
+[Sources]
+  UniversalPayloadLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  ElfLib
+
+[Pcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled

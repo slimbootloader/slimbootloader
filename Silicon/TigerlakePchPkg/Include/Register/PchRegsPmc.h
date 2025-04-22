@@ -34,7 +34,6 @@
 #define PCI_FUNCTION_NUMBER_PCH_PMC                         2
 
 #define B_PCH_PMC_PM_DATA_BAR                               0xFFFFC000
-#define R_PCH_PMC_GEN_PMCON_A                               0xA0
 #define B_PCH_PMC_GEN_PMCON_A_DISB                          BIT23
 
 //

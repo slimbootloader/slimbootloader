@@ -9,7 +9,7 @@
 #include <Library/BoardInitLib.h>
 #include <Library/BootloaderCoreLib.h>
 #include <Library/SerialPortLib.h>
-#include <Library/SiGpioLib.h>
+#include <Library/GpioLib.h>
 #include <Library/PlatformHookLib.h>
 #include <Library/FirmwareUpdateLib.h>
 #include <Library/DebugLib.h>
@@ -87,9 +87,7 @@ EarlyPlatformDataCheck (
     SetDebugPort (0xFF);
   } else {
     SetDebugPort  (StitchData->DebugUart);
-    if ((StitchData->PlatformId > 0) && (StitchData->PlatformId < 32)) {
-      SetPlatformId (StitchData->PlatformId);
-    }
+    SetPlatformId (StitchData->PlatformId);
   }
 }
 
@@ -102,7 +100,7 @@ EarlyPlatformDataCheck (
 **/
 EFI_STATUS
 EFIAPI
-GetBootPartition (
+GetTopSwapRegBootPartition (
   OUT BOOT_PARTITION_SELECT      *BootPartition
   )
 {
@@ -188,7 +186,7 @@ BoardInit (
     }
     PlatformHookSerialPortInitialize ();
     SerialPortInitialize ();
-    Status = GetBootPartition (&BootPartition);
+    Status = GetTopSwapRegBootPartition (&BootPartition);
     if (!EFI_ERROR(Status)) {
       SetCurrentBootPartition (BootPartition == BootPartition2 ? 1 : 0);
     }

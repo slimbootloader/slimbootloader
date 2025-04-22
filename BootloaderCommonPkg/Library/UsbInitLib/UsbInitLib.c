@@ -61,6 +61,7 @@ DeinitUsbDevices (
     return EFI_NOT_FOUND;
   }
 
+  DEBUG ((DEBUG_INFO, "Deinit USB controller\n"));
   Status = UsbDeinitCtrl (mUsbInit.UsbHostHandle);
 
   UsbDeInitBot ();

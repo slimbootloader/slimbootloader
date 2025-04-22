@@ -30,7 +30,7 @@
   - RegisterName:
     Full register name.
 
-  Copyright (c) 1999 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 1999 - 2024, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -54,6 +54,7 @@
 // ACPI and legacy I/O register offsets from ACPIBASE
 //
 #define R_ACPI_IO_PM1_STS                        0x00
+#define B_ACPI_IO_PM1_STS_RTC_EN                 BIT26
 #define B_ACPI_IO_PM1_STS_WAK                    BIT15
 #define B_ACPI_IO_PM1_STS_PRBTNOR                BIT11
 #define B_ACPI_IO_PM1_STS_RTC                    BIT10
@@ -64,6 +65,8 @@
 #define B_ACPI_IO_PM1_EN_PWRBTN                  BIT8
 
 #define R_ACPI_IO_PM1_CNT                        0x04
+#define B_ACPI_IO_PM1_CNT_SLP_EN                 BIT13
+#define B_ACPI_IO_PM1_CNT_SCI_EN                 BIT0
 #define B_ACPI_IO_PM1_CNT_SLP_TYP                (BIT12 | BIT11 | BIT10)
 #define V_ACPI_IO_PM1_CNT_S0                     0
 #define V_ACPI_IO_PM1_CNT_S3                     (BIT12 | BIT10)
@@ -174,6 +177,8 @@
 #define R_PMC_PWRM_MODPHY_PM_CFG5                           0x10D0
 #define R_PMC_PWRM_MODPHY_PM_CFG6                           0x10D4
 
+#define R_PMC_PWRM_THERMAL_TSS0                             0x1560                      ///< Temperature Sensor Control and Status
+#define B_PMC_PWRM_THERMAL_TSS0_TSR_MASK                    0x1FF
 
 #define R_PMC_PWRM_WADT_AC                                  0x1800
 

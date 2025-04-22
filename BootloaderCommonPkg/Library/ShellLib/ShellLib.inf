@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -44,14 +44,18 @@
   CmdCdata.c
   CmdCls.c
   CmdFs.c
+  CmdUsbDev.c
+  CmdCorruptComp.c
   ShellCmds.c
   Parsing.c
   History.c
   Shell.c
+  CmdAcpi.c
 
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
 
 [LibraryClasses]
   BaseLib
@@ -75,14 +79,21 @@
   PartitionLib
   ShellExtensionLib
   MtrrLib
+  RngLib
+  MemoryAllocationLib
+  LoaderPerformanceLib
+  IppCryptoPerfLib
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
   gPlatformCommonLibTokenSpaceGuid.PcdMiniShellEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleInDeviceMask
+  gPlatformCommonLibTokenSpaceGuid.PcdBootPerformanceMask
+  gPlatformCommonLibTokenSpaceGuid.PcdEnableCryptoPerfTest
 
 [Guids]
   gLoaderPerformanceInfoGuid
   gLoaderMemoryMapInfoGuid
   gOsBootOptionGuid
   gLoaderFspInfoGuid
+  gUniversalPayloadAcpiTableGuid

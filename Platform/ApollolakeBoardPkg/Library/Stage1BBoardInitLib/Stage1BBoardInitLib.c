@@ -34,6 +34,7 @@
 #include <Library/HeciLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Library/BoardSupportLib.h>
+#include <Library/SocInitLib.h>
 #include <FspmUpd.h>
 #include <GpioDefines.h>
 #include <PlatformBase.h>
@@ -51,6 +52,7 @@
 #include <Library/InternalIpcLib.h>
 #include "ScRegs/SscRegs.h"
 #include <MeBiosPayloadData.h>
+#include <Library/GpioLibApl.h>
 
 #define APL_FSP_STACK_TOP       0xFEF40000
 #define MRC_PARAMS_BYTE_OFFSET_MRC_VERSION 14
@@ -62,7 +64,8 @@ CONST PLT_DEVICE  mPlatformDevices[]= {
   {{0x00001D00}, OsBootDeviceUfs   , 0 },
   {{0x00000D02}, OsBootDeviceSpi   , 0 },
   {{0x00001500}, OsBootDeviceUsb   , 0 },
-  {{0x01000000}, OsBootDeviceMemory, 0 }
+  {{0x01000000}, OsBootDeviceMemory, 0 },
+  {{0x00000200}, PlatformDeviceGraphics, 0},
 };
 
 CONST CHAR16 *BootDeviceType[] = { L"eMMC", L"UFS", L"SPI" };
@@ -809,7 +812,7 @@ EarlyBootDeviceInit (
 
 
   /* Configure EMMC GPIO Pad */
-  GpioPadConfigTable (ARRAY_SIZE(mGpioInitTblEMMC), (BXT_GPIO_PAD_INIT *)mGpioInitTblEMMC);
+  GpioConfigurePads (ARRAY_SIZE(mGpioInitTblEMMC), (GPIO_INIT_CONFIG *) (UINTN) mGpioInitTblEMMC);
   DEBUG ((DEBUG_INFO, "Early GpioInit for EMMC\n"));
 
   MmioWrite32 (EmmcHcPciBase + PCI_BASE_ADDRESSREG_OFFSET, Base);
@@ -958,6 +961,7 @@ LoadExternalConfigData (
   Get the reset reason from the PMC registers.
 **/
 VOID
+EFIAPI
 UpdateResetReason (
   VOID
   )
@@ -1314,12 +1318,15 @@ PrintMrcInfo (
   VOID
   )
 {
-  LOADER_GLOBAL_DATA       *LdrGlobal;
+  VOID                     *FspHobList;
   UINT8                    *MrcParamsData;
   UINT32                    MrcVersion;
 
-  LdrGlobal     = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-  MrcParamsData = GetGuidHobData (LdrGlobal->FspHobList, NULL, &gFspNonVolatileStorageHobGuid);
+  MrcParamsData = NULL;
+  FspHobList = GetFspHobListPtr ();
+  if (FspHobList != NULL) {
+    MrcParamsData = GetGuidHobData (FspHobList, NULL, &gFspNonVolatileStorageHobGuid);
+  }
   if (MrcParamsData == NULL) {
     DEBUG((DEBUG_ERROR, "MRC: MRC Save Restore Params HOB not valid!\n"));
     return;
@@ -1394,7 +1401,7 @@ EarlyPcieLinkUp (
   UINT8               ClkReqNum;
 
   if (GetPlatformId () == PLATFORM_ID_GPMRB) {
-    GpioPadConfigTable (ARRAY_SIZE (mGpioInitWifiTbl), (BXT_GPIO_PAD_INIT *)mGpioInitWifiTbl);
+    GpioConfigurePads (ARRAY_SIZE (mGpioInitWifiTbl), (GPIO_INIT_CONFIG *) (UINTN) mGpioInitWifiTbl);
 
     // WiFi module specific
     PortIndex = 5;
@@ -1649,30 +1656,30 @@ PlatformFeaturesInit (
   )
 {
   FEATURES_CFG_DATA           *FeaturesCfgData;
-  LOADER_GLOBAL_DATA          *LdrGlobal;
   PLAT_FEATURES               *PlatformFeatures;
   DYNAMIC_CFG_DATA            *DynamicCfgData;
   PLATFORM_DATA               *PlatformData;
+  UINT32                       LdrFeatures;
 
   // Set common features
-  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-  LdrGlobal->LdrFeatures |= FeaturePcdGet (PcdAcpiEnabled)?FEATURE_ACPI:0;
-  LdrGlobal->LdrFeatures |= FeaturePcdGet (PcdVerifiedBootEnabled)?FEATURE_VERIFIED_BOOT:0;
-  LdrGlobal->LdrFeatures |= FeaturePcdGet (PcdMeasuredBootEnabled)?FEATURE_MEASURED_BOOT:0;
+  LdrFeatures  = GetFeatureCfg ();
+  LdrFeatures |= FeaturePcdGet (PcdAcpiEnabled)?FEATURE_ACPI:0;
+  LdrFeatures |= FeaturePcdGet (PcdVerifiedBootEnabled)?FEATURE_VERIFIED_BOOT:0;
+  LdrFeatures |= FeaturePcdGet (PcdMeasuredBootEnabled)?FEATURE_MEASURED_BOOT:0;
 
   // Update feature by configuration data.
   FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
   if (FeaturesCfgData != NULL) {
     if (FeaturesCfgData->Features.Acpi == 0) {
-      LdrGlobal->LdrFeatures &= ~FEATURE_ACPI;
+      LdrFeatures &= ~FEATURE_ACPI;
     }
 
     if (FeaturesCfgData->Features.MeasuredBoot == 0) {
-      LdrGlobal->LdrFeatures &= ~FEATURE_MEASURED_BOOT;
+      LdrFeatures &= ~FEATURE_MEASURED_BOOT;
     }
 
     if (FeaturesCfgData->Features.eMMCTuning != 0) {
-      LdrGlobal->LdrFeatures |= FEATURE_MMC_TUNING;
+      LdrFeatures |= FEATURE_MMC_TUNING;
     }
 
     // Update platform specific feature from configuration data.
@@ -1687,18 +1694,20 @@ PlatformFeaturesInit (
   PlatformData  = (PLATFORM_DATA *)GetPlatformDataPtr ();
   if (PlatformData != NULL) {
     if (PlatformData->BtGuardInfo.Bpm.Mb == 0) {
-      LdrGlobal->LdrFeatures &= ~FEATURE_MEASURED_BOOT;
+      LdrFeatures &= ~FEATURE_MEASURED_BOOT;
     }
     if (PlatformData->BtGuardInfo.Bpm.Vb == 0) {
-      LdrGlobal->LdrFeatures &= ~FEATURE_VERIFIED_BOOT;
+      LdrFeatures &= ~FEATURE_VERIFIED_BOOT;
     }
   }
 
   // Update features by dynamic configuration data
   DynamicCfgData = (DYNAMIC_CFG_DATA *) FindConfigDataByTag (CDATA_DYNAMIC_TAG);
   if ((DynamicCfgData != NULL) && (DynamicCfgData->EmmcTuningEnforcement != 0)) {
-    LdrGlobal->LdrFeatures |= FEATURE_MMC_FORCE_TUNING;
+    LdrFeatures |= FEATURE_MMC_FORCE_TUNING;
   }
+
+  SetFeatureCfg (LdrFeatures);
 }
 
 /**
@@ -1855,10 +1864,11 @@ BoardInit (
       FetchPostRBPData (& (PlatformData->BtGuardInfo));
       DEBUG ((DEBUG_INFO, "BootPolicy : 0x%08X\n", PlatformData->BtGuardInfo.Bpm));
     }
-    GpioPadConfigTable (sizeof (mGpioInitTbl) / sizeof (mGpioInitTbl[0]), (BXT_GPIO_PAD_INIT *)mGpioInitTbl);
+    GpioConfigurePads (sizeof (mGpioInitTbl) / sizeof (mGpioInitTbl[0]), (GPIO_INIT_CONFIG *) (UINTN) mGpioInitTbl);
     EarlyPcieLinkUp ();
     break;
   case PostMemoryInit:
+    UpdateMemoryInfo ();
     break;
   case PreTempRamExit:
     break;

@@ -1,0 +1,75 @@
+## @file
+# Component description file for PlatformAcpiTable module.
+#
+# Build acpi table data required by system boot.
+#  All .asi files tagged with "ToolCode="DUMMY"" in following file list are device description and are included
+#  by top level ASL file which will be dealed with by asl.exe application.
+#
+# Copyright (c)  1999  - 2019, Intel Corporation. All rights reserved
+#
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+#
+##
+
+[defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = AcpiTables
+  FILE_GUID                      = 7E374E25-8E01-4FEE-87F2-390C23C606CD
+  MODULE_TYPE                    = USER_DEFINED
+  VERSION_STRING                 = 1.0
+  EDK_RELEASE_VERSION            = 0x00020000
+  EFI_SPECIFICATION_VERSION      = 0x00020000
+
+[sources.common]
+  Madt/Madt.h
+  Facs/Facs.h
+  Mcfg/Mcfg.h
+  Fadt/Fadt6.1.h
+  AcpiTablePlatform.h
+  Hpet/Hpet.h
+  Dsdt/GpioAcpiDefinesVer2.h
+  Dsdt/Dsdt.asl
+  Ecdt/Ecdt.act
+  Facs/Facs.act
+  Fadt/Fadt6.1.act
+  Madt/Madt.act
+  Mcfg/Mcfg.act
+  Hpet/Hpet.act
+  #Ssdt/SegSsdt.asl
+  SaSsdt/SaSsdt.asl
+  SaSsdt/Thermal.asl
+  Dmar/Dmar.aslc
+  Fwst/Fwst.aslc
+  Dmar/Dmar.h
+  CpuSsdt/Cpu0Cst.asl
+  CpuSsdt/Cpu0Ist.asl
+  CpuSsdt/Cpu0Tst.asl
+  CpuSsdt/Cpu0Psd.asl
+  CpuSsdt/ApCst.asl
+  CpuSsdt/ApIst.asl
+  CpuSsdt/ApTst.asl
+  CpuSsdt/ApPsd.asl
+  CpuSsdt/CpuSsdt.asl
+  CpuSsdt/Ctdp.asl
+  CpuSsdt/Cpu0Hwp.asl
+  CpuSsdt/ApHwp.asl
+  Platform/CommonBoardPkg/AcpiTables/Fpdt/Fpdt.aslc
+  Platform/CommonBoardPkg/AcpiTables/Tpm/Tpm2.aslc
+  Platform/CommonBoardPkg/AcpiTables/Tpm/TpmSsdt.asl
+  BdatTable/BdatTable.aslc
+  Platform/CommonBoardPkg/AcpiTables/Dsdt/AslInc.h
+  PsdTable/PsdTable.aslc
+  SsdtRtd3/TglURvpRtd3.asl
+  Lpit/Lpit.act
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+  Silicon/TigerlakePkg/TigerlakePkg.dec
+  Silicon/TigerlakePchPkg/TigerlakePchPkg.dec
+  Platform/TigerlakeBoardPkg/TigerlakeBoardPkg.dec
+

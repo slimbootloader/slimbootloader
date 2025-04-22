@@ -1,0 +1,201 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : GFX
+- GRAPHICS_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ GRAPHICS_CFG_DATA, 0x300, 0, 0 ] }
+  - GttSize      :
+      name         : Selection of iGFX GTT Memory size
+      type         : Combo
+      option       : 1:2MB, 2:4MB, 3:8MB
+      help         : >
+                     1=2MB, 2=4MB, 3=8MB, Default is 3
+      length       : 0x02
+      value        : 0x3
+  - IgdDvmt50PreAlloc :
+      name         : Internal Graphics Pre-allocated Memory
+      type         : Combo
+      option       : 0x00:0MB, 0x01:32MB, 0x02:64MB, 0x03:96MB, 0x04:128MB, 0x05:160MB, 0xF0:4MB, 0xF1:8MB, 0xF2:12MB, 0xF3:16MB, 0xF4:20MB, 0xF5:24MB, 0xF6:28MB, 0xF7:32MB, 0xF8:36MB, 0xF9:40MB, 0xFA:44MB, 0xFB:48MB, 0xFC:52MB, 0xFD:56MB, 0xFE:60MB
+      help         : >
+                     Size of memory preallocated for internal graphics.
+      length       : 0x01
+      value        : 0xFE
+  - InternalGfx  :
+      name         : Internal Graphics
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable internal graphics.
+      length       : 0x01
+      value        : 0x01
+  - ApertureSize :
+      name         : Aperture Size
+      type         : Combo
+      option       : 0:128 MB, 1:256 MB, 2:512 MB
+      help         : >
+                     Select the Aperture Size.
+      length       : 0x01
+      value        : 0x01
+  - PrimaryDisplay :
+      name         : Selection of the primary display device
+      type         : Combo
+      option       : 0:iGFX, 1:PEG, 2:PCIe Graphics on PCH, 3:AUTO, 4:Switchable Graphics
+      help         : >
+                     0=iGFX, 1=PEG, 2=PCIe Graphics on PCH, 3(Default)=AUTO, 4=Switchable Graphics
+      length       : 0x01
+      value        : 0x3
+  - GtPsmiSupport :
+      name         : Selection of PSMI Support On/Off
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     0(Default) = FALSE, 1 = TRUE. When TRUE, it will allow the PSMI Support
+      length       : 0x01
+      value        : 0x0
+  - PsmiRegionSize :
+      name         : Selection of PSMI Region size
+      type         : Combo
+      option       : 0:32MB, 1:288MB, 2:544MB, 3:800MB, 4:1024MB
+      help         : >
+                     0=32MB, 1=288MB, 2=544MB, 3=800MB, 4=1024MB Default is 0
+      length       : 0x01
+      value        : 0x0
+  - DismSize     :
+      name         : Selection of DiSM Region Size
+      type         : Combo
+      option       : 0:0GB, 1:1GB, 2:2GB, 3:3GB, 4:4GB, 5:5GB, 6:6GB, 7:7GB
+      help         : >
+                     DiSM Size to be allocated for 2LM Sku Default is 0
+      length       : 0x01
+      value        : 0x0
+  - GttMmAdr     :
+      name         : Temporary MMIO address for GTTMMADR
+      type         : EditNum, HEX, (0x00, 0xFFFFFFFF)
+      help         : >
+                     The reference code will use this as Temporary MMIO address space to access GTTMMADR Registers.Platform should provide conflict free Temporary MMIO Range- GttMmAdr to (GttMmAdr + 2MB MMIO + 6MB Reserved + GttSize). Default is (GmAdr - (2MB MMIO + 6MB Reserved + GttSize)) to (GmAdr - 0x1) (Where GttSize = 8MB)
+      length       : 0x4
+      value        : 0xAF000000
+  - GmAdr        :
+      name         : Temporary MMIO address for GMADR
+      type         : EditNum, HEX, (0x00, 0xFFFFFFFF)
+      help         : >
+                     The reference code will use this as Temporary MMIO address space to access GMADR Registers.Platform should provide conflict free Temporary MMIO Range- GmAdr to (GmAdr + ApertureSize). Default is (PciExpressBaseAddress - ApertureSize) to (PciExpressBaseAddress - 0x1) (Where ApertureSize = 256MB)
+      length       : 0x4
+      value        : 0xB0000000
+  - PchHdaEnable :
+      name         : Enable Intel HD Audio (Azalia)
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     0- Disable, 1- Enable (Default) Azalia controller
+      length       : 0x01
+      value        : 0x00
+  - PchHdaDspEnable :
+      name         : Enable HD Audio DSP
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable HD Audio DSP feature.
+      length       : 0x01
+      value        : 0x00
+  - PchHdaIDispLinkFrequency :
+      name         : iDisp-Link Frequency
+      type         : Combo
+      option       : 4:96MHz, 3:48MHz
+      help         : >
+                     iDisp-Link Freq (PCH_HDAUDIO_LINK_FREQUENCY enum)- 4- 96MHz, 3- 48MHz.
+      length       : 0x01
+      value        : 0x04
+  - PchHdaIDispLinkTmode :
+      name         : iDisp-Link T-mode
+      type         : Combo
+      option       : 0:2T, 2:4T, 3:8T, 4:16T
+      help         : >
+                     iDisp-Link T-Mode (PCH_HDAUDIO_IDISP_TMODE enum)- 0- 2T, 2- 4T, 3- 8T, 4- 16T
+      length       : 0x01
+      value        : 0x03
+  - PchHdaIDispCodecDisconnect :
+      name         : iDisplay Audio Codec disconnection
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     0- Not disconnected, enumerable, 1- Disconnected SDI, not enumerable.
+      length       : 0x01
+      value        : 0x00
+  - PchHdAudioLinkMode :
+      name         : PCH Audio Link Mode
+      type         : Combo
+      option       : 0:HDAUDIO_LINK_MODE_HDA, 1:HDAUDIO_LINK_MODE_I2S_SSP, 2:HDAUDIO_LINK_MODE_SNDW, 3:HDAUDIO_LINK_MODE_ADVANCED
+      help         : >
+                     Audio Mode.
+      length       : 0x02
+      value        : 0x01
+  - PchHdaVerbTableEntryNum :
+      name         : PCH HDA Verb Table Entry Number
+      type         : EditNum, HEX, (0x0,0xFF)
+      help         : >
+                     Number of Entries in Verb Table.
+      length       : 0x01
+      value        : 0x00
+  - PchHdaVerbTablePtr :
+      name         : PCH HDA Verb Table Pointer
+      type         : EditNum, HEX, (0x0,0xFFFFFFFF)
+      help         : >
+                     Pointer to Array of pointers to Verb Table.
+      length       : 0x04
+      value        : 0x00000000
+  - PchHdaAudioLinkDmicEnable :
+      name         : Enable HD Audio DMIC_N Link
+      type         : EditNum, HEX, (0x00,0xFFFF)
+      help         : >
+                     Enable/disable HD Audio DMIC1 link. Muxed with SNDW3.
+      length       : 0x02
+      value        : { 0x01, 0x01}
+  - PchHdaAudioLinkSndwEnable :
+      name         : Enable HD Audio SoundWire#N Link
+      type         : EditNum, HEX, (0x00,0xFFFFFFFF)
+      help         : >
+                     Enable/disable HD Audio SNDW#N link. Muxed with HDA.
+      length       : 0x04
+      value        : {0x01, 0x00, 0x00, 0x00}
+  - PchHdaAudioLinkSspEnable :
+      name         : Enable HD Audio SSP0 Link
+      type         : EditNum, HEX, (0x00, 0xFFFFFFFFFFFF)
+      help         : >
+                     Enable/disable HD Audio SSP_N/I2S link. Muxed with HDA. N-number 0-5
+      length       : 0x06
+      value        : { 0x01, 0x01, 0x01, 0x00, 0x00, 0x00 }
+  - PchHdaAudioLinkHdaEnable :
+      name         : Enable HD Audio Link
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable HD Audio Link. Muxed with SSP0/SSP1/SNDW1.
+      length       : 0x01
+      value        : 0x00
+  - PchHdaSdiEnable :
+      name         : Enable HDA SDI lanes
+      type         : EditNum, HEX, (0x00,0xFFFF)
+      help         : >
+                     Enable/disable HDA SDI lanes.
+      length       : 0x02
+      value        : { 0x00, 0x00}
+  - PchHdaDspUaaCompliance :
+      name         : Universal Audio Architecture compliance for DSP enabled system
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     0: Not-UAA Compliant (Intel SST driver supported only), 1: UAA Compliant (HDA Inbox driver or SST driver supported
+      length       : 0x01
+      value        : 0x0
+  - Dummy        :
+      length       : 0x03
+      value        : 0x0

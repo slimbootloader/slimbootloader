@@ -260,7 +260,7 @@ GetPchMaxPciePortNum (
   if (IsPchLp ()) {
     return 16;
   } else {
-    return 24;
+    return 20;
   }
 }
 

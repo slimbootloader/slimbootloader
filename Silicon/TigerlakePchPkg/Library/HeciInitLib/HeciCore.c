@@ -909,7 +909,12 @@ HeciSend (
     }
   }
 
-  HeciGetMeMode (&MeMode);
+  Status = HeciGetMeMode (&MeMode);
+  if (!EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "ME Mode: %X\n", MeMode));
+  } else {
+    DEBUG ((DEBUG_INFO, "Failed to Get ME Mode!\n"));
+  }
   if (MeMode == ME_MODE_SECOVER) {
     return EFI_UNSUPPORTED;
   }
@@ -1327,7 +1332,7 @@ HeciGetFwVersionMsg (
   UINT32                    Length;
   GET_FW_VER                MsgGenGetFwCapsSku;
   GET_FW_VER_ACK            *MsgGenGetFwVersionAckData;
-  LOADER_GLOBAL_DATA        *LdrGlobal;
+  VOID                      *FspHobList;
   ME_BIOS_PAYLOAD           *MbpDataHob;
   UINT32                    MbpDataHobLen;
   UINT8                     *DataPtr;
@@ -1342,10 +1347,10 @@ HeciGetFwVersionMsg (
   //
   // Get Mbp Data HOB
   //
-  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
+  FspHobList = GetFspHobListPtr ();
 
-  if ( LdrGlobal != NULL ) {
-    DataPtr = (UINT8 *)GetGuidHobData (LdrGlobal->FspHobList, &MbpDataHobLen, &gMeBiosPayloadHobGuid);
+  if ( FspHobList != NULL ) {
+    DataPtr = (UINT8 *)GetGuidHobData (FspHobList, &MbpDataHobLen, &gMeBiosPayloadHobGuid);
     if ((DataPtr != NULL) && (MbpDataHobLen > 0)) {
       MbpDataHob = (ME_BIOS_PAYLOAD *)(DataPtr+4);
       //DumpHex(16, 0, MbpDataHobLen, DataPtr);
@@ -1418,15 +1423,15 @@ HeciGetFwVersionMsg (
 EFI_STATUS
 EFIAPI
 HeciGetFwCapsSkuMsg (
-  IN UINT8  *MsgGetFwCaps,
+  IN  UINT8  *MsgGetFwCaps,
   OUT UINT8  *MsgGetFwCapsAck
   )
 {
   EFI_STATUS                Status;
   UINT32                    Length;
   GET_FW_CAPSKU             *MsgGenGetFwCapsSku;
-  GET_FW_CAPS_SKU_ACK_DATA  *MsgGenGetFwCapsSkuAck;
-  LOADER_GLOBAL_DATA        *LdrGlobal;
+  GET_FW_CAPS_SKU_ACK       *MsgGenGetFwCapsSkuAck;
+  VOID                      *FspHobList;
   ME_BIOS_PAYLOAD           *MbpDataHob;
   UINT32                    MbpDataHobLen;
   UINT8                      *DataPtr;
@@ -1437,31 +1442,29 @@ HeciGetFwCapsSkuMsg (
     return EFI_INVALID_PARAMETER;
   }
 
-  MsgGenGetFwCapsSku = (GET_FW_CAPSKU *)MsgGetFwCaps;
-  MsgGenGetFwCapsSkuAck = (GET_FW_CAPS_SKU_ACK_DATA *)MsgGetFwCapsAck;
+  MsgGenGetFwCapsSku    = (GET_FW_CAPSKU *)MsgGetFwCaps;
+  MsgGenGetFwCapsSkuAck = (GET_FW_CAPS_SKU_ACK *)MsgGetFwCapsAck;
 
-  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-  if ( LdrGlobal != NULL ) {
-    DataPtr = (UINT8 *)GetGuidHobData (LdrGlobal->FspHobList, &MbpDataHobLen, &gMeBiosPayloadHobGuid);
+  FspHobList = GetFspHobListPtr ();
+  if ( FspHobList != NULL ) {
+    DataPtr = (UINT8 *)GetGuidHobData (FspHobList, &MbpDataHobLen, &gMeBiosPayloadHobGuid);
     if ((DataPtr != NULL) && (MbpDataHobLen > 0)) {
       MbpDataHob = (ME_BIOS_PAYLOAD *)(DataPtr+4);
-      //DumpHex(16, 0, sizeof(MBP_ITEM_HEADER), DataPtr);
-      //DumpHex(16, 0, MbpDataHobLen, MbpDataHob);
       if( MbpDataHob->FwCapsSku.Available == 1 ) {
-        MsgGenGetFwCapsSkuAck->FWCap.Data = MbpDataHob->FwCapsSku.FwCapabilities.Data;
+        MsgGenGetFwCapsSkuAck->Data.FWCap.Data = MbpDataHob->FwCapsSku.FwCapabilities.Data;
         return EFI_SUCCESS;
       }
     }
   }
 
+  DEBUG ((DEBUG_INFO, "FWCAPS: TGL Though HECI\n"));
 
-  DEBUG ((DEBUG_VERBOSE , "FWCAPS: TGL Though HECI\n"));
   //
   // Allocate MsgGenGetFwVersion data structure
   //
   MsgGenGetFwCapsSku->MkhiHeader.Data               = 0;
-  MsgGenGetFwCapsSku->MkhiHeader.Fields.GroupId     = 0x03;
-  MsgGenGetFwCapsSku->MkhiHeader.Fields.Command     = 0x02;
+  MsgGenGetFwCapsSku->MkhiHeader.Fields.GroupId     = MKHI_FWCAPS_GROUP_ID;
+  MsgGenGetFwCapsSku->MkhiHeader.Fields.Command     = FWCAPS_GET_RULE_CMD;
   MsgGenGetFwCapsSku->MkhiHeader.Fields.IsResponse  = 0x0;
   MsgGenGetFwCapsSku->Data.RuleId                   = 0x0;
   Length = sizeof (GET_FW_CAPSKU);
@@ -1471,7 +1474,7 @@ HeciGetFwCapsSkuMsg (
   }
 
   //
-  // Send Get FW SKU Request to SEC
+  // Send Get FW Caps SKU Request to SEC
   //
   Status = HeciSend (
       HECI1_DEVICE,
@@ -1480,26 +1483,21 @@ HeciGetFwCapsSkuMsg (
       BIOS_FIXED_HOST_ADDR,
       0x7
       );
+  if (!EFI_ERROR (Status)) {
+    Length = sizeof (GET_FW_CAPS_SKU_ACK);
+    Status = HeciReceive (
+        HECI1_DEVICE,
+        BLOCKING,
+        (UINT32 *)MsgGenGetFwCapsSkuAck,
+        &Length
+        );
+  }
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "FWCAPS:Send Error from Heci=%d \n", Status));
+    DEBUG ((DEBUG_INFO, "FWCAPS: Received Error from Heci: %r\n", Status));
     return Status;
   }
 
-  DEBUG ((DEBUG_INFO, "FWCAPS: TGL Though HECI\n"));
-  Length = sizeof (GET_FW_CAPS_SKU_ACK_DATA);
-  Status = HeciReceive (
-      HECI1_DEVICE,
-      BLOCKING,
-      (UINT32 *)MsgGenGetFwCapsSkuAck,
-      &Length
-      );
-
-
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "FWCAPS: Received Error from Heci=%d \n", Status));
-    return Status;
-  }
   return EFI_SUCCESS;
 }
 

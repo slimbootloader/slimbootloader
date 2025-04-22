@@ -1,0 +1,41 @@
+## @file
+# Component description file for CSME Extended Measurement DXE driver
+#
+# Copyright (c) 2019 - 2021, Intel Corporation. All rights reserved.<BR>
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010017
+  BASE_NAME                      = MeExtMeasurementLib
+  FILE_GUID                      = D38FC876-0B17-4D95-A7F8-A022ECA1CA42
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = MeExtMeasurementLib
+
+[LibraryClasses]
+  BaseMemoryLib
+  BaseLib
+  DebugLib
+  #HeciInitLib
+  TpmLib
+  BootloaderCommonLib
+  BootloaderLib
+  HeciMeExtLib
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  Silicon/AlderlakePkg/AlderlakePkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+
+[Sources]
+  MeExtMeasurementLib.c
+
+[Guids]
+  gMeBiosPayloadHobGuid
+
+[Pcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled

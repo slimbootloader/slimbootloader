@@ -173,6 +173,18 @@ PrepareStage1B (
   LOADER_COMPRESSED_HEADER *Hdr;
   UINT8                     SignHashAlg;
 
+#if FixedPcdGetBool(PcdFipsSupport)
+  /* If FIPS is enabled, run FIPS self tests before any crypto algorithm is run.
+     Halt execution if any FIPS self test fails
+  */
+  Status = RunFipsSelftests ();
+  if (EFI_ERROR(Status)) {
+    CpuHalt ("FIPS Self Test Failed");
+  }
+  DEBUG((DEBUG_INFO, "FIPS Self-tests Status = Success\n"));
+  AddMeasurePoint (0x10D0);
+#endif
+
   // Load Stage 1B
   Status = GetComponentInfo (FLASH_MAP_SIG_STAGE1B, &Src, &Length);
   if (EFI_ERROR (Status)) {
@@ -265,6 +277,7 @@ SecStartup2 (
   SERVICES_LIST            *ServiceList;
   BUF_INFO                 *BufInfo;
   CONTAINER_LIST           *ContainerList;
+  BOOT_PARTITION           Partition;
 
   Stage1aFvBase = PcdGet32 (PcdStage1AFdBase) + PcdGet32 (PcdFSPTSize);
   PeCoffFindAndReportImageInfo ((UINT32) (UINTN) GET_STAGE_MODULE_BASE (Stage1aFvBase));
@@ -359,14 +372,20 @@ SecStartup2 (
     SetLibraryData (PcdGet8 (PcdPcdLibId), LdrGlobal->PcdDataPtr, BufInfo->AllocLen);
   }
 
-  // Extra initialization
-  if (FlashMap != NULL) {
-    SetCurrentBootPartition ((FlashMap->Attributes & FLASH_MAP_ATTRIBUTES_BACKUP_REGION) ? 1 : 0);
+  if (PcdGetBool (PcdIdenticalTopSwapsBuilt)) {
+    if (!EFI_ERROR (GetBootPartition (&Partition))) {
+      SetCurrentBootPartition (Partition);
+    }
+  } else if (FlashMap != NULL) {
+    SetCurrentBootPartition ((FlashMap->Attributes & FLASH_MAP_ATTRIBUTES_BACKUP_REGION) ? BackupPartition : PrimaryPartition);
   }
 
   // Call board hook to enable debug
   BoardInit (PostTempRamInit);
   AddMeasurePoint (0x1040);
+
+  // Set DebugPrintErrorLevel to default PCD.
+  SetDebugPrintErrorLevel (PcdGet32 (PcdDebugPrintErrorLevel));
 
   if (DebugCodeEnabled()) {
     DEBUG ((DEBUG_INFO, "\n============= %a STAGE1A =============\n",mBootloaderName));
@@ -460,7 +479,8 @@ SecStartup (
   LdrGlobal->MemPoolStart          = StackTop;
   LdrGlobal->MemPoolCurrTop        = LdrGlobal->MemPoolEnd;
   LdrGlobal->MemPoolCurrBottom     = LdrGlobal->MemPoolStart;
-  LdrGlobal->DebugPrintErrorLevel  = PcdGet32 (PcdDebugPrintErrorLevel);
+  LdrGlobal->MemPoolMaxUsed        = 0;
+  LdrGlobal->DebugPrintErrorLevel  = 0;
   LdrGlobal->PerfData.PerfIndex    = 2;
   LdrGlobal->PerfData.FreqKhz      = GetTimeStampFrequency ();
   LdrGlobal->PerfData.TimeStamp[0] = Stage1aAsmParam->TimeStamp | 0x1000000000000000ULL;
@@ -469,8 +489,12 @@ SecStartup (
   // Any platform (board init lib) can update these according to
   // the config data passed in or these defaults remain
   LdrGlobal->LdrFeatures           = FEATURE_MEASURED_BOOT | FEATURE_ACPI;
+  // TempRam Base and Size
+  LdrGlobal->CarBase               = Stage1aAsmParam->CarBase;
+  LdrGlobal->CarSize               = Stage1aAsmParam->CarTop - LdrGlobal->CarBase;
 
   LoadGdt (&GdtTable, (IA32_DESCRIPTOR *)&mGdt);
+  UpdateSelectors();
   LoadIdt (&IdtTable, (UINT32)(UINTN)LdrGlobal);
   SetLoaderGlobalDataPointer (LdrGlobal);
 
@@ -502,6 +526,7 @@ ContinueFunc (
   UINT8                     ImageId[9];
   BOOT_LOADER_VERSION      *VerInfoTbl;
   FSP_INFO_HEADER          *FspInfoHdr;
+  UINT32                    CpuSig;
 
   LdrGlobal     = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
   AddMeasurePoint (0x1060);
@@ -541,6 +566,10 @@ ContinueFunc (
   FspInfoHdr = (FSP_INFO_HEADER *)(UINTN)(PcdGet32 (PcdFSPTBase) + FSP_INFO_HEADER_OFF);
   CopyMem (ImageId, &FspInfoHdr->ImageId, sizeof (UINT64));
   DEBUG ((DEBUG_INFO, "FSPV: ID(%a) REV(%08X)\n", ImageId, FspInfoHdr->ImageRevision));
+
+  AsmCpuid (1, &CpuSig, NULL, NULL, NULL);
+  DEBUG ((DEBUG_INFO, "CPUV: ID(%x) UCODE(%x)\n", CpuSig, \
+          RShiftU64 (AsmReadMsr64 (MSR_IA32_BIOS_SIGN_ID), 32)));
 
   DEBUG ((DEBUG_INFO, "Loader global data @ 0x%08X\n", (UINT32)(UINTN)LdrGlobal));
   DEBUG ((DEBUG_INFO, "Run  STAGE1A @ 0x%08X\n", PcdGet32 (PcdStage1ALoadBase)));

@@ -29,6 +29,7 @@
   BootloaderCorePkg/BootloaderCorePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
   IntelFsp2Pkg/IntelFsp2Pkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
 
 [LibraryClasses]
   PagingLib
@@ -55,6 +56,11 @@
   DebugAgentLib
   ContainerLib
   StageLib
+  TcoTimerLib
+  TopSwapLib
+  WatchDogTimerLib
+  FirmwareResiliencyLib
+  IppCryptoPerfLib
 
 [Guids]
   gPlatformModuleTokenSpaceGuid
@@ -99,6 +105,10 @@
   gPlatformModuleTokenSpaceGuid.PcdLoaderAcpiNvsSize
   gPlatformModuleTokenSpaceGuid.PcdLoaderAcpiReclaimSize
   gPlatformModuleTokenSpaceGuid.PcdEnableSetup
+  gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled
+  gPlatformModuleTokenSpaceGuid.PcdBootFailureThreshold
+  gPlatformModuleTokenSpaceGuid.PcdTcoTimeout
+  gPlatformCommonLibTokenSpaceGuid.PcdEnableCryptoPerfTest
 
 [Depex]
   TRUE

@@ -1,0 +1,46 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+- $ACTION      :
+    page         : MEM
+- CLOCK_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ CLOCK_CFG_DATA, 0xD00, 0, 0 ] }
+  - !expand { MEM_TMPL : [ CLOCK ] }
+  - ClockGeneratorAddress :
+      name         : Clock Generator Address
+      type         : EditNum, HEX, (0x00, 0xFF)
+      help         : >
+                     Set SKU Clock generator address. Valid field should be set. Skip Clock Generator should be set to Disable.
+      length       : 0x01
+      value        : 0xD4
+  - SSCSecondarySmbusUsed :
+      name         : SSC Secondary Smbus use
+      type         : Combo
+      option       : 0:Disabled,1:Enabled
+      help         : >
+                     Enable or Disable SSC Secondary Smbus use.
+      length       : 0x01
+      value        : 0x0
+  - SkipClockGenerator :
+      name         : Skip Clock Generator
+      type         : Combo
+      option       : 0:Disabled,1:Enabled
+      help         : >
+                     Enable or Disable to skip clock generator configuration.
+      length       : 0x01
+      value        : 0x01
+  - EnableClockSpreadSpec :
+      name         : SSC Enable for Host
+      type         : Combo
+      option       : 0:Disable, 1:Enable SSC with 0.25 spread, 2:Enable SSC with 0.5 spread
+      help         : >
+                     Enable Spread Spectrum Control for the Host(CPU) PCIe High-Speed Root Ports.
+      length       : 0x01
+      value        : 0x0
+

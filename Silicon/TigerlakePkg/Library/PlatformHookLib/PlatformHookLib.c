@@ -74,15 +74,16 @@ GetSerialPortStrideSize (
   @retval  The serial port register base address.
 
 **/
-UINT32
+UINT64
 EFIAPI
 GetSerialPortBase (
   VOID
   )
 {
   UINT16  Cmd16;
-  UINTN  PciAddress;
+  UINTN   PciAddress;
   UINT8   DebugPort;
+  UINT64  MmioBase;
 
   DebugPort = GetDebugPort ();
   if (DebugPort >=  PCH_MAX_SERIALIO_UART_CONTROLLERS) {
@@ -102,7 +103,9 @@ GetSerialPortBase (
     return LPSS_UART_TEMP_BASE_ADDRESS(DebugPort);
   } else {
     if (MmioRead32 (PciAddress + PCI_COMMAND_OFFSET) & EFI_PCI_COMMAND_MEMORY_SPACE) {
-      return MmioRead32 (PciAddress + PCI_BASE_ADDRESSREG_OFFSET) & 0xFFFFFFF0;
+      MmioBase  = LShiftU64 (MmioRead32 (PciAddress + PCI_BASE_ADDRESSREG_OFFSET + 4), 32);
+      MmioBase += (MmioRead32 (PciAddress + PCI_BASE_ADDRESSREG_OFFSET) & 0xFFFFFFF0);
+      return MmioBase;
     } else {
       return 0;
     }
@@ -179,6 +182,7 @@ PlatformHookSerialPortInitialize (
     // Bring UART out of reset
     //
     MmioWrite32 (BarAddress + R_SERIAL_IO_MEM_PPR_RESETS, B_SERIAL_IO_MEM_PPR_RESETS_IDMA | B_SERIAL_IO_MEM_PPR_RESETS_APB | B_SERIAL_IO_MEM_PPR_RESETS_FUNC);
+    MmioRead32 (BarAddress + R_SERIAL_IO_MEM_PPR_RESETS);
 
     //
     // Set clock

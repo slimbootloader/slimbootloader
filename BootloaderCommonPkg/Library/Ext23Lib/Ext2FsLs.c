@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
   Copyright (c) 1997 Manuel Bouyer.
@@ -136,7 +136,7 @@ Ext2fsLs (
   Fp = (FILE *)File->FileSystemSpecificData;
 
   if ((Fp->DiskInode.Ext2DInodeMode & EXT2_IFMT) == EXT2_IFREG) {
-    CONSOLE_PRINT_UNICODE ((L"  %-16a %u\n", File->FileNamePtr, Fp->DiskInode.Ext2DInodeSize));
+    CONSOLE_PRINT_UNICODE ((L"  %-16a %u\n", File->FileNameBuf, Fp->DiskInode.Ext2DInodeSize));
     return EFI_SUCCESS;
   } else if ((Fp->DiskInode.Ext2DInodeMode & EXT2_IFMT) != EXT2_IFDIR) {
     return EFI_NOT_FOUND;
@@ -224,6 +224,8 @@ Ext2fsLs (
         }
         Status = RETURN_SUCCESS;
         CONSOLE_PRINT_UNICODE ((L"  %-16a %u\n", New->EntryName, FileSize));
+      } else if (New->EntryType == 7) {
+        CONSOLE_PRINT_UNICODE ((L"  %a (symbolic link)\n", New->EntryName));
       }
       PNames = New->EntryNext;
     } while (PNames != NULL);

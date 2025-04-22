@@ -1,0 +1,125 @@
+#/** @file
+#
+#  Platform Configuration Delta File.
+#
+#  Copyright (c) 2023, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+#**/
+
+
+#
+# Delta configuration values for platform ID 0x0009
+#
+
+PLATFORMID_CFG_DATA.PlatformId                        | 0x0009
+
+GPIO_CFG_DATA.GpioPinConfig0_GPP_H02                  | 0x0100E2A1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H02                  | 0x07020001
+GPIO_CFG_DATA.GpioPinConfig0_GPD02                    | 0x03148DA1
+GPIO_CFG_DATA.GpioPinConfig1_GPD02                    | 0x05020601
+GPIO_CFG_DATA.GpioPinConfig0_GPP_A12                  | 0x0100E281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A12                  | 0x020C0001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C02                  | 0x0500E283
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C02                  | 0x0B020001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_E00                  | 0x03148DA1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E00                  | 0x0E000601
+GPIO_CFG_DATA.GpioPinConfig0_GPP_E03                  | 0x03148DE1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E03                  | 0x0E030619
+GPIO_CFG_DATA.GpioPinConfig0_GPP_E07                  | 0x05128DA1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E07                  | 0x0E070601
+GPIO_CFG_DATA.GpioPinConfig0_GPP_E22                  | 0x05008385
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E22                  | 0x0E160001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_E23                  | 0x0500E281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E23                  | 0x0E170001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_F07                  | 0x0500E2A1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F07                  | 0x0C070001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D06                  | 0x00008383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D06                  | 0x08060001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D12                  | 0x0100E281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D12                  | 0x080C0001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D13                  | 0x03148DA1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D13                  | 0x080D0601
+PLAT_NAME_CFG_DATA.PlatformName                       | 'AzbCrb'
+GEN_CFG_DATA.PayloadId                                | 'LINX'
+MEMORY_CFG_DATA.SpdAddressTable                       | { 0xa8, 0x00, 0xa8, 0x00, 0xa8, 0x00, 0xa8, 0x00, 0xa8, 0x00, 0xa8, 0x00, 0xa8, 0x00, 0xa8, 0x00 }
+MEMORY_CFG_DATA.SpdDataSel000                         | 0x0
+MEMORY_CFG_DATA.SpdDataSel010                         | 0x0
+MEMORY_CFG_DATA.SpdDataSel020                         | 0x0
+MEMORY_CFG_DATA.SpdDataSel030                         | 0x0
+MEMORY_CFG_DATA.SpdDataSel100                         | 0x0
+MEMORY_CFG_DATA.SpdDataSel101                         | 0x0
+MEMORY_CFG_DATA.SpdDataSel110                         | 0x0
+MEMORY_CFG_DATA.SpdDataSel120                         | 0x0
+MEMORY_CFG_DATA.SpdDataSel130                         | 0x0
+MEMORY_CFG_DATA.DqMapCpu2DramMc0Ch0                   | { 0x04, 0x01, 0x07, 0x06, 0x00, 0x02, 0x05, 0x03, 0x08, 0x0f, 0x0e, 0x09, 0x0a, 0x0d, 0x0c, 0x0b }
+MEMORY_CFG_DATA.DqMapCpu2DramMc0Ch1                   | { 0x00, 0x05, 0x02, 0x07, 0x04, 0x03, 0x01, 0x06, 0x0c, 0x0a, 0x0d, 0x08, 0x0f, 0x0b, 0x0e, 0x09 }
+MEMORY_CFG_DATA.DqMapCpu2DramMc0Ch2                   | { 0x01, 0x03, 0x02, 0x00, 0x07, 0x04, 0x06, 0x05, 0x0c, 0x09, 0x0a, 0x08, 0x0d, 0x0b, 0x0e, 0x0f }
+MEMORY_CFG_DATA.DqMapCpu2DramMc0Ch3                   | { 0x0f, 0x0c, 0x0b, 0x0a, 0x0e, 0x08, 0x09, 0x0d, 0x07, 0x03, 0x06, 0x00, 0x04, 0x01, 0x05, 0x02 }
+MEMORY_CFG_DATA.DqMapCpu2DramMc1Ch0                   | { 0x04, 0x01, 0x07, 0x06, 0x00, 0x02, 0x05, 0x03, 0x08, 0x0f, 0x0e, 0x09, 0x0a, 0x0d, 0x0c, 0x0b }
+MEMORY_CFG_DATA.DqMapCpu2DramMc1Ch1                   | { 0x00, 0x05, 0x02, 0x07, 0x04, 0x03, 0x01, 0x06, 0x0c, 0x0a, 0x0d, 0x08, 0x0f, 0x0b, 0x0e, 0x09 }
+MEMORY_CFG_DATA.DqMapCpu2DramMc1Ch2                   | { 0x01, 0x03, 0x02, 0x00, 0x07, 0x04, 0x06, 0x05, 0x0c, 0x09, 0x0a, 0x08, 0x0d, 0x0b, 0x0e, 0x0f }
+MEMORY_CFG_DATA.DqMapCpu2DramMc1Ch3                   | { 0x0f, 0x0c, 0x0b, 0x0a, 0x0e, 0x08, 0x09, 0x0d, 0x07, 0x03, 0x06, 0x00, 0x04, 0x01, 0x05, 0x02 }
+MEMORY_CFG_DATA.DqsMapCpu2DramMc1Ch3                  | { 1, 0}
+MEMORY_CFG_DATA.DqsMapCpu2DramMc0Ch3                  | { 1, 0}
+MEMORY_CFG_DATA.DqPinsInterleaved                     | 0x0
+MEMORY_CFG_DATA.PlatformMemorySize                    | 0x8391000
+MEMORY_CFG_DATA.BootFrequency                         | 0x02
+MEMORY_CFG_DATA.ActiveCoreCount                       | 0x00
+MEMORY_CFG_DATA.SinitMemorySize                       | 0x0
+MEMORY_CFG_DATA.TxtHeapMemorySize                     | 0x0
+MEMORY_CFG_DATA.BiosAcmBase                           | 0xFFA40000
+MEMORY_CFG_DATA.PcieRpEnableMask                      | 0xFFFFFF
+MEMORY_CFG_DATA.PcieClkSrcUsage                       | { 0x04, 0x05, 0x06, 0x07, 0xff, 0x80, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00 }
+MEMORY_CFG_DATA.PcieClkSrcClkReq                      | { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0xff, 0xff }
+MEMORY_CFG_DATA.CpuPcieRpEnableMask                   | 0x1
+MEMORY_CFG_DATA.IpuLaneUsed                           | { 0x04, 0x01, 0x02, 0x04, 0x04, 0x04, 0x00, 0x00 }
+MEMORY_CFG_DATA.CsiSpeed                              | { 0x02, 0x01, 0x02, 0x02, 0x02, 0x02, 0x00, 0x00 }
+MEMORY_CFG_DATA.CpuDmiHwEqGen3CoeffListCm             | { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+MEMORY_CFG_DATA.CpuDmiHwEqGen3CoeffListCp             | { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+MEMORY_CFG_DATA.CpuDmiHwEqGen4CoeffListCm             | { 0x00, 0x0e, 0x0a, 0x07, 0x07, 0x07, 0x07, 0x07 }
+MEMORY_CFG_DATA.CpuDmiHwEqGen4CoeffListCp             | { 0x00, 0x07, 0x06, 0x07, 0x07, 0x07, 0x07, 0x07 }
+MEMORY_CFG_DATA.TcssItbtPcie0En                       | 0x1
+MEMORY_CFG_DATA.TcssItbtPcie1En                       | 0x1
+MEMORY_CFG_DATA.TcssItbtPcie2En                       | 0x1
+MEMORY_CFG_DATA.TcssItbtPcie3En                       | 0x1
+MEMORY_CFG_DATA.TcssXhciEn                            | 0x1
+MEMORY_CFG_DATA.TcssDma0En                            | 0x1
+MEMORY_CFG_DATA.TcssDma1En                            | 0x1
+MEMORY_CFG_DATA.UsbTcPortEnPreMem                     | 0x3
+MEMORY_CFG_DATA.UserBd                                | 0x0
+MEMORY_CFG_DATA.EnableC6Dram                          | 0x00
+MEMORY_CFG_DATA.BdatEnable                            | 0x0
+MEMORY_CFG_DATA.BiosSize                              | 0x4000
+SILICON_CFG_DATA.PchDmiAspmCtrl                       | 0x04
+SILICON_CFG_DATA.CpuPcieRpAspm                        | { 0x00, 0x02, 0x02, 0x00 }
+SILICON_CFG_DATA.CpuPcieRpPtmEnabled                  | { 0x01, 0x01, 0x01, 0x00 }
+SILICON_CFG_DATA.SataLedEnable                        | 0x00
+SILICON_CFG_DATA.SataPortsDevSlp                      | { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+SILICON_CFG_DATA.PortUsb30Enable                      | { 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+SILICON_CFG_DATA.Usb2OverCurrentPin                   | { 0x04, 0x05, 0xff, 0xff, 0x02, 0x02, 0xff, 0xff, 0xff, 0xff, 0x05, 0x05, 0x06, 0x06, 0x07, 0x07 }
+SILICON_CFG_DATA.Usb3OverCurrentPin                   | { 0x02, 0x02, 0xff, 0xff, 0x02, 0x02, 0x03, 0x03, 0x04, 0x04 }
+SILICON_CFG_DATA.Usb2PhyPetxiset                      | { 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+SILICON_CFG_DATA.Usb2PhyPredeemp                      | { 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+SILICON_CFG_DATA.SerialIoUartMode                     | { 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+SILICON_CFG_DATA.SerialIoUartAutoFlow                 | { 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00 }
+SILICON_CFG_DATA.SerialIoI2cMode                      | { 0x01, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00 }
+SILICON_CFG_DATA.CpuUsb3OverCurrentPin                | { 0x04, 0x05, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff }
+SILICON_CFG_DATA.PchIshI2cEnable                      | { 0x01, 0x01, 0x00 }
+SILICON_CFG_DATA.PchIshGpEnable                       | { 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01 }
+SILICON_CFG_DATA.PcieRpAspm                           | { 0x04, 0x00, 0x04, 0x00, 0x04, 0x04, 0x04, 0x04, 0x04, 0x00, 0x04, 0x04, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02 }
+SILICON_CFG_DATA.PtmEnabled                           | { 0x01, 0x01, 0x01, 0x01 }
+SILICON_CFG_DATA.CpuPcieRpMultiVcEnabled              | { 0x01, 0x00, 0x00, 0x00 }
+POWER_CFG_DATA.TccActivationOffset                    | 0x0A
+POWER_CFG_DATA.TurboMode                              | 0x00
+POWER_CFG_DATA.EnergyEfficientTurbo                   | 0x01
+POWER_CFG_DATA.MaxRatio                               | 0x04
+POWER_CFG_DATA.PsysPmax                               | 0x0
+POWER_CFG_DATA.ImonSlope                              | { 0x00, 0x00, 0x47, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+POWER_CFG_DATA.TdcEnable                              | { 0x01, 0x01, 0x01, 0x00, 0x00 }
+POWER_CFG_DATA.EnableItbm                             | 0x01
+PEP_CFG_DATA.PepPcieDg                                | 0x1
+PEP_CFG_DATA.PepUfs0                                  | 0x1
+PEP_CFG_DATA.PepUfs1                                  | 0x1
+CAPSULE_INFO_CFG_DATA.DevInstance                     | 0x1

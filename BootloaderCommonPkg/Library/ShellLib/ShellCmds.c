@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -48,6 +48,8 @@ LoadShellCommands (
     ShellCommandRegister (Shell, &ShellCommandDmesg);
     ShellCommandRegister (Shell, &ShellCommandReset);
     ShellCommandRegister (Shell, &ShellCommandFs);
+    ShellCommandRegister (Shell, &ShellCommandUsbDev);
+    ShellCommandRegister (Shell, &ShellCommandAcpi);
 
     // Load Platform specific shell commands
     ShellExtensionCmds = GetShellExtensionCmds ();

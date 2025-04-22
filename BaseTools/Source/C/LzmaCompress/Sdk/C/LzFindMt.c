@@ -1,5 +1,5 @@
 /* LzFindMt.c -- multithreaded Match finder for LZ algorithms
-2017-06-10 : Igor Pavlov : Public domain */
+2018-12-29 : Igor Pavlov : Public domain */
 
 #include "Precomp.h"
 
@@ -62,7 +62,7 @@ static void MtSync_StopWriting(CMtSync *p)
     p->csWasEntered = False;
   }
   Semaphore_Release1(&p->freeSemaphore);
- 
+
   Event_Wait(&p->wasStopped);
 
   while (myNumBlocks++ != p->numProcessedBlocks)
@@ -112,12 +112,12 @@ static SRes MtSync_Create2(CMtSync *p, THREAD_FUNC_TYPE startAddress, void *obj,
   RINOK_THREAD(AutoResetEvent_CreateNotSignaled(&p->canStart));
   RINOK_THREAD(AutoResetEvent_CreateNotSignaled(&p->wasStarted));
   RINOK_THREAD(AutoResetEvent_CreateNotSignaled(&p->wasStopped));
-  
+
   RINOK_THREAD(Semaphore_Create(&p->freeSemaphore, numBlocks, numBlocks));
   RINOK_THREAD(Semaphore_Create(&p->filledSemaphore, 0, numBlocks));
 
   p->needStart = True;
-  
+
   RINOK_THREAD(Thread_Create(&p->thread, startAddress, obj));
   p->wasCreated = True;
   return SZ_OK;
@@ -232,38 +232,57 @@ static void MatchFinderMt_GetNextBlock_Hash(CMatchFinderMt *p)
 
 #define kEmptyHashValue 0
 
-/* #define MFMT_GM_INLINE */
+#define MFMT_GM_INLINE
 
 #ifdef MFMT_GM_INLINE
 
-#define NO_INLINE MY_FAST_CALL
+/*
+  we use size_t for _cyclicBufferPos instead of UInt32
+  to eliminate "movsx" BUG in old MSVC x64 compiler.
+*/
 
-static Int32 NO_INLINE GetMatchesSpecN(UInt32 lenLimit, UInt32 pos, const Byte *cur, CLzRef *son,
-    UInt32 _cyclicBufferPos, UInt32 _cyclicBufferSize, UInt32 _cutValue,
-    UInt32 *_distances, UInt32 _maxLen, const UInt32 *hash, Int32 limit, UInt32 size, UInt32 *posRes)
+MY_NO_INLINE
+static UInt32 *GetMatchesSpecN(UInt32 lenLimit, UInt32 pos, const Byte *cur, CLzRef *son,
+    size_t _cyclicBufferPos, UInt32 _cyclicBufferSize, UInt32 _cutValue,
+    UInt32 *distances, UInt32 _maxLen, const UInt32 *hash, const UInt32 *limit, UInt32 size, UInt32 *posRes)
 {
   do
   {
-  UInt32 *distances = _distances + 1;
-  UInt32 curMatch = pos - *hash++;
+  UInt32 *_distances = ++distances;
+  UInt32 delta = *hash++;
 
-  CLzRef *ptr0 = son + (_cyclicBufferPos << 1) + 1;
-  CLzRef *ptr1 = son + (_cyclicBufferPos << 1);
-  UInt32 len0 = 0, len1 = 0;
+  CLzRef *ptr0 = son + ((size_t)_cyclicBufferPos << 1) + 1;
+  CLzRef *ptr1 = son + ((size_t)_cyclicBufferPos << 1);
+  unsigned len0 = 0, len1 = 0;
   UInt32 cutValue = _cutValue;
-  UInt32 maxLen = _maxLen;
-  for (;;)
+  unsigned maxLen = (unsigned)_maxLen;
+
+  /*
+  if (size > 1)
   {
-    UInt32 delta = pos - curMatch;
-    if (cutValue-- == 0 || delta >= _cyclicBufferSize)
+    UInt32 delta = *hash;
+    if (delta < _cyclicBufferSize)
     {
-      *ptr0 = *ptr1 = kEmptyHashValue;
-      break;
+      UInt32 cyc1 = _cyclicBufferPos + 1;
+      CLzRef *pair = son + ((size_t)(cyc1 - delta + ((delta > cyc1) ? _cyclicBufferSize : 0)) << 1);
+      Byte b = *(cur + 1 - delta);
+      _distances[0] = pair[0];
+      _distances[1] = b;
     }
+  }
+  */
+  if (cutValue == 0 || delta >= _cyclicBufferSize)
+  {
+    *ptr0 = *ptr1 = kEmptyHashValue;
+  }
+  else
+  for(;;)
+  {
     {
-      CLzRef *pair = son + ((_cyclicBufferPos - delta + ((delta > _cyclicBufferPos) ? _cyclicBufferSize : 0)) << 1);
+      CLzRef *pair = son + ((size_t)(_cyclicBufferPos - delta + ((_cyclicBufferPos < delta) ? _cyclicBufferSize : 0)) << 1);
       const Byte *pb = cur - delta;
-      UInt32 len = (len0 < len1 ? len0 : len1);
+      unsigned len = (len0 < len1 ? len0 : len1);
+      UInt32 pair0 = *pair;
       if (pb[len] == cur[len])
       {
         if (++len != lenLimit && pb[len] == cur[len])
@@ -272,30 +291,42 @@ static Int32 NO_INLINE GetMatchesSpecN(UInt32 lenLimit, UInt32 pos, const Byte *
               break;
         if (maxLen < len)
         {
-          *distances++ = maxLen = len;
+          maxLen = len;
+          *distances++ = (UInt32)len;
           *distances++ = delta - 1;
           if (len == lenLimit)
           {
-            *ptr1 = pair[0];
-            *ptr0 = pair[1];
+            UInt32 pair1 = pair[1];
+            *ptr1 = pair0;
+            *ptr0 = pair1;
             break;
           }
         }
       }
-      if (pb[len] < cur[len])
       {
-        *ptr1 = curMatch;
-        ptr1 = pair + 1;
-        curMatch = *ptr1;
-        len1 = len;
+        UInt32 curMatch = pos - delta;
+        // delta = pos - *pair;
+        // delta = pos - pair[((UInt32)pb[len] - (UInt32)cur[len]) >> 31];
+        if (pb[len] < cur[len])
+        {
+          delta = pos - pair[1];
+          *ptr1 = curMatch;
+          ptr1 = pair + 1;
+          len1 = len;
+        }
+        else
+        {
+          delta = pos - *pair;
+          *ptr0 = curMatch;
+          ptr0 = pair;
+          len0 = len;
+        }
       }
-      else
-      {
-        *ptr0 = curMatch;
-        ptr0 = pair;
-        curMatch = *ptr0;
-        len0 = len;
-      }
+    }
+    if (--cutValue == 0 || delta >= _cyclicBufferSize)
+    {
+      *ptr0 = *ptr1 = kEmptyHashValue;
+      break;
     }
   }
   pos++;
@@ -303,26 +334,26 @@ static Int32 NO_INLINE GetMatchesSpecN(UInt32 lenLimit, UInt32 pos, const Byte *
   cur++;
   {
     UInt32 num = (UInt32)(distances - _distances);
-    *_distances = num - 1;
-    _distances += num;
-    limit -= num;
+    _distances[-1] = num;
   }
   }
-  while (limit > 0 && --size != 0);
+  while (distances < limit && --size != 0);
   *posRes = pos;
-  return limit;
+  return distances;
 }
 
 #endif
+
+
 
 static void BtGetMatches(CMatchFinderMt *p, UInt32 *distances)
 {
   UInt32 numProcessed = 0;
   UInt32 curPos = 2;
-  UInt32 limit = kMtBtBlockSize - (p->matchMaxLen * 2);
-  
+  UInt32 limit = kMtBtBlockSize - (p->matchMaxLen * 2); //  * 2
+
   distances[1] = p->hashNumAvail;
-  
+
   while (curPos < limit)
   {
     if (p->hashBufPos == p->hashBufPosLimit)
@@ -352,7 +383,7 @@ static void BtGetMatches(CMatchFinderMt *p, UInt32 *distances)
         if (size2 < size)
           size = size2;
       }
-      
+
       #ifndef MFMT_GM_INLINE
       while (curPos < limit && size-- != 0)
       {
@@ -369,8 +400,10 @@ static void BtGetMatches(CMatchFinderMt *p, UInt32 *distances)
       #else
       {
         UInt32 posRes;
-        curPos = limit - GetMatchesSpecN(lenLimit, pos, p->buffer, p->son, cyclicBufferPos, p->cyclicBufferSize, p->cutValue,
-            distances + curPos, p->numHashBytes - 1, p->hashBuf + p->hashBufPos, (Int32)(limit - curPos), size, &posRes);
+        curPos = (UInt32)(GetMatchesSpecN(lenLimit, pos, p->buffer, p->son, cyclicBufferPos, p->cyclicBufferSize, p->cutValue,
+            distances + curPos, p->numHashBytes - 1, p->hashBuf + p->hashBufPos,
+            distances + limit,
+            size, &posRes) - distances);
         p->hashBufPos += posRes - pos;
         cyclicBufferPos += posRes - pos;
         p->buffer += posRes - pos;
@@ -386,7 +419,7 @@ static void BtGetMatches(CMatchFinderMt *p, UInt32 *distances)
       p->cyclicBufferPos = cyclicBufferPos;
     }
   }
-  
+
   distances[0] = curPos;
 }
 
@@ -398,7 +431,7 @@ static void BtFillBlock(CMatchFinderMt *p, UInt32 globalBlockIndex)
     CriticalSection_Enter(&sync->cs);
     sync->csWasEntered = True;
   }
-  
+
   BtGetMatches(p, p->btBuf + (globalBlockIndex & kMtBtNumBlocksMask) * kMtBtBlockSize);
 
   if (p->pos > kMtMaxValForNormalize - kMtBtBlockSize)
@@ -504,7 +537,7 @@ SRes MatchFinderMt_Create(CMatchFinderMt *p, UInt32 historySize, UInt32 keepAddB
 static void MatchFinderMt_Init(CMatchFinderMt *p)
 {
   CMatchFinder *mf = p->MatchFinder;
-  
+
   p->btBufPos =
   p->btBufPosLimit = 0;
   p->hashBufPos =
@@ -513,7 +546,7 @@ static void MatchFinderMt_Init(CMatchFinderMt *p)
   /* Init without data reading. We don't want to read data in this thread */
   MatchFinder_Init_3(mf, False);
   MatchFinder_Init_LowHash(mf);
-  
+
   p->pointerToCurPos = Inline_MatchFinder_GetPointerToCurrentPos(mf);
   p->btNumAvailBytes = 0;
   p->lzPos = p->historySize + 1;
@@ -577,7 +610,7 @@ static UInt32 * MixMatches2(CMatchFinderMt *p, UInt32 matchMinPos, UInt32 *dista
   const Byte *cur = p->pointerToCurPos;
   UInt32 lzPos = p->lzPos;
   MT_HASH2_CALC
-      
+
   curMatch2 = hash[h2];
   hash[h2] = lzPos;
 
@@ -587,7 +620,7 @@ static UInt32 * MixMatches2(CMatchFinderMt *p, UInt32 matchMinPos, UInt32 *dista
       *distances++ = 2;
       *distances++ = lzPos - curMatch2 - 1;
     }
-  
+
   return distances;
 }
 
@@ -601,7 +634,7 @@ static UInt32 * MixMatches3(CMatchFinderMt *p, UInt32 matchMinPos, UInt32 *dista
 
   curMatch2 = hash[                h2];
   curMatch3 = (hash + kFix3HashSize)[h3];
-  
+
   hash[                h2] = lzPos;
   (hash + kFix3HashSize)[h3] = lzPos;
 
@@ -616,13 +649,13 @@ static UInt32 * MixMatches3(CMatchFinderMt *p, UInt32 matchMinPos, UInt32 *dista
     distances[0] = 2;
     distances += 2;
   }
-  
+
   if (curMatch3 >= matchMinPos && cur[(ptrdiff_t)curMatch3 - lzPos] == cur[0])
   {
     *distances++ = 3;
     *distances++ = lzPos - curMatch3 - 1;
   }
-  
+
   return distances;
 }
 
@@ -634,11 +667,11 @@ static UInt32 *MixMatches4(CMatchFinderMt *p, UInt32 matchMinPos, UInt32 *distan
   const Byte *cur = p->pointerToCurPos;
   UInt32 lzPos = p->lzPos;
   MT_HASH4_CALC
-      
+
   curMatch2 = hash[                h2];
   curMatch3 = (hash + kFix3HashSize)[h3];
   curMatch4 = (hash + kFix4HashSize)[h4];
-  
+
   hash[                h2] = lzPos;
   (hash + kFix3HashSize)[h3] = lzPos;
   (hash + kFix4HashSize)[h4] = lzPos;
@@ -654,7 +687,7 @@ static UInt32 *MixMatches4(CMatchFinderMt *p, UInt32 matchMinPos, UInt32 *distan
     distances[0] = 2;
     distances += 2;
   }
-  
+
   if (curMatch3 >= matchMinPos && cur[(ptrdiff_t)curMatch3 - lzPos] == cur[0])
   {
     distances[1] = lzPos - curMatch3 - 1;
@@ -676,7 +709,7 @@ static UInt32 *MixMatches4(CMatchFinderMt *p, UInt32 matchMinPos, UInt32 *distan
       *distances++ = 4;
       *distances++ = lzPos - curMatch4 - 1;
     }
-  
+
   return distances;
 }
 */
@@ -789,7 +822,7 @@ void MatchFinderMt_CreateVTable(CMatchFinderMt *p, IMatchFinder *vTable)
   vTable->GetNumAvailableBytes = (Mf_GetNumAvailableBytes_Func)MatchFinderMt_GetNumAvailableBytes;
   vTable->GetPointerToCurrentPos = (Mf_GetPointerToCurrentPos_Func)MatchFinderMt_GetPointerToCurrentPos;
   vTable->GetMatches = (Mf_GetMatches_Func)MatchFinderMt_GetMatches;
-  
+
   switch (p->MatchFinder->numHashBytes)
   {
     case 2:

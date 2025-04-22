@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -8,6 +8,7 @@
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/BootloaderCommonLib.h>
+#include <Guid/CsmePerformanceInfoGuid.h>
 #include <Library/LoaderPerformanceLib.h>
 #include <Library/PrintLib.h>
 #include <Library/HobLib.h>
@@ -138,6 +139,8 @@ DefPerfIdToStr (
     return "FSP EndOfFirmware notify";
   case 0x31F0:
     return "End of stage2";
+  case 0x10D0:
+    return "FIPS Selftest run";
   }
   return NULL;
 }
@@ -177,6 +180,94 @@ FspPerfIdToStr (
   return NULL;
 }
 
+/**
+  Provide description string for csme perf data corresponding to Id.
+
+  @param[in]  Id  MeasurePoint Id
+
+  @retval Default description string
+**/
+CHAR8 *
+EFIAPI
+CsmePerfIdToStr (
+  IN UINT32 Id
+  )
+{
+  switch (Id) {
+  case 0:
+    return "CSME ROM start execution";
+  case 1:
+    return "EC Boot Load Done (CSME ROM starts main execution)";
+  case 2:
+    return "CSME ROM completed execution / CSME RBE started";
+  case 3:
+    return "CSME got ESE Init Done indication from ESE";
+  case 4:
+    return "CSME RBE start PMC patch/es loading";
+  case 5:
+    return "CSME RBE completed PMC patch/es loading";
+  case 6:
+    return "CSME RBE set Boot Stall Done indication to PMC";
+  case 7:
+    return "CSME start poll for PMC PPS register";
+  case 8:
+    return "PMC set PPS";
+  case 9:
+    return "CSME BUP start running";
+  case 10:
+    return "CSME set Host Boot Prep Done indication to PMC";
+  case 11:
+    return "CSME starts PHYs loading";
+  case 12:
+    return "CSME completed PHYs loading";
+  case 13:
+    return "PMC indicated CSME that xxPWRGOOD was asserted";
+  case 14:
+    return "PMC indicated CSME that SYS_PWROK was asserted";
+  case 15:
+    return "PMC sent CPU_BOOT_CONFIG start message to CSME";
+  case 16:
+    return "CSME sent CPU_BOOT_CONFIG done message to PMC";
+  case 17:
+    return "PMC indicated CSME that xxPLTRST was de-asserted";
+  case 18:
+    return "PMC indicated CSME that TCO_S0 was asserted";
+  case 19:
+    return "PMC sent Core Reset Done Ack - Sent message to CSME";
+  case 20:
+    return "ACM Active indication - ACM started its execution";
+  case 21:
+    return "ACM Done indication - ACM completed execution";
+  case 22:
+    return "BIOS sent DRAM Init Done message";
+  case 23:
+    return "CSME sent DRAM Init Done message back to BIOS";
+  case 24:
+    return "CSME completed loading TCSS";
+  case 25:
+    return "CSME started loading ISH Bringup module";
+  case 26:
+    return "CSME completed loading ISH Bringup module";
+  case 27:
+    return "CSME started loading ISH Main module";
+  case 28:
+    return "CSME completed loading Main module";
+  case 29:
+    return "BIOS sent End Of Post  message to CSME";
+  case 30:
+    return "CSME sent End Of Post ack message back to BIOS";
+  case 31:
+    return "BIOS sent Core BIOS Done message to CSME";
+  case 32:
+    return "CSME sent Core BIOS Done ack message back to BIOS";
+  case 33:
+    return "CSME reached Firmware Init Done";
+  case 63:
+    return "Timestamp when CSME responded to BupGetEarlyBootData message itself";
+  default:
+    return "Reserved";
+  }
+}
 
 /**
   Provide description string corresponding to Id.
@@ -275,7 +366,6 @@ GetMeasurementInfo (
   }
 }
 
-
 /**
   Print FSP Measure Point information.
 
@@ -303,7 +393,7 @@ PrintFspPerfData (
   FspInfo = GET_GUID_HOB_DATA (FspInfo);
 
   FspFirmwarePerformance = NULL;
-  GuidHob = GetNextGuidHob (&gEdkiiFpdtExtendedFirmwarePerformanceGuid, FspInfo->FspHobList);
+  GuidHob = GetNextGuidHob (&gEdkiiFpdtExtendedFirmwarePerformanceGuid, (VOID*)(UINTN)FspInfo->FspHobList);
   while (GuidHob != NULL) {
     FspFirmwarePerformance   = (UINT8*)GET_GUID_HOB_DATA (GuidHob);
     FspPerformanceLogHeader = (FPDT_PEI_EXT_PERF_HEADER *)FspFirmwarePerformance;
@@ -373,6 +463,56 @@ PrintBootloaderPerfData (
 }
 
 /**
+  Print CSME boot time performance data.
+
+**/
+VOID
+PrintCsmePerfData (
+  VOID
+  )
+{
+  UINT8                 Index;
+  const CHAR8           *Desc;
+  UINT32                PrevTS;
+  EFI_HOB_GUID_TYPE     *GuidHob;
+  CSME_PERFORMANCE_INFO  *CsmePerformanceInfo;
+
+  GuidHob = GetNextGuidHob (&gCsmePerformanceInfoGuid, GetHobList());
+  if (GuidHob == NULL) {
+    return;
+  }
+
+  CsmePerformanceInfo = (CSME_PERFORMANCE_INFO *)GET_GUID_HOB_DATA (GuidHob);
+
+  DEBUG ((DEBUG_INFO | DEBUG_EVENT, "\n Csme Boot Time Performance information\n"));
+
+  DEBUG ((DEBUG_INFO | DEBUG_EVENT, "------+------------+------------+----------------------------------\n"));
+  DEBUG ((DEBUG_INFO | DEBUG_EVENT, " Id   | Time (ms)  | Delta (ms) | Description                      \n"));
+  DEBUG ((DEBUG_INFO | DEBUG_EVENT, "------+------------+------------+----------------------------------\n"));
+
+  //
+  // Initialize previous time stamp to CSME ROM Start execution TS
+  //
+  PrevTS = CsmePerformanceInfo->BootPerformanceData[1];
+  for (Index = 1; Index < CsmePerformanceInfo->BootDataLength; Index++) {
+    //
+    // Ignore timestamps with value as 0
+    //
+    if (CsmePerformanceInfo->BootPerformanceData[Index] == 0) {
+      continue;
+    }
+    Desc = PerfIdToStr (Index, CsmePerfIdToStr);
+    DEBUG ((DEBUG_INFO | DEBUG_EVENT, " %4X | %7d ms | %7d ms | %a\n", \
+          Index,\
+          CsmePerformanceInfo->BootPerformanceData[Index],\
+          CsmePerformanceInfo->BootPerformanceData[Index] - PrevTS,\
+          Desc));
+    PrevTS = CsmePerformanceInfo->BootPerformanceData[Index];
+  }
+  DEBUG ((DEBUG_INFO | DEBUG_EVENT, "------+------------+------------+----------------------------------\n"));
+}
+
+/**
   Print Bootloader Measure Point information.
 
   @param[in]  PerfData          A pointer indicating BL_PERF_DATA instance to print performance data
@@ -394,5 +534,10 @@ PrintMeasurePoint (
   // Print FSP boot performance
   if ((PcdGet32 (PcdBootPerformanceMask) & BIT1) != 0) {
     PrintFspPerfData ();
+  }
+
+  // Print CSME boot performance
+  if ((PcdGet32 (PcdBootPerformanceMask) & BIT2) != 0) {
+    PrintCsmePerfData ();
   }
 }

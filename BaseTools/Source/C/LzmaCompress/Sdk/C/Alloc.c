@@ -108,13 +108,13 @@ static void PrintAddr(void *p)
     PrintHex(size, 10); \
     PrintAddr(ptr); \
     PrintLn();
- 
+
 #define PRINT_FREE(name, cnt, ptr) if (ptr) { \
     Print(name " "); \
     PrintDec(--cnt, 10); \
     PrintAddr(ptr); \
     PrintLn(); }
- 
+
 #else
 
 #define PRINT_ALLOC(name, cnt, size, ptr)
@@ -147,7 +147,7 @@ void *MyAlloc(size_t size)
 void MyFree(void *address)
 {
   PRINT_FREE("Free    ", g_allocCount, address);
-  
+
   free(address);
 }
 
@@ -157,9 +157,9 @@ void *MidAlloc(size_t size)
 {
   if (size == 0)
     return NULL;
-  
+
   PRINT_ALLOC("Alloc-Mid", g_allocCountMid, size, NULL);
-  
+
   return VirtualAlloc(NULL, size, MEM_COMMIT, PAGE_READWRITE);
 }
 
@@ -203,7 +203,7 @@ void *BigAlloc(size_t size)
     return NULL;
 
   PRINT_ALLOC("Alloc-Big", g_allocCountBig, size, NULL);
-  
+
   #ifdef _7ZIP_LARGE_PAGES
   {
     SIZE_T ps = g_LargePageSize;
@@ -228,7 +228,7 @@ void *BigAlloc(size_t size)
 void BigFree(void *address)
 {
   PRINT_FREE("Free-Big", g_allocCountBig, address);
-  
+
   if (!address)
     return;
   VirtualFree(address, 0, MEM_RELEASE);
@@ -322,7 +322,7 @@ static int posix_memalign(void **ptr, size_t align, size_t size)
 static void *SzAlignedAlloc(ISzAllocPtr pp, size_t size)
 {
   #ifndef USE_posix_memalign
-  
+
   void *p;
   void *pAligned;
   size_t newSize;
@@ -336,7 +336,7 @@ static void *SzAlignedAlloc(ISzAllocPtr pp, size_t size)
     return NULL;
 
   p = MyAlloc(newSize);
-  
+
   if (!p)
     return NULL;
   pAligned = MY_ALIGN_PTR_UP_PLUS(p, ALLOC_ALIGN_SIZE);
@@ -402,7 +402,7 @@ static void *AlignOffsetAlloc_Alloc(ISzAllocPtr pp, size_t size)
 
   if (alignSize < sizeof(void *))
     alignSize = sizeof(void *);
-  
+
   if (p->offset >= alignSize)
     return NULL;
 
@@ -414,7 +414,7 @@ static void *AlignOffsetAlloc_Alloc(ISzAllocPtr pp, size_t size)
     return NULL;
 
   adr = ISzAlloc_Alloc(p->baseAlloc, newSize);
-  
+
   if (!adr)
     return NULL;
 

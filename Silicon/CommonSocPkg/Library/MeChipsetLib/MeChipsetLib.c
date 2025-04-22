@@ -16,6 +16,7 @@
 #include <Library/BootloaderCoreLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <MeBiosPayloadDataCommon.h>
+#include <Guid/OsBootOptionGuid.h>
 
 STATIC CONST HECI_SERVICE mHeciService = {
   .Header.Signature   = HECI_SERVICE_SIGNATURE,
@@ -45,6 +46,8 @@ MeGetHeciMmPciAddress (
   )
 {
   UINTN   HeciMmPciAddress;
+  UINTN   MeBaseAddress;
+  UINT16  MeBus;
 
   switch (HeciDev) {
     case HECI1_DEVICE:
@@ -52,8 +55,11 @@ MeGetHeciMmPciAddress (
     case HECI3_DEVICE:
     case HECI4_DEVICE:
     case ISH_HECI:
+      MeBaseAddress = GetDeviceAddr (PlatformDeviceMe, 0);
+      MeBus = (MeBaseAddress >> 16) & 0xFF;
+
       HeciMmPciAddress = (UINTN)MM_PCI_ADDRESS (
-        ME_BUS, ME_DEVICE_NUMBER, HECI_FUNCTION_NUMBER + HeciDev, Register);
+        MeBus, ME_DEVICE_NUMBER, HECI_FUNCTION_NUMBER + HeciDev, Register);
       break;
     default:
       HeciMmPciAddress = 0;
@@ -78,7 +84,7 @@ MeHeciTimeoutsEnabled (
   VOID
   )
 {
-  return FALSE;
+  return TRUE;
 }
 
 /**
@@ -111,14 +117,14 @@ MeGetMeBiosPayloadHob (
   )
 {
   UINT32                    Length;
-  LOADER_GLOBAL_DATA       *LdrGlobal;
   VOID                     *MbpHeader;
+  VOID                     *FspHobList;
 
   MbpHeader  = NULL;
   Length     = 0;
-  LdrGlobal  = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-  if (LdrGlobal != NULL) {
-    MbpHeader = GetGuidHobData (LdrGlobal->FspHobList, &Length, &gMeBiosPayloadHobGuid);
+  FspHobList = GetFspHobListPtr ();
+  if (FspHobList != NULL) {
+    MbpHeader  = GetGuidHobData (FspHobList, &Length, &gMeBiosPayloadHobGuid);
   }
   if ((MbpHeader == NULL) || (Length == 0)){
     DEBUG ((DEBUG_ERROR, "MBP Data Hob not Found!\n"));

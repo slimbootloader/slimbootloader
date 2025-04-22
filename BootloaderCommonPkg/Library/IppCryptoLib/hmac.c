@@ -16,6 +16,7 @@
 #define  DEBUG_IPP    0
 
 EFI_STATUS
+EFIAPI
 HmacSha256 (const Ipp8u* pMsg, Ipp32u msgLen, const Ipp8u* pKey, Ipp32u keyLen, Ipp8u* pMD, Ipp32u mdLen)
 {
   IppStatus Result;

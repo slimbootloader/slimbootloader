@@ -1,7 +1,7 @@
 /** @file
   Shell command `mmcdll` to display system performance data.
 
-  Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -113,7 +113,7 @@ ShellCommandMmcDllFunc (
     MmcInitialize (EmmcHcPciBase, DevInitAll);
     MmcTuning (EmmcHcPciBase);
     VariableLen = sizeof (EmmcTuningData);
-    Status = GetVariable ("MMCDLL", NULL, &VariableLen, &EmmcTuningData);
+    Status = GetVariable (L"MMCDLL", NULL, NULL, &VariableLen, &EmmcTuningData);
     if (EFI_ERROR (Status)) {
       ShellPrint (L"MMC traing fails, not found MMCDLL variable.\n");
       return EFI_DEVICE_ERROR;

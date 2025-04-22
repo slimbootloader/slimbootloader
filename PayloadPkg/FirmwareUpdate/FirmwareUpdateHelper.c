@@ -1,7 +1,7 @@
 /** @file
   Internal functions to update firmware in boot media.
 
-  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -18,7 +18,274 @@
 #include <Library/ContainerLib.h>
 #include <Library/DecompressLib.h>
 #include <Library/ConfigDataLib.h>
+#include <Library/LiteFvLib.h>
+#include <Library/ConsoleOutLib.h>
+#include <Library/TimerLib.h>
 #include "FirmwareUpdateHelper.h"
+#include <Service/SpiFlashService.h>
+#include <Library/BootGuardLib.h>
+#include <Library/SocInfoLib.h>
+
+#define MSR_IA32_BIOS_SIGN_ID 0x0000008B
+
+SPI_FLASH_SERVICE   *mFwuSpiService = NULL;
+
+/**
+  This function initialized boot media.
+
+  It initializes SPI services and SPI Flash size information.
+
+**/
+VOID
+EFIAPI
+InitializeBootMedia(
+  VOID
+  )
+{
+  mFwuSpiService = (SPI_FLASH_SERVICE *)GetServiceBySignature (SPI_FLASH_SERVICE_SIGNATURE);
+  if (mFwuSpiService == NULL) {
+    return;
+  }
+
+  mFwuSpiService->SpiInit ();
+}
+
+/**
+  Get the SPI region base and size, based on the enum type
+
+  @param[in] FlashRegionType      The Flash Region type for for the base address which is listed in the Descriptor.
+  @param[out] BaseAddress         The Flash Linear Address for the Region 'n' Base
+  @param[out] RegionSize          The size for the Region 'n'
+
+  @retval EFI_SUCCESS             Read success
+  @retval EFI_INVALID_PARAMETER   Invalid region type given
+  @retval EFI_DEVICE_ERROR        The region is not used
+**/
+EFI_STATUS
+EFIAPI
+BootMediaGetRegion (
+  IN     FLASH_REGION_TYPE  FlashRegionType,
+  OUT    UINT32             *BaseAddress, OPTIONAL
+  OUT    UINT32             *RegionSize OPTIONAL
+  )
+{
+  return mFwuSpiService->SpiGetRegion (FlashRegionType, BaseAddress, RegionSize);
+}
+
+/**
+  This function reads blocks from the SPI device.
+
+  @param[in]  Address             The block address in the FlashRegionAll to read from on the SPI.
+  @param[in]  ByteCount           Size of the Buffer in bytes.
+  @param[out] Buffer              Pointer to caller-allocated buffer containing the data received during the SPI cycle.
+
+  @retval EFI_SUCCESS             Read completes successfully.
+  @retval others                  Device error, the command aborts abnormally.
+
+**/
+EFI_STATUS
+EFIAPI
+BootMediaRead (
+  IN     UINT64   Address,
+  IN     UINT32   ByteCount,
+  OUT    UINT8    *Buffer
+  )
+{
+  return mFwuSpiService->SpiRead (FlashRegionBios, (UINT32)Address, ByteCount, Buffer);
+}
+
+/**
+  This function reads blocks from the SPI device.
+
+  @param[in] FlashRegionType      The Flash Region type for flash cycle which is listed in the Descriptor.
+  @param[in]  Address             The block address in the FlashRegionAll to read from on the SPI.
+  @param[in]  ByteCount           Size of the Buffer in bytes.
+  @param[out] Buffer              Pointer to caller-allocated buffer containing the data received during the SPI cycle.
+
+  @retval EFI_SUCCESS             Read completes successfully.
+  @retval others                  Device error, the command aborts abnormally.
+
+**/
+EFI_STATUS
+EFIAPI
+BootMediaReadByType (
+  IN     FLASH_REGION_TYPE  FlashRegionType,
+  IN     UINT64             Address,
+  IN     UINT32             ByteCount,
+  OUT    UINT8              *Buffer
+  )
+{
+  return mFwuSpiService->SpiRead (FlashRegionType, (UINT32)Address, ByteCount, Buffer);
+}
+
+/**
+  This function writes blocks to the SPI device.
+
+  @param[in]   Address            The block address in the FlashRegionAll to read from on the SPI.
+  @param[in]   ByteCount          Size of the Buffer in bytes.
+  @param[out]  Buffer             Pointer to the data to write.
+
+  @retval EFI_SUCCESS             Write completes successfully.
+  @retval others                  Device error, the command aborts abnormally.
+
+**/
+EFI_STATUS
+EFIAPI
+BootMediaWrite (
+  IN     UINT64   Address,
+  IN     UINT32   ByteCount,
+  OUT    UINT8    *Buffer
+  )
+{
+  return mFwuSpiService->SpiWrite (FlashRegionBios, (UINT32)Address, ByteCount, Buffer);
+}
+
+/**
+  This function writes blocks to the SPI device based on flash region type.
+
+  @param[in] FlashRegionType      The Flash Region type for flash cycle which is listed in the Descriptor.
+  @param[in]  Address             The block address in the FlashRegionAll to read from on the SPI.
+  @param[in]  ByteCount           Size of the Buffer in bytes.
+  @param[out] Buffer              Pointer to caller-allocated buffer containing the data received during the SPI cycle.
+
+  @retval EFI_SUCCESS             Write completes successfully.
+  @retval others                  Device error, the command aborts abnormally.
+
+**/
+EFI_STATUS
+EFIAPI
+BootMediaWriteByType (
+  IN     FLASH_REGION_TYPE  FlashRegionType,
+  IN     UINT64             Address,
+  IN     UINT32             ByteCount,
+  OUT    UINT8              *Buffer
+  )
+{
+  return mFwuSpiService->SpiWrite (FlashRegionType, (UINT32)Address, ByteCount, Buffer);
+}
+
+
+/**
+  This function erases blocks from the SPI device.
+
+  @param[in]  Address             The block address in the FlashRegionAll to read from on the SPI.
+  @param[in]  ByteCount           Size of the region to erase in bytes.
+
+  @retval EFI_SUCCESS             Erase completes successfully.
+  @retval others                  Device error, the command aborts abnormally.
+
+**/
+EFI_STATUS
+EFIAPI
+BootMediaErase (
+  IN     UINT64   Address,
+  IN     UINT32   ByteCount
+  )
+{
+  return mFwuSpiService->SpiErase (FlashRegionBios, (UINT32)Address, ByteCount);
+}
+
+/**
+  Get SVN from existing firmware
+
+  This routine get SPI base address and read first four bytes
+  to get STAGE1A FV base address, using this base address
+  this routine can calculate the offset to the SVN structure.
+
+  @param[in]  Stage1AFvPointer    Pointer to Stage1A fv base.
+  @param[out] BlVersion           Pointer to SBL version struct.
+
+  @retval EFI_SUCCESS             Read SVN success
+  @retval EFI_INVALID_PARAMETER   Invalid parameter
+**/
+EFI_STATUS
+EFIAPI
+GetSvn (
+  IN  UINT32                Stage1AFvPointer,
+  OUT BOOT_LOADER_VERSION   **BlVersion
+  )
+{
+  UINT32                Stage1AFvBase;
+  UINT32                TopSwapRegionSize;
+  EFI_STATUS            Status;
+
+  //
+  // When updating BP1 - read version from backup partition
+  // When updatint BP0 - since top swap bit is set, we need
+  //                     to substract the top swap region size
+  //                     because when top swap bit is set
+  //                     address lines will be inverted and point
+  //                     to stage 1A from primary partition.
+  //
+  Status = GetRegionInfo (&TopSwapRegionSize, NULL, NULL);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "Error getting top swap region size, failed with status: %r\n", Status));
+    return Status;
+  }
+  Stage1AFvPointer = Stage1AFvPointer - TopSwapRegionSize;
+
+  Stage1AFvBase = (UINT32)(*(UINT32 *)(UINTN)Stage1AFvPointer);
+  Stage1AFvBase = Stage1AFvPointer - (~Stage1AFvBase + 1) + sizeof(UINT32);
+
+  Status = GetVersionfromFv (Stage1AFvBase, FALSE, BlVersion);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "Getting firmware version failed with status: %r\n", Status));
+    return Status;
+  }
+
+  return Status;
+}
+
+/**
+  Verify the firmware version to make sure it is no less than current firmware version.
+
+  @param[in]  Stage1ABase   Stage 1A base address.
+  @param[in]  IsFd          Does Stage1ABase point to Stage1A FD
+                            or SBL Stage1A FV ?
+  @param[out] Version       Pointer to version of the firmware
+
+  @retval  EFI_SUCCESS        The operation completed successfully.
+  @retval  others             There is error happening.
+**/
+EFI_STATUS
+GetVersionfromFv (
+  IN  UINT32              Stage1ABase,
+  IN  BOOLEAN             IsFd,
+  OUT BOOT_LOADER_VERSION **Version
+  )
+{
+  EFI_STATUS                  Status;
+  EFI_FFS_FILE_HEADER         *FfsFile;
+  EFI_FIRMWARE_VOLUME_HEADER  *FvHeader;
+
+  FvHeader = (EFI_FIRMWARE_VOLUME_HEADER *)(UINTN)Stage1ABase;
+  //
+  // Stage 1A FD has FSPT FV first, so move on to the next FV
+  //
+  if (IsFd) {
+    FvHeader = (EFI_FIRMWARE_VOLUME_HEADER *)((UINTN)FvHeader + (UINTN)FvHeader->FvLength);
+  }
+
+  //
+  // Get version info FFS from FV
+  //
+  Status = GetFfsFileByName (FvHeader, &gBootLoaderVersionFileGuid, &FfsFile);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "GetFfsFileByName: %r\n", Status));
+    return Status;
+  }
+
+  //
+  // Raw section in version info FFS has version information
+  //
+  Status = GetSectionByType (FfsFile, EFI_SECTION_RAW, 0, (VOID *)Version);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "GetSectionByType: %r\n", Status));
+    return Status;
+  }
+
+  return EFI_SUCCESS;
+}
 
 /**
   Update a region block.
@@ -65,7 +332,14 @@ UpdateRegionBlock (
   // Read, compare, erase, write, read, compare
   //
   for (Count = 0; Count < Length; Count += BlockLen) {
-    Status = BootMediaRead (Address + Count, BlockLen, ReadBuffer);
+    //
+    // If updating region less than 4K bytes,
+    // adjust the block length to size remaining, i.e less than 4k
+    //
+    if (Count + BlockLen > Length) {
+      BlockLen = Length - Count;
+    }
+    Status = BootMediaRead(Address + Count, BlockLen, ReadBuffer);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "BootMediaRead.  readaddr: 0x%llx, Status = 0x%x\n", Address + Count, Status));
       goto End;
@@ -78,9 +352,10 @@ UpdateRegionBlock (
 
     //
     // Erase the boot media
+    // Block length for erase is always 4K bytes
     //
     DEBUG ((DEBUG_INIT, "x"));
-    Status = BootMediaErase ((UINT32) (Address + Count),  BlockLen);
+    Status = BootMediaErase ((UINT32) (Address + Count),  SIZE_4KB);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "ERROR: in BootMediaErase. Status = 0x%x\n", Status));
       goto End;
@@ -156,16 +431,16 @@ UpdateBootRegion (
         UpdateBlockSize = SIZE_64KB;
       }
     }
-    DEBUG ((DEBUG_INIT, "Updating 0x%08llx, Size:0x%05x\n", UpdateAddress, UpdateBlockSize));
+    ConsolePrint ("Updating 0x%08llx, Size:0x%06x\n", UpdateAddress, UpdateBlockSize);
     Status = UpdateRegionBlock (UpdateAddress, Buffer, UpdateBlockSize);
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "\nFailed! Address=0x%08llx, Status = %r\n", UpdateAddress, Status));
+      ConsolePrint ("\nFailed at address 0x%08llx, status: %r\n", UpdateAddress, Status);
       return Status;
     }
     UpdateAddress += UpdateBlockSize;
     Buffer        += UpdateBlockSize;
     UpdatedSize   += UpdateBlockSize;
-    DEBUG ((DEBUG_INIT, "\nFinished   %3d%%\n", (WrittenSize + UpdatedSize) * 100 / TotalSize));
+    ConsolePrint ("\nFinished   %3d%%\n", (WrittenSize + UpdatedSize) * 100 / TotalSize);
   }
 
   return EFI_SUCCESS;
@@ -186,7 +461,8 @@ UpdateBootPartition (
 {
   EFI_STATUS                     Status;
   UINT32                         Index;
-  FIRMWARE_UPDATE_REGION         *UpdateRegion;
+  FIRMWARE_UPDATE_REGION        *UpdateRegion;
+  FIRMWARE_UPDATE_REGION         TempRegion;
   UINT32                         TotalUpdateSize;
   UINT32                         WrittenSize;
 
@@ -204,15 +480,59 @@ UpdateBootPartition (
 
   WrittenSize = 0;
   for (Index = 0; Index < UpdatePartition->RegionCount; Index++) {
-    UpdateRegion = &UpdatePartition->FwRegion[Index];
-    Status = UpdateBootRegion (UpdateRegion, WrittenSize, TotalUpdateSize);
+    // Adjust the offset to be relative to BIOS region start
+    CopyMem (&TempRegion, &UpdatePartition->FwRegion[Index], sizeof(FIRMWARE_UPDATE_REGION));
+    TempRegion.ToUpdateAddress += GetRomImageOffsetInBiosRegion ();
+    Status = UpdateBootRegion (&TempRegion, WrittenSize, TotalUpdateSize);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "UpdateBootRegion failed! Status = 0x%x\n", Status));
       return Status;
     }
-    WrittenSize += UpdateRegion->UpdateSize;
+    WrittenSize += TempRegion.UpdateSize;
   }
 
+  return Status;
+}
+
+/**
+  Perform full BIOS region update.
+
+  @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
+
+  @retval  EFI_SUCCESS      Update successful.
+  @retval  other            error occurred during firmware update
+**/
+EFI_STATUS
+UpdateFullBiosRegion (
+  IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  )
+{
+  EFI_STATUS               Status;
+  UINT32                   BiosRgnBase;
+  UINT32                   BiosRgnSize;
+  FIRMWARE_UPDATE_REGION   UpdateRegion;
+
+  DEBUG((DEBUG_INFO, "Update full BIOS region\n"));
+  Status = BootMediaGetRegion (FlashRegionBios, &BiosRgnBase, &BiosRgnSize);
+  if (!EFI_ERROR (Status)) {
+    if (ImageHdr->UpdateImageSize > BiosRgnSize) {
+      DEBUG((DEBUG_ERROR, "BIOS image in capsule is bigger than BIOS region on flash\n"));
+      Status = EFI_UNSUPPORTED;
+    }
+  }
+  if (ALIGN_DOWN(ImageHdr->UpdateImageSize, SIZE_4KB) != ImageHdr->UpdateImageSize) {
+    DEBUG((DEBUG_ERROR, "BIOS image size in capsule is not 4KB aligned\n"));
+    Status = EFI_UNSUPPORTED;
+  }
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  ZeroMem (&UpdateRegion, sizeof(UpdateRegion));
+  UpdateRegion.ToUpdateAddress = BiosRgnSize - ImageHdr->UpdateImageSize;
+  UpdateRegion.UpdateSize      = ImageHdr->UpdateImageSize;
+  UpdateRegion.SourceAddress   = (UINT8 *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
+  Status = UpdateBootRegion (&UpdateRegion, 0, UpdateRegion.UpdateSize);
   return Status;
 }
 
@@ -222,33 +542,22 @@ UpdateBootPartition (
   This function will update SBL or Configuration data alone.
 
   @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
+  @param[in] FwPolicy       Fw update policy
 
   @retval  EFI_SUCCESS      Update successful.
   @retval  other            error occurred during firmware update
 **/
 EFI_STATUS
 UpdateSystemFirmware (
-  IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
+  IN FIRMWARE_UPDATE_POLICY        FwPolicy
   )
 {
-  EFI_STATUS              Status;
+  EFI_STATUS                  Status;
   FIRMWARE_UPDATE_PARTITION   *UpdatePartition;
-  FIRMWARE_UPDATE_POLICY  FwPolicy;
 
   //
-  // 1. Enforce firmware update policy.
-  //
-  Status = EnforceFwUpdatePolicy (&FwPolicy);
-  if (EFI_ERROR (Status)) {
-    if (Status == EFI_ALREADY_STARTED) {
-      return EFI_SUCCESS;
-    }
-    DEBUG((DEBUG_ERROR, "EnforceFwUpdatePolicy: Status = 0x%x\n", Status));
-    return Status;
-  }
-
-  //
-  // 2. Check firmware version.
+  // Check firmware version.
   //
   Status = VerifyFwVersion (ImageHdr, FwPolicy);
   if (EFI_ERROR (Status)) {
@@ -257,7 +566,7 @@ UpdateSystemFirmware (
   }
 
   //
-  // 3. Get firmware update required information.
+  // Get firmware update required information.
   //
   Status = GetFirmwareUpdateInfo (ImageHdr, FwPolicy, &UpdatePartition);
   if (EFI_ERROR(Status)) {
@@ -266,29 +575,23 @@ UpdateSystemFirmware (
   }
 
   //
-  // 4. Do boot partition update.
+  // Check firmware structure.
   //
-  Status = UpdateBootPartition (UpdatePartition);
+  Status = VerifyFwStruct (ImageHdr);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "UpdateBootPartition, Status = 0x%x\n", Status));
+    DEBUG ((DEBUG_ERROR, " VerifyFwStruct failed with Status = 0x%x\n", Status));
+    FreePool(UpdatePartition);
     return Status;
   }
 
   //
-  // 5. After update Enforce firmware update policy
+  // Do boot partition update.
   //
-  Status = AfterUpdateEnforceFwUpdatePolicy(FwPolicy);
+  Status = UpdateBootPartition (UpdatePartition);
+  FreePool(UpdatePartition);
   if (EFI_ERROR (Status)) {
-    //
-    // If EFI_END_OF_FILE is returned, that means SBL update is successful
-    // return success to end firmware update.
-    //
-    if (Status != EFI_END_OF_FILE) {
-      DEBUG((DEBUG_ERROR, "AfterUpdateEnforceFwUpdatePolicy failed! Status = %r\n", Status));
-      return Status;
-    } else {
-      return EFI_SUCCESS;
-    }
+    DEBUG ((DEBUG_ERROR, "UpdateBootPartition, Status = 0x%x\n", Status));
+    return Status;
   }
 
   return Status;
@@ -356,6 +659,7 @@ UpdateSingleComponent (
     DEBUG ((DEBUG_ERROR, "Updating component %4a failed with status = %r\n", (CHAR8 *)&CompName, Status));
   }
 
+  FreePool(UpdatePartition);
   return Status;
 }
 
@@ -408,15 +712,18 @@ UpdateContainerComp (
   IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
   )
 {
-  EFI_STATUS        Status;
-  UINT32            ContainerName;
-  UINT32            ComponentName;
-  UINT32            ComponentBase;
-  CONTAINER_ENTRY   *ContainerEntryPtr;
-  COMPONENT_ENTRY   *ComponentEntryPtr;
-  CONTAINER_HDR     *ContainerHdr;
+  EFI_STATUS               Status;
+  UINT32                   ContainerName;
+  UINT32                   ComponentName;
+  UINT32                   ComponentBase;
+  CONTAINER_ENTRY          *ContainerEntryPtr;
+  COMPONENT_ENTRY          *ComponentEntryPtr;
+  CONTAINER_HDR            *ContainerHdr;
   LOADER_COMPRESSED_HEADER *FlashCompLzHeader;
   LOADER_COMPRESSED_HEADER *CapCompLzHeader;
+  UINT8                    CompInMem[sizeof(LOADER_COMPRESSED_HEADER)];
+  FLASH_MAP                *FlashMapPtr;
+  UINT32                   RomBase;
 
   ComponentName = (UINT32)RShiftU64 (ImageHdr->UpdateHardwareInstance, 32);
   ContainerName = (UINT32)ImageHdr->UpdateHardwareInstance;
@@ -435,18 +742,43 @@ UpdateContainerComp (
   // Update the component
   //
   ContainerHdr = (CONTAINER_HDR *)(UINTN)ContainerEntryPtr->HeaderCache;
-  //
-  // Component base = Container base + data offset from container base + offset of component inside container
-  //
-  ComponentBase = ContainerEntryPtr->Base + ContainerHdr->DataOffset + ComponentEntryPtr->Offset;
 
-  // Check Svn for container component
-  FlashCompLzHeader = (LOADER_COMPRESSED_HEADER *) (UINTN) ComponentBase;
+  if (ContainerEntryPtr->Base >= 0xF0000000) {
+    //
+    // Component base = Container base + data offset from container base + offset of component inside container
+    //
+    ComponentBase     = ContainerEntryPtr->Base + ContainerHdr->DataOffset + ComponentEntryPtr->Offset;
+    FlashCompLzHeader = (LOADER_COMPRESSED_HEADER *) (UINTN)ComponentBase;
+  } else {
+    // Container base is NOT the flash address, need get its flash address
+    Status = GetComponentInfo(ContainerName, &ComponentBase, NULL);
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_INFO, "Component with the matching signature not found."));
+      return Status;
+    }
+    ComponentBase += ContainerHdr->DataOffset + ComponentEntryPtr->Offset;
+
+    // Read compressed header since container might not be MMIO mapped.
+    FlashMapPtr = GetFlashMapPtr ();
+    ASSERT (FlashMapPtr != NULL);
+    RomBase = (UINT32) (0x100000000ULL - FlashMapPtr->RomSize);
+    Status  = BootMediaRead(ComponentBase - RomBase, sizeof(LOADER_COMPRESSED_HEADER), CompInMem);
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_INFO, "Boot Media device error, read command aborts."));
+      return Status;
+    }
+    FlashCompLzHeader = (LOADER_COMPRESSED_HEADER *) (UINTN) CompInMem;
+  }
+
+  // Current implementation only supports compressed header.
+  // Exception: Signature is zero as a mark for previously detected bad region, e.g., TCCT
   CapCompLzHeader   = (LOADER_COMPRESSED_HEADER *) ((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
-  if ((IS_COMPRESSED (FlashCompLzHeader) == FALSE) || (IS_COMPRESSED (CapCompLzHeader) == FALSE)) {
+  if (((IS_COMPRESSED (FlashCompLzHeader) == FALSE) && (FlashCompLzHeader->Signature != 0)) ||
+      (IS_COMPRESSED (CapCompLzHeader) == FALSE)) {
     return EFI_UNSUPPORTED;
   }
 
+  // Check Svn for container component
   if (CapCompLzHeader->Svn < FlashCompLzHeader->Svn) {
     DEBUG((DEBUG_INFO, "Container Component svn did not met!"));
     return EFI_UNSUPPORTED;
@@ -607,7 +939,7 @@ IsUpdateComponentForContainer (
 EFI_STATUS
 CheckSblConfigDataSvn (
   IN   EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
-  IN   FIRMWARE_UPDATE_POLICY         FwPolicy,
+  IN   FIRMWARE_UPDATE_POLICY        FwPolicy,
   OUT  UINT8                         *SvnStatus
   )
 {
@@ -658,23 +990,164 @@ CheckSblConfigDataSvn (
 }
 
 /**
+  Perform ACM svn check
+
+  This function will perform svn checks for ACM in flash and
+  ACM in capsule.
+
+  @param[in]  ImageHdr       Pointer to fw mgmt capsule Image header
+
+  @retval  EFI_SUCCESS      SVN check successful.
+  @retval  other            error occurred during firmware update
+**/
+EFI_STATUS
+CheckAcmSvn (
+  IN   EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  )
+{
+  EFI_STATUS            Status;
+  UINT16                ExistingAcmSvn;
+  UINT16                NewAcmSvn;
+  UINT32                NewAcmHdr;
+
+  if ((ImageHdr == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  Status = GetExistingAcmSvn (&ExistingAcmSvn);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "Unable to get existing ACM SVN!"));
+    return Status;
+  }
+
+  NewAcmHdr = (UINT32)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
+
+  Status = GetAcmSvnFromAcmHdr(NewAcmHdr, &NewAcmSvn);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "Unable to get new ACM SVN!"));
+    return Status;
+  }
+
+  if (NewAcmSvn < ExistingAcmSvn) {
+    DEBUG((DEBUG_ERROR, "Acm update Svn check failed!!\n"));
+    return EFI_INCOMPATIBLE_VERSION;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Get cpu ucode revision.
+
+  @retval   cpu ucode revision
+**/
+UINT32
+EFIAPI
+GetCpuUCodeRev (
+  VOID
+)
+{
+  UINT64 MsrValue;
+  UINT32 UcodeRev;
+
+  AsmWriteMsr64 (MSR_IA32_BIOS_SIGN_ID, 0LL);
+  AsmCpuid (0, NULL, NULL, NULL, NULL);
+  MsrValue = AsmReadMsr64 (MSR_IA32_BIOS_SIGN_ID);
+  UcodeRev = RShiftU64 (MsrValue, 32) & 0xffffffff;
+
+  return UcodeRev;
+}
+
+/**
+  Perform UCODE revision check
+
+  This function will perform revision checks for UCODE in flash and
+  UCODE in capsule.
+
+  @param[in]  ImageHdr       Pointer to fw mgmt capsule Image header
+
+  @retval  EFI_SUCCESS      revision check successful.
+  @retval  other            error occurred during firmware update
+**/
+EFI_STATUS
+EFIAPI
+CheckUCodeVersion (
+  IN   EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+)
+{
+  UINT32                ExistingUCodeRev;
+  UINT32                NewUCodeRev;
+  UINTN                 ImageBase;
+  UINTN                 Offset;
+  CPU_MICROCODE_HEADER  *UCodeHdr;
+  UINT8                 *ImageByte;
+  UINT32                uCodeVer;
+
+  if (ImageHdr == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  ExistingUCodeRev = GetCpuUCodeRev();
+  DEBUG((DEBUG_INFO, "Existing UCODE revision: %x\n", ExistingUCodeRev));
+
+  // Update is only supported for platforms that slot their uCode
+  if (PcdGet32 (PcdUcodeSlotSize) == 0) {
+    DEBUG((DEBUG_ERROR, "Existing image does not contain uCode slots!!\n"));
+    return EFI_UNSUPPORTED;
+  }
+
+  uCodeVer = 0;
+  Offset = 0;
+  ImageBase = (UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER);
+  ImageByte = (UINT8*)(ImageBase + Offset);
+
+  while (*ImageByte != PAD_BYTE && Offset < ImageHdr->UpdateImageSize) {
+    UCodeHdr = (CPU_MICROCODE_HEADER *)ImageByte;
+
+    // Ensure uCode size from header does not exceed slot size
+    if (UCodeHdr->TotalSize > PcdGet32 (PcdUcodeSlotSize)) {
+      uCodeVer = 0;
+      break;
+    }
+
+    if (UCodeHdr->UpdateRevision > uCodeVer) {
+      uCodeVer = UCodeHdr->UpdateRevision;
+    }
+
+    Offset   += PcdGet32(PcdUcodeSlotSize);
+    ImageByte = (UINT8*)(ImageBase + Offset);
+  }
+
+  NewUCodeRev = uCodeVer;
+  DEBUG((DEBUG_INFO, "New UCODE revision: %x\n", NewUCodeRev));
+
+  if (NewUCodeRev < ExistingUCodeRev) {
+    DEBUG((DEBUG_ERROR, "UCODE update revision check failed!!\n"));
+    return EFI_INCOMPATIBLE_VERSION;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
   Perform Slim Bootloader component update.
 
   This function will try to locate component in the flash map,
   if found, will update the component.
 
   @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
+  @param[in] FwPolicy       Fw update policy
 
   @retval  EFI_SUCCESS      Update successful.
   @retval  other            error occurred during firmware update
 **/
 EFI_STATUS
 UpdateSblComponent (
-  IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
+  IN FIRMWARE_UPDATE_POLICY        FwPolicy
   )
 {
   EFI_STATUS             Status;
-  FLASH_MAP_ENTRY_DESC  *Entry;
   UINT8                  SvnStatus;
 
   Status = EFI_NOT_FOUND;
@@ -708,18 +1181,190 @@ UpdateSblComponent (
   //
   // This is a SBL component update, check if it is a redundant component
   //
-  Entry = GetComponentEntryByPartition((UINT32)ImageHdr->UpdateHardwareInstance, TRUE);
-  if (Entry == NULL) {
-    return EFI_NOT_FOUND;
-  }
-
-  if ((Entry->Flags & FLASH_MAP_FLAGS_NON_REDUNDANT_REGION) != 0){
+  if (IsRedundantComponent(ImageHdr->UpdateHardwareInstance)) {
+    DEBUG ((DEBUG_INFO, "Redundant component update requested! \n"));
+    Status = UpdateSystemFirmware(ImageHdr, FwPolicy);
+  } else {
     DEBUG ((DEBUG_INFO, "Non redundant component update requested! \n"));
     Status = UpdateNonRedundantComp(ImageHdr);
-  } else if ((Entry->Flags & FLASH_MAP_FLAGS_REDUNDANT_REGION) != 0) {
-    DEBUG ((DEBUG_INFO, "Redundant component update requested! \n"));
-    Status = UpdateSystemFirmware(ImageHdr);
+  }
+  return Status;
+}
+
+/**
+  Read the value of FW_UPDATE_STATUS.CsmeNeedReset
+
+  The CsmeNeedReset flag is used to ensure CSME update
+  has taken effect before processing CMDI payload.
+  This is specific to prevent {OEMKEYREVOCATION} command
+  failure for the case that CSME payload contains OEM KM
+  with key revocation extension.
+
+  @retval  Value  Value of FW_UPDATE_STATUS.CsmeNeedReset
+**/
+UINT8
+ReadCsmeNeedResetFlag (
+  VOID
+  )
+{
+  EFI_STATUS  Status;
+  UINT32      FwUpdStatusOffset;
+  UINT8       Value;
+
+  FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
+  FwUpdStatusOffset += OFFSET_OF(FW_UPDATE_STATUS, CsmeNeedReset);
+
+  Value = CSME_NEED_RESET_INIT;
+  Status = BootMediaRead (FwUpdStatusOffset, sizeof(UINT8), (UINT8 *)&Value);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "BootMediaRead CsmeNeedReset. offset: 0x%04x, Status = 0x%x\n",
+          FwUpdStatusOffset, Status));
+    Value = CSME_NEED_RESET_INVALID;
   }
 
-  return Status;
+  return Value;
+}
+
+/**
+  Write the value of FW_UPDATE_STATUS.CsmeNeedReset
+
+  @param[in] Value  Value to be written to FW_UPDATE_STATUS.CsmeNeedReset
+
+  @retval  EFI_SUCCESS            Write operation is successful
+  @retval  EFI_INVALID_PARAMETER  Invalid parameter
+  @retval  EFI_DEVICE_ERROR       Write operation failed
+**/
+EFI_STATUS
+WriteCsmeNeedResetFlag (
+  IN  UINT8  Value
+  )
+{
+  EFI_STATUS  Status;
+  UINT32      FwUpdStatusOffset;
+  UINT8       CurrVal;
+
+  CurrVal = ReadCsmeNeedResetFlag();
+  if (Value > CurrVal) {
+    DEBUG((DEBUG_ERROR, "WriteCsmeNeedResetFlag invalid parameter: %x, current value: %x\n",
+          Value, CurrVal));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
+  FwUpdStatusOffset += OFFSET_OF(FW_UPDATE_STATUS, CsmeNeedReset);
+
+  Status = BootMediaWrite (FwUpdStatusOffset, sizeof(UINT8), (UINT8 *)&Value);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "BootMediaWrite CsmeNeedReset=%x. offset: 0x%04x, Status = 0x%x\n",
+          Value, FwUpdStatusOffset, Status));
+    return EFI_DEVICE_ERROR;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Reboot platform.
+
+  @param[in]  ResetType   Cold, Warm or Shutdown
+
+**/
+VOID
+Reboot (
+  IN  EFI_RESET_TYPE        ResetType
+  )
+{
+  // Set FW_UPDATE_STATUS.CsmeNeedReset to DONE since the system will do a reset
+  if (ReadCsmeNeedResetFlag() == CSME_NEED_RESET_PENDING) {
+    WriteCsmeNeedResetFlag(CSME_NEED_RESET_DONE);
+  }
+
+  ConsolePrint("Reset required to proceed.\n\n");
+  MicroSecondDelay (3000000);
+  ResetSystem (ResetType);
+  CpuDeadLoop ();
+}
+
+/**
+  Verify uCode internal structure
+
+  @param[in] ImageHdr     Pointer to the fw mgmt capsule image header
+
+  @retval  EFI_SUCCESS    The operation completed successfully.
+  @retval  others         There is error happening.
+**/
+EFI_STATUS
+VerifyUcodeStruct (
+  IN  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  )
+{
+  UINTN                 ImageBase;
+  UINTN                 ImageOffset;
+  CPU_MICROCODE_HEADER  *UCodeHdr;
+  UINT8                 *ImageByte;
+
+  // Update is only supported for platforms that slot their uCode
+  if (PcdGet32 (PcdUcodeSlotSize) == 0) {
+    DEBUG((DEBUG_ERROR, "Existing image does not contain uCode slots!!\n"));
+    return EFI_UNSUPPORTED;
+  }
+
+  ImageBase = (UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER);
+  ImageOffset = 0;
+
+  ImageByte = (UINT8*)(ImageBase + ImageOffset);
+  while (*ImageByte != PAD_BYTE && ImageOffset < ImageHdr->UpdateImageSize) {
+    UCodeHdr = (CPU_MICROCODE_HEADER *)ImageByte;
+
+    // Ensure patches in update image start at slot boundaries
+    if (UCodeHdr->HeaderVersion != 1) {
+      DEBUG((DEBUG_ERROR, "Existing uCode slots do not line up with new uCode slots!!\n"));
+      return EFI_NO_MAPPING;
+    }
+
+    // Ensure total size from header does not exceed slot size
+    if (UCodeHdr->TotalSize > PcdGet32 (PcdUcodeSlotSize)) {
+      DEBUG((DEBUG_ERROR, "Total uCode size from header exceeds uCode slot size!!\n"));
+      return EFI_NO_MAPPING;
+    }
+    ImageOffset += PcdGet32(PcdUcodeSlotSize);
+    ImageByte = (UINT8*)(ImageBase + ImageOffset);
+  }
+
+  // Check remaining bytes are unused
+  while (ImageOffset < ImageHdr->UpdateImageSize) {
+    if (*ImageByte != PAD_BYTE) {
+      DEBUG((DEBUG_ERROR, "Existing image slots do not line up with new image slots!!\n"));
+      return EFI_NO_MAPPING;
+    }
+    ++ImageOffset;
+    ImageByte = (UINT8*)(ImageBase + ImageOffset);
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Verify the firmware internal structure.
+
+  @param[in] ImageHdr     Pointer to the fw mgmt capsule image header
+
+  @retval  EFI_SUCCESS    The operation completed successfully.
+  @retval  others         There is error happening.
+**/
+EFI_STATUS
+VerifyFwStruct (
+  IN  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  )
+{
+  EFI_STATUS  Status;
+
+  if ((UINT32)ImageHdr->UpdateHardwareInstance == FLASH_MAP_SIG_UCODE) {
+    Status = VerifyUcodeStruct (ImageHdr);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+  }
+
+  return EFI_SUCCESS;
 }

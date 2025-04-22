@@ -1,0 +1,370 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : GIO
+- GPIO_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ GPIO_CFG_DATA, 0x400, 1, 0 ] }
+  - GPIO_CFG_HDR :
+    - GpioHeaderSize :
+        length       : 0x01
+        value        : _LENGTH_GPIO_CFG_HDR_
+    - GpioBaseTableId :
+        length       : 0x01
+        value        : 0xFF
+    - GpioItemSize :
+        length       : 0x02
+        value        : 8
+    - GpioItemCount :
+        length       : 0x02
+        value        : (_LENGTH_GPIO_CFG_DATA_ - _LENGTH_GPIO_CFG_HDR_ - 8) / 8
+    # Bit start offset within each GPIO entry array to identify a GPIO pin uniquely. EX: GPIO group id + pad id
+    # Offset is 2nd DWORD BIT16 = 1 * 32 + 16 = 48
+    - GpioItemIdBitOff :
+        length       : 0x01
+        value        : 48
+    # Bit length within each GPIO entry array to identify a GPIO pin uniquely.
+    # Length is 2nd DWORD BIT16 to BIT28 = 13
+    - GpioItemIdBitLen :
+        length       : 0x01
+        value        : 13
+    # Bit offset within each GPIO entry array to indicate SKIP a GPIO programming
+    # Offset is 2nd DWORD BIT31 = 63
+    - GpioItemValidBitOff :
+        length       : 0x01
+        value        : 63
+    - GpioItemUnused :
+        length       : 0x01
+        value        : 0
+    # Need 1 bit per GPIO. So this mask byte length needs to be at least (GpioNumber + 7) / 8
+    # Padding can be added to let the whole length aligned at DWORD boundary
+    - GpioBaseTableBitMask :
+        length       : 38
+        value        : {0}
+    - GpioTableData :
+        length       : 0
+        value        : 0
+
+  # GPIO Group GPP_A: TGL-U PCH has 24, TGL-H PCH has 15.
+  - $ACTION      :
+      page         : GIO_GPP_A:GIO:"GPIO GPP_A"
+  - !expand { GPIO_TMPL : [ GPP_A,  00,  0x0350A383,  0x00002019 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  01,  0x0350A383,  0x00012019 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  02,  0x0350A383,  0x00022019 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  03,  0x0350A383,  0x00032019 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  04,  0x0350A383,  0x00042019 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  05,  0x0350A383,  0x00052009 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  06,  0x0350A383,  0x00062001 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  07,  0x0350A381,  0x00072001 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  08,  0x0350A385,  0x00082001 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  09,  0x0350A385,  0x00092001 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  10,  0x0550A581,  0x000A2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  11,  0x0550E281,  0x000B2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  12,  0x0350A383,  0x000C2019 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  13,  0x0350E281,  0x000D2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  14,  0x0550A281,  0x000E2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  15,  0x0350A381,  0x000F2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  16,  0x0350A383,  0x00102001 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  17,  0x0350A381,  0x00112001 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  18,  0x0350A383,  0x00122001 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  19,  0x0350A381,  0x00132001 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  20,  0x0350A381,  0x00142001 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  21,  0x0350A381,  0x00152001 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  22,  0x0350A381,  0x00162001 ] }
+  - !expand { GPIO_TMPL : [ GPP_A,  23,  0x0550A281,  0x00172001 ] }
+
+  # GPIO Group GPP_B: Both TGL-U and TLGL-H PCHs have 24.
+  - $ACTION      :
+      page         : GIO_GPP_B:GIO:"GPIO GPP_B"
+  - !expand { GPIO_TMPL : [ GPP_B,  00,  0x0350A383,  0x01002001 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  01,  0x0350A383,  0x01012001 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  02,  0x0534AD81,  0x01022601 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  03,  0x0350A381,  0x01032001 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  04,  0x0550E281,  0x01042001 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  05,  0x0350A383,  0x01052001 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  06,  0x0350A383,  0x01062001 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  07,  0x0350A383,  0x01072001 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  08,  0x0350A383,  0x01082001 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  09,  0x0350A383,  0x01092001 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  10,  0x0350A383,  0x010A2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  11,  0x0150A383,  0x010B2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  12,  0x0350A383,  0x010C2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  13,  0x0350A383,  0x010D2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  14,  0x0550E285,  0x010E2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  15,  0x0350E281,  0x010F2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  16,  0x0550E281,  0x01102001 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  17,  0x0150A281,  0x01112001 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  18,  0x0550A281,  0x01122001 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  19,  0x0350A383,  0x01132001 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  20,  0x0350A383,  0x01142001 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  21,  0x0350A383,  0x01152001 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  22,  0x0350A283,  0x01162001 ] }
+  - !expand { GPIO_TMPL : [ GPP_B,  23,  0x0550E281,  0x01172001 ] }
+
+  # GPIO Group GPP_C: Both TGL-U and TLGL-H PCHs have 24.
+  - $ACTION      :
+      page         : GIO_GPP_C:GIO:"GPIO GPP_C"
+  - !expand { GPIO_TMPL : [ GPP_C,  00,  0x0350A383,  0x02002001 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  01,  0x0350A383,  0x02012001 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  02,  0x0550E281,  0x02022001 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  03,  0x0350A383,  0x02032001 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  04,  0x0350A383,  0x02042001 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  05,  0x0550E281,  0x02052001 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  06,  0x0150A383,  0x02062001 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  07,  0x0150A383,  0x02072001 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  08,  0x0538AD81,  0x82082001 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  09,  0x0350A381,  0x82092001 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  10,  0x0150A281,  0x020A2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  11,  0x0150A281,  0x020B2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  12,  0x0518AD81,  0x820C2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  13,  0x0550E281,  0x820D2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  14,  0x0314AD81,  0x020E2601 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  15,  0x0550E281,  0x020F2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  16,  0x0350A383,  0x02102001 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  17,  0x0350A383,  0x02112001 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  18,  0x0350A383,  0x02122001 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  19,  0x0350A383,  0x02132001 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  20,  0x0350A381,  0x82142001 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  21,  0x0350A381,  0x82152001 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  22,  0x0350E281,  0x02162001 ] }
+  - !expand { GPIO_TMPL : [ GPP_C,  23,  0x0314AD81,  0x02172601 ] }
+
+  # GPIO Group GPP_D: TGL-U PCH has 20, TGL-H PCH has 24. Skip 20-23 for TGL-U.
+  - $ACTION      :
+      page         : GIO_GPP_D:GIO:"GPIO GPP_D"
+  - !expand { GPIO_TMPL : [ GPP_D,  00,  0x0350A383,  0x03002001 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  01,  0x0350A383,  0x03012001 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  02,  0x0350A383,  0x03022001 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  03,  0x0350A383,  0x03032001 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  04,  0x0350A383,  0x03042001 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  05,  0x0350A383,  0x03052001 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  06,  0x0350A383,  0x03062001 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  07,  0x0350A383,  0x03072001 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  08,  0x0350A383,  0x03082001 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  09,  0x0350A38B,  0x0309201F ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  10,  0x0350A28B,  0x030A201F ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  11,  0x0350A38B,  0x030B201F ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  12,  0x0350A28B,  0x030C201F ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  13,  0x0350A381,  0x030D2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  14,  0x0350A381,  0x030E2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  15,  0x0350A381,  0x030F2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  16,  0x0550E281,  0x03102001 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  17,  0x0350A383,  0x03112001 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  18,  0x0350A383,  0x03122001 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  19,  0x0350A381,  0x03132001 ] }
+  - !expand { GPIO_TMPL : [ GPP_D,  20,  0x0350A381,  0x83142001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_D,  21,  0x0350A381,  0x83152001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_D,  22,  0x0350A381,  0x83162001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_D,  23,  0x0350A381,  0x83172001 ] }   # TGL-H Only. Skip for TGL-U.
+
+  # GPIO Group GPP_E: TGL-U PCH has 24, TGL-H PCH has 13.
+  - $ACTION      :
+      page         : GIO_GPP_E:GIO:"GPIO GPP_E"
+  - !expand { GPIO_TMPL : [ GPP_E,  00,  0x0350A381,  0x04002001 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  01,  0x0350A381,  0x04012001 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  02,  0x0350A381,  0x04022001 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  03,  0x0518A581,  0x04032001 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  04,  0x0150A383,  0x04042001 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  05,  0x0150A383,  0x04052001 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  06,  0x0550E281,  0x04062001 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  07,  0x0512AD81,  0x04072001 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  08,  0x0550E281,  0x04082001 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  09,  0x0350A383,  0x04092001 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  10,  0x0350A381,  0x040A2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  11,  0x0350A381,  0x040B2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  12,  0x0350A381,  0x040C2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  13,  0x0350A381,  0x040D2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  14,  0x0350A383,  0x040E2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  15,  0x0350A383,  0x040F2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  16,  0x0350A385,  0x04102001 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  17,  0x0538AD81,  0x04112001 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  18,  0x0350A38B,  0x0412201F ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  19,  0x0350A28B,  0x0413201F ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  20,  0x0350A38B,  0x0414201F ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  21,  0x0350A28B,  0x0415201F ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  22,  0x0550A281,  0x04162001 ] }
+  - !expand { GPIO_TMPL : [ GPP_E,  23,  0x0550E281,  0x04172001 ] }
+
+  # GPIO Group GPP_F: Both TGL-U and TLGL-H PCHs have 24.
+  - $ACTION      :
+      page         : GIO_GPP_F:GIO:"GPIO GPP_F"
+  - !expand { GPIO_TMPL : [ GPP_F,  00,  0x0350A383,  0x05002001 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  01,  0x0350A383,  0x05012019 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  02,  0x0350A383,  0x05022001 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  03,  0x0350A383,  0x05032019 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  04,  0x0314AD81,  0x05042601 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  05,  0x0314AD81,  0x05052601 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  06,  0x0350A381,  0x05062001 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  07,  0x0550E281,  0x05072001 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  08,  0x0350A381,  0x05082001 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  09,  0x0550E281,  0x05092001 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  10,  0x0550E281,  0x050A2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  11,  0x0350A381,  0x050B2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  12,  0x0350A381,  0x050C2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  13,  0x0350A381,  0x050D2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  14,  0x0350A381,  0x050E2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  15,  0x0350A381,  0x050F2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  16,  0x0350A381,  0x05102001 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  17,  0x0550E283,  0x05112001 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  18,  0x0530A483,  0x05122001 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  19,  0x0350A383,  0x05132001 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  20,  0x0550A281,  0x05142001 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  21,  0x0550A581,  0x05152001 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  22,  0x0350A381,  0x05162001 ] }
+  - !expand { GPIO_TMPL : [ GPP_F,  23,  0x0350A381,  0x05172001 ] }
+
+  # GPIO Group GPP_G: Only in TGL-H PCH (16). Skip all for TGL-U.
+  - $ACTION      :
+      page         : GIO_GPP_G:GIO:"GPIO GPP_G"
+  - !expand { GPIO_TMPL : [ GPP_G,  00,  0x0350A383,  0x86002019 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_G,  01,  0x0350A383,  0x86012019 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_G,  02,  0x0500A2E1,  0x86020001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_G,  03,  0x0500E2E1,  0x86030001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_G,  04,  0x0500E2E1,  0x86040001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_G,  05,  0x0350A383,  0x86052009 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_G,  06,  0x0500E2E1,  0x86060001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_G,  07,  0x0500E2E1,  0x86070001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_G,  08,  0x0350A385,  0x86082001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_G,  09,  0x0350A385,  0x86092001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_G,  10,  0x0550A581,  0x860A2001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_G,  11,  0x0550E281,  0x860B2001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_G,  12,  0x0350A383,  0x860C2019 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_G,  13,  0x0350E281,  0x860D2001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_G,  14,  0x0550A281,  0x860E2001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_G,  15,  0x0550A281,  0x860F2001 ] }   # TGL-H Only. Skip for TGL-U.
+
+  # GPIO Group GPP_H: Both TGL-U and TLGL-H PCHs have 24.
+  - $ACTION      :
+      page         : GIO_GPP_H:GIO:"GPIO GPP_H"
+  - !expand { GPIO_TMPL : [ GPP_H,  00,  0x0550E281,  0x07002001 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  01,  0x0550E281,  0x07012001 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  02,  0x0350A281,  0x07022001 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  03,  0x0350A381,  0x07032001 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  04,  0x0350A383,  0x07042001 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  05,  0x0350A383,  0x07052001 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  06,  0x0350A383,  0x07062001 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  07,  0x0350A383,  0x07072001 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  08,  0x0350A383,  0x07082001 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  09,  0x0350A383,  0x07092001 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  10,  0x0350A383,  0x070A2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  11,  0x0350A383,  0x070B2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  12,  0x0550E281,  0x070C2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  13,  0x0550E281,  0x070D2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  14,  0x0550E281,  0x070E2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  15,  0x0550E281,  0x070F2001 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  16,  0x0350A383,  0x07102001 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  17,  0x0350A283,  0x07112001 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  18,  0x0350A383,  0x07122001 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  19,  0x0314AD83,  0x07132601 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  20,  0x0350A383,  0x07142001 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  21,  0x0350A383,  0x07152001 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  22,  0x0350A383,  0x07162001 ] }
+  - !expand { GPIO_TMPL : [ GPP_H,  23,  0x0350A281,  0x07172001 ] }
+
+  # GPIO Group GPP_I: Only in TGL-H PCH (15). Skip all for TGL-U.
+  - $ACTION      :
+      page         : GIO_GPP_I:GIO:"GPIO GPP_I"
+  - !expand { GPIO_TMPL : [ GPP_I,  00,  0x0350A383,  0x88002019 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_I,  01,  0x0350A383,  0x88012019 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_I,  02,  0x0350A383,  0x88022019 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_I,  03,  0x0350A383,  0x88032019 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_I,  04,  0x0350A383,  0x88042019 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_I,  05,  0x0350A383,  0x88052009 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_I,  06,  0x0350A383,  0x88062001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_I,  07,  0x0350A381,  0x88072001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_I,  08,  0x051885E1,  0x88080601 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_I,  09,  0x0500E2E1,  0x88090001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_I,  10,  0x0500E2E1,  0x880A0001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_I,  11,  0x0550E281,  0x880B2001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_I,  12,  0x0350A383,  0x880C2019 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_I,  13,  0x0350E281,  0x880D2001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_I,  14,  0x0550A281,  0x880E2001 ] }   # TGL-H Only. Skip for TGL-U.
+
+  # GPIO Group GPP_J: Only in TGL-H PCH (10). Skip all for TGL-U.
+  - $ACTION      :
+      page         : GIO_GPP_J:GIO:"GPIO GPP_J"
+  - !expand { GPIO_TMPL : [ GPP_J,  00,  0x0500E2E1,  0x89000001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_J,  01,  0x0350A381,  0x89012001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_J,  02,  0x0350A381,  0x89022001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_J,  03,  0x0518A581,  0x89032001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_J,  04,  0x0150A383,  0x89042001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_J,  05,  0x0150A383,  0x89052001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_J,  06,  0x0550E281,  0x89062001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_J,  07,  0x0512AD81,  0x89072001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_J,  08,  0x0500E2E1,  0x89080601 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_J,  09,  0x053005E1,  0x89090601 ] }   # TGL-H Only. Skip for TGL-U.
+
+  # GPIO Group GPP_K: Only in TGL-H PCH (12). Skip all for TGL-U.
+  - $ACTION      :
+      page         : GIO_GPP_K:GIO:"GPIO GPP_K"
+  - !expand { GPIO_TMPL : [ GPP_K,  00,  0x0500E2E1,  0x8A000001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_K,  01,  0x050085E1,  0x8A010001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_K,  02,  0x050085E1,  0x8A020001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_K,  03,  0x0500E2E1,  0x8A030001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_K,  04,  0x0500E2E1,  0x8A040001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_K,  05,  0x050085E1,  0x8A050001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_K,  06,  0x0550E281,  0x8A062001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_K,  07,  0x0512AD81,  0x8A072001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_K,  08,  0x0550E281,  0x8A082001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_K,  09,  0x0350A383,  0x8A092001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_K,  10,  0x050085E1,  0x8A0A0001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_K,  11,  0x0350A381,  0x8A0B2001 ] }   # TGL-H Only. Skip for TGL-U.
+
+  # GPIO Group GPP_R: TGL-U PCH has 8, TGL-H PCH has 20. Skip 8-19 for TGL-U.
+  - $ACTION      :
+      page         : GIO_GPP_R:GIO:"GPIO GPP_R"
+  - !expand { GPIO_TMPL : [ GPP_R,  00,  0x0350A383,  0x11002001 ] }
+  - !expand { GPIO_TMPL : [ GPP_R,  01,  0x0350A383,  0x1101201F ] }
+  - !expand { GPIO_TMPL : [ GPP_R,  02,  0x0350A283,  0x1102201F ] }
+  - !expand { GPIO_TMPL : [ GPP_R,  03,  0x0350A383,  0x1103201F ] }
+  - !expand { GPIO_TMPL : [ GPP_R,  04,  0x0350A383,  0x11042001 ] }
+  - !expand { GPIO_TMPL : [ GPP_R,  05,  0x0550A281,  0x11052001 ] }
+  - !expand { GPIO_TMPL : [ GPP_R,  06,  0x0550E281,  0x11062001 ] }
+  - !expand { GPIO_TMPL : [ GPP_R,  07,  0x0350A381,  0x11072001 ] }
+  - !expand { GPIO_TMPL : [ GPP_R,  08,  0x0350A381,  0x91082001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_R,  09,  0x0350A381,  0x91092001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_R,  10,  0x053005E1,  0x910A0001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_R,  11,  0x0350A381,  0x910B2001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_R,  12,  0x03188DE1,  0x910C0601 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_R,  13,  0x0350A381,  0x910D2001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_R,  14,  0x0350A381,  0x910E2001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_R,  15,  0x0350A381,  0x910F2001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_R,  16,  0x0350A381,  0x91102001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_R,  17,  0x0350A381,  0x91112001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_R,  18,  0x0350A381,  0x91122001 ] }   # TGL-H Only. Skip for TGL-U.
+  - !expand { GPIO_TMPL : [ GPP_R,  19,  0x0350A381,  0x91132001 ] }   # TGL-H Only. Skip for TGL-U.
+
+  # GPIO Group GPP_S: Only in TGL-U PCH (8).
+  - $ACTION      :
+      page         : GIO_GPP_S:GIO:"GPIO GPP_S"
+  - !expand { GPIO_TMPL : [ GPP_S,  00,  0x0350A487,  0x12002001 ] }
+  - !expand { GPIO_TMPL : [ GPP_S,  01,  0x0350A587,  0x12012001 ] }
+  - !expand { GPIO_TMPL : [ GPP_S,  02,  0x0350A287,  0x12022001 ] }
+  - !expand { GPIO_TMPL : [ GPP_S,  03,  0x0350A487,  0x12032001 ] }
+  - !expand { GPIO_TMPL : [ GPP_S,  04,  0x0350A381,  0x12042001 ] }
+  - !expand { GPIO_TMPL : [ GPP_S,  05,  0x0350A381,  0x12052001 ] }
+  - !expand { GPIO_TMPL : [ GPP_S,  06,  0x0350A381,  0x12062001 ] }
+  - !expand { GPIO_TMPL : [ GPP_S,  07,  0x0350A381,  0x12072001 ] }
+
+  # GPIO Group GPD: Only in TGL-U PCH (12).
+  - $ACTION      :
+      page         : GIO_GPD:GIO:"GPIO GPD"
+  - !expand { GPIO_TMPL : [ GPD,  00,    0x0750A383,  0x19002019 ] }
+  - !expand { GPIO_TMPL : [ GPD,  01,    0x0750A383,  0x1901201F ] }
+  - !expand { GPIO_TMPL : [ GPD,  02,    0x0750A383,  0x1902201F ] }
+  - !expand { GPIO_TMPL : [ GPD,  03,    0x0750A383,  0x19032019 ] }
+  - !expand { GPIO_TMPL : [ GPD,  04,    0x0750A283,  0x19042001 ] }
+  - !expand { GPIO_TMPL : [ GPD,  05,    0x0750A283,  0x19052001 ] }
+  - !expand { GPIO_TMPL : [ GPD,  06,    0x0750A283,  0x19062001 ] }
+  - !expand { GPIO_TMPL : [ GPD,  07,    0x0750E281,  0x19072001 ] }
+  - !expand { GPIO_TMPL : [ GPD,  08,    0x0750A383,  0x19082001 ] }
+  - !expand { GPIO_TMPL : [ GPD,  09,    0x0750A283,  0x19092001 ] }
+  - !expand { GPIO_TMPL : [ GPD,  10,    0x0750A283,  0x190A2001 ] }
+  - !expand { GPIO_TMPL : [ GPD,  11,    0x0750A283,  0x190B2001 ] }

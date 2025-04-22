@@ -1,0 +1,51 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : TCC:PLT:"Intel(R) Time Coordinated Computing (Intel(R) TCC)"
+- $ACTION      :
+    page         : TCC
+- TCC_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ TCC_CFG_DATA, 0x320, 0, 0 ] }
+  - TccEnable      :
+      name         : Intel(R) TCC Mode
+      type         : Combo
+      option       : 0:Disabled, 1:Enabled
+      help         : >
+                     Enable/Disable Intel(R) Time Coordinated Computing Mode.
+                     When enabled, this will modify system settings to improve real-time performance.
+      length       : 0x1
+      value        : 0x0
+  - TccTuning      :
+      name         : Data Streams Optimizer
+      type         : Combo
+      option       : 0:Disabled, 1:Enabled
+      help         : >
+                     Enable/Disable Data Streams Optimizer (DSO).
+                     Enable will utilize DSO Subregion to tune system. DSO settings supersede Intel(R) TCC Mode settings that overlap between the two.
+      length       : 0x1
+      value        : 0x0
+  - TccSoftSram    :
+      name         : Software SRAM
+      type         : Combo
+      option       : 0:Disabled, 1:Enabled
+      help         : >
+                     Enable/Disable Software SRAM.
+                     Enable will allocate 1 way of LLC; if Cache Configuration subregion is available, it will allocate based on the subregion.
+      length       : 0x1
+      value        : 0x0
+  - TccErrorLog      :
+      name         : Error Log
+      type         : Combo
+      option       : 0:Disabled, 1:Enabled
+      help         : >
+                     Enable or Disable Error Log. Enable will record errors related to Intel(R) TCC and save them to memory.
+      length       : 0x1
+      value        : 0x0

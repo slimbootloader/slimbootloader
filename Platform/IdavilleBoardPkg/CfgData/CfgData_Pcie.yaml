@@ -1,0 +1,337 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : PCI
+- PCIE_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ PCIE_CFG_DATA, 0xA00, 0, 0 ] }
+  - !expand { PCI_TMPL : [ IIO_RES ] }
+  - IioRes :
+    - $STRUCT      :
+        name         : PCI IIO Res for Soc 0
+        help         : >
+                       PCI IIO Res for Soc 0
+        struct       : IIO_RES
+    - Enable :
+        name         : Enable PCI IIO Res allocation
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable PCI IIO Res allocation
+        length       : 1b
+        value        : 1
+    - Rsvd1 :
+        name         : Reserved
+        type         : Reserved
+        length       : 31b
+        value        : 0
+    - IoBase :
+        name         : Io Base
+        type         : Table
+        option       : 0:2:HEX
+        help         : >
+                       Io Base
+        struct       : UINT16
+        length       : 0x10
+        value        : {0:0W, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000 }
+        condition    : $(COND_IIO_PCI_RES_EN)
+    - IoLimit :
+        name         : Io Limit
+        type         : Table
+        option       : 0:2:HEX
+        help         : >
+                       Io Base
+        struct       : UINT16
+        length       : 0x10
+        value        : {0:0W, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000 }
+        condition    : $(COND_IIO_PCI_RES_EN)
+    - LowMmioBase :
+        name         : Low Mmio Base
+        type         : Table
+        option       : 0:4:HEX
+        help         : >
+                       Low Mmio Base
+        struct       : UINT32
+        length       : 0x20
+        value        : {0:0D, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 }
+        condition    : $(COND_IIO_PCI_RES_EN)
+    - LowMmioLimit :
+        name         : Low Mmio Limit
+        type         : Table
+        option       : 0:4:HEX
+        help         : >
+                       Low Mmio Limit
+        struct       : UINT32
+        length       : 0x20
+        value        : {0:0D, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 }
+        condition    : $(COND_IIO_PCI_RES_EN)
+    - HighMmioBase :
+        name         : High Mmio Base
+        type         : Table
+        option       : 0:8:HEX
+        help         : >
+                       High Mmio Base
+        struct       : UINT64
+        length       : 0x40
+        value        : {0:0Q, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000 }
+        condition    : $(COND_IIO_PCI_RES_EN)
+    - HighMmioLimit :
+        name         : High Mmio Limit
+        type         : Table
+        option       : 0:8:HEX
+        help         : >
+                       High Mmio Limit
+        struct       : UINT64
+        length       : 0x40
+        value        : {0:0Q, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000 }
+        condition    : $(COND_IIO_PCI_RES_EN)
+  - !expand { PCI_TMPL : [ IIO_RP ] }
+  - IIOPciePortBifurcation :
+      name         : IIO PCIe Port 1 Bifurcation
+      help         : >
+                     IIO PCI Express port bifurcation for selected slot(s).
+      type         : Combo
+      option       : 0xFF:Auto, 0:X4X4X4X4, 1:X4X4X8, 2:X8X4X4, 3:X8X8, 4:X16
+      length       : 0x01
+      value        : 0xFF
+  - IIoPcieHotPlugEnable :
+      name         : IIO PCIe Hot Plug
+      type         : Combo
+      option       : 0:Disabled, 1:Enabled
+      help         : >
+                     Enable / Disable IIO PcieHotPlug
+      length       : 1
+      value        : 0
+  - IIoPcieHotPlugOnPort :
+      name         : IIO PCIe Hot Plug Capable on Port 1A/1B/1C/1D
+      type         : EditNum, HEX, (0x00,0xFFFFFFFF)
+      help         : >
+                     Enable / Disable IIO PCIe Hot Plug Capable on Port 1A/1B/1C/1D
+                     0x00:Disabled, 0x01:Enabled
+      length       : 4
+      condition    : $(COND_IIO_PCIE_HP_EN)
+      value        : { 0x00, 0x00, 0x00, 0x00 }
+  - IIoPcieSurpriseHotPlugOnPort :
+      name         : IIO PCIe Surprise Hot Plug Capable on Port 1A/1B/1C/1D
+      type         : EditNum, HEX, (0x00,0xFFFFFFFF)
+      help         : >
+                     Enable / Disable IIO PCIe Surprise Hot Plug Capable on Port 1A/1B/1C/1D
+                     0x00:Disabled, 0x01:Enabled
+      length       : 4
+      condition    : $(COND_IIO_PCIE_HP_EN)
+      value        : { 0x00, 0x00, 0x00, 0x00 }
+  - IIoPcieDeEmphasis :
+      name         : IIO PCIe DeEmphasis (R-Link, Port 1A, Port 1B, Port 1C and Port 1D)
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFF)
+      help         : >
+                     Desired DeEmphasis level for IIO PCIe R-Link, Port 1A, Port 1B, Port 1C and Port 1D
+                     0x00:6dB, 0x01:3.5dB
+      length       : 5
+      value        : { 0x01, 0x01, 0x01, 0x01, 0x01 }
+  - IIoPcieLinkSpeed :
+      name         : IIO PCIe Link Speed (R-Link, Port 1A, Port 1B, Port 1C and Port 1D)
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFF)
+      help         : >
+                     Desired Link Speed for IIO PCIe R-Link, Port 1A, Port 1B, Port 1C and Port 1D
+                     0x00:AUTO, 0x01:GEN1, 0x02:GEN2, 0x03:GEN3, 0x04:GEN4(Not applicable to R-Link)
+      length       : 5
+      value        : { 0x00, 0x00, 0x00, 0x00, 0x00 }
+  - IIoPcieAspm :
+      name         : IIO PCIe Aspm (R-Link, Port 1A, Port 1B, Port 1C and Port 1D)
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFF)
+      help         : >
+                     Desired Active state power management settings for IIO PCIe R-Link, Port 1
+                     0x00:Disabled, 0x04:Auto
+      length       : 5
+      value        : { 0x04, 0x04, 0x04, 0x04, 0x04 }
+  - BifurcationPcie0 :
+      name         : PCH PCIe Controller 0 Bifurcation
+      type         : Combo
+      option       : 5:4x2, 6:1x4 2x2, 7:2x2 1x4, 8:2x4, 9:1x8
+      help         : >
+                     Configure PCI Express controller 0 bifurcation.
+      length       : 0x01
+      value        : 9
+  - BifurcationPcie1 :
+      name         : PCH PCIe Controller 1 Bifurcation
+      type         : Combo
+      option       : 5:4x2, 6:1x4 2x2, 7:2x2 1x4, 8:2x4, 9:1x8
+      help         : >
+                     Configure PCI Express controller 1 bifurcation.
+      length       : 0x01
+      value        : 5
+  - BifurcationPcie2 :
+      name         : PCH PCIe Controller 2 Bifurcation
+      type         : Combo
+      option       : 5:4x2, 6:1x4 2x2, 7:2x2 1x4, 8:2x4, 9:1x8
+      help         : >
+                     Configure PCI Express controller 2 bifurcation.
+      length       : 0x01
+      value        : 6
+  - IIOPciePort2Bifurcation :
+      name         : IIO PCIe Port 2 Bifurcation
+      help         : >
+                     IIO PCI Express port 2 bifurcation for selected slot(s).
+      type         : Combo
+      option       : 0xFF:Auto, 0:X4X4X4X4, 1:X4X4X8, 2:X8X4X4, 3:X8X8, 4:X16
+      length       : 0x01
+      value        : 0xFF
+  - IIoPciePort2DeEmphasis :
+      name         : IIO PCIe Port 2 DeEmphasis (Port 2A, Port 2B, Port 2C and Port 2D)
+      type         : EditNum, HEX, (0x00,0xFFFFFFFF)
+      help         : >
+                     Desired DeEmphasis level for IIO PCIe Port 2A, Port 2B, Port 2C and Port 2D
+                     0x00:6dB, 0x01:3.5dB
+      length       : 4
+      value        : { 0x01, 0x01, 0x01, 0x01 }
+  - IIoPciePort2LinkSpeed :
+      name         : IIO PCIe Link Speed (Port 2A, Port 2B, Port 2C and Port 2D)
+      type         : EditNum, HEX, (0x00,0xFFFFFFFF)
+      help         : >
+                     Desired Link Speed for IIO PCIe Port 2A, Port 2B, Port 2C and Port 2D
+                     0x00:AUTO, 0x01:GEN1, 0x02:GEN2, 0x03:GEN3, 0x04:GEN4
+      length       : 4
+      value        : { 0x00, 0x00, 0x00, 0x00 }
+  - IIoPciePort2Aspm :
+      name         : IIO PCIe Aspm (Port 2A, Port 2B, Port 2C and Port 2D)
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFF)
+      help         : >
+                     Desired Active state power management settings for IIO PCIe Port 2
+                     0x00:Disabled, 0x04:Auto
+      length       : 4
+      value        : { 0x04, 0x04, 0x04, 0x04 }
+  - IIoPciePort2HotPlugOnPort :
+      name         : IIO PCIe Port 2 Hot Plug Capable on Port 2A/2B/2C/2D
+      type         : EditNum, HEX, (0x00,0xFFFFFFFF)
+      help         : >
+                     Enable / Disable IIO PCIe Port 2 Hot Plug Capable on Port 2A/2B/2C/2D
+                     0x00:Disabled, 0x01:Enabled
+      length       : 4
+      condition    : $(COND_IIO_PCIE_HP_EN)
+      value        : { 0x00, 0x00, 0x00, 0x00 }
+  - IIoPciePort2SurpriseHotPlugOnPort :
+      name         : IIO PCIe Port 2 Surprise Hot Plug Capable on Port 2A/2B/2C/2D
+      type         : EditNum, HEX, (0x00,0xFFFFFFFF)
+      help         : >
+                     Enable / Disable IIO PCIe Port 2 Surprise Hot Plug Capable on Port 2A/2B/2C/2D
+                     0x00:Disabled, 0x01:Enabled
+      length       : 4
+      condition    : $(COND_IIO_PCIE_HP_EN)
+      value        : { 0x00, 0x00, 0x00, 0x00 }
+  - PchDmiAspm :
+      name         : PCH DMI ASPM
+      type         : Combo
+      option       : 0:Disabled, 1:Enabled
+      help         : >
+                     Enable / Disable L1 ASPM for Rlink
+      length       : 1
+      value        : 1
+  - PciePortClkGateEnable  :
+      name         : PCI-E port Clock Gating
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Enable / Disable PCI-E Clock Gating for each port First byte represents Clock gating
+                     for port 1A,Second byte for port 2A... respectively for each PCI-E Port. Each byte
+                     takes value 0x00(Disable)~0x01(Enable).
+      length       : 21
+      value        : { 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1 }
+  - Rsvd2 :
+      name         : Reserved2
+      type         : Reserved
+      length       : 1
+      value        : 0
+  - !expand { PCI_TMPL : [ PCH_RP ] }
+  - PchRpConfig :
+    - $STRUCT      :
+        name         : Pcie Rp Configuration
+        help         : >
+                       Configure Pcie Root Port
+        struct       : PCH_RP_CFG
+    - ClockGatingEnabled :
+        name         : PCI Express Clock Gating
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled
+        help         : >
+                       Enable / Disable PCI Express Clock Gating
+        length       : 1
+        value        : 1
+    - RlinkClockGating :
+        name         : Rlink CG Enable
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled
+        help         : >
+                       Enable / Disable Rlink Clock Gating
+        length       : 1
+        value        : 1
+    - PcieRootPortEn :
+        name         : PcieRootPortEn
+        type         : EditNum, HEX, (0x00,0xFFFF)
+        help         : >
+                       0:Disable, 1:Enable PcieRootPort from 1 to 12, each bit represent a port(bit0-bit11)
+                       and last nibble is unused. For example, bit0 controls PcieRootPortPort 1, bit1
+                       controls PcieRootPortPort 2...
+        length       : 2
+        value        : 0x0FFF
+    - LinkSpeed :
+        name         : Link Speed
+        type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFF)
+        help         : >
+                       1:GEN1, 2:GEN2, 3:GEN3
+        length       : 12
+        value        : { 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3 }
+    - Aspm :
+        name         : ASPM(Active State Power Management)
+        type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFF)
+        help         : >
+                       0:Disabled, 1:L0, 2:L1, 3:L0SL1
+        length       : 12
+        value        : { 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2 }
+    - ConnectionType :
+        name         : Connection Type
+        type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFF)
+        help         : >
+                       0:Built-In, 1:Slot
+        length       : 12
+        value        : { 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1 }
+    - HotPlug :
+        name         : HotPlug
+        type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFF)
+        help         : >
+                       0:Disable, 1:Enable
+        length       : 12
+        value        : { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 }
+    - VppOverride    :
+        name         : Vpp Override
+        type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFF)
+        help         : >
+                        Each one of 12 PCH Port VppOverrides is represented by a nibble. A nibble takes value 0(Disable)~1(Enable).
+        length       : 12
+        value        : { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 }
+    - VppPort        :
+        name         : Vpp Port
+        type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFF)
+        help         : >
+                        Each one of 12 PCH VppPorts is represented by a nibble. A nibble takes value 0~1.
+        length       : 12
+        value        : { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 }
+    - VppAddress     :
+        name         : Vpp Address
+        type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFF)
+        help         : >
+                       Each one of 12 PCH VppAddresses is represented by a nibble. A nibble takes value 0~7.
+        length       : 12
+        value        : { 0x07, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7 }
+    - PtmEnable      :
+        name         : PTM Enable
+        type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFF)
+        help         : >
+                       Each one of 12 PCIe Port PTM Enable is represented by a nibble. A nibble takes value 0~1.
+        length       : 12
+        value        : { 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1 }

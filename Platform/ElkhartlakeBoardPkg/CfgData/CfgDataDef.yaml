@@ -1,0 +1,332 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Default File.
+#
+#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+variable:
+  COND_S0IX_DIS  : ($FEATURES_CFG_DATA.Features.S0ix == 0)
+
+template:
+  CFGHDR_TMPL: >
+    - CfgHeader    :
+        length       : 0x04
+        value        : {0x01:2b, ((_LENGTH_$(1)_)/4):10b, $(3):4b, $(4):4b, $(2):12b}
+    - CondValue    :
+        length       : 0x04
+        value        : 0x00000000
+
+
+  GPIO_TMPL: >
+    - $ACTION      :
+        page         : GIO_$(1)$(2):GIO_$(1):"$(1)$(2)"
+    - GpioPinConfig0_$(1)$(2) :
+      - $STRUCT      :
+          name         : GPIO $(1)$(2) PIN Config0
+          type         : EditNum, HEX, (0x00000000,0xFFFFFFFF)
+          help         : >
+                         GPIO $(1)$(2) PIN Configuration
+          length       : 0x04
+          value        : $(3)
+      - GPIOPADMode_$(1)$(2) :
+          name         : PadMode
+          type         : Combo
+          option       : 0x0:Hardware Default, 0x1:GPIO control of the pad, 0x3:Native function 1, 0x5:Native function 2, 0x7:Native function 3, 0x9:Native function 4, 0xB:Native function 5, 0xD:Native function 6, 0xF:Native function 7, 0x11:Native function 8
+          help         : >
+                         GPIO PAD Mode. If GPIO is set to one of NativeX modes then following settings are not applicable and can be skipped:-
+                         Interrupt related settings, Host Software Ownership, Output/Input enabling/disabling, Output lock
+          condition    : $GPIO_CFG_DATA.GpioPinConfig1_$(1)$(2).GPIOSkip_$(1)$(2) == 0
+          length       : 5b
+      - GPIOHostSoftPadOwn_$(1)$(2) :
+          name         : HostSoftPadOwn
+          type         : Combo
+          option       : 0x0:Host Ownership Default(Leave ownership value unmodified), 0x1:Host ownership to ACPI, 0x3:Host ownership to GPIO Driver mode
+          help         : >
+                         GPIO Host Software Pad Ownership. This setting affects GPIO interrupt status registers. Depending on chosen ownership
+                         some GPIO Interrupt status register get updated and other masked:-
+                         - HOST ownership to ACPI - Use this setting if pad is not going to be used by GPIO OS driver.
+                         If GPIO is configured to generate SCI/SMI/NMI then this setting must be used for interrupts to work.
+                         - HOST ownership to GPIO Driver mode - Use this setting only if GPIO pad should be controlled by GPIO OS Driver.
+                         GPIO OS Driver will be able to control the pad if appropriate entry in ACPI exists.
+          condition    : $GPIO_CFG_DATA.GpioPinConfig1_$(1)$(2).GPIOSkip_$(1)$(2) == 0
+          length       : 2b
+      - GPIODirection_$(1)$(2) :
+          name         : Direction
+          type         : Combo
+          option       : 0x0:DirDefault, 0x9:DirInOut, 0x19:DirInInvOut, 0xB:DirIn, 0x1B:DirInInv, 0x5:DirOut, 0x7:DirNone
+          help         : >
+                         GPIO Host Software Pad Ownership:
+                         - DirDefault = Leave pad direction setting unmodified, - DirInOut = Set pad for both output and input,
+                         - DirInInvOut = Set pad for both output and input with inversion, - DirIn = Set pad for input only,
+                         - DirInInv = Set pad for input with inversion, - DirOut = Set pad for output only,
+                         - DirNone  = Disable both output and input.
+          condition    : $GPIO_CFG_DATA.GpioPinConfig1_$(1)$(2).GPIOSkip_$(1)$(2) == 0
+          length       : 6b
+      - GPIOOutputState_$(1)$(2) :
+          name         : OutputState
+          type         : Combo
+          option       : 0x0:OutDefault, 0x1:OutLow, 0x3:OutHigh
+          help         : >
+                         GPIO Output State.This field is relevant only if output is enabled:-
+                         - OutDefault = Leave output value unmodified, - OutLow = Set output to low, - OutHigh = Set output to high
+          condition    : $GPIO_CFG_DATA.GpioPinConfig1_$(1)$(2).GPIOSkip_$(1)$(2) == 0
+          length       : 2b
+      - GPIOInterruptConfig_$(1)$(2) :
+          name         : InterruptConfig
+          type         : Combo
+          option       : >
+                         0x0:IntDefault , 0x1:IntDisable, 0x3:IntNmi , 0x5:IntSmi, 0x9:IntSci, 0x11:IntApic, 0x20:IntLevel, 0x60:IntEdge, 0xA0:IntLvlEdgDis, 0xE0:IntBothEdge,
+                         0x31:IntLevel | IntApic, 0x29:IntLevel | IntSci, 0x25:IntLevel | IntSmi, 0x69:IntEdge | IntSci, 0x71:IntEdge | IntApic, 0x65:IntEdge | IntSmi, 0x60:IntEdge | IntDefault,
+                         0xA1:IntLvlEdgDis | IntDisable, 0x21:IntLevel | IntDisable
+          help         : >
+                         GPIO Interrupt Configuration - This setting is applicable only if pad is in GPIO mode and has input enabled.
+                         GPIO_INT_CONFIG allows to choose which interrupt is generated (IOxAPIC/SCI/SMI/NMI) and how it is triggered (edge or level).
+                         Refer to PADCFG_DW0 register description in EDS for details on this settings. Field from GpioIntNmi to GpioIntApic can be OR'ed with
+                         GpioIntLevel to GpioIntBothEdge to describe an interrupt e.g. GpioIntApic | GpioIntLevel.
+                         If GPIO is set to cause an SCI then also GPI_GPE_EN is enabled for this pad.
+                         If GPIO is set to cause an NMI then also GPI_NMI_EN is enabled for this pad.
+                         Not all GPIO are capable of generating an SMI or NMI interrupt.
+                         When routing GPIO to cause an IOxAPIC interrupt care must be taken, as this interrupt cannot be shared and its IRQn number is not configurable.
+                         If GPIO is under GPIO OS driver control and appropriate ACPI GpioInt descriptor exist then use only trigger type setting (from GpioIntLevel to GpioIntBothEdge).
+                         This type of GPIO Driver interrupt doesn't have any additional routing setting required to be set by BIOS. Interrupt is handled by GPIO OS Driver.
+                         - IntDefault = Leave value of interrupt routing unmodified, - IntDisable = Disable IOxAPIC/SCI/SMI/NMI interrupt generation,
+                         - IntNmi = Enable NMI interrupt only, - IntSmi = Enable SMI interrupt only, - IntSci = Enable SCI interrupt only, - IntApic = Enable IOxAPIC interrupt only,
+                         - IntLevel = Set interrupt as level triggered, - IntEdge = Set interrupt as edge triggered, - IntLvlEdgDis = Disable interrupt trigger, - IntBothEdge = Set interrupt as both edge triggered
+          condition    : $GPIO_CFG_DATA.GpioPinConfig1_$(1)$(2).GPIOSkip_$(1)$(2) == 0
+          length       : 9b
+      - GPIOResetConfig_$(1)$(2) :
+          name         : Power/ResetConfig
+          type         : Combo
+          option       : 0x0:ResetDefault, 0x1:ResetResume, 0x3:HostDeepReset, 0x5:PlatformReset, 0x7:DswReset
+          help         : >
+                         GPIO Power Configuration. This allows to set GPIO Reset type which will be used to reset certain GPIO settings.
+                         - ResetDefault = Leave value of pad reset unmodified, - ResumeReset = Pad setting will reset on DeepSx transition and G3,
+                         - HostDeepReset = Pad settings will reset on:Warm/Cold/Global reset,DeepSx transition,G3,
+                         - PlatformReset = Pad settings will reset on:S3/S4/S5 transition, Warm/Cold/Global reset, DeepSx transition, G3
+                         - DswReset = Pad settings will reset on G3
+          condition    : $GPIO_CFG_DATA.GpioPinConfig1_$(1)$(2).GPIOSkip_$(1)$(2) == 0
+          length       : 8b
+    - GpioPinConfig1_$(1)$(2) :
+      - $STRUCT      :
+          name         : GPIO $(1)$(2) PIN Config1
+          type         : EditNum, HEX, (0x00000000,0xFFFFFFFF)
+          help         : >
+                         GPIO $(1)$(2) PIN Configuration
+          length       : 0x04
+          value        : $(4)
+      - GPIOElectricalCfg_$(1)$(2) :
+          name         : GPIO ElectricalCfg
+          type         : Combo
+          option       : 0x0:TermDefault, 0x1:TermNone, 0x5:TermNone, 0x9:TermWpd20K, 0x13:TermWpu1K, 0x17:TermWpu2K, 0x15:TermWpu5K, 0x19:TermWpu20K, 0x1B:TermWpu1K2K, 0x1F:TermNative, 0x20:NoTolerance1v8, 0x60:Tolerance1v8
+          help         : >
+                         GPIO Electrical Configuration. Set GPIO termination and Pad Tolerance.(applicable only for some pads):-
+                         - TermDefault = Leave termination setting unmodified, - TermNone = None, - TermWpd5K = 5kOhm weak pull-down, - TermWpd20K = 20kOhm weak pull-down,
+                         - TermWpu1K = 1kOhm weak pull-up, - TermWpu2K = 2kOhm weak pull-up, - TermWpu5K = 5kOhm weak pull-up, - TermWpu20K = 20kOhm weak pull-up, - TermWpu1K2K = 1kOhm & 2kOhm weak pull-up,
+                         - TermNative = Native function. This setting is applicable only to some native modes,
+                         - NoTolerance1v8 = Disable 1.8V pad tolerance, Tolerance1v8 = Enable 1.8V pad tolerance
+          condition    : $GPIO_CFG_DATA.GpioPinConfig1_$(1)$(2).GPIOSkip_$(1)$(2) == 0
+          length       : 9b
+      - GPIOLockConfig_$(1)$(2) :
+          name         : LockConfig
+          type         : Combo
+          option       : 0x0:LockDefault, 0x1:PadConfigLock, 0x3:PadConfigUnlock, 0x5:PadLock , 0xC:OutputStateUnlock, 0xF:PadUnlock
+          help         : >
+                         GPIO Lock Configuration.
+                         - LockDefault = Leave value of pad as-is, - PadConfigLock = Lock Pad configuration,
+                         - PadConfigUnlock = Leave Pad configuration unlocked, - PadLock = Lock both Pad configuration and output control,
+                         - OutputStateUnlock = Leave Pad output control unlocked, PadUnlock = Leave both Pad configuration and output control unlocked
+          condition    : $GPIO_CFG_DATA.GpioPinConfig1_$(1)$(2).GPIOSkip_$(1)$(2) == 0
+          length       : 4b
+      - RxRaw_$(1)$(2) :
+          name         : RxRaw
+          type         : Combo
+          option       : 0x0:Default, 0x1:NoOverride, 0x3:RxDrive 1 internally
+          help         : > This bit determines if the selected pad state is being overridden to '1'.
+          length       : 2b
+      - Reserved1_$(1)$(2) :
+          name         : Reserved1
+          type         : Reserved
+          length       : 1b
+      - PadNum_$(1)$(2)  :
+          name         : PadNum
+          type         : Reserved
+          length       : 8b
+      - GrpIdx_$(1)$(2)  :
+          name         : GrpIdx
+          type         : Reserved
+          length       : 5b
+      - Reserved2_$(1)$(2) :
+          name         : Reserved2
+          type         : Reserved
+          length       : 1b
+      - Hide_$(1)$(2)    :
+          name         : Hide
+          type         : Reserved
+          length       : 1b
+      - GPIOSkip_$(1)$(2) :
+          name         : GPIO Skip
+          type         : Combo
+          option       : $EN_DIS
+          help         : >
+                         ENABLE- Skip GPIO PAD programming (keep the defaults). DISABLE- Program GPIO PAD configuration.
+          order        : 0000.0000
+          length       : 1b
+
+
+  MEM_TMPL: >
+    - $ACTION      :
+        page         : MEM_$(1):MEM:"MEM $(1)"
+    - $ACTION      :
+        page         : MEM_$(1)
+
+
+
+  - !include Platform/CommonBoardPkg/CfgData/Template_BootOption.yaml
+
+
+
+configs:
+  - $ACTION      :
+      page         : PLT::"Platform Settings", MEM::"Memory Settings", SIL::"Silicon Settings", GEN::"General Settings", SEC::"Security Settings", GIO::"GPIO Settings", GFX::"Graphics Settings", PWR::"PM Settings", DYN::"Dynamic Settings", OS::"OS Boot Options"
+  - Signature    :
+      length       : 0x04
+      value        : {'CFGD'}
+  - HeaderLength :
+      length       : 0x01
+      value        : 0x10
+  - Reserved     :
+      length       : 0x03
+      value        : {0,0,0}
+  - UsedLength   :
+      length       : 0x04
+      value        : _LENGTH_
+  - TotalLength  :
+      length       : 0x04
+      value        : 0x1000
+  - $ACTION      :
+      page         : GEN
+
+  - !include Platform/CommonBoardPkg/CfgData/CfgData_Common.yaml
+
+
+  - !include CfgData_Gpio.yaml
+
+
+  - !include Platform/CommonBoardPkg/CfgData/CfgData_Platform.yaml
+
+
+  - !include Platform/CommonBoardPkg/CfgData/CfgData_Tcc.yaml
+
+
+  - !include CfgData_Memory.yaml
+
+
+  - !include CfgData_Silicon.yaml
+
+
+  - !include CfgData_CapsuleInformation.yaml
+
+  - $ACTION      :
+      page         : SEC
+  - SECURITY_CFG_DATA :
+    - !expand { CFGHDR_TMPL : [ SECURITY_CFG_DATA, 0x500, 0, 0 ] }
+    - EnableSgx    :
+        name         : Software Guard eXtensions (SGX)
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled, 2:Software Control
+        help         : >
+                       Enable/Disable Software Guard eXtensions (SGX).
+        length       : 0x01
+        value        : 0x02
+    - EpochUpdate  :
+        condition    : $SECURITY_CFG_DATA.EnableSgx != 0
+        name         : Select Owner EPOCH input type
+        type         : Combo
+        option       : 0:No Change in Owner EPOCHs, 1:Change to New Random Owner EPOCHs, 2:Manual User Defined Owner EPOCHs
+        help         : >
+                       There are three Owner EPOCH modes (Each EPOCH is 64bit)- no change in owner epoch, change to new random owner epoch and manually entered by user. After generating new epoch via 'Change to New Random Owner EPOCHs', the selection reverts back to 'No Change in Owner Epochs', this is to ensure Epoch stays same, across Sx states. After the user enters epoch values manually, the values will not be visible, for security reasons.
+        length       : 0x01
+        value        : 0x0
+    - SgxEpoch0    :
+        condition    : $SECURITY_CFG_DATA.EnableSgx !=0 and $SECURITY_CFG_DATA.EpochUpdate == 1
+        name         : Software Guard Extensions Epoch 0
+        type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFFFF)
+        length       : 0x8
+        value        : 0xFFFFFFFFFFFFFFFF
+    - SgxEpoch1    :
+        condition    : $SECURITY_CFG_DATA.EnableSgx !=0 and $SECURITY_CFG_DATA.EpochUpdate == 1
+        name         : Software Guard Extensions Epoch 1
+        type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFFFF)
+        length       : 0x8
+        value        : 0xFFFFFFFFFFFFFFFF
+    - Reserved     :
+        length       : 0x02
+        value        : 0x0
+
+
+  - $ACTION      :
+      page         : PIDSEL:PLT:"Payload Selection GPIO"
+  - PLATFORM_CFG_DATA :
+    - !expand { CFGHDR_TMPL : [ PLATFORM_CFG_DATA, 0x280, 0, 0 ] }
+    - PayloadSelGpio :
+      - $STRUCT      :
+          name         : GPIO pin for switching payload
+          struct       : PAYLOAD_SEL_GPIO_PIN
+          length       : 0x02
+      - PinGroup     :
+          name         : Pin Group
+          type         : Combo
+          option       : >
+                         0x0B:GPP_A, 0x00:GPP_B, 0x0D:GPP_C, 0x05:GPP_D, 0x10:GPP_E, 0x0E:GPP_F, 0x02:GPP_G, 0x04:GPP_H,
+                         0x12:GPP_R, 0x0A:GPP_S, 0x01:GPP_T, 0x06:GPP_U, 0x03:GPP_V, 0x08:GPD
+          condition    : ($PLATFORM_CFG_DATA.PayloadSelGpio.Enable > 0)
+          help         : >
+                         Specify GPIO Group Number
+          length       : 7bW
+          value        : 0
+      - Enable       :
+          name         : Payload Selection Pin Enable
+          type         : Combo
+          option       : $EN_DIS
+          help         : >
+                         Enable/Disable this pin for payload selection between OsLoader and UEFI.
+          order        : 0000.0000
+          length       : 1bW
+          value        : 0
+      - PinNumber    :
+          name         : Pin Number
+          type         : Combo
+          option       : >
+                         0:0, 1:1, 2:2, 3:3, 4:4, 5:5, 6:6, 7:7, 8:8, 9:9,
+                         10:10, 11:11, 12:12, 13:13, 14:14, 15:15, 16:16, 17:17,
+                         18:18, 19:19, 20:20, 21:21, 22:22, 23:23
+          length       : 8bW
+          value        : 0
+          condition    : ($PLATFORM_CFG_DATA.PayloadSelGpio.Enable > 0)
+          help         : >
+                         Specify GPIO Pin Number
+    - Dummy        :
+        length       : 0x02
+        value        : 0x0
+
+
+  - !include CfgData_GpuConfig.yaml
+
+
+  - !include CfgData_Features.yaml
+
+
+  - !include CfgData_Dynamic.yaml
+
+
+  - !include CfgData_BootOption.yaml
+
+
+  - !include CfgData_Power.yaml
+
+
+  - !include CfgData_Security.yaml
+

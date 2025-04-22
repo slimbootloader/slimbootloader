@@ -1,0 +1,70 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Template File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+CFGHDR_TMPL: >
+  - CfgHeader    :
+      length       : 0x04
+      value        : {0x01:2b, ((_LENGTH_$(1)_)/4):10b, $(3):4b, $(4):4b, $(2):12b}
+  - CondValue    :
+      length       : 0x04
+      value        : 0x00000000
+
+
+MEM_TMPL: >
+  - $ACTION      :
+      page         : MEM_$(1):MEM:"Memory $(1)"
+  - $ACTION      :
+      page         : MEM_$(1)
+
+
+SIL_TMPL: >
+  - $ACTION      :
+      page         : SIL_$(1):SIL:"Silicon $(1)"
+  - $ACTION      :
+      page         : SIL_$(1)
+
+
+MSC_TMPL: >
+  - $ACTION      :
+      page         : MSC_$(1):MSC:"Misc $(1)"
+  - $ACTION      :
+      page         : MSC_$(1)
+
+
+PCI_TMPL: >
+  - $ACTION      :
+      page         : PCI_$(1):PCI:"PCI $(1)"
+  - $ACTION      :
+      page         : PCI_$(1)
+
+
+PWR_TMPL: >
+  - $ACTION      :
+      page         : PWR_$(1):PWR:"PWR $(1)"
+  - $ACTION      :
+      page         : PWR_$(1)
+
+
+SPD_SEL_TMPL: >
+  - SpdDataSel$(1)$(2)$(3) :
+      name         : IMC [$(1)]  CH [$(2)]  DIMM[$(3)]
+      type         : Combo
+      option       : 0:NONE, 1:SPD1 - RDimm
+      help         : >
+                     Select which SPD data should be used for IMC$(1) CH$(2) DIMM$(3).
+      length       : 0x01
+      value        : $(4)
+      condition    : ($(5))
+
+- !include Template_Gpio.yaml
+
+
+- !include Platform/CommonBoardPkg/CfgData/Template_BootOption.yaml
+

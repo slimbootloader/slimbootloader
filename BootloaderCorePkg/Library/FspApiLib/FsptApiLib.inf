@@ -39,3 +39,6 @@
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdFSPTBase
+
+[FixedPcd]
+  gPlatformModuleTokenSpaceGuid.PcdFSPM64Bit

@@ -1,0 +1,3 @@
+[submodule "BootloaderCommonPkg/Library/IppCrypto2Lib/ipp-crypto"]
+	path = BootloaderCommonPkg/Library/IppCrypto2Lib/ipp-crypto
+	url = https://github.com/intel/ipp-crypto.git

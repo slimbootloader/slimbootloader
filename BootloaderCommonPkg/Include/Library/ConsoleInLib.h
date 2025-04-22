@@ -12,6 +12,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 typedef enum {
   ConsoleInSerialPort  = BIT0,
   ConsoleInUsbKeyboard = BIT1,
+  ConsoleInDebugPort   = BIT2,
   ConsoleInAll         = 0xFFFFFFFF,
 } CONSOLE_IN_DEVICE_TYPE;
 

@@ -1,0 +1,84 @@
+## @file
+#
+#  FuSa feature Configuration Delta File.
+#
+#  Copyright (c) 2023, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+#
+
+# Note: This file will come into effect only when ENABLE_FUSA = 1 in BoardConfig file
+
+# BIST Enables
+FUSA_CFG_DATA.FusaPeriodicScanBist0 | 0
+FUSA_CFG_DATA.FusaPeriodicScanBist1 | 0
+FUSA_CFG_DATA.FusaPeriodicArrayBist0 | 0
+FUSA_CFG_DATA.FusaPeriodicArrayBist1 | 0
+
+# Module Lockstep
+FUSA_CFG_DATA.Module0Lockstep | 0
+FUSA_CFG_DATA.Module1Lockstep | 0
+
+# Parity Options
+FUSA_CFG_DATA.DisplayFusaConfigEnable | 1
+FUSA_CFG_DATA.GraphicFusaConfigEnable | 1
+FUSA_CFG_DATA.OpioFusaConfigEnable | 1
+FUSA_CFG_DATA.IopFusaConfigEnable | 1
+FUSA_CFG_DATA.PsfFusaConfigEnable | 1
+FUSA_CFG_DATA.McParity | 1
+FUSA_CFG_DATA.IbeccParity | 1
+
+# IBECC
+MEMORY_CFG_DATA.Ibecc | 1
+# IBECC operation mode: 0:Protect base on address range, 1:Non-protected, 2:All protected
+MEMORY_CFG_DATA.IbeccOperationMode | 2
+
+# CrashLog
+SILICON_CFG_DATA.CpuCrashLogEnable | 1
+SILICON_CFG_DATA.CrashLogReporting | 1
+
+# PROCHOT
+POWER_CFG_DATA.BiProcHot | 0
+POWER_CFG_DATA.ProcHotResponse | 1
+POWER_CFG_DATA.ProcHotLock | 1
+
+TCC_CFG_DATA.TccEnable | 1
+# TCC Power profile settings
+# These are set automatically if TCC is enabled above.
+MEMORY_CFG_DATA.DisPgCloseIdleTimeout         | 1
+MEMORY_CFG_DATA.PowerDownMode                 | 0
+MEMORY_CFG_DATA.HyperThreading                | 0
+MEMORY_CFG_DATA.DisableStarv2medPrioOnNewReq  | 1
+
+POWER_CFG_DATA.Cx                             | 0
+POWER_CFG_DATA.Eist                           | 0
+POWER_CFG_DATA.Hwp                            | 0
+POWER_CFG_DATA.TurboMode                      | 0
+
+SILICON_CFG_DATA.PsfTccEnable                 | 0
+SILICON_CFG_DATA.PchDmiAspmCtrl               | 0
+SILICON_CFG_DATA.PchLegacyIoLowLatency        | 1
+SILICON_CFG_DATA.PchTsnMultiVcEnable          | 1
+SILICON_CFG_DATA.OpioRecenter                 | 1
+SILICON_CFG_DATA.PcieRpAspm                   | {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+SILICON_CFG_DATA.PcieRpL1Substates            | {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+SILICON_CFG_DATA.PciePtm                      | {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+SILICON_CFG_DATA.CpuPcieRpAspm                | {0, 0, 0, 0}
+SILICON_CFG_DATA.CpuPcieRpL1Substates         | {0, 0, 0, 0}
+SILICON_CFG_DATA.CpuPcieRpPtmEnabled          | {1, 1, 1, 1}
+SILICON_CFG_DATA.CpuPcieClockGating           | 0
+SILICON_CFG_DATA.CpuPciePowerGating           | 0
+SILICON_CFG_DATA.CpuPcieRpMultiVcEnabled      | {1, 1, 1, 1}
+SILICON_CFG_DATA.L2QosEnumerationEn           | 1
+SILICON_CFG_DATA.RenderStandby                | 0
+
+# MISC settings that affect FuSa
+SILICON_CFG_DATA.D3ColdEnable                 | 0
+SILICON_CFG_DATA.D3HotEnable                  | 0
+SILICON_CFG_DATA.IehMode                      | 1
+SILICON_CFG_DATA.TcCstateLimit                | 0
+SILICON_CFG_DATA.VccSt                        | 0
+
+# FuSa requires TSN support is enabled.
+SILICON_CFG_DATA.PchTsnEnable                 | 1

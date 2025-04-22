@@ -542,7 +542,7 @@ GetAlignmentFromFile(char *InFile, UINT32 *Alignment)
   PeFileBuffer = (UINT8 *) malloc (PeFileSize);
   if (PeFileBuffer == NULL) {
     fclose (InFileHandle);
-    Error(NULL, 0, 4001, "Resource", "memory cannot be allocated  of %s", InFileHandle);
+    Error(NULL, 0, 4001, "Resource", "memory cannot be allocated for %s", InFile);
     return EFI_OUT_OF_RESOURCES;
   }
   fread (PeFileBuffer, sizeof (UINT8), PeFileSize, InFileHandle);
@@ -821,12 +821,11 @@ Returns:
           if (Alignment < 0x400){
             sprintf (AlignmentBuffer, "%d", Alignment);
           }
-          else if (Alignment >= 0x400) {
-            if (Alignment >= 0x100000) {
-              sprintf (AlignmentBuffer, "%dM", Alignment/0x100000);
-            } else {
-              sprintf (AlignmentBuffer, "%dK", Alignment/0x400);
-            }
+          else if (Alignment >= 0x100000) {
+            sprintf (AlignmentBuffer, "%dM", Alignment/0x100000);
+          }
+          else {
+            sprintf (AlignmentBuffer, "%dK", Alignment/0x400);
           }
           Status = StringtoAlignment (AlignmentBuffer, &(InputFileAlign[InputFileNum]));
         }

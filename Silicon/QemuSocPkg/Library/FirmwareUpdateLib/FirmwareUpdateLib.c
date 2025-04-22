@@ -15,7 +15,6 @@
 #include <Library/HobLib.h>
 #include <Library/SpiFlashLib.h>
 #include <Library/IoLib.h>
-#include <Library/SpiFlashLib.h>
 #include <Library/PcdLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Library/BootloaderCoreLib.h>
@@ -24,8 +23,7 @@
 #include <Library/GpioLib.h>
 #include <Library/FirmwareUpdateLib.h>
 
-SPI_FLASH_SERVICE             *mFwuSpiService = NULL;
-UINT32                         mFlashSize;
+UINT32  mFlashSize = 0;
 
 /**
   Platform code to get capsule image for firmware update.
@@ -46,101 +44,6 @@ PlatformGetCapsuleImage (
   )
 {
   return EFI_UNSUPPORTED;
-}
-
-/**
-  This function initialized boot media.
-
-  It initializes SPI services and SPI Flash size information.
-
-**/
-VOID
-EFIAPI
-InitializeBootMedia (
-  VOID
-  )
-{
-  mFwuSpiService = (SPI_FLASH_SERVICE *)GetServiceBySignature (SPI_FLASH_SERVICE_SIGNATURE);
-  if (mFwuSpiService != NULL) {
-    mFwuSpiService->SpiGetRegion (FlashRegionAll, NULL, &mFlashSize);
-  }
-  ASSERT ((mFwuSpiService != NULL) && (mFlashSize > 0));
-}
-
-/**
-  This function reads blocks from the SPI device.
-
-  @param[in]  Address             The block address in the FlashRegionAll to read from on the SPI.
-  @param[in]  ByteCount           Size of the Buffer in bytes.
-  @param[out] Buffer              Pointer to caller-allocated buffer containing the data received during the SPI cycle.
-
-  @retval EFI_SUCCESS             Read completes successfully.
-  @retval others                  Device error, the command aborts abnormally.
-
-**/
-EFI_STATUS
-EFIAPI
-BootMediaRead (
-  IN     UINT64                  Address,
-  IN     UINT32                  ByteCount,
-  OUT    UINT8                   *Buffer
-  )
-{
-  EFI_STATUS                     Status;
-
-  Status = mFwuSpiService->SpiRead (FlashRegionAll, (UINT32)Address, ByteCount, Buffer);
-
-  return Status;
-}
-
-/**
-  This function writes blocks from the SPI device.
-
-  @param[in]  Address             The block address in the FlashRegionAll to read from on the SPI.
-  @param[in]  ByteCount           Size of the Buffer in bytes.
-  @param[in]  Buffer              Pointer to the data to write.
-
-  @retval EFI_SUCCESS             Write completes successfully.
-  @retval others                  Device error, the command aborts abnormally.
-
-**/
-EFI_STATUS
-EFIAPI
-BootMediaWrite (
-  IN     UINT64                  Address,
-  IN     UINT32                  ByteCount,
-  IN     UINT8                   *Buffer
-  )
-{
-  EFI_STATUS                     Status;
-
-  Status = mFwuSpiService->SpiWrite (FlashRegionAll, (UINT32)Address, ByteCount, Buffer);
-
-  return Status;
-}
-
-/**
-  This function erases blocks from the SPI device.
-
-  @param[in]  Address             The block address in the FlashRegionAll to read from on the SPI.
-  @param[in]  ByteCount           Size of the region to erase in bytes.
-
-  @retval EFI_SUCCESS             Erase completes successfully.
-  @retval others                  Device error, the command aborts abnormally.
-
-**/
-EFI_STATUS
-EFIAPI
-BootMediaErase (
-  IN     UINT64                  Address,
-  IN     UINT32                  ByteCount
-  )
-{
-  EFI_STATUS                     Status;
-
-  Status = mFwuSpiService->SpiErase (FlashRegionAll, (UINT32)Address, ByteCount);
-
-  return Status;
 }
 
 /**
@@ -187,43 +90,7 @@ PlatformGetStage1AOffset (
   OUT UINT32     *Size
   )
 {
-  EFI_STATUS                Status;
-  FLASH_MAP                 *FlashMap;
-
-  if ((Base == NULL) || (Size == NULL)) {
-    return EFI_INVALID_PARAMETER;
-  }
-
-  FlashMap = GetFlashMapPtr();
-  if (FlashMap == NULL) {
-    return EFI_NOT_FOUND;
-  }
-
-  //
-  // Get stage 1A base and size
-  //
-  Status = GetComponentInfoByPartition (FLASH_MAP_SIG_STAGE1A, IsBackupPartition, Base, Size);
-  if (IsBackupPartition && (Status == EFI_NOT_FOUND)) {
-    Status = GetComponentInfoByPartition (FLASH_MAP_SIG_STAGE1A, FALSE, Base, Size);
-  }
-
-  if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, "Could not get component information from flash map \n"));
-    return Status;
-  }
-
-  //
-  // Convert base address to offset in the BIOS region
-  //
-  *Base = (UINT32)(FlashMap->RomSize - (0x100000000ULL - *Base));
-
-  //
-  // Calculate base address of the component in the capsule image
-  // Capsule image address + bios region offset + offset of the component
-  //
-  *Base  = (UINT32)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER) + *Base);
-
-  return EFI_SUCCESS;
+  return EFI_UNSUPPORTED;
 }
 
 /**
@@ -430,7 +297,15 @@ SetBootPartition (
   IN BOOT_PARTITION  Partition
   )
 {
-  UINT8                   Data;
+  UINT8       Data;
+  EFI_STATUS  Status;
+
+  if (mFlashSize == 0) {
+    Status = BootMediaGetRegion (FlashRegionAll, NULL, &mFlashSize);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+  }
 
   //
   // Flip the boot partition.
@@ -476,9 +351,17 @@ PlatformEndFirmwareUpdate (
   VOID
   )
 {
-  UINT8    Data;
+  UINT8       Data;
+  EFI_STATUS  Status;
 
   DEBUG ((DEBUG_INIT, "Firmware update Done! clear FWU flag to normal boot mode.\n"));
+
+  if (mFlashSize == 0) {
+    Status = BootMediaGetRegion (FlashRegionAll, NULL, &mFlashSize);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+  }
 
   //
   // This is platform specific method.
@@ -544,6 +427,26 @@ SetFlashDescriptorLock (
 EFI_STATUS
 EFIAPI
 SetArbSvnCommit (
+   IN  CHAR8     *CmdDataBuf,
+   IN  UINTN     CmdDataSize
+   )
+{
+  return EFI_UNSUPPORTED;
+}
+
+/**
+  Oem Key Revocation
+
+  @param[in]  CmdDataBuf    Pointer to command buffer.
+  @param[in]  CmdDataSize   size of command data.
+
+  @retval  EFI_SUCCESS      Oem Key Revocation is successful.
+  @retval  others           Error happening when updating.
+
+**/
+EFI_STATUS
+EFIAPI
+SetOemKeyRevocation (
    IN  CHAR8     *CmdDataBuf,
    IN  UINTN     CmdDataSize
    )

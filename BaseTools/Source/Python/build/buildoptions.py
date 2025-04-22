@@ -2,8 +2,9 @@
 # build a platform or a module
 #
 #  Copyright (c) 2014, Hewlett-Packard Development Company, L.P.<BR>
-#  Copyright (c) 2007 - 2019, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2007 - 2021, Intel Corporation. All rights reserved.<BR>
 #  Copyright (c) 2018 - 2020, Hewlett Packard Enterprise Development, L.P.<BR>
+#  Copyright (c) 2022, Loongson Technology Corporation Limited. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -40,8 +41,8 @@ class MyOptionParser():
 
     def GetOption(self):
         Parser = OptionParser(description=__copyright__, version=__version__, prog="build.exe", usage="%prog [options] [all|fds|genc|genmake|clean|cleanall|cleanlib|modules|libraries|run]")
-        Parser.add_option("-a", "--arch", action="append", type="choice", choices=['IA32', 'X64', 'EBC', 'ARM', 'AARCH64', 'RISCV64'], dest="TargetArch",
-            help="ARCHS is one of list: IA32, X64, ARM, AARCH64, RISCV64 or EBC, which overrides target.txt's TARGET_ARCH definition. To specify more archs, please repeat this option.")
+        Parser.add_option("-a", "--arch", action="append", dest="TargetArch",
+            help="ARCHS is one of list: IA32, X64, ARM, AARCH64, RISCV64, LOONGARCH64 or EBC, which overrides target.txt's TARGET_ARCH definition. To specify more archs, please repeat this option.")
         Parser.add_option("-p", "--platform", action="callback", type="string", dest="PlatformFile", callback=SingleCheckCallback,
             help="Build the platform specified by the DSC file name argument, overriding target.txt's ACTIVE_PLATFORM definition.")
         Parser.add_option("-m", "--module", action="callback", type="string", dest="ModuleFile", callback=SingleCheckCallback,
@@ -83,8 +84,8 @@ class MyOptionParser():
         Parser.add_option("-D", "--define", action="append", type="string", dest="Macros", help="Macro: \"Name [= Value]\".")
 
         Parser.add_option("-y", "--report-file", action="store", dest="ReportFile", help="Create/overwrite the report to the specified filename.")
-        Parser.add_option("-Y", "--report-type", action="append", type="choice", choices=['PCD', 'LIBRARY', 'FLASH', 'DEPEX', 'BUILD_FLAGS', 'FIXED_ADDRESS', 'HASH', 'EXECUTION_ORDER'], dest="ReportType", default=[],
-            help="Flags that control the type of build report to generate.  Must be one of: [PCD, LIBRARY, FLASH, DEPEX, BUILD_FLAGS, FIXED_ADDRESS, HASH, EXECUTION_ORDER].  "\
+        Parser.add_option("-Y", "--report-type", action="append", type="choice", choices=['PCD', 'LIBRARY', 'FLASH', 'DEPEX', 'BUILD_FLAGS', 'FIXED_ADDRESS', 'HASH', 'EXECUTION_ORDER', 'COMPILE_INFO'], dest="ReportType", default=[],
+            help="Flags that control the type of build report to generate.  Must be one of: [PCD, LIBRARY, FLASH, DEPEX, BUILD_FLAGS, FIXED_ADDRESS, HASH, EXECUTION_ORDER, COMPILE_INFO].  "\
                  "To specify more than one flag, repeat this option on the command line and the default flag set is [PCD, LIBRARY, FLASH, DEPEX, HASH, BUILD_FLAGS, FIXED_ADDRESS]")
         Parser.add_option("-F", "--flag", action="store", type="string", dest="Flag",
             help="Specify the specific option to parse EDK UNI file. Must be one of: [-c, -s]. -c is for EDK framework UNI file, and -s is for EDK UEFI UNI file. "\

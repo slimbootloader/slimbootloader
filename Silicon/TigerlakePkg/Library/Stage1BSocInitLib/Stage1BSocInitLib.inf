@@ -24,10 +24,10 @@
 
 [Packages]
   MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
   Silicon/TigerlakePchPkg/TigerlakePchPkg.dec
   Silicon/TigerlakePkg/TigerlakePkg.dec
-  BootloaderCommonPkg/BootloaderCommonPkg.dec
 
 [LibraryClasses]
   BaseLib

@@ -6,8 +6,8 @@
 
 **/
 
-#include "GpioLibrary.h"
 #include "GpioInitLib.h"
+#include <Library/GpioSiLib.h>
 
 //
 // GPIO_GROUP_DW_DATA structure is used by GpioConfigurePch function
@@ -388,9 +388,10 @@ GpioConfigurePch (
   @retval EFI_INVALID_PARAMETER         Invalid group or pad number
 **/
 EFI_STATUS
+EFIAPI
 GpioConfigurePads (
   IN UINT32                    NumberOfItems,
-  IN GPIO_INIT_CONFIG          *GpioInitTableAddress
+  IN VOID                     *GpioInitTableAddress
   )
 {
   EFI_STATUS   Status;

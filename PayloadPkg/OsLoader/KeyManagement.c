@@ -1,14 +1,14 @@
 /** @file
 
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
 #include "OsLoader.h"
 
-extern CONST CHAR8 *mMmcDllStr;
-UINT8              mRpmbKeyCount = 0;
+extern CONST CHAR16   *mMmcDllStr;
+UINT8                 mRpmbKeyCount = 0;
 
 /**
   Check the eMMC storage serial number validity.
@@ -42,7 +42,7 @@ EmmcSerialNumCheck (
 
   // Get serial number from SPI flash
   VariableLen = sizeof (EmmcTuningData);
-  Status = GetVariable ((CHAR8 *)mMmcDllStr, NULL, &VariableLen, (void *)&EmmcTuningData);
+  Status = GetVariable ((CHAR16 *)mMmcDllStr, NULL, NULL, &VariableLen, (void *)&EmmcTuningData);
   if (EFI_ERROR (Status)) {
     return EFI_NOT_FOUND;
   }
@@ -52,7 +52,7 @@ EmmcSerialNumCheck (
     AsciiStrCpyS (EmmcTuningData.SerialNumber, sizeof(EmmcTuningData.SerialNumber), LoaderPlatformInfo->SerialNumber);
 
     // Save new serial number into SPI flash
-    Status = SetVariable ((CHAR8 *)mMmcDllStr, 0, sizeof (EMMC_TUNING_DATA), (VOID *)&EmmcTuningData);
+    Status = SetVariable ((CHAR16 *)mMmcDllStr, NULL, 0, sizeof (EMMC_TUNING_DATA), (VOID *)&EmmcTuningData);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "MMC serial number save to flash unsuccessful, Status = %r\n", Status));
       return EFI_DEVICE_ERROR;
@@ -79,7 +79,6 @@ EmmcSerialNumCheck (
   2.native android (AOS loader) with Trusty OS           = dseed + rpmb
   3.Clear linux without Trusty                           = useed + dseed
   4.Clear Linux with Trusty (no AOS loader)              = all (useed/dseed/rpmb keys)
-  5.ACRN                                                 = all
 
   @param[in]     CurrentBootOption        Current boot option
   @param[in,out]     SeedList             Pointer to the Seed list
@@ -127,11 +126,11 @@ SeedSanityCheck (
   // Get OStype/ Trusty Flag from Osbootoptionlist for index: 0
   // as its assumed that target OS should always be at index:0
   OsImageType = OsBootOptionList->OsBootOption[0].ImageType;
-  TrustyFlag  = (OsBootOptionList->OsBootOption[0].BootFlags & BOOT_FLAGS_TRUSTY) >> 2;
+  TrustyFlag  = (OsBootOptionList->OsBootOption[0].BootFlags & BOOT_FLAGS_PREOS) >> 2;
 
   // Get Os type/Trusty flag from current boot option
   CurrentOsImageType = CurrentBootOption->ImageType;
-  CurrentTrustyFlag = (CurrentBootOption->BootFlags & BOOT_FLAGS_TRUSTY) >> 2;
+  CurrentTrustyFlag = (CurrentBootOption->BootFlags & BOOT_FLAGS_PREOS) >> 2;
 
   // Compare OS type/Trusty flags of current bootoption with bootoption index 0
   if((OsImageType == CurrentOsImageType) && (TrustyFlag == CurrentTrustyFlag)) {
@@ -158,25 +157,17 @@ SeedSanityCheck (
     }
 
     // Check Image Type and only then only pass seeds to OS. If not, zero out the HOB
-    if(!((OsImageType == EnumImageTypeClearLinux) || (OsImageType == EnumImageTypeAcrn))) {
-      if(UseedCount > 0) {
-        // No other Image should have useeds. Zero out HOB buffer
-        ClearSeedHOB = TRUE;
-      }
+    if(UseedCount > 0) {
+       // No other Image should have useeds. Zero out HOB buffer
+       ClearSeedHOB = TRUE;
     }
-    if(!((OsImageType == EnumImageTypeClearLinux) || (OsImageType == EnumImageTypeAcrn) ||
-    ((OsImageType == EnumImageTypeAdroid) && (TrustyFlag != 0)))) {
-      if(DseedCount > 0) {
-        // No other Image should have dseeds. Zero out HOB buffer
-        ClearSeedHOB = TRUE;
-      }
+    if(DseedCount > 0) {
+      // No other Image should have dseeds. Zero out HOB buffer
+      ClearSeedHOB = TRUE;
     }
-    if (!((OsImageType == EnumImageTypeAdroid) || (OsImageType == EnumImageTypeAcrn) ||
-    ((OsImageType == EnumImageTypeClearLinux) && (TrustyFlag != 0)))) {
-      if(mRpmbKeyCount > 0) {
-        // No other Image should have rpmb keys. Zero out HOB buffer
-        ClearSeedHOB = TRUE;
-      }
+    if(mRpmbKeyCount > 0) {
+      // No other Image should have rpmb keys. Zero out HOB buffer
+      ClearSeedHOB = TRUE;
     }
   } else {
     // Current boot option Image type is not same as Bootoption[0] ImageType.

@@ -52,4 +52,18 @@ GetBootDeviceNameString (
   OS_BOOT_MEDIUM_TYPE      DevType
   );
 
+/**
+  Get image type name string by loaded image type
+
+  @param[in]  ImageType    Loaded Image Type
+
+  @retval String           Return a string when loaded image type is found.
+  @retval NULL             Return NULL if loaded image type is not found.
+**/
+CHAR8 *
+EFIAPI
+GetLoadedImageTypeNameString (
+  LOAD_IMAGE_TYPE      ImageType
+  );
+
 #endif

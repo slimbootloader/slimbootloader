@@ -1,12 +1,11 @@
 /** @file
 
-  Copyright (c) 2016 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2016 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
 #include "Stage2.h"
-
 
 /**
   Callback function to add performance measure point during component loading.
@@ -68,11 +67,11 @@ PreparePayload (
   UINT32                         Dst;
   UINT32                         DstLen;
   VOID                          *DstAdr;
-  BOOLEAN                        IsNormalPld;
   UINT32                         PayloadId;
   UINT32                         ContainerSig;
   UINT32                         ComponentName;
   UINT8                          BootMode;
+  UINT64                         SignatureBuf;
 
   BootMode = GetBootMode();
   //
@@ -83,13 +82,11 @@ PreparePayload (
   }
   // Load payload to PcdPayloadLoadBase.
   PayloadId   = GetPayloadId ();
-  DEBUG ((DEBUG_INFO, "Loading Payload ID 0x%08X\n", PayloadId));
-  IsNormalPld = (PayloadId == 0) ? TRUE : FALSE;
   if (BootMode == BOOT_ON_FLASH_UPDATE) {
     ContainerSig  = COMP_TYPE_PAYLOAD_FWU;
     ComponentName = FLASH_MAP_SIG_FWUPDATE;
   } else {
-    if (IsNormalPld) {
+    if (PayloadId == 0) {
       ContainerSig  = COMP_TYPE_PAYLOAD;
       ComponentName = FLASH_MAP_SIG_PAYLOAD;
     } else {
@@ -97,6 +94,8 @@ PreparePayload (
       ComponentName = PayloadId;
     }
   }
+  SignatureBuf = ComponentName;
+  DEBUG ((DEBUG_INFO, "Loading Payload ID %4a\n", (CHAR8 *)&SignatureBuf));
 
   Dst = PcdGet32 (PcdPayloadExeBase);
   if (FixedPcdGetBool (PcdPayloadLoadHigh)) {
@@ -149,13 +148,25 @@ NormalBootPath (
   UINT8                          *CmdLine;
   UINT32                          CmdLineLen;
   UINT32                          UefiSig;
+  UINT32                          HobSize;
   UINT16                          PldMachine;
+  LOADED_PAYLOAD_INFO             PayloadInfo;
+  UNIVERSAL_PAYLOAD_EXTRA_DATA   *PldImgInfo;
+  FIT_IMAGE_CONTEXT               Context;
+  FIT_RELOCATE_ITEM              *RelocateTable;
+  INTN                            Delta;
+  UINTN                           Index;
+  UNIVERSAL_PAYLOAD_BASE         *PayloadBase;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
 
   // Load payload
   Dst = (UINT32 *)(UINTN)PreparePayload (Stage2Param);
   if (Dst == NULL) {
+    // Unable to recover non-FWU payload, so avoid triggering of recovery flow
+    if (PcdGetBool (PcdSblResiliencyEnabled) && GetBootMode () != BOOT_ON_FLASH_UPDATE) {
+      StopTcoTimer ();
+    }
     CpuHalt ("Failed to load payload !");
   }
 
@@ -178,13 +189,52 @@ NormalBootPath (
         Status = PeCoffLoaderGetEntryPoint (Dst, (VOID *)&PldEntry);
       }
     }
+  } else if (IsFitImage (Dst, &Context)) {
+    DEBUG ((DEBUG_INFO, "FIT Format Payload\n"));
+    Context.PayloadBaseAddress = (UINTN)Dst;
+    if (Context.PayloadBaseAddress != Context.PayloadLoadAddress) {
+      RelocateTable = (FIT_RELOCATE_ITEM *)(UINTN)(Context.PayloadBaseAddress + Context.RelocateTableOffset);
+      Delta         = (INTN)(Context.PayloadBaseAddress - Context.PayloadLoadAddress);
+      Context.PayloadEntryPoint += Delta;
+      for (Index = 0; Index < Context.RelocateTableCount; Index++) {
+        if ((RelocateTable[Index].RelocateType == 10) || (RelocateTable[Index].RelocateType == 3)) {
+          *((UINT64 *)(UINTN)(Context.PayloadBaseAddress + RelocateTable[Index].Offset)) += Delta;
+        }
+      }
+    }
+    DEBUG ((DEBUG_INFO, "Image Base: 0x%08lx, EntryPoint: 0x%08lx\n", Context.PayloadLoadAddress, Context.PayloadEntryPoint));
+    PayloadBase = BuildGuidHob (&gUniversalPayloadBaseGuid, sizeof (UNIVERSAL_PAYLOAD_BASE));
+    PayloadBase->Entry = (EFI_PHYSICAL_ADDRESS)Context.ImageBase;
+
+    // ASSUME 64bit payload. Need get arch info if need support 32bit payload
+    PldMachine = IMAGE_FILE_MACHINE_X64;
+    PldEntry   = (PAYLOAD_ENTRY)(UINTN)Context.PayloadEntryPoint;
   } else if (Dst[10] == EFI_FVH_SIGNATURE) {
     // It is a FV format
     DEBUG ((DEBUG_INFO, "FV Format Payload\n"));
     UefiSig = Dst[0];
     Status  = LoadFvImage (Dst, Stage2Param->PayloadActualLength, (VOID **)&PldEntry, &PldMachine);
-  } else if (IsElfImage (Dst)) {
-    Status = LoadElfImage (Dst, (VOID *)&PldEntry);
+  } else if (IsElfFormat ((CONST UINT8 *)Dst)) {
+    DEBUG ((DEBUG_INFO, "ELF Format Payload\n"));
+    // Assume Universal Payload first
+    ZeroMem (&PayloadInfo, sizeof(PayloadInfo));
+    Status = LoadElfPayload (Dst, &PayloadInfo);
+    if (!EFI_ERROR(Status)) {
+      if (PayloadInfo.Info.Identifier == UNIVERSAL_PAYLOAD_IDENTIFIER) {
+        DEBUG ((DEBUG_INFO, "Universal Payload %a v%08X\n", PayloadInfo.Info.ImageId, PayloadInfo.Info.Revision));
+        UefiSig    = UNIVERSAL_PAYLOAD_IDENTIFIER;
+        HobSize    = sizeof (UNIVERSAL_PAYLOAD_EXTRA_DATA) + sizeof(UNIVERSAL_PAYLOAD_EXTRA_DATA_ENTRY) * PayloadInfo.ImageCount;
+        PldImgInfo = (UNIVERSAL_PAYLOAD_EXTRA_DATA *)BuildGuidHob (&gUniversalPayloadExtraDataGuid, HobSize);
+        if (PldImgInfo != NULL) {
+          ZeroMem (PldImgInfo, HobSize);
+          PldImgInfo->Header.Revision = 0;
+          PldImgInfo->Count = PayloadInfo.ImageCount;
+          CopyMem (&PldImgInfo->Entry[0], &PayloadInfo.LoadedImage, sizeof(UNIVERSAL_PAYLOAD_EXTRA_DATA_ENTRY) * PayloadInfo.ImageCount);
+        }
+      }
+      PldMachine = (UINT16)PayloadInfo.Machine;
+      PldEntry   = (PAYLOAD_ENTRY)PayloadInfo.EntryPoint;
+    }
   } else {
     if (FeaturePcdGet (PcdLinuxPayloadEnabled)) {
       if (IsBzImage (Dst)) {
@@ -227,12 +277,6 @@ NormalBootPath (
   AddMeasurePoint (0x31B0);
   ASSERT_EFI_ERROR (Status);
 
-  if (FixedPcdGetBool (PcdSmpEnabled)) {
-    DEBUG ((DEBUG_INIT, "MP Init%a\n", DebugCodeEnabled() ? " (Done)" : ""));
-    Status = MpInit (EnumMpInitDone);
-    AddMeasurePoint (0x31C0);
-  }
-
   BoardInit (EndOfStages);
 
   PayloadId = GetPayloadId ();
@@ -246,8 +290,19 @@ NormalBootPath (
     // but some customized UEFI payload will. The 1st DWORD in UEFI payload image
     // will be used to indicate if it will handle FSP notifications.
     CallBoardNotify = FALSE;
+  } else if (UefiSig == UNIVERSAL_PAYLOAD_IDENTIFIER) {
+    // Expect Universal UEFI payload would send FSP notifications.
+    CallBoardNotify = FALSE;
   } else {
     CallBoardNotify = TRUE;
+  }
+
+  if (FixedPcdGetBool (PcdSmpEnabled)) {
+    // Only delay MpInitDone for OsLoader
+    if ((PayloadId != 0) || (GetBootMode() == BOOT_ON_FLASH_UPDATE)) {
+      Status = MpInit (EnumMpInitDone);
+      AddMeasurePoint (0x31C0);
+    }
   }
 
   if (CallBoardNotify) {
@@ -262,10 +317,22 @@ NormalBootPath (
 
   DEBUG ((DEBUG_INFO, "HOB @ 0x%08X\n", LdrGlobal->LdrHobList));
   PldHobList = BuildExtraInfoHob (Stage2Param);
+  #if (FixedPcdGetBool (PcdHandOffFdtEnable))
+    PldHobList = BuildFdtForUpl ();
+    ASSERT (PldHobList != NULL);
+  #endif
 
   DEBUG_CODE_BEGIN ();
   PrintStackHeapInfo ();
   DEBUG_CODE_END ();
+
+  UpdateFpdtSblTable ();
+  // FWU payload is the only payload in SBL scope, so stop TCO
+  // timer if another payload is set to be launched
+  if (PcdGetBool (PcdSblResiliencyEnabled) && GetBootMode () != BOOT_ON_FLASH_UPDATE) {
+    StopTcoTimer ();
+    ClearFailedBootCount ();
+  }
 
   DEBUG ((DEBUG_INFO, "Payload entry: 0x%08X\n", PldEntry));
   if (PldEntry != NULL) {
@@ -310,7 +377,6 @@ S3ResumePath (
   S3Data    = (S3_DATA *)LdrGlobal->S3DataPtr;
 
   if (FixedPcdGetBool (PcdSmpEnabled)) {
-    DEBUG ((DEBUG_INFO, "MP Init (Done)\n"));
     MpInit (EnumMpInitDone);
     AddMeasurePoint (0x31C0);
   }
@@ -333,8 +399,15 @@ S3ResumePath (
   // Update FPDT table
   UpdateFpdtS3Table (S3Data->AcpiBase);
 
-  // Find Wake Vector and Jump to OS
   AddMeasurePoint (0x31F0);
+
+  // No payload is executed in S3 resume, so stop TCO timer in all cases
+  if (PcdGetBool (PcdSblResiliencyEnabled)) {
+    StopTcoTimer ();
+    ClearFailedBootCount ();
+  }
+
+  // Find Wake Vector and Jump to OS
   FindAcpiWakeVectorAndJump (S3Data->AcpiBase);
 }
 
@@ -367,6 +440,8 @@ SecStartup (
   S3_DATA                        *S3Data;
   PLATFORM_SERVICE               *PlatformService;
   VOID                           *SmbiosEntry;
+  BOOLEAN                         SplashPostPci;
+  UINT8                           SmmRebaseMode;
 
   // Initialize HOB
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
@@ -381,6 +456,11 @@ SecStartup (
 
   // Deallocate temporary memory used by previous stage
   FreeTemporaryMemory (NULL);
+
+  if (IS_X64) {
+    // Build full physical space 1:1 mapping page table
+    CreateIdentityMappingPageTables (0);
+  }
 
   // Init all services
   InitializeService ();
@@ -419,9 +499,23 @@ SecStartup (
   DEBUG ((DEBUG_INIT, "Silicon Init\n"));
   AddMeasurePoint (0x3020);
   Status = CallFspSiliconInit ();
+
+  FspResetHandler(Status);
+  ASSERT_EFI_ERROR (Status);
+
+  Status = FspVariableHandler(Status, CallFspMultiPhaseSiliconInit);
+  ASSERT_EFI_ERROR(Status);
+
+  Status = FspMultiPhaseSiliconInitHandler();
+  if (Status == EFI_UNSUPPORTED) {
+    DEBUG((DEBUG_INFO, "FspMultiPhaseSiliconInitHandler() returned EFI_UNSUPPORTED.\n"));
+  } else {
+    ASSERT_EFI_ERROR(Status);
+  }
+
   AddMeasurePoint (0x3030);
   FspResetHandler (Status);
-  ASSERT_EFI_ERROR (Status);
+
 
   if (FixedPcdGetBool (PcdSmbiosEnabled)) {
     InitSmbiosStringPtr ();
@@ -430,18 +524,67 @@ SecStartup (
   BoardInit (PostSiliconInit);
   AddMeasurePoint (0x3040);
 
+#if FixedPcdGetBool (PcdEnableCryptoPerfTest)
+  CryptoPerfTest();
+#endif
+
   // Create base HOB
   BuildBaseInfoHob (Stage2Param);
 
   // Display splash
+  SplashPostPci = FALSE;
   if (FixedPcdGetBool (PcdSplashEnabled)) {
-    DisplaySplash ();
+    Status = DisplaySplash ();
     AddMeasurePoint (0x3050);
+    if (Status == EFI_NOT_FOUND) {
+      SplashPostPci = TRUE;
+    }
+  }
+
+  //
+  // Update SMM_REBASE_AUTO and SMM_REBASE_AUTO_NOSMRR to specific rebase modes
+  // Currently, there are three types of payloads:
+  //
+  // Payload A: Payload without SMM support
+  //            Examples: OsLoader payload, UEFI payload without SMM feature support.
+  //
+  // Payload B: Payload with full SMM support
+  //            Examples: UEFI payload built with EDK2 PiSmmCpuDxeSmm that supports SMM relocation.
+  //
+  // Payload C: Payload with partial SMM support (excluding SMM rebase)
+  //            Examples: UEFI payload with EDK2 PiSmmCpuDxeSmm relying on gSmmBaseHobGuid HOB.
+  //                      Note: Starting in 2024, EDK2 PiSmmCpuDxeSmm removed SMM relocation
+  //                      and now depends on the bootloader to handle SMM rebasing and to build
+  //                      a gSmmBaseHobGuid HOB.
+  //  +------------+--------------------------+---------------------------------------------------+
+  //  |   Type     | Expected Rebase Mode     | Comments                                          |
+  //  +------------+--------------------------+---------------------------------------------------+
+  //  | Payload A  | SMM_REBASE_ENABLE        | SBL rebases SMM and configures SMRRs              |
+  //  +------------+--------------------------+---------------------------------------------------+
+  //  | Payload B  | SMM_REBASE_DISABLE       | Payload handles SMM rebasing and configures SMRRs |
+  //  +------------+--------------------------+---------------------------------------------------+
+  //  | Payload C  | SMM_REBASE_ENABLE_NOSMRR | SBL rebases SMM, while the payload configures SMRR|
+  //  +------------+--------------------------+---------------------------------------------------+
+  //
+  // Based on the information above, the UEFI payload can be built into different types of payloads.
+  // SBL must set PcdSmmRebaseMode appropriately according to the type of payload.
+  //
+  SmmRebaseMode = PcdGet8 (PcdSmmRebaseMode);
+  if ((SmmRebaseMode == SMM_REBASE_AUTO) || (SmmRebaseMode == SMM_REBASE_AUTO_NOSMRR)) {
+    if (GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE) {
+      if (SmmRebaseMode == SMM_REBASE_AUTO_NOSMRR) {
+        SmmRebaseMode = SMM_REBASE_ENABLE_NOSMRR;
+      } else {
+        SmmRebaseMode = SMM_REBASE_DISABLE;
+      }
+    } else {
+      SmmRebaseMode = SMM_REBASE_ENABLE;
+    }
+    (VOID) PcdSet8S (PcdSmmRebaseMode, SmmRebaseMode);
   }
 
   // MP Init phase 1
   if (FixedPcdGetBool (PcdSmpEnabled)) {
-    DEBUG ((DEBUG_INFO, "MP Init (Wakeup)\n"));
     Status = MpInit (EnumMpInitWakeup);
   } else {
     DEBUG ((DEBUG_INIT, "BSP Init\n"));
@@ -451,11 +594,22 @@ SecStartup (
 
   // MP Init phase 2
   if (FixedPcdGetBool (PcdSmpEnabled) && !EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "MP Init (Run)\n"));
     Status = MpInit (EnumMpInitRun);
     AddMeasurePoint (0x3080);
   }
   ASSERT_EFI_ERROR (Status);
+
+  //
+  // Allocate SMBIOS tables' memory, set Base and call Smbios init
+  //
+  if (FixedPcdGetBool (PcdSmbiosEnabled)) {
+    SmbiosEntry = AllocateZeroPool (PcdGet16(PcdSmbiosTablesSize));
+    Status = PcdSet32S (PcdSmbiosTablesBase, (UINT32)(UINTN)SmbiosEntry);
+    Status = SmbiosInit ();
+    if (EFI_ERROR(Status)) {
+      DEBUG ((DEBUG_INFO, "SMBIOS init Status = %r\n", Status));
+    }
+  }
 
   // PCI Enumeration
   BoardInit (PrePciEnumeration);
@@ -466,18 +620,23 @@ SecStartup (
     DEBUG ((DEBUG_INIT, "PCI Enum\n"));
     Status = PciEnumeration (MemPool);
     AddMeasurePoint (0x30A0);
-
+    UpdateGraphicsHob ();
     BoardInit (PostPciEnumeration);
     AddMeasurePoint (0x30B0);
 
     if (!EFI_ERROR (Status)) {
-      if (BootMode != BOOT_ON_FLASH_UPDATE) {
+      if (FeaturePcdGet(PcdEnableFwuNotify) || (BootMode != BOOT_ON_FLASH_UPDATE)) {
         BoardNotifyPhase (PostPciEnumeration);
         AddMeasurePoint (0x30C0);
       }
     }
-
     ASSERT_EFI_ERROR (Status);
+
+    if (FixedPcdGetBool (PcdSplashEnabled)) {
+      if (SplashPostPci) {
+        DisplaySplash ();
+      }
+    }
   }
 
   // ACPI Initialization
@@ -514,18 +673,6 @@ SecStartup (
     }
   }
 
-  //
-  // Allocate SMBIOS tables' memory, set Base and call Smbios init
-  //
-  if (FixedPcdGetBool (PcdSmbiosEnabled)) {
-    SmbiosEntry = AllocateZeroPool (PcdGet16(PcdSmbiosTablesSize));
-    Status = PcdSet32S (PcdSmbiosTablesBase, (UINT32)(UINTN)SmbiosEntry);
-    Status = SmbiosInit ();
-    if (EFI_ERROR(Status)) {
-      DEBUG ((DEBUG_INFO, "SMBIOS init Status = %r\n", Status));
-    }
-  }
-
   PlatformService = (PLATFORM_SERVICE *) GetServiceBySignature (PLATFORM_SERVICE_SIGNATURE);
   if (PlatformService != NULL) {
     PlatformService->ResetSystem = ResetSystem;
@@ -533,6 +680,18 @@ SecStartup (
 
   BoardInit (PrePayloadLoading);
   AddMeasurePoint (0x30E0);
+
+  // Trigger SMI to enable SMRR valid bit if required
+  if (SmmRebaseMode == SMM_REBASE_ENABLE) {
+    DEBUG ((DEBUG_INFO, "Enable SMRR\n"));
+    SendSmiIpiAllExcludingSelf ();
+    SendSmiIpi (GetApicId());
+  }
+
+  // Finalize Smbios (add Type127 and cheksum)
+  if (FixedPcdGetBool (PcdSmbiosEnabled)) {
+    FinalizeSmbios ();
+  }
 
   // Continue boot flow
   if (ACPI_ENABLED() && (BootMode == BOOT_ON_S3_RESUME)) {

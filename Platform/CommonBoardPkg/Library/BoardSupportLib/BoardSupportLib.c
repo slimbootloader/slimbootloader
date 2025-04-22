@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -17,9 +17,14 @@
 #include <Library/BootloaderCoreLib.h>
 #include <Library/SpiFlashLib.h>
 #include <Library/CryptoLib.h>
+#include <Library/IgdOpRegionLib.h>
+#include <IgdOpRegionDefines.h>
 
-#define  IMAGE_TYPE_ADDENDUM  0xFE
-#define  IMAGE_TYPE_NOT_USED  0xFF
+#define  IMAGE_TYPE_ADDENDUM  0x1E
+#define  IMAGE_TYPE_NOT_USED  0x1F
+
+#define  PREOS_IMAGE_INDEX    MAX_EXTRA_IMAGE_NUM
+#define  MISC_IMAGE_INDEX     PREOS_IMAGE_INDEX + 1
 
 #define NATIVE_PSTATE_LATENCY         10
 #define PSTATE_BM_LATENCY             10
@@ -62,7 +67,6 @@ FillBootOptionListFromCfgData (
   OS_BOOT_OPTION             *BootOption;
   OS_BOOT_OPTION             *BootOptionCfgData;
   UINT8                       PrevBootOptionIndex;
-  UINT8                       UpdateFlag;
   UINTN                       ImageIdx;
   UINT32                      Idx;
   UINT64                      Lba;
@@ -82,50 +86,58 @@ FillBootOptionListFromCfgData (
       continue;
     }
 
-    UpdateFlag = 0;
     if (BootOptionCfgData->ImageType == IMAGE_TYPE_ADDENDUM) {
       // This entry is an addendum for previous boot option entry
-      if (ImageIdx < ARRAY_SIZE(BootOption->Image)) {
-        UpdateFlag = 2;
-        BootOption = &OsBootOptionList->OsBootOption[PrevBootOptionIndex];
+      BootOption = &OsBootOptionList->OsBootOption[PrevBootOptionIndex];
+      if (BootOptionCfgData->PreOsImageType < MAX_EXTRA_IMAGE_NUM) {
+        // extra image addendum
+        ImageIdx = LoadImageTypeExtra0 + BootOptionCfgData->PreOsImageType;
+      } else if (BootOptionCfgData->PreOsImageType == PREOS_IMAGE_INDEX) {
+        //  PreOS addendum
+        ImageIdx = LoadImageTypePreOs;
+      } else if (BootOptionCfgData->PreOsImageType == MISC_IMAGE_INDEX) {
+        // misc addendum
+        ImageIdx = LoadImageTypeMisc;
+      } else {
+        DEBUG ((DEBUG_ERROR, "Invalid addendum image type: %2x\n", BootOptionCfgData->PreOsImageType));
       }
     } else {
       // CFGDATA has short structure to save size on flash
       // Need to translate the short format to OS_BOOT_OPTION format
-      UpdateFlag = 1;
       ImageIdx   = 0;
       BootOption = &OsBootOptionList->OsBootOption[OsBootOptionList->OsBootOptionCount];
       CopyMem (BootOption, BootOptionCfgData, OFFSET_OF (OS_BOOT_OPTION, Image[0]));
     }
 
-    if (UpdateFlag > 0) {
-      StrPtr = (CHAR8 *)BootOptionCfgData->Image[0].FileName;
-      // Use either LBA or filename. '#' indicates it is LBA string.
-      if ((StrPtr[0] == '#') && (AsciiStrHexToUint64S (StrPtr + 1, NULL, &Lba) == RETURN_SUCCESS)) {
-        BootOption->Image[ImageIdx].LbaImage.Valid   = 1;
-        BootOption->Image[ImageIdx].LbaImage.SwPart  = BootOptionCfgData->SwPart;
-        // LBA should be defined as 64bit.
-        // Will remove the typecast when the structure is fixed.
-        BootOption->Image[ImageIdx].LbaImage.LbaAddr = (UINT32)Lba;
-      } else {
-        CopyMem (BootOption->Image[ImageIdx].FileName, BootOptionCfgData->Image[0].FileName,
-                 sizeof (BootOption->Image[ImageIdx].FileName));
+    StrPtr = (CHAR8 *)BootOptionCfgData->Image[0].FileName;
+    // Use either LBA or filename. '#' indicates it is LBA string.
+    if ((StrPtr[0] == '#') && (AsciiStrHexToUint64S (StrPtr + 1, NULL, &Lba) == RETURN_SUCCESS)) {
+      BootOption->Image[ImageIdx].LbaImage.Valid   = 1;
+      BootOption->Image[ImageIdx].LbaImage.SwPart  = BootOptionCfgData->SwPart;
+      // LBA should be defined as 64bit.
+      // Will remove the typecast when the structure is fixed.
+      BootOption->Image[ImageIdx].LbaImage.LbaAddr = (UINT32)Lba;
+    } else {
+      CopyMem (BootOption->Image[ImageIdx].FileImage.FileName, StrPtr,
+               sizeof (BootOption->Image[ImageIdx].FileName));
+      BootOption->Image[ImageIdx].FileImage.SwPart = BootOptionCfgData->SwPart;
+      BootOption->Image[ImageIdx].FileImage.FsType = BootOptionCfgData->FsType;
+    }
+
+    if (BootOptionCfgData->ImageType != IMAGE_TYPE_ADDENDUM) {
+      PrevBootOptionIndex = OsBootOptionList->OsBootOptionCount;
+      OsBootOptionList->OsBootOptionCount++;
+      if (OsBootOptionList->OsBootOptionCount >= PcdGet32 (PcdOsBootOptionNumber)) {
+        break;
       }
-      if (UpdateFlag == 1) {
-        PrevBootOptionIndex = OsBootOptionList->OsBootOptionCount;
-        OsBootOptionList->OsBootOptionCount++;
-        if (OsBootOptionList->OsBootOptionCount >= PcdGet32 (PcdOsBootOptionNumber)) {
-          break;
-        }
-      }
-      ImageIdx += 1;
     }
   }
 
   GenCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
   if (GenCfgData != NULL) {
     OsBootOptionList->CurrentBoot = GenCfgData->CurrentBoot;
-    if (OsBootOptionList->CurrentBoot != MAX_BOOT_OPTION_CFGDATA_ENTRY) {
+    OsBootOptionList->BootToShell = (GenCfgData->BootToShell == 0)?0:1;
+    if (OsBootOptionList->CurrentBoot != MAX_BOOT_OPTION_ENTRY - 1) {
       if (OsBootOptionList->CurrentBoot >= OsBootOptionList->OsBootOptionCount) {
         OsBootOptionList->CurrentBoot = 0;
       }
@@ -159,7 +171,7 @@ PlatformNameInit (
 
 /**
   Load the configuration data blob from SPI flash into destination buffer.
-  It supports the sources:  BIOS for external Cfgdata.
+  It supports the sources: PDR, BIOS for external Cfgdata.
 
   @param[in]    Dst        Destination address to load configuration data blob.
   @param[in]    Src        Source address to load configuration data blob.
@@ -278,7 +290,7 @@ CheckStateMachine (
   // firmare update process, continue doing firmware update
   // If Bit 3 of State Machine is 0, SM is set to Done. Rest of the bits are ignored while checking for Done state.
   //
-  if (pFwUpdStatus->Signature == FW_UPDATE_STATUS_SIGNATURE) {
+  if ((pFwUpdStatus->Signature == FW_UPDATE_STATUS_SIGNATURE) || (pFwUpdStatus->Signature == FW_RECOVERY_STATUS_SIGNATURE)) {
     if ((pFwUpdStatus->StateMachine != FW_UPDATE_SM_INIT) && (pFwUpdStatus->StateMachine & BIT3)) {
       DEBUG((DEBUG_ERROR, "State Machine set to processing mode, triggering firmware update\n"));
       return EFI_SUCCESS;

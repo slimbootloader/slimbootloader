@@ -1,0 +1,10 @@
+VerInfo.txt
+*/VbtBin/*
+!QemuBoardPkg/VbtBin/
+!CoffeelakeBoardPkg/VbtBin/
+!AlderlakeBoardPkg/VbtBin/
+!ApollolakeBoardPkg/VbtBin/Vbt_*.*
+!ArrowlakeBoardPkg/VbtBin/*
+*.json
+!RaptorlakeBoardPkg/VbtBin/Vbt_rplp*.*
+!RaptorlakeBoardPkg/VbtBin/VbtRplPs*.*

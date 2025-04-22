@@ -135,7 +135,7 @@ DebugAgentIsBsp (
   IN UINT32  ProcessorIndex
   )
 {
-  MSR_IA32_APIC_BASE  MsrApicBase;
+  MSR_IA32_APIC_BASE_REGISTER  MsrApicBase;
 
   //
   // If there are less than 2 CPUs detected, then the currently executing CPU
@@ -147,7 +147,7 @@ DebugAgentIsBsp (
   }
 
   MsrApicBase.Uint64 = AsmReadMsr64 (0x0000001B);
-  if (MsrApicBase.Bits.Bsp == 1) {
+  if (MsrApicBase.Bits.BSP == 1) {
     if (mDebugMpContext.BspIndex != ProcessorIndex) {
       AcquireMpSpinLock (&mDebugMpContext.MpContextSpinLock);
       mDebugMpContext.BspIndex = ProcessorIndex;

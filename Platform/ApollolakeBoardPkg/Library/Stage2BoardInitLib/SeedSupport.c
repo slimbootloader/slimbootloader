@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -251,7 +251,7 @@ GenerateSeeds (
 
   // Get EmmcTuningData.SerialNumber from SPI using variable service
   VariableLen = sizeof (EmmcTuningData);
-  Status = GetVariable ("MMCDLL", NULL, &VariableLen, (void *)&EmmcTuningData);
+  Status = GetVariable (L"MMCDLL", NULL, NULL, &VariableLen, (void *)&EmmcTuningData);
   if ((Status != EFI_SUCCESS) || (AsciiStrnCmp (EmmcTuningData.SerialNumber, "badbadbadbadba", sizeof (EmmcTuningData.SerialNumber)) == 0)) {
     RpmbSerialNumberValid = FALSE;
   } else {
@@ -283,7 +283,6 @@ GenerateSeeds (
   2.native android (AOS loader) with Trusty OS            = dseed + rpmb
   3.Clear linux without Trusty                            = useed + dseed
   4.Clear Linux with Trusty (no AOS loader)               = all (useed/dseed/rpmb keys)
-  5.ACRN                                                  = all
 
   @retval  BOOLEAN           Seed Type present or not.
 **/
@@ -294,41 +293,12 @@ SeedStatusBasedOnImageType (
   )
 {
   OS_BOOT_OPTION_LIST   *OsBootOptionList;
-  UINT8                 OsImageType;
-  BOOLEAN               TrustyFlag;
 
   OsBootOptionList = GetBootOptionList ();
   if (OsBootOptionList == NULL || OsBootOptionList->OsBootOptionCount == 0) {
     return FALSE;
   }
-  // First boot option should be the target OS.
-  TrustyFlag  = (OsBootOptionList->OsBootOption[0].BootFlags & BOOT_FLAGS_TRUSTY) >> 2;
-  OsImageType = OsBootOptionList->OsBootOption[0].ImageType;
 
-  switch (SeedType) {
-    case UserSeed:
-      if((OsImageType == EnumImageTypeClearLinux) || (OsImageType == EnumImageTypeAcrn)) {
-        return TRUE;
-      }
-      break;
-
-    case DeviceSeed:
-      if((OsImageType == EnumImageTypeClearLinux) || (OsImageType == EnumImageTypeAcrn) ||
-        ((OsImageType == EnumImageTypeAdroid) && (TrustyFlag != 0))) {
-        return TRUE;
-      }
-      break;
-
-    case RpmbKey:
-      if ((OsImageType == EnumImageTypeAdroid) || (OsImageType == EnumImageTypeAcrn) ||
-        ((OsImageType == EnumImageTypeClearLinux) && (TrustyFlag != 0))) {
-        return TRUE;
-      }
-      break;
-
-    default:
-      break;
-  }
   return FALSE;
 }
 

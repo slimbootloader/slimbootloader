@@ -1,0 +1,717 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : MEM
+- MEMORY_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ MEMORY_CFG_DATA, 0x180, 0, 0 ] }
+  - !expand { MEM_TMPL : [ MISC ] }
+  - SpdAddressTable :
+      name         : Spd Address Table
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Specify SPD Address table for CH0D0/CH0D1/CH1D0/CH1D1
+      length       : 0x10
+      value        : { 0xA0, 0xA2, 0, 0, 0, 0, 0, 0, 0xA4, 0xA6, 0, 0, 0, 0, 0, 0 }
+  - !expand { SPD_TMPL : [ 0, 0, 0 ,  0x0 ] }
+  - !expand { SPD_TMPL : [ 0, 0, 1 ,  0x0 ] }
+  - !expand { SPD_TMPL : [ 0, 1, 0 ,  0x0 ] }
+  - !expand { SPD_TMPL : [ 0, 1, 1 ,  0x0 ] }
+  - !expand { SPD_TMPL : [ 0, 2, 0 ,  0x0 ] }
+  - !expand { SPD_TMPL : [ 0, 2, 1 ,  0x0 ] }
+  - !expand { SPD_TMPL : [ 0, 3, 0 ,  0x0 ] }
+  - !expand { SPD_TMPL : [ 0, 3, 1 ,  0x0 ] }
+  - !expand { SPD_TMPL : [ 1, 0, 0 ,  0x0 ] }
+  - !expand { SPD_TMPL : [ 1, 0, 1 ,  0x0 ] }
+  - !expand { SPD_TMPL : [ 1, 1, 0 ,  0x0 ] }
+  - !expand { SPD_TMPL : [ 1, 1, 1 ,  0x0 ] }
+  - !expand { SPD_TMPL : [ 1, 2, 0 ,  0x0 ] }
+  - !expand { SPD_TMPL : [ 1, 2, 1 ,  0x0 ] }
+  - !expand { SPD_TMPL : [ 1, 3, 0 ,  0x0 ] }
+  - !expand { SPD_TMPL : [ 1, 3, 1 ,  0x0 ] }
+  - DqsMapCpu2DramMc0Ch0 :
+      name         : Dqs Map CPU to DRAM MC 0 CH 0
+      type         : EditNum, HEX, (0x00,0xFFFF)
+      help         : >
+                     Set Dqs mapping relationship between CPU and DRAM, Memory controller 0 Channel 0- board-dependentt
+      length       : 0x02
+      value        : { 0, 1}
+  - DqsMapCpu2DramMc0Ch1 :
+      name         : Dqs Map CPU to DRAM MC 0 CH 1
+      type         : EditNum, HEX, (0x00,0xFFFF)
+      help         : >
+                     Set Dqs mapping relationship between CPU and DRAM, Memory controller 0 Channel 1- board-dependentt
+      length       : 0x02
+      value        : { 1, 0}
+  - DqsMapCpu2DramMc0Ch2 :
+      name         : Dqs Map CPU to DRAM MC 0 CH 2
+      type         : EditNum, HEX, (0x00,0xFFFF)
+      help         : >
+                     Set Dqs mapping relationship between CPU and DRAM, Memory controller 0 Channel 2- board-dependentt
+      length       : 0x02
+      value        : { 0, 1}
+  - DqsMapCpu2DramMc0Ch3 :
+      name         : Dqs Map CPU to DRAM MC 0 CH 3
+      type         : EditNum, HEX, (0x00,0xFFFF)
+      help         : >
+                     Set Dqs mapping relationship between CPU and DRAM, Memory controller 0 Channel 3- board-dependentt
+      length       : 0x02
+      value        : { 1, 0}
+  - DqsMapCpu2DramMc1Ch0 :
+      name         : Dqs Map CPU to DRAM MC 1 CH 0
+      type         : EditNum, HEX, (0x00,0xFFFF)
+      help         : >
+                     Set Dqs mapping relationship between CPU and DRAM, Memory controller 1 Channel 0- board-dependentt
+      length       : 0x02
+      value        : { 1, 0}
+  - DqsMapCpu2DramMc1Ch1 :
+      name         : Dqs Map CPU to DRAM MC 1 CH 1
+      type         : EditNum, HEX, (0x00,0xFFFF)
+      help         : >
+                     Set Dqs mapping relationship between CPU and DRAM, Memory controller 1 Channel 1- board-dependentt
+      length       : 0x02
+      value        : { 0, 1}
+  - DqsMapCpu2DramMc1Ch2 :
+      name         : Dqs Map CPU to DRAM MC 1 CH 2
+      type         : EditNum, HEX, (0x00,0xFFFF)
+      help         : >
+                     Set Dqs mapping relationship between CPU and DRAM, Memory controller 1 Channel 2- board-dependentt
+      length       : 0x02
+      value        : { 0, 1}
+  - DqsMapCpu2DramMc1Ch3 :
+      name         : Dqs Map CPU to DRAM MC 1 CH 3
+      type         : EditNum, HEX, (0x00,0xFFFF)
+      help         : >
+                     Set Dqs mapping relationship between CPU and DRAM, Memory controller 1 Channel 3- board-dependentt
+      length       : 0x02
+      value        : { 1, 0}
+  - DqMapCpu2DramMc0Ch0 :
+      name         : MC0 Dq Byte Map CH0
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Memory controller 0 chennel 0 LPDDR4 DQ swizzling between CPU and DRAM
+      length       : 0x10
+      value        : { 0,  1,  6,  7,  3,  2,  5,  4, 15,  8,  9, 14, 12, 11, 10, 13}
+  - DqMapCpu2DramMc0Ch1 :
+      name         : MC0 Dq Byte Map CH1
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Memory controller 0 chennel 1 LPDDR4 DQ swizzling between CPU and DRAM
+      length       : 0x10
+      value        : { 11, 12,  8, 15,  9, 14, 10, 13, 3,  4,  7,  0,  6,  1,  5,  2}
+  - DqMapCpu2DramMc0Ch2 :
+      name         : MC0 Dq Byte Map CH2
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Memory controller 0 chennel 2 LPDDR4 DQ swizzling between CPU and DRAM
+      length       : 0x10
+      value        : {4,  5,  3,  2,  7,  1,  0,  6, 11, 10, 12, 13,  8,  9, 14, 15}
+  - DqMapCpu2DramMc0Ch3 :
+      name         : MC0 Dq Byte Map CH3
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Memory controller 0 chennel 3 LPDDR4 DQ swizzling between CPU and DRAM
+      length       : 0x10
+      value        : {12, 11,  8, 13, 14, 15,  9, 10,  4,  7,  3,  2,  1,  6,  0,  5}
+  - DqMapCpu2DramMc1Ch0 :
+      name         : MC1 Dq Byte Map CH0
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Memory controller 1 chennel 0 LPDDR4 DQ swizzling between CPU and DRAM
+      length       : 0x10
+      value        : { 11, 10,  9,  8, 12, 13, 15, 14, 4,  5,  6,  7,  3,  2,  0,  1}
+  - DqMapCpu2DramMc1Ch1 :
+      name         : MC1 Dq Byte Map CH1
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Memory controller 1 chennel 1 LPDDR4 DQ swizzling between CPU and DRAM
+      length       : 0x10
+      value        : {0,  7,  1,  6,  3,  5,  2,  4, 9,  8, 10, 11, 14, 15, 13, 12}
+  - DqMapCpu2DramMc1Ch2 :
+      name         : MC1 Dq Byte Map CH2
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Memory controller 1 chennel 2 LPDDR4 DQ swizzling between CPU and DRAM
+      length       : 0x10
+      value        : {4,  5,  6,  1,  3,  2,  7,  0, 10, 13, 12, 11, 14,  9, 15,  8}
+  - DqMapCpu2DramMc1Ch3 :
+      name         : MC1 Dq Byte Map CH3
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Memory controller 1 chennel 3 LPDDR4 DQ swizzling between CPU and DRAM
+      length       : 0x10
+      value        : {10, 12,  9, 15,  8, 11, 13, 14, 3,  4,  1,  2,  6,  0,  5,  7}
+  - DqPinsInterleaved :
+      name         : Dqs Pins Interleaved Setting
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Indicates DqPinsInterleaved setting- board-dependent
+      length       : 0x01
+      value        : 0x0
+  - RcompResistor :
+      name         : RcompResistor settings
+      type         : EditNum, HEX, (0x00, 0xFFFF)
+      help         : >
+                     Indicates  RcompResistor settings- Board-dependent
+      length       : 0x02
+      value        : 0x0
+  - RcompTarget  :
+      name         : RcompTarget settings
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     RcompTarget settings- board-dependent
+      length       : 0x05
+      value        : { 0, 0, 0, 0, 0 }
+  - SmbusAddressTable :
+      name         : Smbus Address Table
+      type         : EditNum, HEX, (0x00,0xFFFFFFFF)
+      help         : >
+                     Specify the reserved SMBUS address table
+      length       : 0x04
+      value        : { 0xA2, 0xA0, 0xA2, 0xA0 }
+  - PlatformMemorySize :
+      name         : Platform Reserved Memory Size
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     The minimum platform memory size required to pass control to post-memory init
+      length       : 0x08
+      value        : 0x5976000
+  - X2ApicOptOut :
+      name         : State of X2APIC_OPT_OUT bit in the DMAR table
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     0=Disable/Clear, 1=Enable/Set
+      length       : 0x1
+      value        : 0x0
+  - DmaControlGuarantee :
+      name         : State of DMA_CONTROL_GUARANTEE bit in the DMAR table
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     0=Disable/Clear, 1=Enable/Set
+      length       : 0x1
+      value        : 0x0
+  - MrcFastBoot  :
+      name         : MRC Fast Boot
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enables/Disable the MRC fast path thru the MRC
+      length       : 0x01
+      value        : 0x1
+  - RmtPerTask   :
+      name         : Rank Margin Tool per Task
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     This option enables the user to execute Rank Margin Tool per major training step in the MRC.
+      length       : 0x01
+      value        : 0x0
+  - IedSize      :
+      name         : Intel Enhanced Debug
+      type         : Combo
+      option       : 0 :Disable, 0x400000 :Enable
+      help         : >
+                     Intel Enhanced Debug (IED)- 0=Disabled, 0x400000=Enabled and 4MB SMRAM occupied
+      length       : 0x04
+      value        : 0x00000000
+  - TsegSize     :
+      name         : Tseg Size
+      type         : Combo
+      option       : 0x0400000:4MB, 0x00800000:8MB, 0x01000000:16MB
+      help         : >
+                     Size of SMRAM memory reserved. 0x400000 for Release build and 0x1000000 for Debug build
+      length       : 0x04
+      value        : 0x00800000
+  - MmioSize     :
+      name         : MMIO Size
+      type         : EditNum, HEX, (0,0xC00)
+      help         : >
+                     Size of MMIO space reserved for devices. 0=Auto, non-Zero=size in MB
+      length       : 0x02
+      value        : 0x0
+  - SmbusEnable  :
+      name         : Enable SMBus
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable SMBus controller.
+      length       : 0x01
+      value        : 0x01
+  - TxtDprMemoryBase :
+      name         : Txt Dpr Memory Base
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     Base Address of Txt Dpr
+      length       : 0x08
+      value        : 0x400000
+  - TxtDprMemorySize :
+      name         : Txt Dpr Memory Size
+      type         : EditNum, HEX, (0x00,0xFFFFFFFF)
+      help         : >
+                     Size of Txt Dpr
+      length       : 0x04
+      value        : 0x400000
+  - BiosAcmBase  :
+      name         : ACM Base
+      type         : EditNum, HEX, (0x00,0xFFFFFFFF)
+      help         : >
+                     Base Address of ACM
+      length       : 0x04
+      value        : 0xFF6C0000
+  - UserBd       :
+      name         : Board Type
+      type         : Combo
+      option       : 0:Mobile/Mobile Halo, 1:Desktop/DT Halo, 5:ULT/ULX/Mobile Halo, 7:UP Server
+      help         : >
+                     MrcBoardType, Options are 0=Mobile/Mobile Halo, 1=Desktop/DT Halo, 5=ULT/ULX/Mobile Halo, 7=UP Server
+      length       : 0x01
+      value        : 0x05
+  - RealtimeMemoryTiming :
+      name         : Realtime Memory Timing
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     When enabled, it will allow the system to perform realtime memory timing changes after MRC_DONE.
+      length       : 0x01
+      value        : 0x0
+  - EnableC6Dram :
+      name         : C6DRAM power gating feature
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     This policy indicates whether or not BIOS should allocate PRMRR memory for C6DRAM power gating feature.- 0- Don't allocate any PRMRR memory for C6DRAM power gating feature.- 1- Allocate PRMRR memory for C6DRAM power gating feature.
+      length       : 0x01
+      value        : 0x00
+  - CpuRatio     :
+      name         : CPU ratio value
+      type         : EditNum, HEX, (0x00, 0x3F)
+      help         : >
+                     CPU ratio value. Valid Range 0 to 63
+      length       : 0x01
+      value        : 0x00
+  - BootFrequency :
+      name         : Boot frequency
+      type         : Combo
+      option       : 0:0, 1:1, 2:2
+      help         : >
+                     Sets the boot frequency starting from reset vector.- 0- Maximum battery performance.- 1- Maximum non-turbo performance.- 2- Turbo performance. @note If Turbo is selected BIOS will start in max non-turbo mode and switch to Turbo mode.
+      length       : 0x01
+      value        : 0x01
+  - ActiveCoreCount :
+      name         : Number of active cores
+      type         : Combo
+      option       : 0:All, 1:1, 2:2, 3:3
+      help         : >
+                     Number of active cores(Depends on Number of cores). 0- All;1- 1 ;2- 2 ;3- 3
+      length       : 0x01
+      value        : 0x00
+  - FClkFrequency :
+      name         : Processor Early Power On Configuration FCLK setting
+      type         : Combo
+      option       : 0:800 MHz, 1:1 GHz, 2:400 MHz, 3:Reserved
+      help         : >
+                     0- 800 MHz (ULT/ULX). 1- 1 GHz (DT/Halo). Not supported on ULT/ULX.- 2- 400 MHz. - 3- Reserved
+      length       : 0x01
+      value        : 0x01
+  - PcieClkSrcUsage :
+      name         : Usage type for ClkSrc
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     0-23- PCH rootport, 0x40-0x43- PEG port, 0x70:LAN, 0x80- unspecified but in use (free running), 0xFF- not used
+      length       : 0x10
+      value        : { 0x40, 0x02, 0x03, 0x08, 0x70, 0x07, 0x04, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80 }
+  - PcieClkSrcClkReq :
+      name         : ClkReq-to-ClkSrc mapping
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Number of ClkReq signal assigned to ClkSrc
+      length       : 0x10
+      value        : { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F }
+  - DmiGen3RootPortPreset :
+      name         : DMI Gen3 Root port preset values per lane
+      type         : EditNum, HEX, (0x00, 0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     Used for programming DMI Gen3 preset values per lane. Range- 0-9, 8 is default for each lane
+      length       : 0x8
+      value        : {0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8}
+  - DmiGen3EndPointPreset :
+      name         : DMI Gen3 End port preset values per lane
+      type         : EditNum, HEX, (0x00, 0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     Used for programming DMI Gen3 preset values per lane. Range- 0-9, 7 is default for each lane
+      length       : 0x8
+      value        : {0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7}
+  - DmiGen3EndPointHint :
+      name         : DMI Gen3 End port Hint values per lane
+      type         : EditNum, HEX, (0x00, 0xFFFFFFFFFFFFFFFF)
+      help         : >
+                     Used for programming DMI Gen3 Hint values per lane. Range- 0-6, 2 is default for each lane
+      length       : 0x8
+      value        : {0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2}
+  - DmiGen3RxCtlePeaking :
+      name         : DMI Gen3 RxCTLEp per-Bundle control
+      type         : EditNum, HEX, (0x00, 0xFFFF)
+      help         : >
+                     Range- 0-15, 0 is default for each bundle, must be specified based upon platform design
+      length       : 0x4
+      value        : {0x0, 0x0, 0x0, 0x0}
+  - MrcSafeConfig :
+      name         : MRC Safe Config
+      option       : $EN_DIS
+      help         : >
+                     Enables/Disable MRC Safe Config
+      length       : 0x01
+      value        : 0x01
+  - SaGv         :
+      name         : SA GV
+      type         : Combo
+      option       : 0:Disabled, 1:FixedPoint0, 2:FixedPoint1, 3:FixedPoint2, 4:FixedPoint3, 5:Enabled
+      help         : >
+                     System Agent dynamic frequency support and when enabled memory will be training at different frequencies. 0:Disabled, 1:FixedPoint0, 2:FixedPoint1, 3:FixedPoint2, 4:FixedPoint3, 5:Enabled
+      length       : 0x01
+      value        : 0x00
+  - DisPgCloseIdleTimeout :
+      name         : Page Close Idle Timeout
+      type         : Combo
+      option       : 0:Enabled, 1:Disabled
+      help         : >
+                     This option controls Page Close Idle Timeout
+      length       : 0x01
+      value        : 0x0
+  - PowerDownMode :
+      name         : Power Down Mode
+      type         : Combo
+      option       : 0x0:No Power Down, 0x1:APD, 0x6:PPD DLL OFF, 0xFF:Auto
+      help         : >
+                     This option controls command bus tristating during idle periods
+      length       : 0x01
+      value        : 0x0
+  - VtdDisable   :
+      name         : Disable VT-d
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     0=Enable/FALSE(VT-d enabled), 1=Disable/TRUE (VT-d disabled)
+      length       : 0x1
+      value        : 0x0
+  - VmxEnable    :
+      name         : Enable or Disable VMX
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable VMX; 0- Disable; <b>1- Enable</b>.
+      length       : 0x01
+      value        : 0x0
+  - WrcFeatureEnable :
+      name         : WRC Feature
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/Disable WRC (Write Cache) feature of IOP. When feature is enabled, supports IO devices allocating onto the ring and into LLC. WRC is fused on by default.
+      length       : 0x01
+      value        : 0x0
+  - HyperThreading :
+      name         : Hyper Threading Enable/Disable
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable or Disable Hyper Threading; 0- Disable; <b>1- Enable</b>
+      length       : 0x01
+      value        : 0x01
+  - GtClosEnable :
+      name         : Enable Gt CLOS
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     0(Default)=Disable, 1=Enable
+      length       : 0x01
+      value        : 0x0
+  - EnhancedInterleave :
+      name         : Enhanced Interleave support
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enables/Disable Enhanced Interleave support
+      length       : 0x01
+      value        : 0x01
+  - RankInterleave :
+      name         : Rank Interleave support
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enables/Disable Rank Interleave support. NOTE- RI and HORI can not be enabled at the same time.
+      length       : 0x01
+      value        : 0x01
+  - RhPrevention :
+      name         : Enable RH Prevention
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enables/Disable RH Prevention
+      length       : 0x01
+      value        : 0x00
+  - RhSolution   :
+      condition    : $MEMORY_CFG_DATA.RhPrevention == 1
+      name         : Row Hammer Solution
+      type         : Combo
+      option       : 0:Hardware RHP, 1:2x Refresh
+      help         : >
+                     Type of method used to prevent Row Hammer.
+      length       : 0x01
+      value        : 0x00
+  - RhActProbability :
+      condition    : $MEMORY_CFG_DATA.RhPrevention == 1 or $MEMORY_CFG_DATA.RhSolution == 0
+      name         : RH Activation Probability
+      type         : EditNum, HEX, (0x01, 0xF)
+      help         : >
+                     RH Activation Probability, Probability value is 1/2^(inputvalue)
+      length       : 0x01
+      value        : 0xB
+  - ExitOnFailure :
+      name         : Exit On Failure (MRC)
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enables/Disable Exit On Failure (MRC)
+      length       : 0x01
+      value        : 0x01
+  - ChHashEnable :
+      name         : Ch Hash Support
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/Disable Channel Hash Support. NOTE- ONLY if Memory interleaved Mode
+      length       : 0x01
+      value        : 0x01
+  - ChHashInterleaveBit :
+      name         : Ch Hash Interleaved Bit
+      type         : Combo
+      option       : 0:BIT6, 1:BIT7, 2:BIT8, 3:BIT9, 4:BIT10, 5:BIT11, 6:BIT12, 7:BIT13
+      help         : >
+                     Select the BIT to be used for Channel Interleaved mode. NOTE- BIT7 will interlave the channels at a 2 cacheline granularity, BIT8 at 4 and BIT9 at 8
+      length       : 0x01
+      value        : 0x02
+  - ChHashMask   :
+      name         : Ch Hash Mask
+      type         : EditNum, HEX, (0x0001, 0x3FFF)
+      help         : >
+                     Set the BIT(s) to be included in the XOR function. NOTE BIT mask corresponds to BITS [19:6}.
+      length       : 0x02
+      value        : 0x30CC
+  - CkeRankMapping :
+      name         : Cke Rank Mapping
+      type         : EditNum, HEX, (0x0, 0xFF)
+      help         : >
+                     Bits [7:4] - Channel 1, bits [3:0] - Channel 0. Bit [i] specifies which rank CKE[i] goes to.
+      length       : 0x01
+      value        : 0xAA
+  - RemapEnable  :
+      name         : Memory Remap
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enables/Disable Memory Remap
+      length       : 0x01
+      value        : 0x01
+  - DisableDimmChannel0 :
+      name         : Channel A DIMM Control
+      type         : Combo
+      option       : 0:Enable both DIMMs, 1:Disable DIMM0, 2:Disable DIMM1, 3:Disable both DIMMs
+      help         : >
+                     Channel A DIMM Control Support - Enable or Disable Dimms on Channel A.
+      length       : 0x01
+      value        : 0x00
+  - DisableDimmChannel1 :
+      name         : Channel B DIMM Control
+      type         : Combo
+      option       : 0:Enable both DIMMs, 1:Disable DIMM0, 2:Disable DIMM1, 3:Disable both DIMMs
+      help         : >
+                     Channel B DIMM Control Support - Enable or Disable Dimms on Channel B.
+      length       : 0x01
+      value        : 0x00
+  - ScramblerSupport :
+      name         : Scrambler Support
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     This option enables data scrambling in memory.
+      length       : 0x01
+      value        : 0x1
+  - McParity     :
+      name         : McParity
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     CMI/MC Parity Control
+      length       : 0x01
+      value        : 0x01
+  - Ibecc        :
+      name         : Ibecc
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     In-Band ECC Support
+      length       : 0x01
+      value        : 0x00
+  - IbeccParity  :
+      condition    : $MEMORY_CFG_DATA.Ibecc != 0
+      name         : IbeccParity
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     In-Band ECC Parity Control
+      length       : 0x01
+      value        : 0x01
+  - IbeccOperationMode :
+      condition    : $MEMORY_CFG_DATA.Ibecc != 0
+      name         : IbeccOperationMode
+      type         : Combo
+      option       : 0:Protect base on address range, 1:Non-protected, 2:All protected
+      help         : >
+                     In-Band ECC Operation Mode
+      length       : 0x01
+      value        : 0x02
+  - IbeccProtectedRegionEnable :
+      condition    : $MEMORY_CFG_DATA.Ibecc != 0
+      name         : IbeccProtectedRegionEnable
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     In-Band ECC Protected Region Enable
+      length       : 0x8
+      value        : { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 }
+  - IbeccProtectedRegionBase :
+      condition    : $MEMORY_CFG_DATA.Ibecc != 0
+      name         : IbeccProtectedRegionBases
+      type         : EditNum, HEX, (0x00,0xFFFF)
+      struct       : UINT16
+      help         : >
+                     IBECC Protected Region Bases
+      length       : 0x10
+      value        : {0:0W,  0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 }
+  - IbeccProtectedRegionMask :
+      condition    : $MEMORY_CFG_DATA.Ibecc != 0
+      name         : IbeccProtectedRegionMasks
+      type         : EditNum, HEX, (0x00,0x3FFF)
+      struct       : UINT16
+      help         : >
+                     IBECC Protected Region Masks. Max value this can have is 0x3FFF
+      length       : 0x10
+      value        : {0:0W,  0x3FFF, 0x3FFF, 0x3FFF, 0x3FFF, 0x3FFF, 0x3FFF, 0x3FFF, 0x3FFF }
+  - IbeccErrorInj :
+      name         : IbeccErrorInj
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     In-Band ECC Error Injection NOTE- For Debug or Development purposes only! Disable this option for production systems.
+      length       : 0x01
+      value        : 0x00
+  - PchTraceHubMode :
+      name         : PCH Trace Hub Mode
+      type         : Combo
+      option       : 0:Disable, 1:Target Debugger Mode, 2:Host Debugger Mode
+      help         : >
+                     Select 'Host Debugger' if Trace Hub is used with host debugger tool or 'Target Debugger' if Trace Hub is used by target debugger software or 'Disable' trace hub functionality.
+      length       : 0x01
+      value        : 0x0
+  - PlatformDebugConsent :
+      name         : Platform Debug Consent
+      type         : Combo
+      option       : 0:Disabled, 1:Enabled (DCI OOB+[DbC]), 2:Enabled (DCI OOB), 3:Enabled (USB3 DbC), 4:Enabled (XDP/MIPI60), 5:Enabled (USB2 DbC), 6:Enable (2-wire DCI OOB), 7:Manual
+      help         : >
+                     To 'opt-in' for debug, please select 'Enabled' with the desired debug probe type. Enabling this BIOS option may alter the default value of other debug-related BIOS options.\Manual- Do not use Platform Debug Consent to override other debug-relevant policies, but the user must set each debug option manually, aimed at advanced users.\nNote- DCI OOB (aka BSSB) uses CCA probe;[DCI OOB+DbC] and [USB2 DbC] have the same setting.
+      length       : 0x01
+      value        : 0x0
+  - DciEn        :
+      name         : DCI Enable
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Determine if to enable DCI debug from host
+      length       : 0x01
+      value        : 0x0
+  - !expand { MEM_TMPL : [ Training ] }
+  - RMT          :
+      name         : Rank Margin Tool
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable/disable Rank Margin Tool.
+      length       : 0x01
+      value        : 0x01
+  - BdatEnable   :
+      name         : Generate BIOS Data ACPI Table
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enable- Generate BDAT for MRC RMT or SA PCIe data. Disable (Default)- Do not generate it
+      length       : 0x01
+      value        : 0x00
+  - BdatTestType :
+      name         : BdatTestType
+      type         : Combo
+      option       : 0:Rank Margin Tool, 1:Margin2D
+      help         : >
+                     Indicates the type of Memory Training data to populate into the BDAT ACPI table.
+      length       : 0x1
+      value        : 0x00
+  - RMC          :
+      name         : Retrain Margin Check
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enables/Disable Retrain Margin Check
+      length       : 0x01
+      value        : 0x00
+  - MEMTST       :
+      name         : Memory Test
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enables/Disable Memory Test
+      length       : 0x01
+      value        : 0x00
+  - ECT          :
+      name         : Early Command Training
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Enables/Disable Early Command Training
+      length       : 0x01
+      value        : 0x01
+  - UsbTcPortEnPreMem :
+      name         : TCSS USB Port Enable
+      type         : EditNum, HEX, (0x0,0x003F)
+      help         : >
+                     Bitmap for per port enabling
+      length       : 0x01
+      value        : 0xF
+  - TmeEnable    :
+      name         : Total Memory Encryption Enable
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                     Total Memory Encryption enabling
+      length       : 0x01
+      value        : 0x00
+  - ConfigTdpLevel :
+      name         : Configuration for boot TDP selection
+      type         : EditNum, HEX, (0x00, 0xFF)
+      help         : >
+                     Configuration for boot TDP selection; <b>0- TDP Nominal</b>; 1- TDP Down; 2- TDP Up;0xFF - Deactivate
+      length       : 0x01
+      value        : 0x00
+  - Dummy        :
+      length       : 0x01
+      value        : 0x0
+

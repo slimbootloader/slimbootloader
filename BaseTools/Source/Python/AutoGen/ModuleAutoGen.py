@@ -32,7 +32,7 @@ import tempfile
 ## Mapping Makefile type
 gMakeTypeMap = {TAB_COMPILER_MSFT:"nmake", "GCC":"gmake"}
 #
-# Regular expression for finding Include Directories, the difference between MSFT and INTEL/GCC/RVCT
+# Regular expression for finding Include Directories, the difference between MSFT and INTEL/GCC
 # is the former use /I , the Latter used -I to specify include directories
 #
 gBuildOptIncludePatternMsft = re.compile(r"(?:.*?)/I[ \t]*([^ ]*)", re.MULTILINE | re.DOTALL)
@@ -254,7 +254,6 @@ class ModuleAutoGen(AutoGen):
         self.AutoGenDepSet = set()
         self.ReferenceModules = []
         self.ConstPcd                  = {}
-        self.Makefile         = None
         self.FileDependCache  = {}
 
     def __init_platform_info__(self):
@@ -685,12 +684,12 @@ class ModuleAutoGen(AutoGen):
     @cached_property
     def BuildOptionIncPathList(self):
         #
-        # Regular expression for finding Include Directories, the difference between MSFT and INTEL/GCC/RVCT
+        # Regular expression for finding Include Directories, the difference between MSFT and INTEL/GCC
         # is the former use /I , the Latter used -I to specify include directories
         #
         if self.PlatformInfo.ToolChainFamily in (TAB_COMPILER_MSFT):
             BuildOptIncludeRegEx = gBuildOptIncludePatternMsft
-        elif self.PlatformInfo.ToolChainFamily in ('INTEL', 'GCC', 'RVCT'):
+        elif self.PlatformInfo.ToolChainFamily in ('INTEL', 'GCC'):
             BuildOptIncludeRegEx = gBuildOptIncludePatternOther
         else:
             #
@@ -705,16 +704,7 @@ class ModuleAutoGen(AutoGen):
             except KeyError:
                 FlagOption = ''
 
-            if self.ToolChainFamily != 'RVCT':
-                IncPathList = [NormPath(Path, self.Macros) for Path in BuildOptIncludeRegEx.findall(FlagOption)]
-            else:
-                #
-                # RVCT may specify a list of directory seperated by commas
-                #
-                IncPathList = []
-                for Path in BuildOptIncludeRegEx.findall(FlagOption):
-                    PathList = GetSplitList(Path, TAB_COMMA_SPLIT)
-                    IncPathList.extend(NormPath(PathEntry, self.Macros) for PathEntry in PathList)
+            IncPathList = [NormPath(Path, self.Macros) for Path in BuildOptIncludeRegEx.findall(FlagOption)]
 
             #
             # EDK II modules must not reference header files outside of the packages they depend on or
@@ -1032,7 +1022,7 @@ class ModuleAutoGen(AutoGen):
     @cached_property
     def ModulePcdList(self):
         # apply PCD settings from platform
-        RetVal = self.PlatformInfo.ApplyPcdSetting(self.Module, self.Module.Pcds)
+        RetVal = self.PlatformInfo.ApplyPcdSetting(self, self.Module.Pcds)
 
         return RetVal
     @cached_property
@@ -1063,7 +1053,7 @@ class ModuleAutoGen(AutoGen):
                     continue
                 Pcds.add(Key)
                 PcdsInLibrary[Key] = copy.copy(Library.Pcds[Key])
-            RetVal.extend(self.PlatformInfo.ApplyPcdSetting(self.Module, PcdsInLibrary, Library=Library))
+            RetVal.extend(self.PlatformInfo.ApplyPcdSetting(self, PcdsInLibrary, Library=Library))
         return RetVal
 
     ## Get the GUID value mapping
@@ -1822,9 +1812,6 @@ class ModuleAutoGen(AutoGen):
             for LibraryAutoGen in self.LibraryAutoGenList:
                 LibraryAutoGen.CreateCodeFile()
 
-        # CanSkip uses timestamps to determine build skipping
-        if self.CanSkip():
-            return
         self.LibraryAutoGenList
         AutoGenList = []
         IgoredAutoGenList = []

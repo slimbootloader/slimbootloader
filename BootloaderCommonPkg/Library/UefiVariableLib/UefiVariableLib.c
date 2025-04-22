@@ -2,7 +2,7 @@
   Implement ReadOnly Variable Services required by PEIM and install
   PEI ReadOnly Varaiable2 PPI. These services operates the non volatile storage space.
 
-Copyright (c) 2006 - 2019, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2006 - 2021, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -517,14 +517,17 @@ GetVariableStore (
       //
       BackUpOffset = 0;
 
-      FtwWorkingHeader = (UEFI_FAULT_TOLERANT_WORKING_BLOCK_HEADER *) (NvStorageBase + (NvStorageSize / 2) - FTW_WORKING_SIZE);
+      FtwWorkingHeader = (UEFI_FAULT_TOLERANT_WORKING_BLOCK_HEADER *) (UINTN)(NvStorageBase + (NvStorageSize / 2) - FTW_WORKING_SIZE);
       FtwWorkingSize   = FTW_WORKING_SIZE;
-      SpareAreaAddress = (EFI_PHYSICAL_ADDRESS) (NvStorageBase + (NvStorageSize / 2));
+      SpareAreaAddress = (EFI_PHYSICAL_ADDRESS) (UINTN) (NvStorageBase + (NvStorageSize / 2));
       SpareAreaLength  = NvStorageSize / 2;
 
       LibStatus = GetLibraryData (PcdGet8 (PcdUefiVariableLibId), (VOID **)&VarStoreLibData);
       if (LibStatus == EFI_NOT_FOUND) {
         VarStoreLibData = (UEFI_VAR_STORE_LIBRARY_DATA *) AllocatePool (sizeof(UEFI_VAR_STORE_LIBRARY_DATA));
+        if (VarStoreLibData == NULL) {
+          return NULL;
+        }
         ZeroMem (VarStoreLibData, sizeof(UEFI_VAR_STORE_LIBRARY_DATA));
       }
 
@@ -543,27 +546,29 @@ GetVariableStore (
 
         if (!EFI_ERROR(Status) && FtwLastWriteRecord != NULL) {
           if ((FtwLastWriteRecord->SpareComplete == FTW_VALID_STATE) && (FtwLastWriteRecord->DestinationComplete != FTW_VALID_STATE)) {
-            if (LibStatus == EFI_NOT_FOUND) {
-              VarStoreLibData->FtwLastWriteData.TargetAddress = (EFI_PHYSICAL_ADDRESS) (UINTN) ((INT64) SpareAreaAddress + FtwLastWriteRecord->RelativeOffset);
-              VarStoreLibData->FtwLastWriteData.SpareAddress  = SpareAreaAddress;
-              VarStoreLibData->FtwLastWriteData.Length        = SpareAreaLength;
-            }
-            if (VarStoreLibData->FtwLastWriteData.TargetAddress == NvStorageBase) {
-              //
-              // Let FvHeader point to spare block.
-              //
-              FvHeader = (EFI_FIRMWARE_VOLUME_HEADER *) (UINTN) VarStoreLibData->FtwLastWriteData.SpareAddress;
-              DEBUG ((DEBUG_INFO, "PeiVariable: NV storage is backed up in spare block: 0x%x\n", (UINTN) VarStoreLibData->FtwLastWriteData.SpareAddress));
-            } else if ((VarStoreLibData->FtwLastWriteData.TargetAddress > NvStorageBase) && (VarStoreLibData->FtwLastWriteData.TargetAddress < (NvStorageBase + NvStorageSize))) {
-              StoreInfo->FtwLastWriteData = &VarStoreLibData->FtwLastWriteData;
-              //
-              // Flash NV storage from the offset is backed up in spare block.
-              //
-              BackUpOffset = (UINT32) (VarStoreLibData->FtwLastWriteData.TargetAddress - NvStorageBase);
-              DEBUG ((DEBUG_INFO, "PeiVariable: High partial NV storage from offset: %x is backed up in spare block: 0x%x\n", BackUpOffset, (UINTN) VarStoreLibData->FtwLastWriteData.SpareAddress));
-              //
-              // At least one block data in flash NV storage is still valid, so still leave FvHeader point to NV storage base.
-              //
+            if (VarStoreLibData != NULL) {
+              if (LibStatus == EFI_NOT_FOUND) {
+                VarStoreLibData->FtwLastWriteData.TargetAddress = (EFI_PHYSICAL_ADDRESS) (UINTN) ((INT64) SpareAreaAddress + FtwLastWriteRecord->RelativeOffset);
+                VarStoreLibData->FtwLastWriteData.SpareAddress  = SpareAreaAddress;
+                VarStoreLibData->FtwLastWriteData.Length        = SpareAreaLength;
+              }
+              if (VarStoreLibData->FtwLastWriteData.TargetAddress == NvStorageBase) {
+                //
+                // Let FvHeader point to spare block.
+                //
+                FvHeader = (EFI_FIRMWARE_VOLUME_HEADER *) (UINTN) VarStoreLibData->FtwLastWriteData.SpareAddress;
+                DEBUG ((DEBUG_INFO, "PeiVariable: NV storage is backed up in spare block: 0x%x\n", (UINTN) VarStoreLibData->FtwLastWriteData.SpareAddress));
+              } else if ((VarStoreLibData->FtwLastWriteData.TargetAddress > NvStorageBase) && (VarStoreLibData->FtwLastWriteData.TargetAddress < (NvStorageBase + NvStorageSize))) {
+                StoreInfo->FtwLastWriteData = &VarStoreLibData->FtwLastWriteData;
+                //
+                // Flash NV storage from the offset is backed up in spare block.
+                //
+                BackUpOffset = (UINT32) (VarStoreLibData->FtwLastWriteData.TargetAddress - NvStorageBase);
+                DEBUG ((DEBUG_INFO, "PeiVariable: High partial NV storage from offset: %x is backed up in spare block: 0x%x\n", BackUpOffset, (UINTN) VarStoreLibData->FtwLastWriteData.SpareAddress));
+                //
+                // At least one block data in flash NV storage is still valid, so still leave FvHeader point to NV storage base.
+                //
+              }
             }
           }
         }
@@ -573,6 +578,10 @@ GetVariableStore (
         // If the working block workspace is not valid, try to find workspace in the spare block.
         //
         WorkSpaceInSpareArea = SpareAreaAddress + SpareAreaLength - FtwWorkingSize;
+
+        // Ensure WorkSpaceInSpareArea is within the expected range
+        ASSERT((WorkSpaceInSpareArea >= SpareAreaAddress) && (WorkSpaceInSpareArea <= (SpareAreaAddress + SpareAreaLength)));
+
         while (WorkSpaceInSpareArea >= SpareAreaAddress) {
           if (CompareGuid (&gEdkiiWorkingBlockSignatureGuid, (EFI_GUID *) (UINTN) WorkSpaceInSpareArea)) {
             //
@@ -588,7 +597,7 @@ GetVariableStore (
           //
           // It was workspace self reclaim.
           //
-          if (LibStatus == EFI_NOT_FOUND) {
+          if (LibStatus == EFI_NOT_FOUND && VarStoreLibData != NULL) {
             VarStoreLibData->FtwLastWriteData.TargetAddress = NvStorageBase - (WorkSpaceInSpareArea - SpareAreaAddress);
             VarStoreLibData->FtwLastWriteData.SpareAddress  = SpareAreaAddress;
             VarStoreLibData->FtwLastWriteData.Length        = SpareAreaLength;
@@ -613,24 +622,26 @@ GetVariableStore (
 
       StoreInfo->AuthFlag = (BOOLEAN) (CompareGuid (&VariableStoreHeader->Signature, &gEfiAuthenticatedVariableGuid));
 
-      if (LibStatus == EFI_NOT_FOUND) {
-        //
-        // If it's the first time to access variable region in flash, create a guid hob to record
-        // VAR_ADDED type variable info.
-        // Note that as the resource of PEI phase is limited, only store the limited number of
-        // VAR_ADDED type variables to reduce access time.
-        //
-        VarStoreLibData->IndexTable.Length      = 0;
-        VarStoreLibData->IndexTable.StartPtr    = GetStartPointer (VariableStoreHeader);
-        VarStoreLibData->IndexTable.EndPtr      = GetEndPointer   (VariableStoreHeader);
-        VarStoreLibData->IndexTable.GoneThrough = 0;
-        //
-        // Set the Lib data after Ftw and Index table info is updated
-        //
-        VarStoreLibData->StoreLibVarHdrSet = FALSE;
-        Status = SetLibraryData (PcdGet8(PcdUefiVariableLibId), VarStoreLibData, sizeof(UEFI_VAR_STORE_LIBRARY_DATA));
-      } else {
-        StoreInfo->IndexTable = &VarStoreLibData->IndexTable;
+      if (VarStoreLibData!= NULL) {
+        if (LibStatus == EFI_NOT_FOUND) {
+          //
+          // If it's the first time to access variable region in flash, create a guid hob to record
+          // VAR_ADDED type variable info.
+          // Note that as the resource of PEI phase is limited, only store the limited number of
+          // VAR_ADDED type variables to reduce access time.
+          //
+          VarStoreLibData->IndexTable.Length      = 0;
+          VarStoreLibData->IndexTable.StartPtr    = GetStartPointer (VariableStoreHeader);
+          VarStoreLibData->IndexTable.EndPtr      = GetEndPointer   (VariableStoreHeader);
+          VarStoreLibData->IndexTable.GoneThrough = 0;
+          //
+          // Set the Lib data after Ftw and Index table info is updated
+          //
+          VarStoreLibData->StoreLibVarHdrSet = FALSE;
+          Status = SetLibraryData (PcdGet8(PcdUefiVariableLibId), VarStoreLibData, sizeof(UEFI_VAR_STORE_LIBRARY_DATA));
+        } else {
+          StoreInfo->IndexTable = &VarStoreLibData->IndexTable;
+        }
       }
 
       break;
@@ -692,6 +703,10 @@ GetVariableHeader (
       // Variable header pointed by Variable is inconsecutive,
       //
       LibStatus = GetLibraryData (PcdGet8 (PcdUefiVariableLibId), (VOID **)&VarStoreLibData);
+      if (LibStatus == EFI_NOT_FOUND) {
+        return FALSE;
+      }
+
       if (VarStoreLibData->StoreLibVarHdrSet == FALSE) {
         *VariableHeader = &VarStoreLibData->VariableHdr;
         PartialHeaderSize = (UINTN) TargetAddress - (UINTN) Variable;
@@ -880,7 +895,7 @@ FindVariableEx (
       //
       if ((IndexTable != NULL) && !StopRecord) {
         Offset = (UINTN) Variable - (UINTN) LastVariable;
-        if ((Offset > 0x0FFFF) || (IndexTable->Length == sizeof (IndexTable->Index) / sizeof (IndexTable->Index[0]))) {
+        if ((Offset > 0x0FFFF) || (IndexTable->Length >= sizeof (IndexTable->Index) / sizeof (IndexTable->Index[0]))) {
           //
           // Stop to record if the distance of two neighbouring VAR_ADDED variable is larger than the allowable scope(UINT16),
           // or the record buffer is full.
@@ -1015,7 +1030,7 @@ UefiGetVariable (
   //
   GetComponentInfo (FLASH_MAP_SIG_UEFIVARIABLE, &NvStorageBase, &NvStorageSize);
   ASSERT (NvStorageBase != 0);
-  FwVolHeader = (EFI_FIRMWARE_VOLUME_HEADER *) NvStorageBase;
+  FwVolHeader = (EFI_FIRMWARE_VOLUME_HEADER *) (UINTN) NvStorageBase;
   if ((FwVolHeader->Signature != EFI_FVH_SIGNATURE) || (!CompareGuid (&gEfiSystemNvDataFvGuid, &FwVolHeader->FileSystemGuid))) {
     DEBUG ((DEBUG_INFO, "Invalid NV area!\n"));
     return EFI_DEVICE_ERROR;

@@ -3,7 +3,7 @@
 ## @ CfgDataStitch.py
 # Project template script to patch CFGDATA blob into IFWI image
 #
-# Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2018 - 2021, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -45,17 +45,11 @@ def cfgdata_stitch(ifwi_file, ifwi_out_file, cfg_dir, key_file, script_dir, tool
         fv_dir = ''
 
     if ifwi_out_file == '':
-        ifwi_out_file = ifwi_file
+        ifwi_out_file = os.path.join ('Output', os.path.basename(ifwi_file))
 
     out_dir = os.path.dirname(ifwi_out_file)
     if out_dir == '':
         out_dir = '.'
-
-    if cfg_dir == '':
-        if fv_dir:
-            cfg_dir = fv_dir
-        else:
-            cfg_dir = '.'
 
     if tool_dir == '':
         if fv_dir:
@@ -72,11 +66,14 @@ def cfgdata_stitch(ifwi_file, ifwi_out_file, cfg_dir, key_file, script_dir, tool
     if key_file == '':
         raise Exception("Key file is not specified!!")
 
-    if os.name == 'nt' and 'OPENSSL_PATH' not in os.environ:
-        os.environ['OPENSSL_PATH'] = "C:\\Openssl\\"
-
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
+
+    if cfg_dir == "":
+        dlt_dir = out_dir
+        cfg_dir = '.'
+    else:
+        dlt_dir = cfg_dir
 
     cfg_ext = 'yaml'
     # CfgDataDef needs to be under cfgdata_dir
@@ -97,8 +94,8 @@ def cfgdata_stitch(ifwi_file, ifwi_out_file, cfg_dir, key_file, script_dir, tool
         raise Exception("Cannot find file '%s' !" % result)
 
     chk_files = [
-        (cfg_dir, [file[1] for file in dlt_files]),
-        (cfg_dir, ['CfgDataInt.bin'])
+        (dlt_dir, [file[1] for file in dlt_files]),
+        (out_dir, ['CfgDataInt.bin'])
     ]
 
     result = check_file_exist (chk_files)
@@ -109,12 +106,12 @@ def cfgdata_stitch(ifwi_file, ifwi_out_file, cfg_dir, key_file, script_dir, tool
           name_id.append('%d:%s' % (pid, os.path.splitext(dlt)[0]))
         name_str = ','.join(name_id)
         run_cmd([sys.executable, os.path.join(script_dir, 'CfgDataTool.py'), 'export',
-                '-i', ifwi_file, '-t', tool_dir, '-o', cfg_dir, '-n', name_str])
+                '-i', ifwi_file, '-t', tool_dir, '-o', out_dir, '-n', name_str])
 
         for pid, dlt_name in dlt_files:
           bin_name = os.path.splitext(dlt_name)[0] + '.bin'
-          dlt_path = os.path.join(cfg_dir, dlt_name)
-          bin_path = os.path.join(cfg_dir, bin_name)
+          dlt_path = os.path.join(dlt_dir, dlt_name)
+          bin_path = os.path.join(out_dir, bin_name)
           run_cmd([sys.executable, os.path.join(script_dir, 'GenCfgData.py'), 'GENDLT',
                  os.path.join(cfg_dir, 'CfgDataDef.%s;%s' % (cfg_ext, bin_path)), dlt_path])
 
@@ -125,7 +122,7 @@ def cfgdata_stitch(ifwi_file, ifwi_out_file, cfg_dir, key_file, script_dir, tool
         bin_file = os.path.join(out_dir, bin_file)
         run_cmd([sys.executable, os.path.join(script_dir, 'GenCfgData.py'), 'GENBIN',
                  os.path.join(cfg_dir, 'CfgDataDef.%s;') % cfg_ext + os.path.join(
-                     cfg_dir, dlt), bin_file])
+                     dlt_dir, dlt), bin_file])
         bin_files.append(bin_file)
 
     # merge the CFGDATA
@@ -133,7 +130,7 @@ def cfgdata_stitch(ifwi_file, ifwi_out_file, cfg_dir, key_file, script_dir, tool
                 '-o', os.path.join(out_dir, 'CfgDataExt.bin')]
     if platform_id:
         cmd_list.extend(['-p', platform_id])
-    cmd_list.append(os.path.join(cfg_dir, 'CfgDataInt.bin*'))
+    cmd_list.append(os.path.join(out_dir, 'CfgDataInt.bin*'))
     cmd_list.extend(bin_files)
     run_cmd(cmd_list)
 
@@ -151,7 +148,7 @@ def cfgdata_stitch(ifwi_file, ifwi_out_file, cfg_dir, key_file, script_dir, tool
     run_cmd(cmd_list)
 
     # clean intermediate files
-    for each in ['CfgDataExt.bin', 'CfgData.bin', 'Stage1b.fd', 'Stage1b.lz']:
+    for each in ['CfgDataExt.bin', 'CfgData.bin', 'Stage1b.fd', 'Stage1b.lz', 'CfgData.bin.hash', 'CfgData.bin.hash.tmp']:
         bin_files.append (os.path.join(out_dir, each))
     for file in bin_files:
         if os.path.exists(file):

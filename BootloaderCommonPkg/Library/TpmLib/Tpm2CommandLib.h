@@ -1,7 +1,7 @@
 /** @file
   This library is used by other modules to send TPM2 command.
 
-  Copyright (c) 2013 - 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2013 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -765,13 +765,28 @@ Tpm2GetCapabilityPcrs (
 
   @retval     EFI_SUCCESS   TPM was successfully queried and return values can be trusted.
   @retval     Others        An error occurred, likely in communication with the TPM.
-
 **/
 EFI_STATUS
 EFIAPI
 Tpm2GetCapabilitySupportedAndActivePcrs (
   OUT UINT32                            *TpmHashAlgorithmBitmap,
   OUT UINT32                            *ActivePcrBanks
+  );
+
+/**
+  This function will query if the command is supported.
+
+  @param[in]  Command         TPM_CC command starts from TPM_CC_FIRST.
+  @param[out] IsCmdImpl       The command is supported or not.
+
+  @retval EFI_SUCCESS            Operation completed successfully.
+  @retval EFI_DEVICE_ERROR       The command was unsuccessful.
+**/
+EFI_STATUS
+EFIAPI
+Tpm2GetCapabilityIsCommandImplemented (
+  IN      TPM_CC      Command,
+  OUT     BOOLEAN     *IsCmdImpl
   );
 
 /**

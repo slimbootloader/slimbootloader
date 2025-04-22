@@ -11,6 +11,20 @@
 #include <Guid/OsBootOptionGuid.h>
 #include <Library/FirmwareUpdateLib.h>
 
+#define  MVBT_SIGNATURE               SIGNATURE_32 ('$', 'M', 'V', 'B')
+
+typedef struct {
+  UINT32        Signature;
+  UINT8         EntryNum;
+  UINT8         Reserved[3];
+} VBT_MB_HDR;
+
+typedef struct {
+  UINT32        ImageId;
+  UINT32        Length;
+  UINT8         Data[];
+} VBT_ENTRY_HDR;
+
 /**
   A function pointer to get relative power number in mW
 
@@ -156,6 +170,27 @@ LocateVbtByImageId (
 **/
 UINTN
 GetVbtAddress (
+  );
+
+/**
+  Set framebuffer range as writecombining for performance.
+
+  @param[in]    FrameBufferBase   Framebuffer base address.
+                                  if 0, it will use framebuffer HOB to get the base.
+  @param[in]    FrameBufferSize   Framebuffer size.
+                                  if 0, it will use framebuffer HOB to get the size.
+                                  if MAX_UINT32, it will parse the PCI bar to get the size.
+
+  @retval  EFI_SUCCESS            The framebuffer cache was enabled successfully.
+           EFI_NOT_FOUND          Failed to find the required GFX controller.
+           EFI_UNSUPPORTED        The base and size cannot be supported.
+           EFI_OUT_OF_RESOURCES   No enough MTRR to use.
+**/
+EFI_STATUS
+EFIAPI
+SetFrameBufferWriteCombining (
+  IN  EFI_PHYSICAL_ADDRESS   FrameBufferBase,
+  IN  UINT32                 FrameBufferSize
   );
 
 #endif

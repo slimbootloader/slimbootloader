@@ -1,0 +1,92 @@
+/** @file
+
+  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+#include <Acpi/AcpiTablePlatform.h>
+
+    External(\_SB.SCK0.ToName(C), DeviceObj)
+
+#if MAX_SOCKET > 1
+    External(\_SB.SCK1.ToName(C), DeviceObj)
+#endif
+
+#if MAX_SOCKET > 2
+    External(\_SB.SCK2.ToName(C), DeviceObj)
+#endif
+
+#if MAX_SOCKET > 3
+    External(\_SB.SCK3.ToName(C), DeviceObj)
+#endif
+
+#if MAX_SOCKET > 4
+    External(\_SB.SCK4.ToName(C), DeviceObj)
+#endif
+
+#if MAX_SOCKET > 5
+    External(\_SB.SCK5.ToName(C), DeviceObj)
+#endif
+
+#if MAX_SOCKET > 6
+    External(\_SB.SCK6.ToName(C), DeviceObj)
+#endif
+
+#if MAX_SOCKET > 7
+    External(\_SB.SCK7.ToName(C), DeviceObj)
+#endif
+
+    Scope(\_SB.SCK0.ToName(C))
+    {
+      #include "TstProc.asi"
+    }
+
+#if MAX_SOCKET > 1
+    Scope(\_SB.SCK1.ToName(C))
+    {
+      #include "TstProc.asi"
+    }
+#endif
+
+#if MAX_SOCKET > 2
+    Scope(\_SB.SCK2.ToName(C))
+    {
+      #include "TstProc.asi"
+    }
+#endif
+
+#if MAX_SOCKET > 3
+    Scope(\_SB.SCK3.ToName(C))
+    {
+      #include "TstProc.asi"
+    }
+#endif
+
+#if MAX_SOCKET > 4
+    Scope(\_SB.SCK4.ToName(C))
+    {
+      #include "TstProc.asi"
+    }
+#endif
+
+#if MAX_SOCKET > 5
+    Scope(\_SB.SCK5.ToName(C))
+    {
+      #include "TstProc.asi"
+    }
+#endif
+
+#if MAX_SOCKET > 6
+    Scope(\_SB.SCK6.ToName(C))
+    {
+      #include "TstProc.asi"
+    }
+#endif
+
+#if MAX_SOCKET > 7
+    Scope(\_SB.SCK7.ToName(C))
+    {
+      #include "TstProc.asi"
+    }
+#endif

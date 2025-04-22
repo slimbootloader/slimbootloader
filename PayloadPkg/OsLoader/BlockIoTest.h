@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -17,6 +17,7 @@
 #include <Library/SpiBlockIoLib.h>
 #include <Library/UfsBlockIoLib.h>
 #include <Library/UsbBlockIoLib.h>
+#include <Library/PciNvmCtrlLib.h>
 #include <Guid/OsBootOptionGuid.h>
 
 #define TEST_DEVICE_WRITE     0

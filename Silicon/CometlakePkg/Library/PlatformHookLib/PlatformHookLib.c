@@ -39,7 +39,8 @@ GetSerialPortStrideSize (
     return 4;
   }
 }
-UINT32
+
+UINT64
 EFIAPI
 GetSerialPortBase (
   VOID
@@ -48,6 +49,8 @@ GetSerialPortBase (
   UINT16  Cmd16;
   UINTN   PciAddress;
   UINT8   DebugPort;
+  UINT64  MmioBase;
+
   DebugPort = GetDebugPort ();
   if (DebugPort >=  PCH_MAX_SERIALIO_UART_CONTROLLERS) {
     if (DebugPort == 0xFE) {
@@ -66,7 +69,9 @@ GetSerialPortBase (
     return LPSS_UART_TEMP_BASE_ADDRESS(DebugPort);
   } else {
     if (MmioRead32 (PciAddress + PCI_COMMAND_OFFSET) & EFI_PCI_COMMAND_MEMORY_SPACE) {
-      return MmioRead32 (PciAddress + PCI_BASE_ADDRESSREG_OFFSET) & 0xFFFFFFF0;
+      MmioBase  = LShiftU64 (MmioRead32 (PciAddress + PCI_BASE_ADDRESSREG_OFFSET + 4), 32);
+      MmioBase += (MmioRead32 (PciAddress + PCI_BASE_ADDRESSREG_OFFSET) & 0xFFFFFFF0);
+      return MmioBase;
     } else {
       return 0;
     }

@@ -1,63 +1,43 @@
 /** @file
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-#include <PiPei.h>
-#include <Library/BaseLib.h>
-#include <Library/PciLib.h>
-#include <Library/BaseMemoryLib.h>
-#include <Library/DebugLib.h>
-#include <Library/IoLib.h>
-#include <Library/GpioLib.h>
-#include <Library/SiGpioLib.h>
-#include <Library/SpiFlashLib.h>
-#include <Library/SocInitLib.h>
-#include <Library/BoardInitLib.h>
-#include <Library/ConfigDataLib.h>
-#include <Library/SerialPortLib.h>
-#include <Library/VariableLib.h>
-#include <Library/BootloaderCoreLib.h>
-#include <Library/BlMemoryAllocationLib.h>
-#include <Library/FspSupportLib.h>
-#include <Library/BoardSupportLib.h>
-#include <Library/ContainerLib.h>
-#include <Guid/GraphicsInfoHob.h>
-#include <Guid/SystemTableInfoGuid.h>
-#include <Guid/SerialPortInfoGuid.h>
-#include <Guid/SmmInformationGuid.h>
-#include <FspsUpd.h>
-#include <BlCommon.h>
-#include <GlobalNvsArea.h>
-#include <PlatformBase.h>
-#include <ConfigDataDefs.h>
-#include "GpioTbl.h"
+#include <Stage2BoardInitLibInternal.h>
 
-#define GRAPHICS_DATA_SIG    SIGNATURE_32 ('Q', 'G', 'F', 'X')
+STATIC
+CONST EFI_ACPI_TEST_TABLE  mAcpiTestTableTemplate = {
+  {
+    SIGNATURE_32('T', 'E', 'S', 'T'),
+    sizeof (EFI_ACPI_TEST_TABLE),
+    1,     // Revision
+    0x00,  // Checksum will be updated at runtime
+    EFI_ACPI_OEM_ID,                 // OEM ID is a 6 bytes long field
+    EFI_ACPI_OEM_TABLE_ID,           // OEM Table ID(8 bytes long)
+    EFI_ACPI_OEM_REVISION,           // OEM Revision
+    EFI_ACPI_CREATOR_ID,             // Creator ID
+    EFI_ACPI_CREATOR_REVISION        // Creator Revision
+  },
+  0
+};
 
-typedef struct {
-  UINT32     Signature;
-  UINT32     ResX;
-  UINT32     ResY;
-} GRAPHICS_DATA;
+STATIC
+CONST EFI_ACPI_COMMON_HEADER *mPlatformAcpiTblTmpl[] = {
+  (EFI_ACPI_COMMON_HEADER *)&mAcpiTestTableTemplate,
+  NULL
+};
+
+STATIC
+CONST DISPLAY_TIMING_INFO mDefaultTiming = {
+  40000, 60,
+  800,   40, 128, 88, 1,
+  600,   1,  4,   23, 1
+};
 
 UINT8
-EFIAPI
-GetSerialPortStrideSize (
-  VOID
-);
-
-UINT32
-EFIAPI
-GetSerialPortBase (
-  VOID
-  );
-
-VOID
-EFIAPI
-EnableLegacyRegions (
+GetGraphicsDeviceNumber (
   VOID
 );
 
@@ -80,7 +60,7 @@ TestVariableService (
   DEBUG ((DEBUG_INFO, "Test variable services\n"));
 
   DataSize   = sizeof(Data);
-  Status   = GetVariable ("VARTST0", NULL, &DataSize, &Data);
+  Status   = GetVariable (L"VARTST0", NULL, NULL, &DataSize, &Data);
   if (!EFI_ERROR(Status) && (Data == 0x55667788) && (sizeof(Data) == DataSize)) {
     return EFI_SUCCESS;
   }
@@ -90,12 +70,12 @@ TestVariableService (
   }
 
   Data       = 0x55667788;
-  Status     = SetVariable ("VARTST0", 0, sizeof(Data), &Data);
+  Status     = SetVariable (L"VARTST0", NULL, 0, sizeof(Data), &Data);
 
   Data       = 0;
   DataSize   = sizeof(Data);
   if (!EFI_ERROR(Status)) {
-    Status   = GetVariable ("VARTST0", NULL, &DataSize, &Data);
+    Status   = GetVariable (L"VARTST0", NULL, NULL, &DataSize, &Data);
   }
 
   if (!EFI_ERROR(Status) && (Data == 0x55667788) && (sizeof(Data) == DataSize)) {
@@ -139,7 +119,7 @@ GpioInit (
   GpioCfgBaseHdr = NULL;
 
   //Find the GPIO CFG Data based on Platform ID. GpioTableData is the start of the GPIO entries
-  if (GpioCfgCurrHdr->GpioBaseTableId < 16) {
+  if (GpioCfgCurrHdr->GpioBaseTableId < GPIO_MAX_BASE_TABLE_PLATFORM_ID) {
     DEBUG ((DEBUG_INFO, "Get base platform GPIO table from board ID %d\n", GpioCfgCurrHdr->GpioBaseTableId));
     GpioCfgBaseHdr = (GPIO_CFG_HDR *)FindConfigDataByPidTag (GpioCfgCurrHdr->GpioBaseTableId, CDATA_GPIO_TAG);
     if (GpioCfgBaseHdr == NULL) {
@@ -177,8 +157,236 @@ GpioInit (
 
   DEBUG ((DEBUG_INFO, "Programming %d GPIO entries\n", GpioEntries));
 
-  GpioPadConfigTable (GpioEntries, GpioCfgDataBuffer);
+  GpioConfigurePads (GpioEntries, (GPIO_INIT_CONFIG *) GpioCfgDataBuffer);
 }
+
+/**
+  Update current boot Payload ID.
+
+**/
+VOID
+UpdatePayloadId (
+  VOID
+  )
+{
+  UINT8                BootDev;
+  GEN_CFG_DATA        *GenericCfgData;
+
+  GenericCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
+  if (GenericCfgData != NULL) {
+    if (GenericCfgData->PayloadId == AUTO_PAYLOAD_ID_SIGNATURE) {
+      // Use QEMU 3rd bootorder to select the payload
+      // Add QEMU command line parameter:
+      //   default           : enable OsLoader
+      //   '-boot order=??a' : enable EFI payload
+      //   '-boot order=??c' : enable LINUX payload
+      // Here ?? is the normal boot devices.
+      IoWrite8 (0x70, 0x38);
+      BootDev = IoRead8 (0x71) >> 4;
+      if (BootDev == 1) {
+        // Boot UEFI payload
+        SetPayloadId (UEFI_PAYLOAD_ID_SIGNATURE);
+      } else if (BootDev == 2) {
+        // Boot LINUX payload
+        SetPayloadId (LINX_PAYLOAD_ID_SIGNATURE);
+      } else {
+        // Boot OsLoader
+        SetPayloadId (0);
+      }
+    } else {
+      SetPayloadId (GenericCfgData->PayloadId);
+    }
+  }
+}
+
+/**
+  Initialize graphics for QEMU.
+
+  @retval   EFI_SUCCESS            Graphics was initialized successfully.
+            EFI_OUT_OF_RESOURCES   No enough memory to build HOB.
+
+**/
+EFI_STATUS
+EmuGraphicsInit (
+  VOID
+  )
+{
+  EFI_STATUS                          Status;
+  UINT32                              DevPciBase;
+  GRAPHICS_INIT_POLICY                GfxPolicy;
+  EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE   GopMode;
+  EFI_PEI_GRAPHICS_INFO_HOB          *GfxInfoHob;
+  GRAPHICS_DATA                      *QemuVbt;
+
+  GfxInfoHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (GetFspHobListPtr(), NULL, &gEfiGraphicsInfoHobGuid);
+  if (GfxInfoHob != NULL) {
+    // If FSP initialized GFX, skip.
+    return EFI_SUCCESS;
+  }
+
+  DEBUG ((DEBUG_INFO, "Native Emu GFX init\n"));
+
+  ZeroMem (&GfxPolicy, sizeof(GfxPolicy));
+  GfxPolicy.PciTempResourceBase  = PcdGet32 (PcdPciResourceMem32Base);
+  CopyMem (&GfxPolicy.DisaplayTimingInfo, &mDefaultTiming, sizeof(DISPLAY_TIMING_INFO));
+
+  QemuVbt = (GRAPHICS_DATA *)(UINTN)PcdGet32(PcdGraphicsVbtAddress);
+  if ((QemuVbt != NULL) && (QemuVbt->Signature == GRAPHICS_DATA_SIG)) {
+    GfxPolicy.DisaplayTimingInfo.Hdisp = QemuVbt->ResX;
+    GfxPolicy.DisaplayTimingInfo.Vdisp = QemuVbt->ResY;
+  }
+
+  DevPciBase = ((UINT32) GetGraphicsDeviceNumber ()) << 8;
+  Status = GraphicsInit (DevPciBase, &GfxPolicy);
+  if (!EFI_ERROR (Status)) {
+    Status = GetGraphicOutputModeInfo (&GopMode);
+    if (!EFI_ERROR (Status)) {
+      GfxInfoHob = (EFI_PEI_GRAPHICS_INFO_HOB *)BuildGuidHob (
+                  &gEfiGraphicsInfoHobGuid,
+                  sizeof (EFI_PEI_GRAPHICS_INFO_HOB));
+      if (GfxInfoHob != NULL) {
+        GfxInfoHob->GraphicsMode.Version              = GopMode.Info->Version;
+        GfxInfoHob->GraphicsMode.HorizontalResolution = GopMode.Info->HorizontalResolution;
+        GfxInfoHob->GraphicsMode.VerticalResolution   = GopMode.Info->VerticalResolution;
+        GfxInfoHob->GraphicsMode.PixelFormat          = GopMode.Info->PixelFormat;
+        GfxInfoHob->GraphicsMode.PixelInformation     = GopMode.Info->PixelInformation;
+        GfxInfoHob->GraphicsMode.PixelsPerScanLine    = GopMode.Info->PixelsPerScanLine;
+        GfxInfoHob->FrameBufferBase                   = GopMode.FrameBufferBase;
+        GfxInfoHob->FrameBufferSize                   = (UINT32)GopMode.FrameBufferSize;
+      } else {
+        Status = EFI_OUT_OF_RESOURCES;
+      }
+    }
+  }
+
+  return Status;
+}
+
+/**
+  Add a Smbios type string into a buffer
+
+**/
+STATIC
+EFI_STATUS
+AddSmbiosTypeString (
+  SMBIOS_TYPE_STRINGS  *Dest,
+  UINT8                 Type,
+  UINT8                 Index,
+  CHAR8                *String
+  )
+{
+  UINTN   Length;
+
+  Dest->Type    = Type;
+  Dest->Idx     = Index;
+  if (String != NULL) {
+    Length = AsciiStrLen (String);
+
+    Dest->String  = (CHAR8 *)AllocateZeroPool (Length + 1);
+    if (Dest->String == NULL) {
+      return EFI_OUT_OF_RESOURCES;
+    }
+    CopyMem (Dest->String, String, Length);
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Initialize necessary information for Smbios
+
+  @retval EFI_SUCCESS             Initialized necessary information successfully
+  @retval EFI_OUT_OF_RESOURCES    Failed to allocate memory for Smbios info
+
+**/
+EFI_STATUS
+InitializeSmbiosInfo (
+  VOID
+  )
+{
+  CHAR8                 TempStrBuf[SMBIOS_STRING_MAX_LENGTH];
+  UINT16                Index;
+  UINTN                 Length;
+  SMBIOS_TYPE_STRINGS  *TempSmbiosStrTbl;
+  BOOT_LOADER_VERSION  *VerInfoTbl;
+  VOID                 *SmbiosStringsPtr;
+
+  Index             = 0;
+  TempSmbiosStrTbl  = (SMBIOS_TYPE_STRINGS *) AllocateTemporaryMemory (0);
+  if (TempSmbiosStrTbl == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+  VerInfoTbl    = GetVerInfoPtr ();
+
+  //
+  // SMBIOS_TYPE_BIOS_INFORMATION
+  //
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BIOS_INFORMATION,
+    1, "Intel Corporation");
+  if (VerInfoTbl != NULL) {
+    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf),
+      "SB_QEMU.%03d.%03d.%03d.%03d.%05d.%c\0",
+      VerInfoTbl->ImageVersion.CoreMajorVersion,
+      VerInfoTbl->ImageVersion.CoreMinorVersion,
+      VerInfoTbl->ImageVersion.ProjMajorVersion,
+      VerInfoTbl->ImageVersion.ProjMinorVersion,
+      VerInfoTbl->ImageVersion.BuildNumber,
+      VerInfoTbl->ImageVersion.BldDebug ? 'D' : 'R');
+  } else {
+    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a", "Unknown");
+  }
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BIOS_INFORMATION,
+    2, TempStrBuf);
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BIOS_INFORMATION,
+    3, __DATE__);
+
+  //
+  // SMBIOS_TYPE_SYSTEM_INFORMATION
+  //
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
+    1, "Intel Corporation");
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
+    2, "QEMU Virtual Platform");
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
+    3, "0.1");
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
+    4, "System Serial Number");
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
+    5, "System SKU Number");
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
+    6, "Virtual System");
+
+  //
+  // SMBIOS_TYPE_BASEBOARD_INFORMATION
+  //
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BASEBOARD_INFORMATION,
+    1, "Intel Corporation");
+  AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%8a (ID:%02X)", GetPlatformName(), GetPlatformId ());
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BASEBOARD_INFORMATION,
+    2, TempStrBuf);
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BASEBOARD_INFORMATION,
+    3, "1");
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BASEBOARD_INFORMATION,
+    4, "Board Serial Number");
+
+  //
+  // SMBIOS_TYPE_END_OF_TABLE
+  //
+  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_END_OF_TABLE,
+    0, NULL);
+
+  Length = sizeof (SMBIOS_TYPE_STRINGS) * Index;
+  SmbiosStringsPtr = AllocatePool (Length);
+  if (SmbiosStringsPtr == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+  CopyMem (SmbiosStringsPtr, TempSmbiosStrTbl, Length);
+  (VOID) PcdSet32S (PcdSmbiosStringsPtr, (UINT32)(UINTN)SmbiosStringsPtr);
+  (VOID) PcdSet16S (PcdSmbiosStringsCnt, Index);
+
+  return EFI_SUCCESS;
+}
+
 
 /**
   Board specific hook point.
@@ -194,33 +402,41 @@ BoardInit (
   IN  BOARD_INIT_PHASE    InitPhase
 )
 {
-  EFI_STATUS           Status;
-  GEN_CFG_DATA        *GenericCfgData;
-  LOADER_GLOBAL_DATA  *LdrGlobal;
-  UINT32               TsegBase;
-  UINT64               TsegSize;
-  UINT8                BootDev;
-  VOID                *Buffer;
-  UINT32               Length;
+  EFI_STATUS            Status;
+  UINT32                TsegBase;
+  UINT64                TsegSize;
+  VOID                 *Buffer;
+  UINT32                Length;
+  UINT32                PmBase;
+  VOID                 *FspHobList;
 
   switch (InitPhase) {
   case PreSiliconInit:
+    if (GetPlatformId () == PLATFORM_ID_QSP_SIMICS) {
+      // Update PCI Memory 32 base address for QSP
+      Status = PcdSet32S (PcdPciResourceMem32Base, 0xF0000000);
+    }
     GpioInit ();
-    SpiConstructor ();
     EnableLegacyRegions ();
-    VariableConstructor (PcdGet32 (PcdVariableRegionBase), PcdGet32 (PcdVariableRegionSize));
     if (!FeaturePcdGet (PcdStage1BXip)) {
-      Status = TestVariableService ();
-      ASSERT_EFI_ERROR (Status);
+      if (GetPlatformId () != PLATFORM_ID_QSP_SIMICS) {
+        SpiConstructor ();
+        VariableConstructor (PcdGet32 (PcdVariableRegionBase), PcdGet32 (PcdVariableRegionSize));
+        Status = TestVariableService ();
+        ASSERT_EFI_ERROR (Status);
+      }
     }
     // Get TSEG info from FSP HOB
     // It will be consumed in MpInit if SMM rebase is enabled
-    LdrGlobal  = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-    TsegBase = (UINT32)GetFspReservedMemoryFromGuid (
-                       LdrGlobal->FspHobList,
-                       &TsegSize,
-                       &gReservedMemoryResourceHobTsegGuid
-                       );
+    TsegBase = 0;
+    FspHobList = GetFspHobListPtr ();
+    if (FspHobList != NULL) {
+      TsegBase = (UINT32)GetFspReservedMemoryFromGuid (
+                        FspHobList,
+                        &TsegSize,
+                        &gReservedMemoryResourceHobTsegGuid
+                        );
+    }
     if (TsegBase != 0) {
       Status = PcdSet32S (PcdSmramTsegBase, TsegBase);
       Status = PcdSet32S (PcdSmramTsegSize, (UINT32)TsegSize);
@@ -233,33 +449,45 @@ BoardInit (
     if (!EFI_ERROR(Status)) {
       DumpHex (2, 0, Length > 16 ? 16 : Length, Buffer);
     }
+    // Prepare platform ACPI tempate
+    Status = PcdSet32S (PcdAcpiTableTemplatePtr, (UINT32)(UINTN)mPlatformAcpiTblTmpl);
+    if (GetBootMode() != BOOT_ON_FLASH_UPDATE) {
+      UpdatePayloadId ();
+    }
+    break;
+
+  case PostSiliconInit:
+    // Initialize Smbios Info
+    if (FeaturePcdGet (PcdSmbiosEnabled)) {
+      InitializeSmbiosInfo ();
+    }
+    // Open TSEG so that MpInit can do SMM rebasing if required
+    PciAnd8 (PCI_LIB_ADDRESS(0, 0, 0, MCH_ESMRAMC), (UINT8)~MCH_ESMRAMC_T_EN);
+    PciAndThenOr8 (PCI_LIB_ADDRESS(0, 0, 0, MCH_SMRAM), (UINT8)~MCH_SMRAM_D_CLOSE, MCH_SMRAM_D_OPEN);
+    if (PcdGetBool (PcdFramebufferInitEnabled)) {
+      EmuGraphicsInit ();
+    }
     break;
 
   case PostPciEnumeration:
-    GenericCfgData = (GEN_CFG_DATA *)FindConfigDataByTag (CDATA_GEN_TAG);
-    if (GenericCfgData != NULL) {
-      if (GenericCfgData->PayloadId == AUTO_PAYLOAD_ID_SIGNATURE) {
-        // Use QEMU 3rd bootorder to select the payload
-        // Add QEMU command line parameter:
-        //   default           : enable OsLoader
-        //   '-boot order=??a' : enable EFI payload
-        //   '-boot order=??c' : enable LINUX payload
-        // Here ?? is the normal boot devices.
-        IoWrite8 (0x70, 0x38);
-        BootDev = IoRead8 (0x71) >> 4;
-        if (BootDev == 1) {
-          // Boot UEFI payload
-          SetPayloadId (UEFI_PAYLOAD_ID_SIGNATURE);
-        } else if (BootDev == 2) {
-          // Boot LINUX payload
-          SetPayloadId (LINX_PAYLOAD_ID_SIGNATURE);
-        } else {
-          // Boot OsLoader
-          SetPayloadId (0);
-        }
-      } else {
-        SetPayloadId (GenericCfgData->PayloadId);
-      }
+    Status = SetFrameBufferWriteCombining (0, MAX_UINT32);
+    if (EFI_ERROR(Status)) {
+      DEBUG ((DEBUG_INFO, "Failed to set GFX framebuffer as WC\n"));
+    }
+    break;
+
+  case PrePayloadLoading:
+    // Hide TSEG
+    PciOr8 (PCI_LIB_ADDRESS(0, 0, 0, MCH_ESMRAMC), MCH_ESMRAMC_T_EN);
+    // Close TSEG
+    PciAndThenOr8 (PCI_LIB_ADDRESS(0, 0, 0, MCH_SMRAM), (UINT8)~MCH_SMRAM_D_OPEN, MCH_SMRAM_D_CLOSE);
+    if (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE) {
+      PciOr8 (PCI_LIB_ADDRESS(0, 0, 0, MCH_SMRAM), MCH_SMRAM_D_LCK);
+      // Lock down SMI_EN register
+      PmBase = PciRead32 (POWER_MGMT_REGISTER_Q35 (ICH9_PMBASE)) & ICH9_PMBASE_MASK;
+      IoWrite32 (PmBase + ICH9_PMBASE_OFS_SMI_EN, 0);
+      // Prevent software from undoing the above (until platform reset).
+      PciOr16 (POWER_MGMT_REGISTER_Q35 (ICH9_GEN_PMCON_1),  ICH9_GEN_PMCON_1_SMI_LOCK);
     }
     break;
 
@@ -284,20 +512,15 @@ UpdateFspConfig (
 {
   FSPS_UPD           *FspsUpd;
   FSP_S_CONFIG       *FspsConfig;
-  SILICON_CFG_DATA   *SilCfgData;
 
   FspsUpd    = (FSPS_UPD *)FspUpdRgnPtr;
   FspsConfig = &FspsUpd->FspsConfig;
 
   if (PcdGetBool (PcdFramebufferInitEnabled)) {
     FspsConfig->GraphicsConfigPtr = (UINT32)GetVbtAddress ();
+    FspsConfig->PciTempResourceBase = PcdGet32 (PcdPciResourceMem32Base);
   } else {
     FspsConfig->GraphicsConfigPtr = 0;
-  }
-
-  SilCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
-  if (SilCfgData == NULL) {
-    return;
   }
 }
 
@@ -333,8 +556,9 @@ UpdateSerialPortInfo (
   IN  SERIAL_PORT_INFO  *SerialPortInfo
 )
 {
-  SerialPortInfo->Type     = 1;
-  SerialPortInfo->BaseAddr = GetSerialPortBase();
+  SerialPortInfo->Type       = 1;
+  SerialPortInfo->BaseAddr64 = GetSerialPortBase ();
+  SerialPortInfo->BaseAddr   = (UINT32) SerialPortInfo->BaseAddr64;
   SerialPortInfo->RegWidth = GetSerialPortStrideSize();
 }
 
@@ -353,7 +577,7 @@ UpdateOsBootMediumInfo (
 
   FillBootOptionListFromCfgData (OsBootOptionList);
 
-  if (OsBootOptionList->CurrentBoot == MAX_BOOT_OPTION_CFGDATA_ENTRY) {
+  if (OsBootOptionList->CurrentBoot == MAX_BOOT_OPTION_ENTRY - 1) {
     //
     // Read boot order, it is passed in by QEMU command
     //   QEMU boot order (a=1 c=2 d=3 n=4 at CMOS 0x3D)
@@ -394,6 +618,31 @@ UpdateOsBootMediumInfo (
   }
 }
 
+/**
+ Find the correct graphics PCI device number
+
+ @retval   GFX PCI device number
+ */
+UINT8
+GetGraphicsDeviceNumber (
+  VOID
+)
+{
+  UINT8            Dev;
+
+  if (GetPlatformId () == PLATFORM_ID_QSP_SIMICS) {
+    Dev = 15;
+  } else {
+    Dev = 1;
+  }
+
+  if (PciRead16 (PCI_LIB_ADDRESS(0, Dev, 0, 2)) != 0x1111) {
+    Dev = 0xff;
+    DEBUG ((DEBUG_INFO, "Could not find GFX device !\n"));
+  }
+
+  return Dev;
+}
 
 /**
  Update the frame buffer info by reading the PCI address
@@ -406,12 +655,16 @@ UpdateFrameBufferInfo (
 )
 {
   GRAPHICS_DATA   *GfxPtr;
+  UINT8            Dev;
 
   GfxPtr = (GRAPHICS_DATA *)(UINTN)PcdGet32(PcdGraphicsVbtAddress);
-  GfxInfo->FrameBufferBase = (UINT64)PciRead32 (PCI_LIB_ADDRESS(0, 1, 0, 0x10)) & 0xFFFFFFF0;
-  if (GfxPtr->Signature == GRAPHICS_DATA_SIG) {
-    GfxInfo->GraphicsMode.HorizontalResolution = GfxPtr->ResX;
-    GfxInfo->GraphicsMode.VerticalResolution   = GfxPtr->ResY;
+  Dev = GetGraphicsDeviceNumber ();
+  if (Dev < 32) {
+    GfxInfo->FrameBufferBase = (UINT64)PciRead32 (PCI_LIB_ADDRESS(0, Dev, 0, 0x10)) & 0xFFFFFFF0;
+    if (GfxPtr->Signature == GRAPHICS_DATA_SIG) {
+      GfxInfo->GraphicsMode.HorizontalResolution = GfxPtr->ResX;
+      GfxInfo->GraphicsMode.VerticalResolution   = GfxPtr->ResY;
+    }
   }
 }
 
@@ -425,9 +678,16 @@ UpdateFrameBufferDeviceInfo (
   OUT  EFI_PEI_GRAPHICS_DEVICE_INFO_HOB   *GfxDeviceInfo
   )
 {
-  GfxDeviceInfo->BarIndex = 0;
-  GfxDeviceInfo->VendorId = PciRead16 (PCI_LIB_ADDRESS (0, 1, 0, 0));
-  GfxDeviceInfo->DeviceId = PciRead16 (PCI_LIB_ADDRESS (0, 1, 0, 2));
+  UINT8            Dev;
+
+  Dev = GetGraphicsDeviceNumber ();
+  if (Dev < 32) {
+    GfxDeviceInfo->BarIndex = 0;
+    GfxDeviceInfo->VendorId = PciRead16 (PCI_LIB_ADDRESS (0, Dev, 0, 0));
+    GfxDeviceInfo->DeviceId = PciRead16 (PCI_LIB_ADDRESS (0, Dev, 0, 2));
+  }
+
+  SetDeviceAddr (PlatformDeviceGraphics, 0, (0 << 16) | (Dev << 8) | 0);
 }
 
 /**
@@ -448,7 +708,6 @@ UpdateSmmInfo (
     SmmInfoHob->SmmBase = PcdGet32 (PcdSmramTsegBase);
     SmmInfoHob->SmmSize = TsegSize;
     SmmInfoHob->Flags   = 0;
-    DEBUG ((DEBUG_INFO, "SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", SmmInfoHob->SmmBase, SmmInfoHob->SmmSize));
   }
 }
 
@@ -517,12 +776,16 @@ PlatformUpdateAcpiGnvs (
   SetMem (Gnvs, sizeof(EFI_GLOBAL_NVS_AREA), 0);
 
   Gnvs->PciWindow32.Base    = PcdGet32(PcdPciResourceMem32Base);
-  Gnvs->PciWindow32.End     = PcdGet64(PcdPciExpressBaseAddress) - 1;
+  if (GetPlatformId () == PLATFORM_ID_QSP_SIMICS) {
+    Gnvs->PciWindow32.End   = IO_APIC_BASE_ADDRESS - 1;
+  } else {
+    Gnvs->PciWindow32.End   = PcdGet64(PcdPciExpressBaseAddress) - 1;
+  }
   Gnvs->PciWindow32.Length  = Gnvs->PciWindow32.End - Gnvs->PciWindow32.Base + 1;
 
-  Gnvs->PciWindow64.Base    = 0;
-  Gnvs->PciWindow64.End     = 0;
-  Gnvs->PciWindow64.Length  = 0;
+  Gnvs->PciWindow64.Base    = 0x0800000000;
+  Gnvs->PciWindow64.End     = 0x0fffffffff;
+  Gnvs->PciWindow64.Length  = Gnvs->PciWindow64.Base - Gnvs->PciWindow64.End + 1;
 
   SocUpdateAcpiGnvs ((VOID *)Gnvs);
 }

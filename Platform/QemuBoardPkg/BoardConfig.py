@@ -1,7 +1,7 @@
 ## @file
 # This file is used to provide board specific image information.
 #
-#  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -28,9 +28,9 @@ class Board(BaseBoard):
 
         self.VERINFO_IMAGE_ID          = 'SB_QEMU '
         self.VERINFO_PROJ_MAJOR_VER    = 1
-        self.VERINFO_PROJ_MINOR_VER    = 0
+        self.VERINFO_PROJ_MINOR_VER    = 1
         self.VERINFO_SVN               = 1
-        self.VERINFO_BUILD_DATE        = '09/25/2017'
+        self.VERINFO_BUILD_DATE        = '05/03/2021'
 
         self.BOARD_NAME           = 'qemu'
         self.BOARD_PKG_NAME       = 'QemuBoardPkg'
@@ -60,9 +60,14 @@ class Board(BaseBoard):
         self.ENABLE_GRUB_CONFIG       = 1
         self.ENABLE_LINUX_PAYLOAD     = 1
         self.ENABLE_CRYPTO_SHA_OPT    = 0
+        self.ENABLE_SMBIOS            = 1
+
+        # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
+        self.ENABLE_SMM_REBASE        = 2
 
         self.ENABLE_SMBIOS            = 1
         self.ENABLE_SBL_SETUP         = 0
+        self.ENABLE_UPL_HANDOFF_FDT   = 0
 
         self.CPU_MAX_LOGICAL_PROCESSOR_NUMBER = 255
 
@@ -98,18 +103,20 @@ class Board(BaseBoard):
         self.STAGE1B_XIP          = 0
 
         self.STAGE1A_SIZE         = 0x00010000
+        if self.NO_OPT_MODE:
+            self.STAGE1A_SIZE    += 0x1000
         self.STAGE1B_SIZE         = 0x00030000
-        self.STAGE2_SIZE          = 0x00018000
+        self.STAGE2_SIZE          = 0x0001D000
 
         self.TEST_SIZE            = 0x00001000
         self.SIIPFW_SIZE          = 0x00010000
         self.EPAYLOAD_SIZE        = 0x0020D000
-        self.PAYLOAD_SIZE         = 0x00020000
+        self.PAYLOAD_SIZE         = 0x00021000
         self.CFGDATA_SIZE         = 0x00001000
         self.KEYHASH_SIZE         = 0x00001000
         self.VARIABLE_SIZE        = 0x00002000
         self.SBLRSVD_SIZE         = 0x00001000
-        self.FWUPDATE_SIZE        = 0x00018000 if self.ENABLE_FWU else 0
+        self.FWUPDATE_SIZE        = 0x00019000 if self.ENABLE_FWU else 0
         self.SETUP_SIZE           = 0x00020000 if self.ENABLE_SBL_SETUP else 0
 
         self._REDUNDANT_LAYOUT    = 1
@@ -120,6 +127,8 @@ class Board(BaseBoard):
             self.NON_REDUNDANT_SIZE = 0x400000
         else:
             self.TOP_SWAP_SIZE      = 0x010000
+            if self.NO_OPT_MODE:
+                self.TOP_SWAP_SIZE  = 0x020000
             self.REDUNDANT_SIZE     = 0x080000
             self.NON_VOLATILE_SIZE  = 0x001000
             self.NON_REDUNDANT_SIZE = 0x2DF000
@@ -136,10 +145,11 @@ class Board(BaseBoard):
             self.STAGE1A_LOAD_BASE  = FREE_TEMP_RAM_TOP
 
         self.STAGE1B_XIP          = EXECUTE_IN_PLACE
+        self.REMAP_STAGE1B        = not EXECUTE_IN_PLACE
         if not self.STAGE1B_XIP:
             # For Stage1B, it can be compressed if STAGE1B_XIP is 0
             # If so, STAGE1B_FD_BASE/STAGE1B_FD_SIZE need to be defined
-            self.STAGE1B_FD_SIZE      = 0x30000
+            self.STAGE1B_FD_SIZE      = 0x32000
             if self.NO_OPT_MODE:
                 self.STAGE1B_FD_SIZE += 0xE000
             self.STAGE1B_FD_BASE    = FREE_TEMP_RAM_TOP - self.STAGE1B_FD_SIZE
@@ -150,15 +160,18 @@ class Board(BaseBoard):
         self.STAGE2_FD_SIZE       = 0x00060000
 
         if self.NO_OPT_MODE:
-            self.STAGE2_SIZE         += 0x2000
+            if self.FSPDEBUG_MODE == 1:
+                self.STAGE2_SIZE     += 0x8000
+            else:
+                self.STAGE2_SIZE     += 0x2000
             self.PAYLOAD_SIZE        += 0xA000
-            self.OS_LOADER_FD_SIZE   += 0x22000
+            self.OS_LOADER_FD_SIZE   += 0x23000
             self.FWUPDATE_SIZE       += 0x8000
             self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         self.STAGE1_STACK_SIZE    = 0x00002000
         self.STAGE1_DATA_SIZE     = 0x0000E000
-
+        self.LOADER_RSVD_MEM_SIZE = 0x00800000
         self.CFG_DATABASE_SIZE    = self.CFGDATA_SIZE
 
         # Add following to force to use a specific platform ID
@@ -166,7 +179,7 @@ class Board(BaseBoard):
         #self._PLATFORM_ID         = 1
 
         self._CFGDATA_INT_FILE    = []
-        self._CFGDATA_EXT_FILE    = ['CfgDataExt_Brd1.dlt', 'CfgDataExt_Brd31.dlt']
+        self._CFGDATA_EXT_FILE    = ['CfgDataExt_Brd1.dlt', 'CfgDataExt_Brd31.dlt', 'CfgDataExt_QSP.dlt']
 
         # If mulitple VBT table support is required, list them as:
         #   {VbtImageId1 : VbtFileName1, VbtImageId2 : VbtFileName2, ...}
@@ -175,6 +188,12 @@ class Board(BaseBoard):
         # VbtFileName is the VBT file name. It needs to be located under platform
         #   VbtBin folder.
         self._MULTI_VBT_FILE      = {1:'Vbt800x600.dat', 2:'Vbt1024x768.dat'}
+
+    def GetPlatformToolchainVersions(self):
+        version_dict = {
+            'iasl'      : '20160318',
+        }
+        return version_dict
 
     def PlatformBuildHook (self, build, phase):
         if phase == 'post-build:before':
@@ -191,6 +210,11 @@ class Board(BaseBoard):
             'PlatformHookLib|Silicon/$(SILICON_PKG_NAME)/Library/PlatformHookLib/PlatformHookLib.inf',
             'GpioLib|Silicon/$(SILICON_PKG_NAME)/Library/GpioLib/GpioLib.inf',
             'SpiFlashLib|Silicon/$(SILICON_PKG_NAME)/Library/SpiFlashLib/SpiFlashLib.inf',
+            'GraphicsInitLib|Silicon/CommonSocPkg/Library/EmuGfxInitLib/EmuGfxInitLib.inf',
+            'BootGuardLib|Silicon/CommonSocPkg/Library/BootGuardLibCBnT/BootGuardLibCBnT.inf',
+            'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
+            'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf',
+            'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf'
         ]
         dsc['PcdsFeatureFlag.%s' % self.BUILD_ARCH] = [
             'gPlatformCommonLibTokenSpaceGuid.PcdMultiUsbBootDeviceEnabled | TRUE'
@@ -259,6 +283,12 @@ class Board(BaseBoard):
           ])
 
         return container_list
+
+    def GetOutputImages (self):
+        # define extra images that will be copied to output folder
+        img_list = ['CfgDataStitch.py',
+                    'CfgDataDef.yaml']
+        return img_list
 
     def GetImageLayout (self):
 

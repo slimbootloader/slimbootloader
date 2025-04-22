@@ -1,7 +1,7 @@
 /** @file
   Interface definition details for MBP.
 
-  Copyright (c) 2006 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2006 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 #ifndef _ME_BIOS_PAYLOAD_DATA_H_
@@ -49,7 +49,7 @@ typedef union {
 #define MBP_ITEM_ID(ApplicationId, ItemId) ((ApplicationId << 4) | ItemId)
 
 #define MBP_ITEM_ID_MEASURED_BOOT     MBP_ITEM_ID(MbpAppIdKernel, MbpItemIdMeasuredBoot)
-
+#define MBP_ITEM_ID_OEM_KEY_REVOKE    MBP_ITEM_ID(MbpAppIdKernel, MbpItemIdOemKeyRevoke)
 
 //
 // Enum for AppId
@@ -71,7 +71,8 @@ typedef enum {
   MbpItemIdUnconfigOnRtc              = 8,
   MbpItemIdShipState                  = 9,
   MbpItemIdFwArbSvn                   = 14,
-  MbpItemIdMeasuredBoot               = 15
+  MbpItemIdMeasuredBoot               = 15,
+  MbpItemIdOemKeyRevoke               = 16
 } MBP_KERNEL_ITEM_ID;
 typedef enum {
   MbpItemIdHwaMtu = 1
@@ -202,6 +203,12 @@ typedef struct {
   UINT8                       Reserved[3];
 } MBP_MEASURED_BOOT_SUPPORT;
 
+typedef struct {
+  UINT32                      OemKeyDataRsrvd;
+  BOOLEAN                     Available;
+  UINT8                       Reserved[3];
+} MBP_OEM_KEY_REVOKE;
+
 ///
 /// ME BIOS Payload structure containing insensitive data only
 ///
@@ -217,6 +224,7 @@ typedef struct {
   MBP_IFWI_DNX_REQUEST       IfwiDnxRequest;
   MBP_ICC_PROFILE            IccProfile;
   MBP_MEASURED_BOOT_SUPPORT  MeasuredBootSupport;
+  MBP_OEM_KEY_REVOKE         OemKeyRevoke;
 } ME_BIOS_PAYLOAD;
 
 ///

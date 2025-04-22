@@ -19,6 +19,7 @@
 ;---------------------
 
 extern ASM_PFX(Execute32BitCode)
+extern ASM_PFX(Execute64BitCode)
 
 ;------------------------------------------------------------------------------
 ; EFI_STATUS
@@ -37,6 +38,29 @@ ASM_PFX(FspmSwitchStack):
     mov   rsp, r9      ; Set new stack
     mov   r9,  0       ; 4th parameter for Execute32BitCode
     call  ASM_PFX(Execute32BitCode)
+    mov   rsp, rbp     ; Restore old stack
+    pop   rbp
+    ret
+
+;------------------------------------------------------------------------------
+; EFI_STATUS
+; EFIAPI
+; FspmSwitchStack64 (
+;   IN VOID        *EntryPoint,
+;   IN VOID        *Context1,   OPTIONAL
+;   IN VOID        *Context2,   OPTIONAL
+;   IN VOID        *NewStack
+;   );
+;------------------------------------------------------------------------------
+global ASM_PFX(FspmSwitchStack64)
+ASM_PFX(FspmSwitchStack64):
+    push  rbp
+    mov   rbp, rsp
+    mov   rsp, r9      ; Set new stack
+    mov   r9,  rcx     ; FSP-M EntryPoint
+    mov   rcx, rdx     ; shift parameters 1 & 2 for FSP-M Entry point
+    mov   rdx, r8
+    call  r9
     mov   rsp, rbp     ; Restore old stack
     pop   rbp
     ret

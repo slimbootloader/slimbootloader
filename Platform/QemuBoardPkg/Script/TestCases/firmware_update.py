@@ -72,7 +72,7 @@ def  get_check_lines (bp = 0, mode = 0):
               "===========Read Capsule Image============",
               "Boot from partition %s, update partition %s" % (bp_ab[0], bp_ab[1]),
               "Finished   100%",
-              "Reset required to proceed with the firmware update"
+              "Reset required to proceed"
               ])
     return lines
 
@@ -283,7 +283,7 @@ def main():
         output.extend(lines)
 
     # Try final normal boot
-    lines = run_qemu(bios_img, fwu_dir, True if fwu_mode != 0 else False, 3)
+    lines = run_qemu(bios_img, fwu_dir, True if fwu_mode != 0 else False, timeout = 3)
     output.extend(lines)
 
     # check test result

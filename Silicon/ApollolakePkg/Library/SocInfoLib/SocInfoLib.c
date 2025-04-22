@@ -12,6 +12,7 @@
 #include <CpuRegs.h>
 #include <Library/DebugLib.h>
 #include <Library/PcdLib.h>
+#include <Register/Intel/Cpuid.h>
 
 typedef struct
 {
@@ -75,7 +76,7 @@ GetCpuNumCores (
 )
 {
   UINT32 Ebx;
-  AsmCpuidEx (CPUID_CORE_TOPOLOGY, 1, NULL, &Ebx, NULL, NULL); // BWG 3.1.8
+  AsmCpuidEx (CPUID_EXTENDED_TOPOLOGY, 1, NULL, &Ebx, NULL, NULL); // BWG 3.1.8
   return (Ebx & 0xffff);
 }
 

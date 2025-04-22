@@ -70,7 +70,7 @@ SocUpdateAcpiGnvs (
     McD0BaseAddress  = PCI_LIB_ADDRESS (SA_MC_BUS, 0, 0, 0);
     McD2BaseAddress  = PCI_LIB_ADDRESS (SA_IGD_BUS, SA_IGD_DEV, SA_IGD_FUN_0, 0);
 
-    Gnvs->SaNvs.VtdDisable = FALSE;
+    Gnvs->SaNvs.VtdDisable = !FeaturePcdGet (PcdVtdEnabled);
     for (Index = 0; Index < SA_VTD_ENGINE_NUMBER; Index++) {
       Gnvs->SaNvs.VtdBaseAddress[Index] = ReadVtdBaseAddress (Index);
     }

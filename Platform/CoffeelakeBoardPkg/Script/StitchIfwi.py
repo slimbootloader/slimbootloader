@@ -1,7 +1,7 @@
 ## @ StitchIfwi.py
 #  This is a python stitching script for Slim Bootloader WHL/CFL build
 #
-# Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2019 - 2023, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -22,6 +22,12 @@ from   ctypes  import *
 from   StitchLoader import *
 from   subprocess   import call
 sys.dont_write_bytecode = True
+
+sblopen_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../'))
+if not os.path.exists (sblopen_dir):
+    sblopen_dir = os.getenv('SBL_SOURCE', '')
+if not os.path.exists (sblopen_dir):
+    raise  Exception("Please set env 'SBL_SOURCE' to SBL open source root folder")
 
 btg_profile_values = [\
                     "Boot Guard Profile 0 - No_FVME",\
@@ -65,8 +71,30 @@ stitching ingredients listed in step 2 below, please contact your Intel represen
 
 """
 
+def is_wine_installed ():
+    return True if shutil.which("wine") != None else False
+
+def get_path_wrapper (path):
+    if os.name == 'posix' and is_wine_installed ():
+        cmd = ['winepath', '-w', path]
+        return run_process (cmd, capture_out=True).strip()
+    else:
+        return path
+
+def run_process_wrapper (cmds):
+    if os.name == 'posix':
+        if is_wine_installed ():
+            cmds = ["wine"] + cmds
+        else:
+            print ("\n")
+            print ("ERROR: Please install 'wine'.")
+            print ("       To stitch CFL IFWI in Linux, 'wine' is required")
+            print ("\n")
+            raise Exception ()
+    run_process (cmds)
+
 def gen_bpmgen2_params (stitch_cfg_file, InFile, OutFile):
-    InFileptr = open(InFile, 'r')
+    InFileptr = open(InFile, 'r', encoding='utf8')
     lines = InFileptr.readlines()
     InFileptr.close()
 
@@ -140,7 +168,7 @@ def sign_binary(infile, stitch_dir, stitch_cfg_file):
     gen_bpmgen2_params(stitch_cfg_file, os.path.join(bpm_gen2dir, "Example.bpDef"), os.path.join(output_dir, "bpmgen2.params"))
 
     print("Generating Btg KeyManifest.bin....")
-    run_process ([os.path.join (bpm_gen2dir, 'bpmgen2'),
+    run_process_wrapper ([get_path_wrapper (os.path.join (bpm_gen2dir, 'bpmgen2')),
         'KM1GEN',
         '-KEY',        os.path.join (bpm_key_dir, 'pubkey.pem'), 'BPM',
         '-KM',         os.path.join (output_dir,  'KeyManifest.bin'),
@@ -151,7 +179,7 @@ def sign_binary(infile, stitch_dir, stitch_cfg_file):
         '-d:2'])
 
     print("Generating Btg Boot Policy Manifest (BPM).bin....")
-    run_process ([os.path.join (bpm_gen2dir, 'bpmgen2'),
+    run_process_wrapper ([get_path_wrapper (os.path.join (bpm_gen2dir, 'bpmgen2')),
         'GEN',
         os.path.join (output_dir, 'sbl_sec_temp.bin'),
         os.path.join (output_dir, 'bpmgen2.params'),
@@ -297,8 +325,8 @@ def gen_xml_file(stitch_dir, stitch_cfg_file, btg_profile, platform, tpm):
     new_xml_file = os.path.join (stitch_dir, 'Temp', 'new.xml')
     updated_xml_file = os.path.join (stitch_dir, 'Temp', 'updated.xml')
     sku = stitch_cfg_file.get_platform_sku().get(platform)
-    cmd = [fit_tool, '-sku', sku, '-save', new_xml_file, '-w', os.path.join (stitch_dir, 'Temp')]
-    run_process (cmd)
+    cmd = [get_path_wrapper(fit_tool), '-sku', sku, '-save', new_xml_file, '-w', os.path.join (stitch_dir, 'Temp')]
+    run_process_wrapper (cmd)
 
     tree = ET.parse(new_xml_file)
 
@@ -342,12 +370,6 @@ def replace_component (ifwi_src_path, flash_path, file_path, comp_alg, pri_key):
         container_file = os.path.join(work_dir, 'CTN_%s.bin') % comp_name
         gen_file_from_object (container_file, ifwi_bin[replace_comp.offset:replace_comp.offset + replace_comp.length])
         comp_file     = os.path.join(work_dir, file_path)
-        sblopen_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), '../../../../', 'SblOpen')
-        if not os.path.exists (sblopen_dir):
-            sblopen_dir = os.getenv('SBL_SOURCE', '')
-
-        if not os.path.exists (sblopen_dir):
-           raise  Exception("Please set env 'SBL_SOURCE' to SBL open source root folder")
 
         if os.name == 'nt':
             tool_bin_dir  = os.path.join(sblopen_dir, "BaseTools", "Bin", "Win32")
@@ -404,7 +426,7 @@ def stitch (stitch_dir, stitch_cfg_file, sbl_file, btg_profile, platform_data, p
     gen_xml_file(stitch_dir, stitch_cfg_file, btg_profile, platform, tpm)
 
     print ("Run fit tool to generate ifwi.........")
-    run_process (['./Fit/fit', '-b', '-o', 'Temp/Ifwi.bin', '-f', os.path.join (temp_dir, 'updated.xml'),
+    run_process_wrapper ([get_path_wrapper ('./Fit/fit'), '-b', '-o', 'Temp/Ifwi.bin', '-f', os.path.join (temp_dir, 'updated.xml'),
         '-s', temp_dir, '-w', temp_dir, '-d', temp_dir])
     return 0
 #    cmd = './fit -b -o Ifwi.bin -f Platform.xml'
@@ -501,13 +523,18 @@ def main():
                     type=str, required=True,
                     help='specify the platform specific stitch config file')
 
+    ap.add_argument('-op',
+                     dest='outpath',
+                     default = '',
+                     help = "Specify path to write output IFIW and signed bin files")
+
     args = ap.parse_args()
 
     stitch_cfg_file = load_source('StitchIfwiConfig', args.config_file)
     if args.stitch_dir == '':
         print ("Please specify stitch work directory")
         print ('%s' % stitch_cfg_file.extra_usage_txt)
-        return 0
+        return 1
 
     sku_dict = stitch_cfg_file.get_platform_sku()
     if len (sku_dict) == 1 and args.platform == '':
@@ -518,16 +545,16 @@ def main():
         print ("Invalid sku (%s), Please provide valid sku:" % args.platform)
         for sku in sku_dict :
             print (" %s - 'For %s'" % (sku, sku_dict[sku]))
-        return 0
+        return 1
 
     if args.btg_profile in ["vm","fvme"] and args.tpm == "none":
         print ("ERROR: Choose appropriate Tpm type for BootGuard profile 3 and 5")
-        return 0
+        return 1
 
     if args.clean:
         shutil.rmtree(os.path.join(stitch_dir, 'Temp'), ignore_errors=True)
         print ("Cleaning completed successfully !\n")
-        return 0
+        return 1
 
     print ("Executing stitch.......")
     curr_dir = os.getcwd()
@@ -540,9 +567,12 @@ def main():
     os.chdir(curr_dir)
 
     generated_ifwi_file = os.path.join(stitch_dir, 'Temp', 'Ifwi.bin')
-
-    ifwi_file_name = 'sbl_ifwi_%s.bin' % (args.platform)
+    ifwi_file_name = os.path.join(args.outpath,'sbl_ifwi_%s.bin' % (args.platform))
     shutil.copy(generated_ifwi_file, ifwi_file_name)
+
+    generated_signed_sbl =  os.path.join(stitch_dir, 'Temp', 'SlimBootloader.bin')
+    sbl_file_name = os.path.join(args.outpath,'SlimBootloader_%s.bin' % (args.platform))
+    shutil.copy(generated_signed_sbl, sbl_file_name)
 
     print ("\nIFWI Stitching completed successfully !")
     print ("Boot Guard Profile: %s" % args.btg_profile.upper())

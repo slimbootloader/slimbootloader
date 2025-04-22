@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2014 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2014 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -541,32 +541,13 @@ UfsCreateDMCommandDesc (
   }
 
   DataDirection = Packet->DataDirection;
-  if (DataDirection == UfsDataIn) {
-    DataSize = Packet->InTransferLength;
-    Data     = Packet->InDataBuffer;
-  } else if (DataDirection == UfsDataOut) {
-    DataSize = Packet->OutTransferLength;
-    Data     = Packet->OutDataBuffer;
-  } else {
-    DataSize = 0;
-    Data     = NULL;
-  }
-
-  if (((Opcode != UtpQueryFuncOpcodeSetFlag) && (Opcode != UtpQueryFuncOpcodeClrFlag) && (Opcode != UtpQueryFuncOpcodeTogFlag))
-      && ((DataSize == 0) || (Data == NULL))) {
-    return EFI_INVALID_PARAMETER;
-  }
-
-  if (((Opcode == UtpQueryFuncOpcodeSetFlag) || (Opcode == UtpQueryFuncOpcodeClrFlag) || (Opcode == UtpQueryFuncOpcodeTogFlag))
-      && ((DataSize != 0) || (Data != NULL))) {
-    return EFI_INVALID_PARAMETER;
-  }
-
-  if ((Opcode == UtpQueryFuncOpcodeWrAttr) && (DataSize != sizeof (UINT32))) {
-    return EFI_INVALID_PARAMETER;
-  }
+  DataSize      = Packet->TransferLength;
+  Data          = Packet->DataBuffer;
 
   if ((Opcode == UtpQueryFuncOpcodeWrDesc) || (Opcode == UtpQueryFuncOpcodeRdDesc)) {
+    if (DataSize == 0 || Data == NULL) {
+      return EFI_INVALID_PARAMETER;
+    }
     TotalLen = ROUNDUP8 (sizeof (UTP_QUERY_REQ_UPIU)) + ROUNDUP8 (sizeof (UTP_QUERY_RESP_UPIU)) + ROUNDUP8 (DataSize);
   } else {
     TotalLen = ROUNDUP8 (sizeof (UTP_QUERY_REQ_UPIU)) + ROUNDUP8 (sizeof (UTP_QUERY_RESP_UPIU));
@@ -644,6 +625,7 @@ UfsCreateNopCommandDesc (
 
   NopOutUpiu = (UTP_NOP_OUT_UPIU *)CommandDesc;
 
+  ASSERT (NopOutUpiu != NULL);
   NopOutUpiu->TaskTag = Private->TaskTag++;
 
   //
@@ -679,13 +661,26 @@ UfsFindAvailableSlotInTrl (
 {
   ASSERT ((Private != NULL) && (Slot != NULL));
 
-  //
-  // The simplest algo to always use slot 0.
-  // TODO: enhance it to support async transfer with multiple slot.
-  //
-  *Slot = 0;
+  UINT8            Nutrs;
+  UINT8            Index;
+  UINT32           Data;
+  UINTN            Address;
 
-  return EFI_SUCCESS;
+  ASSERT ((Private != NULL) && (Slot != NULL));
+
+  Address = Private->UfsHcBase + UFS_HC_UTRLDBR_OFFSET;
+  Data    = MmioRead32 (Address);
+
+  Nutrs   = (UINT8)((Private->Capabilities & UFS_HC_CAP_NUTRS) + 1);
+
+  for (Index = 0; Index < Nutrs; Index++) {
+    if ((Data & (BIT0 << Index)) == 0) {
+      *Slot = Index;
+      return EFI_SUCCESS;
+    }
+  }
+
+  return EFI_NOT_READY;
 }
 
 
@@ -748,6 +743,200 @@ UfsStopExecCmd (
 }
 
 /**
+  Extracts return data from query response upiu.
+
+  @param[in] Packet     Pointer to the UFS_DEVICE_MANAGEMENT_REQUEST_PACKET.
+  @param[in] QueryResp  Pointer to the query response.
+
+  @retval EFI_INVALID_PARAMETER Packet or QueryResp are empty or opcode is invalid.
+  @retval EFI_DEVICE_ERROR      Data returned from device is invalid.
+  @retval EFI_SUCCESS           Data extracted.
+
+**/
+EFI_STATUS
+UfsGetReturnDataFromQueryResponse (
+  IN UFS_DEVICE_MANAGEMENT_REQUEST_PACKET  *Packet,
+  IN UTP_QUERY_RESP_UPIU                   *QueryResp
+  )
+{
+  UINT16  ReturnDataSize;
+  UINT32  ReturnData;
+
+  if (Packet == NULL || QueryResp == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  switch (Packet->Opcode) {
+    case UtpQueryFuncOpcodeRdDesc:
+      ReturnDataSize = QueryResp->Tsf.Length;
+      SwapLittleEndianToBigEndian ((UINT8*)&ReturnDataSize, sizeof (UINT16));
+      //
+      // Make sure the hardware device does not return more data than expected.
+      //
+      if (ReturnDataSize > Packet->TransferLength) {
+        return EFI_DEVICE_ERROR;
+      }
+
+      CopyMem (Packet->DataBuffer, (QueryResp + 1), ReturnDataSize);
+      Packet->TransferLength = ReturnDataSize;
+      break;
+    case UtpQueryFuncOpcodeWrDesc:
+      ReturnDataSize = QueryResp->Tsf.Length;
+      SwapLittleEndianToBigEndian ((UINT8*)&ReturnDataSize, sizeof (UINT16));
+      Packet->TransferLength = ReturnDataSize;
+      break;
+    case UtpQueryFuncOpcodeRdFlag:
+    case UtpQueryFuncOpcodeSetFlag:
+    case UtpQueryFuncOpcodeClrFlag:
+    case UtpQueryFuncOpcodeTogFlag:
+      //
+      // The 'FLAG VALUE' field is at byte offset 3 of QueryResp->Tsf.Value
+      //
+      *((UINT8*)(Packet->DataBuffer)) = *((UINT8*)&(QueryResp->Tsf.Value) + 3);
+      break;
+    case UtpQueryFuncOpcodeRdAttr:
+    case UtpQueryFuncOpcodeWrAttr:
+      ReturnData = QueryResp->Tsf.Value;
+      SwapLittleEndianToBigEndian ((UINT8*) &ReturnData, sizeof (UINT32));
+      CopyMem (Packet->DataBuffer, &ReturnData, sizeof (UINT32));
+      break;
+    default:
+      return EFI_INVALID_PARAMETER;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Creates Transfer Request descriptor and sends Query Request to the device.
+
+  @param[in] Private Pointer to the UFS_PEIM_HC_PRIVATE_DATA.
+  @param[in] Packet  Pointer to the UFS_DEVICE_MANAGEMENT_REQUEST_PACKET.
+
+  @retval EFI_SUCCESS           The device descriptor was read/written successfully.
+  @retval EFI_INVALID_PARAMETER The DescId, Index and Selector fields in Packet are invalid
+                                combination to point to a type of UFS device descriptor.
+  @retval EFI_DEVICE_ERROR      A device error occurred while attempting to r/w the device descriptor.
+  @retval EFI_TIMEOUT           A timeout occurred while waiting for the completion of r/w the device descriptor.
+
+**/
+EFI_STATUS
+UfsSendDmRequestRetry (
+  IN UFS_PEIM_HC_PRIVATE_DATA              *Private,
+  IN UFS_DEVICE_MANAGEMENT_REQUEST_PACKET  *Packet
+  )
+{
+  UINT8                               Slot;
+  UTP_TRD                             *Trd;
+  UINT32                              CmdDescSize;
+  UTP_QUERY_RESP_UPIU                 *QueryResp;
+  EFI_STATUS                          Status;
+  UINT8                               *CmdDescBase;
+  UINTN                               Address;
+
+  //
+  // Find out which slot of transfer request list is available.
+  //
+  Status = UfsFindAvailableSlotInTrl (Private, &Slot);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  Trd = ((UTP_TRD*)Private->UtpTrlBase) + Slot;
+  //
+  // Fill transfer request descriptor to this slot.
+  //
+  Status = UfsCreateDMCommandDesc (Private, Packet, Trd);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to create DM command descriptor\n"));
+    return Status;
+  }
+
+  //
+  // Check the transfer request result.
+  //
+  CmdDescBase = (UINT8 *) (UINTN) (LShiftU64 ((UINT64)Trd->UcdBaU, 32) | LShiftU64 ((UINT64)Trd->UcdBa, 7));
+  QueryResp   = (UTP_QUERY_RESP_UPIU *) (CmdDescBase + Trd->RuO * sizeof (UINT32));
+  ASSERT (QueryResp != NULL);
+  CmdDescSize = Trd->RuO * sizeof (UINT32) + Trd->RuL * sizeof (UINT32);
+
+  //
+  // Start to execute the transfer request.
+  //
+  UfsStartExecCmd (Private, Slot);
+
+  //
+  // Wait for the completion of the transfer request.
+  //
+  Address = Private->UfsHcBase + UFS_HC_UTRLDBR_OFFSET;
+  Status = UfsWaitMemSet (Address, BIT0, 0, Packet->Timeout);
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  if (Trd->Ocs != 0 || QueryResp->QueryResp != UfsUtpQueryResponseSuccess) {
+    DEBUG ((DEBUG_ERROR, "Failed to send query request, OCS = %X, QueryResp = %X\n", Trd->Ocs, QueryResp->QueryResp));
+    DumpQueryResponseResult (QueryResp->QueryResp);
+
+    if ((QueryResp->QueryResp == UfsUtpQueryResponseInvalidSelector) ||
+        (QueryResp->QueryResp == UfsUtpQueryResponseInvalidIndex) ||
+        (QueryResp->QueryResp == UfsUtpQueryResponseInvalidIdn)) {
+      Status = EFI_INVALID_PARAMETER;
+    } else {
+      Status = EFI_DEVICE_ERROR;
+    }
+    goto Exit;
+  }
+
+  Status = UfsGetReturnDataFromQueryResponse (Packet, QueryResp);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to get return data from query response\n"));
+    goto Exit;
+  }
+
+Exit:
+  UfsStopExecCmd (Private, Slot);
+  UfsFreeMem (Private->Pool, CmdDescBase, CmdDescSize);
+
+  return Status;
+}
+
+/**
+  Sends Query Request to the device. Query is sent until device responds correctly or counter runs out.
+
+  @param[in] Private Pointer to the UFS_PEIM_HC_PRIVATE_DATA.
+  @param[in] Packet  Pointer to the UFS_DEVICE_MANAGEMENT_PACKET.
+
+  @retval EFI_SUCCESS           The device responded correctly to the Query request.
+  @retval EFI_INVALID_PARAMETER The DescId, Index and Selector fields in Packet are invalid
+                                combination to point to a type of UFS device descriptor.
+  @retval EFI_DEVICE_ERROR      A device error occurred while waiting for the response from the device.
+  @retval EFI_TIMEOUT           A timeout occurred while waiting for the completion of the operation.
+
+**/
+EFI_STATUS
+UfsSendDmRequest (
+  IN UFS_PEIM_HC_PRIVATE_DATA              *Private,
+  IN UFS_DEVICE_MANAGEMENT_REQUEST_PACKET  *Packet
+  )
+{
+  EFI_STATUS  Status;
+  UINT8       Retry;
+
+  Status = EFI_SUCCESS;
+
+  for (Retry = 0; Retry < 5; Retry ++) {
+    Status = UfsSendDmRequestRetry (Private, Packet);
+    if (!EFI_ERROR (Status)) {
+      return EFI_SUCCESS;
+    }
+  }
+
+  DEBUG ((DEBUG_ERROR, "Failed to get response from the device after %d retries\n", Retry));
+  return Status;
+}
+
+/**
   Read or write specified device descriptor of a UFS device.
 
   @param[in]      Private       The pointer to the UFS_PEIM_HC_PRIVATE_DATA data structure.
@@ -771,111 +960,89 @@ UfsRwDeviceDesc (
   IN     UINT8                        Index,
   IN     UINT8                        Selector,
   IN OUT VOID                         *Descriptor,
-  IN     UINT32                       DescSize
+  IN     UINT32                       *DescSize
   )
 {
   EFI_STATUS                           Status;
   UFS_DEVICE_MANAGEMENT_REQUEST_PACKET Packet;
-  UINT8                                Slot;
-  UTP_TRD                              *Trd;
-  UINTN                                Address;
-  UTP_QUERY_RESP_UPIU                  *QueryResp;
-  UINT8                                *CmdDescBase;
-  UINT32                               CmdDescSize;
-  UINT16                               ReturnDataSize;
+
+  if (DescSize == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
   ZeroMem (&Packet, sizeof (UFS_DEVICE_MANAGEMENT_REQUEST_PACKET));
 
   if (Read) {
     Packet.DataDirection     = UfsDataIn;
-    Packet.InDataBuffer      = Descriptor;
-    Packet.InTransferLength  = DescSize;
     Packet.Opcode            = UtpQueryFuncOpcodeRdDesc;
   } else {
     Packet.DataDirection     = UfsDataOut;
-    Packet.OutDataBuffer     = Descriptor;
-    Packet.OutTransferLength = DescSize;
     Packet.Opcode            = UtpQueryFuncOpcodeWrDesc;
   }
+  Packet.DataBuffer          = Descriptor;
+  Packet.TransferLength      = *DescSize;
   Packet.DescId              = DescId;
   Packet.Index               = Index;
   Packet.Selector            = Selector;
   Packet.Timeout             = UFS_TIMEOUT;
 
-  //
-  // Find out which slot of transfer request list is available.
-  //
-  Status = UfsFindAvailableSlotInTrl (Private, &Slot);
+  Status = UfsSendDmRequest (Private, &Packet);
   if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  Trd = ((UTP_TRD *)Private->UtpTrlBase) + Slot;
-  //
-  // Fill transfer request descriptor to this slot.
-  //
-  Status = UfsCreateDMCommandDesc (Private, &Packet, Trd);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  //
-  // Check the transfer request result.
-  //
-  CmdDescBase = (UINT8 *) (UINTN) (LShiftU64 ((UINT64)Trd->UcdBaU, 32) | LShiftU64 ((UINT64)Trd->UcdBa, 7));
-  QueryResp   = (UTP_QUERY_RESP_UPIU *) (CmdDescBase + Trd->RuO * sizeof (UINT32));
-  CmdDescSize = Trd->RuO * sizeof (UINT32) + Trd->RuL * sizeof (UINT32);
-
-  //
-  // Start to execute the transfer request.
-  //
-  UfsStartExecCmd (Private, Slot);
-
-  //
-  // Wait for the completion of the transfer request.
-  //
-  Address = Private->UfsHcBase + UFS_HC_UTRLDBR_OFFSET;
-  Status = UfsWaitMemSet (Address, BIT0 << Slot, 0, Packet.Timeout);
-  if (EFI_ERROR (Status)) {
-    goto Exit;
-  }
-
-  if (QueryResp->QueryResp != 0) {
-    DumpQueryResponseResult (QueryResp->QueryResp);
-    Status = EFI_DEVICE_ERROR;
-    goto Exit;
-  }
-
-  if (Trd->Ocs == 0) {
-    ReturnDataSize = QueryResp->Tsf.Length;
-    SwapLittleEndianToBigEndian ((UINT8 *)&ReturnDataSize, sizeof (UINT16));
-
-    if (Read) {
-      //
-      // Make sure the hardware device does not return more data than expected.
-      //
-      if (ReturnDataSize > Packet.InTransferLength) {
-        Status = EFI_DEVICE_ERROR;
-        goto Exit;
-      }
-
-      CopyMem (Packet.InDataBuffer, (QueryResp + 1), ReturnDataSize);
-      Packet.InTransferLength = ReturnDataSize;
-    } else {
-      Packet.OutTransferLength = ReturnDataSize;
-    }
+    *DescSize = 0;
   } else {
-    Status = EFI_DEVICE_ERROR;
+    *DescSize = Packet.TransferLength;
   }
-
-Exit:
-  UfsStopExecCmd (Private, Slot);
-  UfsFreeMem (Private->Pool, CmdDescBase, CmdDescSize);
 
   return Status;
 }
 
+/**
+  Read or write specified attribute of a UFS device.
 
+  @param[in]      Private       The pointer to the UFS_PEIM_HC_PRIVATE_DATA data structure.
+  @param[in]      Read          The boolean variable to show r/w direction.
+  @param[in]      AttrId        The ID of Attribute.
+  @param[in]      Index         The Index of Attribute.
+  @param[in]      Selector      The Selector of Attribute.
+  @param[in, out] Attributes    The value of Attribute to be read or written.
+
+  @retval EFI_SUCCESS           The Attribute was read/written successfully.
+  @retval EFI_INVALID_PARAMETER AttrId, Index and Selector are invalid combination to point to a
+                                type of UFS device descriptor.
+  @retval EFI_DEVICE_ERROR      A device error occurred while attempting to r/w the Attribute.
+  @retval EFI_TIMEOUT           A timeout occurred while waiting for the completion of r/w the Attribute.
+
+**/
+EFI_STATUS
+UfsRwAttributes (
+  IN     UFS_PEIM_HC_PRIVATE_DATA  *Private,
+  IN     BOOLEAN                     Read,
+  IN     UINT8                       AttrId,
+  IN     UINT8                       Index,
+  IN     UINT8                       Selector,
+  IN OUT UINT32                      *Attributes
+  )
+{
+  UFS_DEVICE_MANAGEMENT_REQUEST_PACKET  Packet;
+
+  ZeroMem (&Packet, sizeof (UFS_DEVICE_MANAGEMENT_REQUEST_PACKET));
+
+  if (Read) {
+    Packet.DataDirection = UfsDataIn;
+    Packet.Opcode        = UtpQueryFuncOpcodeRdAttr;
+  } else {
+    Packet.DataDirection = UfsDataOut;
+    Packet.Opcode        = UtpQueryFuncOpcodeWrAttr;
+  }
+
+  Packet.DataBuffer = Attributes;
+  Packet.DescId     = AttrId;
+  Packet.Index      = Index;
+  Packet.Selector   = Selector;
+  Packet.Timeout    = UFS_TIMEOUT;
+
+  return UfsSendDmRequest (Private, &Packet);
+}
 
 /**
   Read or write specified flag of a UFS device.
@@ -898,14 +1065,7 @@ UfsRwFlags (
   IN OUT UINT8                        *Value
   )
 {
-  EFI_STATUS                           Status;
   UFS_DEVICE_MANAGEMENT_REQUEST_PACKET Packet;
-  UINT8                                Slot;
-  UTP_TRD                              *Trd;
-  UINTN                                Address;
-  UTP_QUERY_RESP_UPIU                  *QueryResp;
-  UINT8                                *CmdDescBase;
-  UINT32                               CmdDescSize;
 
   if (Value == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -927,69 +1087,13 @@ UfsRwFlags (
       return EFI_INVALID_PARAMETER;
     }
   }
+  Packet.DataBuffer          = Value;
   Packet.DescId              = FlagId;
   Packet.Index               = 0;
   Packet.Selector            = 0;
   Packet.Timeout             = UFS_TIMEOUT;
 
-  //
-  // Find out which slot of transfer request list is available.
-  //
-  Status = UfsFindAvailableSlotInTrl (Private, &Slot);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  //
-  // Fill transfer request descriptor to this slot.
-  //
-  Trd    = ((UTP_TRD *)Private->UtpTrlBase) + Slot;
-  Status = UfsCreateDMCommandDesc (Private, &Packet, Trd);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  //
-  // Check the transfer request result.
-  //
-  CmdDescBase = (UINT8 *) (UINTN) (LShiftU64 ((UINT64)Trd->UcdBaU, 32) | LShiftU64 ((UINT64)Trd->UcdBa, 7));
-  QueryResp   = (UTP_QUERY_RESP_UPIU *) (CmdDescBase + Trd->RuO * sizeof (UINT32));
-  CmdDescSize = Trd->RuO * sizeof (UINT32) + Trd->RuL * sizeof (UINT32);
-
-  //
-  // Start to execute the transfer request.
-  //
-  UfsStartExecCmd (Private, Slot);
-
-  //
-  // Wait for the completion of the transfer request.
-  //
-  Address = Private->UfsHcBase + UFS_HC_UTRLDBR_OFFSET;
-  Status = UfsWaitMemSet (Address, BIT0 << Slot, 0, Packet.Timeout);
-  if (EFI_ERROR (Status)) {
-    goto Exit;
-  }
-
-  if (QueryResp->QueryResp != 0) {
-    DumpQueryResponseResult (QueryResp->QueryResp);
-    Status = EFI_DEVICE_ERROR;
-    goto Exit;
-  }
-
-  if (Trd->Ocs == 0) {
-    //
-    // The 'FLAG VALUE' field is at byte offset 3 of QueryResp->Tsf.Value
-    //
-    *Value = *((UINT8*)&(QueryResp->Tsf.Value) + 3);
-  } else {
-    Status = EFI_DEVICE_ERROR;
-  }
-
-Exit:
-  UfsStopExecCmd (Private, Slot);
-  UfsFreeMem (Private->Pool, CmdDescBase, CmdDescSize);
-
-  return Status;
+  return UfsSendDmRequest (Private, &Packet);
 }
 
 /**
@@ -1065,6 +1169,7 @@ UfsExecNopCmds (
   //
   CmdDescBase = (UINT8 *) (UINTN) (LShiftU64 ((UINT64)Trd->UcdBaU, 32) | LShiftU64 ((UINT64)Trd->UcdBa, 7));
   NopInUpiu   = (UTP_NOP_IN_UPIU *) (CmdDescBase + Trd->RuO * sizeof (UINT32));
+  ASSERT (NopInUpiu != NULL);
   CmdDescSize = Trd->RuO * sizeof (UINT32) + Trd->RuL * sizeof (UINT32);
 
   //
@@ -1226,26 +1331,45 @@ Exit:
 
 
 /**
-  Sent UIC DME_LINKSTARTUP command to start the link startup procedure.
+  Fill UIC Command associated fields.
 
-  @param[in] Private          The pointer to the UFS_PEIM_HC_PRIVATE_DATA data structure.
   @param[in] UicOpcode        The opcode of the UIC command.
-  @param[in] Arg1             The value for 1st argument of the UIC command.
-  @param[in] Arg2             The value for 2nd argument of the UIC command.
-  @param[in] Arg3             The value for 3rd argument of the UIC command.
+  @param[in] Arg1Mib          The value for MIB Attribute of UIC command 1st argument.
+  @param[in] Arg1GenSel       The value for Gen Selector Index of UIC command 1st argument.
+  @param[in] Arg2             The value for UIC command 2nd argument.
+  @param[in] Arg3             The value for UIC command 3rd argument.
 
-  @return EFI_SUCCESS      Successfully execute this UIC command and detect attached UFS device.
-  @return EFI_DEVICE_ERROR Fail to execute this UIC command and detect attached UFS device.
-  @return EFI_NOT_FOUND    The presence of the UFS device isn't detected.
+**/
+VOID
+UfsFillUicCommand (
+  IN     UINT8             UicOpcode,
+  IN     UINT16            Arg1Mib,
+  IN     UINT16            Arg1GenSel,
+  IN     UINT32            Arg2,
+  IN     UINT32            Arg3,
+  IN OUT UFS_COMMAND       *Cmd
+  )
+{
+  Cmd->UicOpcode = UicOpcode;
+  Cmd->Arg1      = UFS_UIC_ARG_MIB_SEL (Arg1Mib, Arg1GenSel);
+  Cmd->Arg2      = Arg2;
+  Cmd->Arg3      = Arg3;
+}
+
+/**
+  Send UIC command.
+
+  @param[in]      Private                 The pointer to the UFS_PEIM_HC_PRIVATE_DATA data structure.
+  @param[in, out] UicCommand              UIC command descriptor. On exit contains UIC command results.
+
+  @return EFI_SUCCESS                     Successfully execute this UIC command and detect attached UFS device.
+  @return EFI_DEVICE_ERROR                Fail to execute this UIC command and detect attached UFS device.
 
 **/
 EFI_STATUS
 UfsExecUicCommands (
   IN  UFS_PEIM_HC_PRIVATE_DATA      *Private,
-  IN  UINT8                         UicOpcode,
-  IN  UINT32                        Arg1,
-  IN  UINT32                        Arg2,
-  IN  UINT32                        Arg3
+  IN OUT  UFS_COMMAND               *UicCommand
   )
 {
   EFI_STATUS  Status;
@@ -1269,13 +1393,13 @@ UfsExecUicCommands (
   // are set.
   //
   Address = UfsHcBase + UFS_HC_UCMD_ARG1_OFFSET;
-  MmioWrite32 (Address, Arg1);
+  MmioWrite32 (Address, UicCommand->Arg1);
 
   Address = UfsHcBase + UFS_HC_UCMD_ARG2_OFFSET;
-  MmioWrite32 (Address, Arg2);
+  MmioWrite32 (Address, UicCommand->Arg2);
 
   Address = UfsHcBase + UFS_HC_UCMD_ARG3_OFFSET;
-  MmioWrite32 (Address, Arg3);
+  MmioWrite32 (Address, UicCommand->Arg3);
 
   //
   // Host software shall only set the UICCMD if HCS.UCRDY is set to 1.
@@ -1287,47 +1411,60 @@ UfsExecUicCommands (
   }
 
   Address = UfsHcBase + UFS_HC_UIC_CMD_OFFSET;
-  MmioWrite32 (Address, (UINT32)UicOpcode);
+  MmioWrite32 (Address, (UINT32)UicCommand->UicOpcode);
 
   //
   // UFS 2.0 spec section 5.3.1 Offset:0x20 IS.Bit10 UIC Command Completion Status (UCCS)
   // This bit is set to '1' by the host controller upon completion of a UIC command.
   //
   Address = UfsHcBase + UFS_HC_IS_OFFSET;
-  Data    = MmioRead32 (Address);
   Status  = UfsWaitMemSet (Address, UFS_HC_IS_UCCS, UFS_HC_IS_UCCS, UFS_TIMEOUT);
   if (EFI_ERROR (Status)) {
     return Status;
   }
 
-  if (UicOpcode != UfsUicDmeReset) {
+  if (UicCommand->UicOpcode != UfsUicDmeReset) {
+    // Arg 2
     Address = UfsHcBase + UFS_HC_UCMD_ARG2_OFFSET;
-    Data    = MmioRead32 (Address);
-    if ((Data & 0xFF) != 0) {
+    UicCommand->Arg2    = MmioRead32 (Address);
+    // Arg 3
+    Address = UfsHcBase + UFS_HC_UCMD_ARG3_OFFSET;
+    UicCommand->Arg3    = MmioRead32 (Address);
+    if ((UicCommand->Arg2 & 0xFF) != 0) {
       DEBUG_CODE_BEGIN();
-      DumpUicCmdExecResult (UicOpcode, (UINT8) (Data & 0xFF));
+      DumpUicCmdExecResult ((UINT8)UicCommand->UicOpcode, (UINT8) (UicCommand->Arg2 & 0xFF));
       DEBUG_CODE_END();
       return EFI_DEVICE_ERROR;
     }
   }
 
-  //
-  // Check value of HCS.DP and make sure that there is a device attached to the Link.
-  //
-  Address = UfsHcBase + UFS_HC_STATUS_OFFSET;
-  Data    = MmioRead32 (Address);
-  if ((Data & UFS_HC_HCS_DP) == 0) {
-    Address = UfsHcBase + UFS_HC_IS_OFFSET;
-    Status  = UfsWaitMemSet (Address, UFS_HC_IS_ULSS, UFS_HC_IS_ULSS, UFS_TIMEOUT);
-  if (EFI_ERROR (Status)) {
-    return EFI_DEVICE_ERROR;
-  }
-    return EFI_NOT_FOUND;
-  }
-
-  DEBUG ((DEBUG_INFO, "UfsblockioPei: found a attached UFS device\n"));
-
   return EFI_SUCCESS;
+}
+
+/**
+  Applies platform specific programming after the driver
+  has enabled the host controller.
+
+  @param[in] Private                 The pointer to the UFS_PEIM_HC_PRIVATE_DATA data structure.
+
+**/
+VOID
+UfsHcPlatformPostHce (
+  IN  UFS_PEIM_HC_PRIVATE_DATA       *Private
+  )
+{
+  UFS_COMMAND            LccDisableCommand;
+  EFI_STATUS  Status;
+
+  //
+  // For all supported integrated controllers we have to disable the
+  // line configuration check(LCC).
+  //
+  UfsFillUicCommand (UfsUicDmeSet, PA_Local_TX_LCC_Enable, 0, 0, 0, &LccDisableCommand );
+  Status = UfsExecUicCommands (Private, &LccDisableCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to execute UIC LccDisableCommand\n"));
+  }
 }
 
 /**
@@ -1381,7 +1518,604 @@ UfsEnableHostController (
     return EFI_DEVICE_ERROR;
   }
 
+  //
+  // Apply platform specific programming after the driver has enabled
+  // the host controller.
+  //
+  UfsHcPlatformPostHce(Private);
   return EFI_SUCCESS;
+}
+
+/**
+  Detects the connected Ufs Lanes and Programs the Active Lanes Attribute.
+
+  @param[in] Private                 The pointer to the UFS_PEIM_HC_PRIVATE_DATA data structure.
+
+  @retval EFI_SUCCESS                Successfully Programmed the lanes
+  @retval others                     Failed to program the lanes
+**/
+EFI_STATUS
+UfsActivateAllLanes (
+  IN  UFS_PEIM_HC_PRIVATE_DATA       *Private
+  )
+{
+  EFI_STATUS         Status;
+  UINT32             ConnectedLanes = 0;
+  UINT32             ActiveLanes = 0;
+  UFS_COMMAND        UicCommand;
+
+  //Step 1: Query connected and Active Rx lanes and make all connected Rx lanes Active.
+  UfsFillUicCommand (UfsUicDmeGet, PA_ConnectedRxDataLanes, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet PA_ConnectedRxDataLanes(%x) \n", PA_ConnectedRxDataLanes));
+    return Status;
+  }
+  ConnectedLanes = UicCommand.Arg3;
+
+  UfsFillUicCommand (UfsUicDmeGet, PA_ActiveRxDataLanes, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet PA_ActiveRxDataLanes(%x) \n", PA_ActiveRxDataLanes));
+    return Status;
+  }
+  ActiveLanes = UicCommand.Arg3;
+
+  if (ActiveLanes < ConnectedLanes) {
+    DEBUG ((DEBUG_INFO, "UfsActivateAllLanes : PA_ActiveRxDataLanes = %x  PA_ConnectedRxDataLanes = %x\n", ActiveLanes, ConnectedLanes));
+    UfsFillUicCommand (UfsUicDmeSet, PA_ActiveRxDataLanes, 0, 0, ConnectedLanes, &UicCommand );
+    Status = UfsExecUicCommands (Private, &UicCommand);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to set active Rx data lanes\n"));
+      return Status;
+    }
+  }
+
+  //Step 2: Query connected and Active Tx lanes and make all connected Tx lanes Active.
+  UfsFillUicCommand (UfsUicDmeGet, PA_ConnectedTxDataLanes, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet PA_ConnectedTxDataLanes(%x)\n", PA_ConnectedTxDataLanes));
+    return Status;
+  }
+  ConnectedLanes = UicCommand.Arg3;
+
+  UfsFillUicCommand (UfsUicDmeGet, PA_ActiveTxDataLanes, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet PA_ActiveTxDataLanes(%x) \n", PA_ActiveTxDataLanes));
+    return Status;
+  }
+  ActiveLanes = UicCommand.Arg3;
+
+  if (ActiveLanes < ConnectedLanes) {
+    DEBUG ((DEBUG_INFO, "UfsActivateAllLanes : PA_ActiveTxDataLanes = %x  PA_ConnectedTxDataLanes = %x\n", ActiveLanes, ConnectedLanes));
+    UfsFillUicCommand (UfsUicDmeSet, PA_ActiveTxDataLanes, 0, 0, ConnectedLanes, &UicCommand );
+    Status = UfsExecUicCommands (Private, &UicCommand);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to set active Tx data lanes\n"));
+      return Status;
+    }
+  }
+
+  return Status;
+}
+
+/**
+  Switches the link to highest supported PWM Gear.
+
+  @param[in] Private                 The pointer to the UFS_PEIM_HC_PRIVATE_DATA data structure.
+
+  @retval EFI_SUCCESS                Successfully switched to PWM Gear
+  @retval others                     Failed to switch to PWM Gear
+**/
+EFI_STATUS
+UfsPwmGearSwitch (
+  IN  UFS_PEIM_HC_PRIVATE_DATA       *Private
+  )
+{
+  EFI_STATUS         Status;
+  UINT32             MaxPwmGear[] = {PWM_G1, PWM_G1};
+  UFS_COMMAND        UicCommand;
+  UINTN              Address;
+
+  Status = UfsActivateAllLanes (Private);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "UfsPwmGearSwitch: Failed to activate connected UFS Lanes \n"));
+    return Status;
+  }
+
+  UfsFillUicCommand (UfsUicDmeGet, PA_MaxRxPWMGear, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "UfsPwmGearSwitch: Failed to Get UfsUicDmeGet PA_MaxRxPWMGear(%x) \n", PA_MaxRxPWMGear));
+    return Status;
+  }
+  MaxPwmGear[UfsRxLane] = UicCommand.Arg3;
+
+  UfsFillUicCommand (UfsUicDmePeerGet, PA_MaxRxPWMGear, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "UfsPwmGearSwitch: Failed to Get UfsUicDmePeerGet PA_MaxRxPWMGear(%x) \n", PA_MaxRxPWMGear));
+    return Status;
+  }
+  MaxPwmGear[UfsTxLane] = UicCommand.Arg3;
+
+  UfsFillUicCommand (UfsUicDmeSet, PA_RXGear, 0, 0, MaxPwmGear[UfsRxLane], &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "UfsPwmGearSwitch: Failed to set UfsUicDmeSet PA_RXGear \n"));
+    return Status;
+  }
+
+  UfsFillUicCommand (UfsUicDmeSet, PA_TXGear, 0, 0, MaxPwmGear[UfsTxLane], &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "UfsPwmGearSwitch: Failed to set UfsUicDmeSet PA_TXGear \n"));
+    return Status;
+  }
+
+  //
+  // Change Power Mode of both directions
+  //
+  UfsFillUicCommand (UfsUicDmeSet, PA_PWRMode, 0, 0, (((SlowAuto_Mode & 0xF) << 4) | (SlowAuto_Mode & 0xF)), &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "UfsPwmGearSwitch: Failed to set PA_PWRMode(%x) \n", PA_PWRMode));
+    return Status;
+  }
+
+  Address = Private->UfsHcBase + UFS_HC_IS_OFFSET;
+  Status = UfsWaitMemSet (Address, UFS_HC_IS_UPMS, UFS_HC_IS_UPMS, UFS_TIMEOUT);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "UfsPwmGearSwitch: Failed to switch power mode\n"));
+    return EFI_DEVICE_ERROR;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Programs the recipe required for High speed link Power Mode and Gear switch
+
+  @param[in] Private                 The pointer to the UFS_PEIM_HC_PRIVATE_DATA data structure.
+
+  @retval EFI_SUCCESS                Successfully programmed the recipe
+  @retval others                     Failed to program the recipe
+**/
+EFI_STATUS
+UfsHsRecipieProgramming (
+  IN  UFS_PEIM_HC_PRIVATE_DATA       *Private
+  )
+{
+  EFI_STATUS         Status;
+  UFS_COMMAND        UicCommand;
+
+  UfsFillUicCommand (UfsUicDmeSet, DL_FC0ProtectionTimeOutVal, 0, 0, 0x1FFF, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to set active FC0 protection time out value\n"));
+    return Status;
+  }
+  UfsFillUicCommand (UfsUicDmeSet, DL_TC0ReplayTimeOutVal, 0, 0, 0xFFFF, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to set active TC0 replay time out value\n"));
+    return Status;
+  }
+  UfsFillUicCommand (UfsUicDmeSet, DL_AFC0ReqTimeOutVal, 0, 0, 0x7FFF, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+   DEBUG ((DEBUG_ERROR, "Failed to set active AFC0 req time out value\n"));
+    return Status;
+  }
+  UfsFillUicCommand (UfsUicDmeSet, PA_HSSeries, 0, 0, UFS_PA_HS_MODE_B, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+  DEBUG ((DEBUG_ERROR, "Failed to enable rate B\n"));
+  return Status;
+  }
+  UfsFillUicCommand (UfsUicDmeSet, PA_RxTermination, 0, 0, 0x1, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to enable Rx termination\n"));
+    return Status;
+  }
+  UfsFillUicCommand (UfsUicDmeSet, PA_TxTermination, 0, 0, 0x1, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to enable Tx termination\n"));
+    return Status;
+  }
+  return Status;
+}
+
+/**
+  Dumps the link Configuration.
+ @param[in] Private                 The pointer to the UFS_PEIM_HC_PRIVATE_DATA data structure.
+
+  @retval EFI_SUCCESS               Successfully switched to fast mode
+  @retval others                    Failed to switch to fast mode
+**/
+EFI_STATUS
+UfsDumpLinkConfig (
+  IN  UFS_PEIM_HC_PRIVATE_DATA       *Private
+  )
+{
+  EFI_STATUS         Status;
+  UFS_COMMAND        UicCommand;
+
+  DEBUG ((DEBUG_INFO, "UfsDumpLinkConfig Entry \n"));
+
+  UfsFillUicCommand (UfsUicDmeGet, PA_Local_TX_LCC_Enable, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet PA_Local_TX_LCC_Enable(%x)\n", PA_Local_TX_LCC_Enable));
+  }
+  DEBUG ((DEBUG_INFO, "UfsUicDmeGet PA_Local_TX_LCC_Enable(%x) = %x \n", PA_Local_TX_LCC_Enable, UicCommand.Arg3));
+
+  UfsFillUicCommand (UfsUicDmeGet, PA_MaxRxHSGear, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet PA_MaxRxHSGear(%x)\n", PA_MaxRxHSGear));
+  }
+  DEBUG ((DEBUG_INFO, "UfsUicDmeGet PA_MaxRxHSGear(%x) = %x \n", PA_MaxRxHSGear, UicCommand.Arg3));
+
+  UfsFillUicCommand (UfsUicDmePeerGet, PA_MaxRxHSGear, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmePeerGet PA_MaxRxHSGear(%x)\n", PA_MaxRxHSGear));
+  }
+  DEBUG ((DEBUG_INFO, "UfsUicDmePeerGet PA_MaxRxHSGear(%x) = %x \n", PA_MaxRxHSGear, UicCommand.Arg3));
+
+  UfsFillUicCommand (UfsUicDmeGet, PA_MaxRxPWMGear, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet PA_MaxRxPWMGear(%x)\n", PA_MaxRxPWMGear));
+  }
+  DEBUG ((DEBUG_INFO, "UfsUicDmeGet PA_MaxRxPWMGear(%x) = %x \n", PA_MaxRxPWMGear, UicCommand.Arg3));
+
+  UfsFillUicCommand (UfsUicDmePeerGet, PA_MaxRxPWMGear, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmePeerGet PA_MaxRxPWMGear(%x)\n", PA_MaxRxPWMGear));
+  }
+  DEBUG ((DEBUG_INFO, "UfsUicDmePeerGet PA_MaxRxPWMGear(%x) = %x \n", PA_MaxRxPWMGear, UicCommand.Arg3));
+
+  UfsFillUicCommand (UfsUicDmeGet, PA_AvailTxDataLanes, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet PA_AvailTxDataLanes(%x)\n", PA_AvailTxDataLanes));
+  }
+  DEBUG ((DEBUG_INFO, "UfsUicDmeGet PA_AvailTxDataLanes(%x) = %x \n", PA_AvailTxDataLanes, UicCommand.Arg3));
+
+  UfsFillUicCommand (UfsUicDmeGet, PA_AvailRxDataLanes, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet PA_AvailRxDataLanes(%x)\n", PA_AvailRxDataLanes));
+  }
+  DEBUG ((DEBUG_INFO, "UfsUicDmeGet PA_AvailRxDataLanes(%x) = %x \n", PA_AvailRxDataLanes, UicCommand.Arg3));
+
+  UfsFillUicCommand (UfsUicDmeGet, PA_ConnectedTxDataLanes, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet PA_ConnectedTxDataLanes(%x)\n", PA_ConnectedTxDataLanes));
+  }
+  DEBUG ((DEBUG_INFO, "UfsUicDmeGet PA_ConnectedTxDataLanes(%x) = %x \n", PA_ConnectedTxDataLanes, UicCommand.Arg3));
+
+  UfsFillUicCommand (UfsUicDmeGet, PA_ConnectedRxDataLanes, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet PA_ConnectedRxDataLanes(%x)\n", PA_ConnectedRxDataLanes));
+  }
+  DEBUG ((DEBUG_INFO, "UfsUicDmeGet PA_ConnectedRxDataLanes(%x) = %x \n", PA_ConnectedRxDataLanes, UicCommand.Arg3));
+
+  UfsFillUicCommand (UfsUicDmeGet, PA_ActiveTxDataLanes, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet PA_ActiveTxDataLanes(%x)\n", PA_ActiveTxDataLanes));
+  }
+  DEBUG ((DEBUG_INFO, "UfsUicDmeGet PA_ActiveTxDataLanes(%x) = %x \n", PA_ActiveTxDataLanes, UicCommand.Arg3));
+
+  UfsFillUicCommand (UfsUicDmeGet, PA_ActiveRxDataLanes, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet PA_ActiveRxDataLanes(%x)\n", PA_ActiveRxDataLanes));
+  }
+  DEBUG ((DEBUG_INFO, "UfsUicDmeGet PA_ActiveRxDataLanes(%x) = %x \n", PA_ActiveRxDataLanes, UicCommand.Arg3));
+
+  UfsFillUicCommand (UfsUicDmeGet, PA_TxPWRStatus, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet PA_TxPWRStatus(%x)\n", PA_TxPWRStatus));
+  }
+  DEBUG ((DEBUG_INFO, "UfsUicDmeGet PA_TxPWRStatus(%x) = %x \n", PA_TxPWRStatus, UicCommand.Arg3));
+
+  UfsFillUicCommand (UfsUicDmeGet, PA_RxPWRStatus, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet PA_RxPWRStatus(%x)\n", PA_RxPWRStatus));
+  }
+  DEBUG ((DEBUG_INFO, "UfsUicDmeGet PA_RxPWRStatus(%x) = %x \n", PA_RxPWRStatus, UicCommand.Arg3));
+
+  UfsFillUicCommand (UfsUicDmeGet, DL_FC0ProtectionTimeOutVal, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet DL_FC0ProtectionTimeOutVal(%x)\n", DL_FC0ProtectionTimeOutVal));
+  }
+  DEBUG ((DEBUG_INFO, "UfsUicDmeGet DL_FC0ProtectionTimeOutVal(%x) = %x \n", DL_FC0ProtectionTimeOutVal, UicCommand.Arg3));
+
+  UfsFillUicCommand (UfsUicDmeGet, DL_TC0ReplayTimeOutVal, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet DL_TC0ReplayTimeOutVal(%x)\n", DL_TC0ReplayTimeOutVal));
+  }
+  DEBUG ((DEBUG_INFO, "UfsUicDmeGet DL_TC0ReplayTimeOutVal(%x) = %x \n", DL_TC0ReplayTimeOutVal, UicCommand.Arg3));
+
+  UfsFillUicCommand (UfsUicDmeGet, DL_AFC0ReqTimeOutVal, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet DL_AFC0ReqTimeOutVal(%x)\n", DL_AFC0ReqTimeOutVal));
+  }
+  DEBUG ((DEBUG_INFO, "UfsUicDmeGet DL_AFC0ReqTimeOutVal(%x) = %x \n", DL_AFC0ReqTimeOutVal, UicCommand.Arg3));
+
+  UfsFillUicCommand (UfsUicDmeGet, PA_TXGear, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet PA_TXGear(%x)\n", PA_TXGear));
+  }
+  DEBUG ((DEBUG_INFO, "UfsUicDmeGet PA_TXGear(%x) = %x \n", PA_TXGear, UicCommand.Arg3));
+
+  UfsFillUicCommand (UfsUicDmeGet, PA_TxTermination, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet PA_TxTermination(%x)\n", PA_TxTermination));
+  }
+  DEBUG ((DEBUG_INFO, "UfsUicDmeGet PA_TxTermination(%x) = %x \n", PA_TxTermination, UicCommand.Arg3));
+
+  UfsFillUicCommand (UfsUicDmeGet, PA_HSSeries, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet PA_HSSeries(%x)\n", PA_HSSeries));
+  }
+  DEBUG ((DEBUG_INFO, "UfsUicDmeGet PA_HSSeries(%x) = %x \n", PA_HSSeries, UicCommand.Arg3));
+
+  UfsFillUicCommand (UfsUicDmeGet, PA_RXGear, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet PA_RXGear(%x)\n", PA_RXGear));
+  }
+  DEBUG ((DEBUG_INFO, "UfsUicDmeGet PA_RXGear(%x) = %x \n", PA_RXGear, UicCommand.Arg3));
+
+  UfsFillUicCommand (UfsUicDmeGet, PA_RxTermination, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet PA_RxTermination(%x)\n", PA_RxTermination));
+  }
+  DEBUG ((DEBUG_INFO, "UfsUicDmeGet PA_RxTermination(%x) = %x \n", PA_RxTermination, UicCommand.Arg3));
+
+  UfsFillUicCommand (UfsUicDmeGet, PA_HSSeries, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet PA_HSSeries(%x)\n", PA_HSSeries));
+  }
+  DEBUG ((DEBUG_INFO, "UfsUicDmeGet PA_HSSeries(%x) = %x \n", PA_HSSeries, UicCommand.Arg3));
+
+  DEBUG ((DEBUG_INFO, "UfsDumpLinkConfig Exit \n"));
+  return EFI_SUCCESS;
+}
+
+/**
+  Switches the link Power Mode and Gear.
+
+  @param[in] Private                 The pointer to the UFS_PEIM_HC_PRIVATE_DATA data structure.
+
+  @retval EFI_SUCCESS                Successfully switched the Power Mode and Gear
+  @retval others                     Failed to switch the Power Mode and Gear
+**/
+EFI_STATUS
+UfsPowerModeAndGearSwitch (
+  IN  UFS_PEIM_HC_PRIVATE_DATA       *Private
+  )
+{
+  EFI_STATUS         Status;
+  UINT32             PowerMode[] = {Fast_Mode, Fast_Mode};
+  UINT32             MaxHsGear[] = {HS_G1, HS_G1};
+  UINT32             CurrentHsGear[] = {NO_HS, NO_HS};
+  UINT32             MaxPwmGear[] = {PWM_G1, PWM_G1};
+  UFS_COMMAND        UicCommand;
+  UINTN              Address;
+
+  DEBUG ((DEBUG_INFO, "UfsPowerModeAndGearSwitch Entry: \n" ));
+  //
+  //Step 1: Program Lanes
+  //
+  Status = UfsActivateAllLanes (Private);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Program UFS Lanes \n"));
+    return Status;
+  }
+  //
+  //Step 2: Query Max HS Gear and Max PWM Gears and if no HS gear, set PowerMode to SlowAuto
+  //
+  UfsFillUicCommand (UfsUicDmeGet, PA_MaxRxPWMGear, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet PA_MaxRxPWMGear(%x)\n", PA_MaxRxPWMGear));
+    return Status;
+  }
+  MaxPwmGear[UfsRxLane] = UicCommand.Arg3;
+
+  UfsFillUicCommand (UfsUicDmeGet, PA_MaxRxHSGear, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet PA_MaxRxHSGear(%x) \n", PA_MaxRxHSGear));
+    return Status;
+  }
+  MaxHsGear[UfsRxLane] = UicCommand.Arg3;
+
+  UfsFillUicCommand (UfsUicDmePeerGet, PA_MaxRxPWMGear, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmePeerGet PA_MaxRxPWMGear(%x) \n",PA_MaxRxPWMGear));
+    return Status;
+  }
+  MaxPwmGear[UfsTxLane] = UicCommand.Arg3;
+
+  UfsFillUicCommand (UfsUicDmePeerGet, PA_MaxRxHSGear, 0, 0, 0, &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmePeerGet PA_MaxRxHSGear(%x) \n", PA_MaxRxHSGear));
+    return Status;
+  }
+  MaxHsGear[UfsTxLane] = UicCommand.Arg3;
+
+  //
+  //Step 3: Mark the Power Mode as SlowAuto_Mode
+  //
+  if ((NO_HS == MaxHsGear[UfsRxLane]) || (NO_HS == MaxHsGear[UfsTxLane])) {
+    PowerMode[UfsRxLane] = SlowAuto_Mode;
+    PowerMode[UfsTxLane] = SlowAuto_Mode;
+  }
+
+  DEBUG ((DEBUG_INFO, "PowerMode[UfsRxLane] = %x \n", PowerMode[UfsRxLane]));
+  DEBUG ((DEBUG_INFO, "PowerMode[UfsTxLane] = %x \n", PowerMode[UfsTxLane]));
+  DEBUG ((DEBUG_INFO, "MaxHsGear[UfsRxLane] = %x \n", MaxHsGear[UfsRxLane]));
+  DEBUG ((DEBUG_INFO, "MaxHsGear[UfsTxLane] = %x \n", MaxHsGear[UfsTxLane]));
+  DEBUG ((DEBUG_INFO, "MaxPwmGear[UfsRxLane] = %x \n", MaxPwmGear[UfsRxLane]));
+  DEBUG ((DEBUG_INFO, "MaxPwmGear[UfsTxLane] = %x \n", MaxPwmGear[UfsTxLane]));
+
+  //
+  //Step 4: Set Rx gear
+  //
+  if (PowerMode[UfsRxLane] == SlowAuto_Mode) {
+    UfsFillUicCommand (UfsUicDmeSet, PA_RXGear, 0, 0, MaxPwmGear[UfsRxLane], &UicCommand );
+    Status = UfsExecUicCommands (Private, &UicCommand);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to set UfsUicDmeSet PA_RXGear \n"));
+      return Status;
+    }
+  } else {
+    if (MaxHsGear[UfsRxLane] > HS_G3) {
+      MaxHsGear[UfsRxLane] = HS_G3;
+      DEBUG ((DEBUG_INFO, "Limited MaxHsGear to %x \n", MaxHsGear[UfsRxLane]));
+    }
+
+    UfsFillUicCommand (UfsUicDmeGet, PA_RXGear, 0, 0, 0, &UicCommand );
+    Status = UfsExecUicCommands (Private, &UicCommand);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to set UfsUicDmeSet PA_RXGear \n"));
+      return Status;
+    }
+    CurrentHsGear[UfsRxLane] = UicCommand.Arg3;
+
+    if (CurrentHsGear[UfsRxLane] < MaxHsGear[UfsRxLane]) {
+      DEBUG ((DEBUG_INFO, "CurrentHsGear[UfsRxLane] = %x switching to MaxHsGear[UfsRxLane]=%x \n", CurrentHsGear[UfsRxLane], MaxHsGear[UfsRxLane]));
+      UfsFillUicCommand (UfsUicDmeSet, PA_RXGear, 0, 0, MaxHsGear[UfsRxLane], &UicCommand );
+      Status = UfsExecUicCommands (Private, &UicCommand);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "Failed to set UfsUicDmeSet PA_RXGear \n"));
+        return Status;
+      }
+    }
+  }
+  //
+  //Step 5: Set Tx gear
+  //
+  if (PowerMode[UfsTxLane] == SlowAuto_Mode) {
+    UfsFillUicCommand (UfsUicDmeSet, PA_TXGear, 0, 0, MaxPwmGear[UfsTxLane], &UicCommand );
+    Status = UfsExecUicCommands (Private, &UicCommand);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to set UfsUicDmeSet PA_TXGear \n"));
+      return Status;
+    }
+  } else {
+    if (MaxHsGear[UfsTxLane] > HS_G3) {
+      MaxHsGear[UfsTxLane] = HS_G3;
+      DEBUG ((DEBUG_INFO, "Limited MaxHsGear to %x \n", MaxHsGear[UfsTxLane]));
+    }
+    UfsFillUicCommand (UfsUicDmeGet, PA_TXGear, 0, 0, 0, &UicCommand );
+    Status = UfsExecUicCommands (Private, &UicCommand);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeSet PA_TXGear \n"));
+      return Status;
+    }
+    CurrentHsGear[UfsTxLane] = UicCommand.Arg3;
+    if (CurrentHsGear[UfsTxLane] < MaxHsGear[UfsRxLane]) {
+      DEBUG ((DEBUG_INFO, "CurrentHsGear[UfsTxLane] = %x switching to MaxHsGear[UfsTxLane]=%x \n", CurrentHsGear[UfsTxLane], MaxHsGear[UfsTxLane]));
+      UfsFillUicCommand (UfsUicDmeSet, PA_TXGear, 0, 0, MaxHsGear[UfsTxLane], &UicCommand );
+      Status = UfsExecUicCommands (Private, &UicCommand);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "Failed to set UfsUicDmeSet PA_TXGear \n"));
+        return Status;
+      }
+    }
+  }
+  //
+  //Step 6: Program the Intel platform specific recipe required for High speed link Power Mode and Gear switch
+  //
+  Status = UfsHsRecipieProgramming (Private);
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, "UfsHsRecipieProgramming Fails, Status = %r\n", Status));
+  }
+  //
+  // Step 7 Change Power Mode of both directions
+  //
+  UfsFillUicCommand (UfsUicDmeSet, PA_PWRMode, 0, 0, (((PowerMode[UfsRxLane] & 0xF) << 4) | (PowerMode[UfsTxLane] & 0xF)), &UicCommand );
+  Status = UfsExecUicCommands (Private, &UicCommand);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to set PA_PWRMode(%x) \n", PA_PWRMode));
+    return Status;
+  }
+
+  Address = Private->UfsHcBase + UFS_HC_IS_OFFSET;
+  Status = UfsWaitMemSet (Address, UFS_HC_IS_UPMS, UFS_HC_IS_UPMS, UFS_TIMEOUT);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to switch power mode\n"));
+    return EFI_DEVICE_ERROR;
+  }
+
+  DEBUG ((DEBUG_INFO, "Dump LinkConfig After UfsPowerModeAndGearSwitch\n"));
+  Status = UfsDumpLinkConfig (Private);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Dump LinkConfig\n"));
+  }
+
+  DEBUG ((DEBUG_INFO, "UfsPowerModeAndGearSwitch Exit\n" ));
+  return EFI_SUCCESS;
+}
+
+/**
+  Switches the link Power Mode and Gear.
+
+  @param[in] Private                 The pointer to the UFS_PEIM_HC_PRIVATE_DATA data structure.
+
+**/
+EFI_STATUS
+EFIAPI
+UfsHcPlatformPostHceSwitchGear (
+  IN  UFS_PEIM_HC_PRIVATE_DATA       *Private
+  )
+{
+  EFI_STATUS                         Status;
+
+  DEBUG ((DEBUG_INFO, "UfsHcPlatformPostHceSwitchGear Entry\n" ));
+  if (Private == NULL) {
+    DEBUG((DEBUG_ERROR, "UfsHcPlatformPostHceSwitchGear Private is NULL\n"));
+    return EFI_LOAD_ERROR;
+  }
+
+  Status = UfsPwmGearSwitch (Private);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "UfsPwmGearSwitch Fails, Status = %r\n", Status));
+  }
+
+  Status = UfsPowerModeAndGearSwitch(Private);
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, "UfsPowerModeAndGearSwitch Fails, Status = %r\n", Status));
+  }
+  DEBUG ((DEBUG_INFO, "UfsHcPlatformPostHceSwitchGear Exit\n" ));
+  return Status;
 }
 
 /**
@@ -1399,19 +2133,35 @@ UfsDeviceDetection (
   IN  UFS_PEIM_HC_PRIVATE_DATA       *Private
   )
 {
-  UINTN                  Retry;
-  EFI_STATUS             Status;
+  UINTN              Retry;
+  EFI_STATUS         Status;
+  UINT32             Data;
+  UFS_COMMAND        LinkStartupCommand;
+  UINTN              Address;
 
   //
   // Start UFS device detection.
   // Try up to 3 times for establishing data link with device.
   //
   for (Retry = 0; Retry < 3; Retry++) {
-    Status = UfsExecUicCommands (Private, UfsUicDmeLinkStartup, 0, 0, 0);
+    LinkStartupCommand.UicOpcode = UfsUicDmeLinkStartup;
+    LinkStartupCommand.Arg1 = 0;
+    LinkStartupCommand.Arg2 = 0;
+    LinkStartupCommand.Arg3 = 0;
+    Status = UfsExecUicCommands (Private, &LinkStartupCommand);
     if (!EFI_ERROR (Status)) {
-      break;
-    }
+      Address = Private->UfsHcBase + UFS_HC_STATUS_OFFSET;
+      Data = MmioRead32 (Address);
 
+    if ((Data & UFS_HC_HCS_DP) == 0) {
+      Address = Private->UfsHcBase + UFS_HC_IS_OFFSET;
+      Status = UfsWaitMemSet (Address, UFS_HC_IS_ULSS, UFS_HC_IS_ULSS, UFS_TIMEOUT);
+      if (EFI_ERROR (Status)) {
+        return EFI_DEVICE_ERROR;
+      }
+    }
+    break;
+    }
     if (Status == EFI_NOT_FOUND) {
       continue;
     }
@@ -1420,7 +2170,7 @@ UfsDeviceDetection (
   }
 
   if (Retry == 3) {
-    return EFI_NOT_FOUND;
+      return EFI_NOT_FOUND;
   }
 
   return EFI_SUCCESS;
@@ -1669,3 +2419,57 @@ UfsControllerStop (
   return EFI_SUCCESS;
 }
 
+/**
+  Initializes UfsHcInfo field in private data.
+
+  @param[in] Private  Pointer to host controller private data.
+
+  @retval EFI_SUCCESS  UfsHcInfo initialized successfully.
+  @retval Others       Failed to initalize UfsHcInfo.
+**/
+EFI_STATUS
+GetUfsHcInfo (
+  IN UFS_PEIM_HC_PRIVATE_DATA  *Private
+  )
+{
+  UINTN       Address;
+  UINT32      Data;
+
+  Address = Private->UfsHcBase + UFS_HC_VER_OFFSET;
+  Data = MmioRead32 (Address);
+
+  Private->Version = Data;
+
+  Address = Private->UfsHcBase + UFS_HC_CAP_OFFSET;
+  Data    = MmioRead32 (Address);
+  Private->Capabilities = Data;
+
+  return EFI_SUCCESS;
+}
+
+
+/**
+  Read specified flag from a UFS device.
+
+  @param[in]  Private           The pointer to the UFS_PEIM_HC_PRIVATE_DATA data structure.
+  @param[in]  FlagId            The ID of flag to be read.
+  @param[out] Value             The flag's value.
+
+  @retval EFI_SUCCESS           The flag was read successfully.
+  @retval EFI_DEVICE_ERROR      A device error occurred while attempting to read the flag.
+  @retval EFI_TIMEOUT           A timeout occurred while waiting for the completion of reading the flag.
+
+**/
+EFI_STATUS
+UfsReadFlag (
+  IN     UFS_PEIM_HC_PRIVATE_DATA   *Private,
+  IN     UINT8                        FlagId,
+  OUT    UINT8                        *Value
+  )
+{
+  EFI_STATUS                           Status;
+
+  Status = UfsRwFlags (Private, TRUE, FlagId, Value);
+
+  return Status;
+}

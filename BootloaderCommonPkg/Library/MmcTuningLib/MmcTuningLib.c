@@ -1,7 +1,7 @@
 /** @file
   This file provides some helper functions which are specific for EMMC device.
 
-  Copyright (c) 2015 - 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2015 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -211,7 +211,6 @@ EmmcRxHs400Tuning (
   BLOCK_READ_WRITE_STATUS   FirstRead;
   UINT32                    TuningPatternSize;
   CONST UINT8               DllMax = RX_STROBE_DLL1_TAP_MAX_RANGE;
-  CONST UINT8               DllMin = RX_STROBE_DLL1_TAP_MIN_RANGE;
 
   DEBUG ((DEBUG_VERBOSE, "EmmcRxHs400Tuning() Start\n"));
 
@@ -269,7 +268,7 @@ EmmcRxHs400Tuning (
   //
   FirstRead = NotAvailable;
 
-  while ((DllCount <= DllMax) && (DllCount >= DllMin)) {
+  while (DllCount <= DllMax) {
     DEBUG ((DEBUG_VERBOSE, "[ EmmcRxHs400Tuning: Rx Min DLL1 (DllCount) = 0x%x ]\n", DllCount));
     MicroSecondDelay (1 * 1000);
     Status = MmcReadBlocks (
@@ -332,7 +331,7 @@ EmmcRxHs400Tuning (
   EmmcSetRxDllCtrl (EmmcBaseAddress, RxDll2, DllCount, RegList);
 
   FirstRead = NotAvailable;
-  while ((DllCount <= DllMax) && (DllCount >= DllMin)) {
+  while (DllCount <= DllMax) {
     DEBUG ((DEBUG_VERBOSE, "[ EmmcRxHs400Tuning: Rx Max DLL1 (DllCount) = 0x%x ]\n", DllCount));
     MicroSecondDelay (1 * 1000);
     Status = MmcReadBlocks (
@@ -438,7 +437,6 @@ EmmcTxHs400Tuning (
   EFI_STATUS                Status;
   BLOCK_READ_WRITE_STATUS   FirstWrite;
   CONST UINT8               DllMax = TX_DATA_DLL_TAP_MAX_RANGE;
-  CONST UINT8               DllMin = TX_DATA_DLL_TAP_MIN_RANGE;
 
   DEBUG ((DEBUG_VERBOSE, "EmmcTxHs400Tuning() Start\n"));
 
@@ -481,7 +479,7 @@ EmmcTxHs400Tuning (
   //
   FirstWrite = NotAvailable;
 
-  while ((DllCount <= DllMax) && (DllCount >= DllMin)) {
+  while (DllCount <= DllMax) {
     DEBUG ((DEBUG_VERBOSE, "[ EmmcTxHs400Tuning: Tx Min DLL (DllCount) = 0x%x ]\n", DllCount));
     MicroSecondDelay (1 * 1000);
     Status = MmcWriteBlocks (
@@ -543,7 +541,7 @@ EmmcTxHs400Tuning (
   //
   FirstWrite = NotAvailable;
 
-  while ((DllCount <= DllMax) && (DllCount >= DllMin)) {
+  while (DllCount <= DllMax) {
     DEBUG ((DEBUG_VERBOSE, "[ EmmcTxHs400Tuning: Tx Max DLL1 (DllCount) = 0x%x ]\n", DllCount));
     MicroSecondDelay (1 * 1000);
     Status = MmcWriteBlocks (
@@ -957,7 +955,7 @@ MmcTuning (
   //
   VariableLen = sizeof (EmmcTuningData);
   ZeroMem (&EmmcTuningData, VariableLen);
-  Status = GetVariable ("MMCDLL", NULL, &VariableLen, &EmmcTuningData);
+  Status = GetVariable (L"MMCDLL", NULL, NULL, &VariableLen, &EmmcTuningData);
   if (!EFI_ERROR (Status)) {
     if ((FeatureCfg & FEATURE_MMC_FORCE_TUNING) == 0) {
       DEBUG ((DEBUG_INFO, "Found eMMC tunning data, re-tuning is not required.\n"));
@@ -992,7 +990,7 @@ MmcTuning (
     DEBUG ((DEBUG_ERROR, "ERRORL: MMC serial number invalid, status = %r\n", Status));
   }
 
-  Status = SetVariable ("MMCDLL", 0, sizeof(EMMC_TUNING_DATA), &EmmcTuningData);
+  Status = SetVariable (L"MMCDLL", NULL, 0, sizeof(EMMC_TUNING_DATA), &EmmcTuningData);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "MMC DLL data save error, status = %r\n", Status));
   }

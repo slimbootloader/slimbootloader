@@ -1,0 +1,35 @@
+## @file
+#
+#  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = EmuGfxInitLib
+  FILE_GUID                      = BA37F2C5-B0F3-4a95-B55F-F25F4F6F8452
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = GraphicsInitLib
+
+[Sources]
+  EmuGfxInitLib.h
+  EmuGfxInitLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+  IntelFsp2Pkg/IntelFsp2Pkg.dec
+
+[LibraryClasses]
+  IoLib
+  DebugLib
+  MemoryAllocationLib
+  PciLib
+  BootloaderCommonLib
+
+[Guids]
+  gEfiGraphicsInfoHobGuid
+

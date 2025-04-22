@@ -3,7 +3,7 @@
   NVM Express specification.
 
   (C) Copyright 2014 Hewlett-Packard Development Company, L.P.<BR>
-  Copyright (c) 2013 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2013 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -250,7 +250,7 @@ NvmeCreatePrpList (
              Mapping
              );
   if (EFI_ERROR(Status) || (*PrpListHost == NULL)) {
-    DEBUG ((DEBUG_ERROR, "NvmeCreatePrpList: create PrpList failure!\n"));
+    DEBUG ((DEBUG_VERBOSE, "NvmeCreatePrpList: create PrpList failure!\n"));
     goto EXIT;
   }
 
@@ -336,7 +336,7 @@ NvmExpressPassThru (
   IN     EFI_NVM_EXPRESS_PASS_THRU_PROTOCOL          *This,
   IN     UINT32                                      NamespaceId,
   IN OUT EFI_NVM_EXPRESS_PASS_THRU_COMMAND_PACKET    *Packet,
-  IN     ASYNC_IO_CALL_BACK                          *Event OPTIONAL
+  IN     EFI_EVENT                                   Event OPTIONAL
   )
 {
   NVME_CONTROLLER_PRIVATE_DATA   *Private;
@@ -435,7 +435,7 @@ NvmExpressPassThru (
   if (Packet->QueueType == NVME_ADMIN_QUEUE) {
     QueueId = 0;
   } else {
-    if (Event == NULL || *Event == NULL) {
+    if (Event == NULL) {
       QueueId = 1;
     } else {
       QueueId = 2;
@@ -467,7 +467,7 @@ NvmExpressPassThru (
   //
   ASSERT (Sq->Psdt == 0);
   if (Sq->Psdt != 0) {
-    DEBUG ((DEBUG_ERROR, "NvmExpressPassThru: doesn't support SGL mechanism\n"));
+    DEBUG ((DEBUG_VERBOSE, "NvmExpressPassThru: doesn't support SGL mechanism\n"));
     return EFI_UNSUPPORTED;
   }
 
@@ -577,7 +577,7 @@ NvmExpressPassThru (
   //
   // Ring the submission queue doorbell.
   //
-  if ((Event != NULL && *Event != NULL) && (QueueId != 0)) {
+  if ((Event != NULL) && (QueueId != 0)) {
     Private->SqTdbl[QueueId].Sqt =
       (Private->SqTdbl[QueueId].Sqt + 1) % QueueSize;
   } else {
@@ -595,7 +595,7 @@ NvmExpressPassThru (
   // For non-blocking requests, return directly if the command is placed
   // in the submission queue.
   //
-  if ((Event != NULL && *Event != NULL) && (QueueId != 0)) {
+  if ((Event != NULL) && (QueueId != 0)) {
     AsyncRequest = AllocateZeroPool (sizeof (NVME_PASS_THRU_ASYNC_REQ));
     if (AsyncRequest == NULL) {
       Status = EFI_DEVICE_ERROR;
@@ -605,7 +605,7 @@ NvmExpressPassThru (
     AsyncRequest->Signature     = NVME_PASS_THRU_ASYNC_REQ_SIG;
     AsyncRequest->Packet        = Packet;
     AsyncRequest->CommandId     = Sq->Cid;
-    AsyncRequest->CallerEvent   = *Event;
+    AsyncRequest->CallerEvent   = Event;
     AsyncRequest->MapData       = MapData;
     AsyncRequest->MapMeta       = MapMeta;
     AsyncRequest->MapPrpList    = MapPrpList;
@@ -648,6 +648,19 @@ NvmExpressPassThru (
     // Copy the Respose Queue entry for this command to the callers response buffer
     //
     CopyMem (Packet->NvmeCompletion, Cq, sizeof (EFI_NVM_EXPRESS_COMPLETION));
+  } else {
+    //
+    // Timeout occurs for an NVMe command. Reset the controller to abort the
+    // outstanding commands.
+    //
+    DEBUG ((DEBUG_WARN, "NvmExpressPassThru: Timeout occurs for an NVMe command.\n"));
+    Status = NvmeControllerInit (Private);
+    if (!EFI_ERROR (Status)) {
+      Status = EFI_TIMEOUT;
+    } else {
+      Status = EFI_DEVICE_ERROR;
+    }
+    goto EXIT;
   }
 
   if ((Private->CqHdbl[QueueId].Cqh ^= 1) == 0) {
@@ -663,12 +676,7 @@ NvmExpressPassThru (
   // For now, the code does not support the non-blocking feature for admin queue.
   // If Event is not NULL for admin queue, signal the caller's event here.
   //
-  if (Event != NULL && *Event != NULL) {
-    NVME_BLKIO2_SUBTASK                  *Subtask;
-    ASSERT (QueueId == 0);
-    Subtask = NVME_BLKIO2_SUBTASK_FROM_EVENT (Event);
-    (*Event) (Subtask);
-  }
+  ASSERT (Event == NULL);
 
 EXIT:
   if (MapData != NULL) {

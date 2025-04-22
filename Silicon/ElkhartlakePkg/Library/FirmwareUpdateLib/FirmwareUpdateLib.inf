@@ -1,0 +1,56 @@
+### @file
+# Firmware Update library.
+#
+#
+# Copyright (c) 2014 - 2020, Intel Corporation. All rights reserved.<BR>
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+# @par Glossary:
+###
+
+[Defines]
+  INF_VERSION          = 0x00010005
+  BASE_NAME            = FirmwareUpdateLib
+  FILE_GUID            = 5BCBDE77-884E-4172-960F-882FA547CE89
+  MODULE_TYPE          = BASE
+  VERSION_STRING       = 1.0
+  LIBRARY_CLASS        = FirmwareUpdateLib
+
+[Sources]
+  FirmwareUpdateLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  Silicon/ElkhartlakePkg/ElkhartlakePkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+  PayloadPkg/PayloadPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  MemoryAllocationLib
+  IoLib
+  FileSystemLib
+  MmcAccessLib
+  PcdLib
+  PartitionLib
+  LitePeCoffLib
+  HeciInitLib
+
+[Guids]
+  gEfiPartTypeSystemPartGuid
+  gOsBootOptionGuid
+  gSblCompFWUpdateImageFileGuid
+
+[Pcd]
+  gPlatformModuleTokenSpaceGuid.PcdTopSwapRegionSize
+  gPlatformModuleTokenSpaceGuid.PcdRedundantRegionSize
+  gPlatformModuleTokenSpaceGuid.PcdFlashBaseAddress
+  gPlatformModuleTokenSpaceGuid.PcdMrcDataSize
+  gPlatformModuleTokenSpaceGuid.PcdStage1BSize
+  gPlatformModuleTokenSpaceGuid.PcdStage2Size
+  gPlatformModuleTokenSpaceGuid.PcdUcodeSize
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+  gPayloadTokenSpaceGuid.PcdPayloadHobList

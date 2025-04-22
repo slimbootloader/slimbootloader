@@ -1,0 +1,33 @@
+## @file
+#  Component description file for the top swap library
+#
+#  Copyright 2022 Intel Corporation.
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = TopSwapLib
+  FILE_GUID                      = ec8c01f9-7436-4dcd-9d41-58abbe9fd2c0
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = TopSwapLib
+
+[Sources]
+  TopSwapLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  IoLib
+  BootloaderCommonLib
+  PcdLib
+
+[Pcd]
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress

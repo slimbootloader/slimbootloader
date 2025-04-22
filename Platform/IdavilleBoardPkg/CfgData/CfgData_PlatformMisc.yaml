@@ -1,0 +1,36 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+- $ACTION         :
+  page              : PLTMISC:PLT:"Misc"
+- $ACTION         :
+  page              : PLTMISC
+- PLTMISC_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ PLTMISC_CFG_DATA, 0x0F1, 0, 0 ] }
+  - PltMisc      :
+    - $STRUCT         :
+      name            : Platform Misc. configuration
+      struct          : PLATFORM_MISC
+      help            : >
+                        Config Platform Misc.
+      length          : 0x04
+    - ActiveVideo     :
+      name            : Select default active video
+      type            : Combo
+      option          : 0x0:Onboard Device, 0x1:PCIE Device
+      help            : >
+                        Select default active video - Onboard or PCIE VGA
+      length          : 1b
+      value           : 0
+    - Rsvd1           :
+      name            : Reserved
+      type            : Reserved
+      length          : 31b
+      value           : 0
+

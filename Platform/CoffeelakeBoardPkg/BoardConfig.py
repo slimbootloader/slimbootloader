@@ -1,7 +1,7 @@
 ## @file
 # This file is used to provide board specific image information.
 #
-#  Copyright (c) 2017-2019, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -40,6 +40,11 @@ class Board(BaseBoard):
         self.PCI_MEM32_BASE       = 0x9F000000
         self.ACPI_PM_TIMER_BASE   = 0x1808
 
+        self._PCI_ENUM_DOWNGRADE_PMEM64 = 1
+        self._PCI_ENUM_DOWNGRADE_MEM64  = 1
+        self._PCI_ENUM_DOWNGRADE_BUS0   = 1
+        self.PCI_MEM64_BASE             = 0x4000000000
+
         self.FLASH_BASE_ADDRESS   = 0xFE000000
         self.FLASH_BASE_SIZE      = (self.FLASH_LAYOUT_START - self.FLASH_BASE_ADDRESS)
 
@@ -51,10 +56,30 @@ class Board(BaseBoard):
         self.ENABLE_SPLASH        = 1
         self.ENABLE_FRAMEBUFFER_INIT  = 1
         self.HAVE_PSD_TABLE       = 1
+        self.ENABLE_VTD           = 1
         self.ENABLE_GRUB_CONFIG   = 1
         self.ENABLE_CSME_UPDATE   = 0
         self.ENABLE_DMA_PROTECTION    = 0
+        self.ENABLE_SMM_REBASE        = 2
         self.DEBUG_PORT_NUMBER    = 0xFF
+
+        # BIT0: Log buffer
+        # BIT1: Serial port
+        # BIT2: Platform debug port
+        # BIT7: Platform console devices
+        self.DEBUG_OUTPUT_DEVICE_MASK = 0x03
+
+        # Input consoles
+        #   BIT0: Serial port
+        #   BIT1: USB Keyboard
+        #   BIT2: Platform debug port
+        self.CONSOLE_IN_DEVICE_MASK   = 0x00000001
+
+        # Output consoles
+        #   BIT0: Serial port
+        #   BIT1: Framebuffer
+        #   BIT2: Platform debug port
+        self.CONSOLE_OUT_DEVICE_MASK  = 0x00000001
 
         # CSME update library is required to enable this option and will be available as part of CSME kit
         self.BUILD_CSME_UPDATE_DRIVER   = 0
@@ -96,7 +121,7 @@ class Board(BaseBoard):
         self.STAGE1_DATA_SIZE     = 0x00014000
 
         self.PAYLOAD_EXE_BASE     = 0x00B00000
-        self.PAYLOAD_SIZE         = 0x00028000
+        self.PAYLOAD_SIZE         = 0x00030000
         if len(self._PAYLOAD_NAME.split(';')) > 1:
             self.UEFI_VARIABLE_SIZE = 0x00040000
         else:
@@ -136,8 +161,8 @@ class Board(BaseBoard):
             acm_btm = (acm_btm & 0xFFFE0000)
             self.ACM_SIZE     = acm_top - acm_btm
 
-        self.CFGDATA_REGION_TYPE  = FLASH_REGION_TYPE.BIOS
-        self.SPI_IAS_REGION_TYPE  = FLASH_REGION_TYPE.BIOS
+        self.CFGDATA_REGION_TYPE        = FLASH_REGION_TYPE.BIOS
+        self.SPI_CONTAINER_REGION_TYPE  = FLASH_REGION_TYPE.BIOS
 
         self.CFG_DATABASE_SIZE    = self.CFGDATA_SIZE + 0x4000
         self._CFGDATA_INT_FILE    = ['CfgDataInt_Cfls.dlt', 'CfgDataInt_Cflh.dlt', 'CfgDataInt_Whl.dlt']
@@ -152,18 +177,23 @@ class Board(BaseBoard):
         self._MULTI_VBT_FILE      = {1:'Vbt.dat', 2:'VbtCflH.dat', 3:'VbtCflS.dat'}
 
     def GetPlatformDsc (self):
+        debug_port_enable = False
+        if (self.CONSOLE_OUT_DEVICE_MASK & 0x04) or (self.CONSOLE_IN_DEVICE_MASK & 0x04) or (self.DEBUG_OUTPUT_DEVICE_MASK & 0x04):
+            debug_port_enable = True
+
         dsc = {}
         common_libs = [
             'LoaderLib|Platform/CommonBoardPkg/Library/LoaderLib/LoaderLib.inf',
             'PlatformHookLib|Silicon/$(SILICON_PKG_NAME)/Library/PlatformHookLib/PlatformHookLib.inf',
+            'ResetSystemLib|Platform/$(BOARD_PKG_NAME)/Library/ResetSystemLib/ResetSystemLib.inf',
             'PchSpiLib|Silicon/CommonSocPkg/Library/PchSpiLib/PchSpiLib.inf',
             'SpiFlashLib|Silicon/CommonSocPkg/Library/SpiFlashLib/SpiFlashLib.inf',
-            'PchSbiAccessLib|Silicon/$(SILICON_PKG_NAME)/Library/PchSbiAccessLib/PchSbiAccessLib.inf',
+            'PchSbiAccessLib|Silicon/CommonSocPkg/Library/PchSbiAccessLib/PchSbiAccessLib.inf',
             'PchInfoLib|Silicon/$(SILICON_PKG_NAME)/Library/PchInfoLib/PchInfoLib.inf',
             'PchSerialIoLib|Silicon/$(SILICON_PKG_NAME)/Library/PchSerialIoLib/PchSerialIoLib.inf',
             'GpioLib|Silicon/$(SILICON_PKG_NAME)/Library/GpioLib/GpioLib.inf',
-            'IgdOpRegionLib|Silicon/$(SILICON_PKG_NAME)/Library/IgdOpRegionLib/IgdOpRegionLib.inf',
-            'BdatLib|Silicon/$(SILICON_PKG_NAME)/Library/BdatLib/BdatLib.inf',
+            'IgdOpRegionLib|Silicon/CommonSocPkg/Library/IgdOpRegionLib/IgdOpRegionLib.inf',
+            'BdatLib|Silicon/CommonSocPkg/Library/BdatLib/BdatLib.inf',
             'BootMediaLib|Silicon/$(SILICON_PKG_NAME)/Library/BootMediaLib/BootMediaLib.inf',
             'StageCommonLib|Silicon/$(SILICON_PKG_NAME)/Library/StageCommonLib/StageCommonLib.inf',
             'BootGuardLib|Silicon/$(SILICON_PKG_NAME)/Library/BootGuardLib/BootGuardLib.inf',
@@ -172,11 +202,51 @@ class Board(BaseBoard):
             'HeciLib|Silicon/CommonSocPkg/Library/HeciLib/HeciLib.inf',
             'MeChipsetLib|Silicon/CommonSocPkg/Library/MeChipsetLib/MeChipsetLib.inf',
             'ShellExtensionLib|Platform/$(BOARD_PKG_NAME)/Library/ShellExtensionLib/ShellExtensionLib.inf',
-            'VtdPmrLib|Silicon/CommonSocPkg/Library/VtdPmrLib/VtdPmrLib.inf'
+            'VtdLib|Silicon/$(SILICON_PKG_NAME)/Library/VTdLib/VTdLib.inf',
+            'VtdPmrLib|Silicon/CommonSocPkg/Library/VtdPmrLib/VtdPmrLib.inf',
+            'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
+            'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf',
+            'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf'
         ]
         if self.BUILD_CSME_UPDATE_DRIVER:
             common_libs.append ('MeFwUpdateLib|Silicon/$(SILICON_PKG_NAME)/Library/MeFwUpdateLib/MeFwUpdateLib.inf')
-        dsc['LibraryClasses.%s' % self.BUILD_ARCH] = common_libs
+        if debug_port_enable:
+            common_libs.append ('GpioDebugPortLib|Platform/CommonBoardPkg/Library/GpioDebugPortLib/GpioDebugPortLib.inf')
+            common_libs.append ('MailboxDebugPortLib|Platform/CommonBoardPkg/Library/MailboxDebugPortLib/MailboxDebugPortLib.inf')
+            common_libs.append ('DebugPortLib|Platform/$(BOARD_PKG_NAME)/Library/DebugPortLib/DebugPortLib.inf')
+        dsc['LibraryClasses.%s' % self.BUILD_ARCH]   = common_libs
+
+        fixed_pcds = []
+        if debug_port_enable:
+            # Use GPIO_CNL_LP_GPP_H12 pin for example
+            # Refer to GpioPinsCnlLp.h file to look up its GPIO pad value.
+            # The GPIO pad value is 0x0407000C.
+            gpio_pad     = 0 # 0x0407000C for GPIO_CNL_LP_GPP_H12
+
+            # IOSF SB access address for the GPIO DW0 register (DWORD)
+            # Calculate the IOSF SB access address for GPIO DW0 register
+            #   - Get GPIO DW0 offset from SOC EDS datasheet. It is 0x9D0 for H12.
+            #   - Get GPIO community ID. It is community 1 for H12.
+            #   - Look up PID_GPIOCOM1 in file PchRegsPcr.h for PortId. It is 0x6D.
+            #    IOSF_MMIO = 0xFD000000 + (PortId<<16) + GpioOffset
+            # If set to 0, gpio debug port will be disabled.
+            iosf_mmio    = 0 # 0xFD6D09D0 for GPIO_CNL_LP_GPP_H12
+            fixed_pcds = [
+                'gCommonBoardTokenSpaceGuid.PcdGpioDebugPortPinPad      | 0x%08X' % gpio_pad,
+                'gCommonBoardTokenSpaceGuid.PcdGpioDebugPortMmioBase    | 0x%08X' % iosf_mmio
+            ]
+
+            # Mailbox debug port, use GPI Interrupt Enable register as example
+            # IOSF SB access address for the mailbox register (DWORD)
+            # If set to 0, mailbox debug port will be disabled
+            mailbox_mmio = 0 # 0xFD6E0120
+            fixed_pcds.append (
+                'gCommonBoardTokenSpaceGuid.PcdMailboxDebugPortMmioBase | 0x%08X' % mailbox_mmio,
+            )
+
+        if len(fixed_pcds) > 0:
+            dsc['PcdsFixedAtBuild.%s' % self.BUILD_ARCH] = fixed_pcds
+
         return dsc
 
     def GetKeyHashList (self):

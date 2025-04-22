@@ -1,12 +1,12 @@
 /** @file
 
-  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-#ifndef __LINUX_LOADER_H__
-#define __LINUX_LOADER_H__
+#ifndef __OS_LOADER_H__
+#define __OS_LOADER_H__
 
 #include <Library/LiteFvLib.h>
 #include <Library/PartitionLib.h>
@@ -17,7 +17,6 @@
 #include <Library/DecompressLib.h>
 #include <Library/PayloadLib.h>
 #include <Library/ShellLib.h>
-#include <Library/IasImageLib.h>
 #include <Library/MultibootLib.h>
 #include <Library/MediaAccessLib.h>
 #include <Library/PayloadEntryLib.h>
@@ -40,11 +39,13 @@
 #include <Library/ConfigDataLib.h>
 #include <Library/AbSupportLib.h>
 #include <Library/SblParameterLib.h>
-#include <Library/TrustyBootLib.h>
 #include <Library/UsbInitLib.h>
 #include <Library/UsbKbLib.h>
 #include <Library/ElfLib.h>
+#include <Library/UniversalPayloadLib.h>
 #include <Library/LinuxLib.h>
+#include <Library/ThunkLib.h>
+#include <Library/MpServiceLib.h>
 #include <Library/ContainerLib.h>
 #include <Library/DebugLogBufferLib.h>
 #include <Guid/SeedInfoHobGuid.h>
@@ -61,9 +62,9 @@
 #include <PayloadModule.h>
 #include "BlockIoTest.h"
 #include <ConfigDataCommonDefs.h>
-#include <Register/Intel/Msr/ArchitecturalMsr.h>
-#include "PreOsChecker.h"
+#include <Register/Intel/ArchitecturalMsr.h>
 #include <Library/StringSupportLib.h>
+#include <PreOsHeader.h>
 
 
 #define MKHI_BOOTLOADER_SEED_LEN       64
@@ -73,18 +74,24 @@
 #define EOF                      "<eof>"
 #define GPT_PART_ENTRIES_MAX     4
 
-#define LOADED_IMAGE_IAS         BIT0
+// For LOADED_IMAGE Flags
 #define LOADED_IMAGE_MULTIBOOT   BIT1
 #define LOADED_IMAGE_LINUX       BIT2
-#define LOADED_IMAGE_PE32        BIT3
+#define LOADED_IMAGE_PE          BIT3
 #define LOADED_IMAGE_FV          BIT4
 #define LOADED_IMAGE_CONTAINER   BIT5
 #define LOADED_IMAGE_COMPONENT   BIT6
+#define LOADED_IMAGE_RUN_EXTRA   BIT7
+#define LOADED_IMAGE_ELF         BIT8
+#define LOADED_IMAGE_MULTIBOOT2  BIT9
+#define LOADED_IMAGE_MBMODULE    BIT10
 
 #define MAX_EXTRA_FILE_NUMBER    16
 
 #define MAX_BOOT_MENU_ENTRY      8
 #define MAX_STR_SLICE_LEN        16
+
+#define PLD_EXTRA_MOD_RTCM       SIGNATURE_32('R', 'T', 'C', 'M')
 
 typedef struct {
   UINT32       Pos;
@@ -131,9 +138,9 @@ typedef union {
 } LOADED_IMAGE_TYPE;
 
 typedef struct {
-  UINT8                   Flags;
+  UINT16                  Flags;
   UINT8                   LoadImageType;
-  UINT16                  Reserved;
+  UINT8                   Reserved;
   IMAGE_DATA              ImageData;
   EFI_HANDLE              HwPartHandle;
   LOADED_IMAGE_TYPE       Image;
@@ -163,6 +170,17 @@ DumpMbInfo (
   );
 
 /**
+Print out the Multiboot-2 information block.
+
+@param[in]  Mi  The Multiboot-2 information block to be printed.
+
+**/
+VOID
+DumpMb2Info (
+  IN  CONST MULTIBOOT2_START_TAG *Mi
+  );
+
+/**
   Print out the Multiboot boot state.
 
   @param[in]  BootState  The Multiboot boot state pointer.
@@ -170,19 +188,6 @@ DumpMbInfo (
 VOID
 DumpMbBootState (
   IN  CONST IA32_BOOT_STATE  *BootState
-  );
-
-/**
-  Dumps the content of the buffer starting from Address.
-
-  @param[in]  Address   Start address of buffer to dump
-  @param[in]  Length    Size of the buffer to dump
-
- **/
-VOID
-DumpBuffer (
-  IN CHAR8                   *Address,
-  IN UINT32                  Length
   );
 
 /**
@@ -249,20 +254,6 @@ UnloadLoadedImage (
   );
 
 /**
-  Free the allocated memory in an image data
-
-  This function free a memory allocated in IMAGE_DATA according to Allocation Type.
-
-  @param[in]  ImageData       An image data pointer which has allocated memory address,
-                              its size, and allocation type.
-
-**/
-VOID
-FreeImageData (
-  IN  IMAGE_DATA    *ImageData
-  );
-
-/**
   Load Image from boot media.
 
   This function will initialize OS boot device, and load image based on
@@ -270,7 +261,6 @@ FreeImageData (
 
   @param[in]  BootOption        Current boot option
   @param[in]  HwPartHandle      Hardware partition handle
-  @param[in]  FsHandle          FileSystem handle
   @param[out] LoadedImageHandle Loaded Image handle
 
   @retval     RETURN_SUCCESS    If image was loaded successfully
@@ -281,7 +271,6 @@ EFIAPI
 LoadBootImages (
   IN  OS_BOOT_OPTION  *OsBootOption,
   IN  EFI_HANDLE       HwPartHandle,
-  IN  EFI_HANDLE       FsHandle,
   OUT EFI_HANDLE      *LoadedImageHandle
   );
 
@@ -322,7 +311,7 @@ GetFromConfigFile (
 
   @param[in]     BootOption        Current boot option
   @param[in,out] LoadedImage       Normal OS boot image
-  @param[in,out] LoadedTrustyImage Trusty OS image
+  @param[in,out] LoadedPreOsImage  Pre OS image
   @param[in,out] LoadedExtraImages Extra OS images
 
   @retval   RETURN_SUCCESS         If update OS parameter success
@@ -332,7 +321,7 @@ EFI_STATUS
 UpdateOsParameters (
   IN     OS_BOOT_OPTION      *BootOption,
   IN OUT LOADED_IMAGE        *LoadedImage,
-  IN OUT LOADED_IMAGE        *LoadedTrustyImage,
+  IN OUT LOADED_IMAGE        *LoadedPreOsImage,
   IN OUT LOADED_IMAGE        *LoadedExtraImages
   );
 
@@ -374,7 +363,6 @@ GetNextBootOption (
   2.native android (AOS loader) with Trusty OS           = dseed + rpmb
   3.Clear linux without Trusty                           = useed + dseed
   4.Clear Linux with Trusty (no AOS loader)              = all (useed/dseed/rpmb keys)
-  5.ACRN                                                 = all
 
   @param[in]     CurrentBootOption        Current boot option
   @param[in,out] SeedList                 Pointer to the Seed list
@@ -512,6 +500,53 @@ EFIAPI
 PayloadModuleInit (
   IN  PLD_MOD_PARAM       *PldModParam,
   IN  CHAR8               *ModuleName
+  );
+
+/**
+  Print the stack/HOB and heap usage information.
+
+**/
+VOID
+EFIAPI
+PrintStackHeapInfo (
+  VOID
+  );
+
+/**
+  Start preOS boot image
+
+  This function will call into preOS entry point with OS information as parameter.
+
+  @param[in]  LoadedPreOsImage  Loaded PreOS image information.
+  @param[in]  LoadedImage       Loaded OS image information.
+
+  @retval  RETURN_SUCCESS       boot image is return after boot
+  @retval  Others               There is error when checking boot image
+**/
+EFI_STATUS
+StartPreOsBooting (
+  IN LOADED_IMAGE            *LoadedPreOsImage,
+  IN LOADED_IMAGE            *LoadedImage
+  );
+
+
+/**
+  Call into an extra image entrypoint.
+
+  Detect and call into the image entrypoint. If required, handle thunk call
+  as well.
+
+  @param[in]  ModSignature      Module signature.
+  @param[in]  LoadedImage       Loaded Image information, expected to be PE32 format.
+
+  @retval  EFI_SUCCESS          Image returns successfully
+  @retval  Others               There is error during the module call.
+
+**/
+EFI_STATUS
+CallExtraModule (
+  IN   UINT32           ModSignature,
+  IN   LOADED_IMAGE    *LoadedImage
   );
 
 #endif

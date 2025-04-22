@@ -15,6 +15,7 @@
 
 CHAR8  *mOsBootDeviceName[] = { "SATA", "SD", "MMC", "UFS", "SPI", "USB", "NVME", "MEM" };
 CHAR8  *mOsFsTypeName[]     = { "FAT", "EXT2", "AUTO", "RAW" };
+CHAR8  *mImageTypeName[]    = { "Normal", "PreOs", "Misc", "Extra0", "Extra1", "Extra2", "Extra3" };
 
 /**
   Get boot option list
@@ -81,3 +82,22 @@ GetBootDeviceNameString (
   return mOsBootDeviceName[DevType];
 }
 
+/**
+  Get image type name string by loaded image type
+
+  @param[in]  ImageType    Loaded Image Type
+
+  @retval String           Return a string when loaded image type is found.
+  @retval NULL             Return NULL if loaded image type is not found.
+**/
+CHAR8 *
+EFIAPI
+GetLoadedImageTypeNameString (
+  LOAD_IMAGE_TYPE      ImageType
+  )
+{
+  if (ImageType >= LoadImageTypeMax) {
+    return NULL;
+  }
+  return mImageTypeName[ImageType];
+}

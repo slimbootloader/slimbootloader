@@ -105,6 +105,7 @@ TransitionFromReal16To32BitFlat:
     mov     ds, bx
     mov     bx, ADDR16_OF(gdtr)
 o32 lgdt    [cs:bx]
+    mov     ebx, eax ; save BIST to EBX
     mov     eax, cr0
     and     eax, SEC_DEFAULT_CR0_MASK
     or      eax, SEC_DEFAULT_CR0
@@ -120,5 +121,6 @@ jumpTo32BitAndLandHere:
     mov     fs, ax
     mov     gs, ax
     mov     ss, ax
+    movd    mm0, ebx  ; save BIST to MM0
     OneTimeCallRet TransitionFromReal16To32BitFlat
 

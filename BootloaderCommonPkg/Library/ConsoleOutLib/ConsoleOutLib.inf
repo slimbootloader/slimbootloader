@@ -30,6 +30,7 @@
   BaseLib
   GraphicsLib
   SerialPortLib
+  DebugPortLib
 
 [Guids]
 

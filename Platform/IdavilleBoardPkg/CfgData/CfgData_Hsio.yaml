@@ -1,0 +1,49 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : MEM
+- HSIO_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ HSIO_CFG_DATA, 0x600, 0, 0 ] }
+  - !expand { MEM_TMPL : [ HSIO ] }
+  - PcdFiaMuxOverride :
+      name         : FIA MUX Override
+      help         : >
+                     Enable/Disable FIA MUX override.
+      type         : Combo
+      option       : 0:Disabled,1:Enabled
+      length       : 0x01
+      value        : 0x0
+  - FiaMuxCfgInvalidate :
+      name         : FIA MUX Cfg Invalidate
+      type         : Combo
+      option       : 0:Disabled,1:Enabled
+      help         : >
+                     Enable/Disable FIA MUX Cfg Invalidate.
+      length       : 0x01
+      value        : 0x0
+  - FiaLaneConfig :
+      name         : Fia Lane Config
+      type         : EditNum, HEX, (0x00, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     0x0=Disabled, 0x1=PCIE, 0x2=SATA, 0x3=XHCI, 0xFF=OverrideDisabled
+      length       : 0x18
+      value        : {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}
+  - FiaLaneLinkWidth :
+      name         : Fia Lane Link Width
+      type         : EditNum, HEX, (0x00, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+      help         : >
+                     Fia Lane Link Width. 0x0=Set by BICTRL, 0x1=X1
+      length       : 0x18
+      value        : {0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0}
+  - Dummy        :
+      length       : 0x2
+      value        : 0x0
+

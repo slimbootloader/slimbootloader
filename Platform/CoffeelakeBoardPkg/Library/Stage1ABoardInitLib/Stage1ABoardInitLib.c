@@ -9,7 +9,7 @@
 #include <Library/BoardInitLib.h>
 #include <Library/BootloaderCoreLib.h>
 #include <Library/SerialPortLib.h>
-#include <Library/SiGpioLib.h>
+#include <Library/GpioLib.h>
 #include <Library/PlatformHookLib.h>
 #include <Library/FirmwareUpdateLib.h>
 #include <Library/DebugLib.h>
@@ -95,6 +95,10 @@ CONST GPIO_INIT_CONFIG mUartGpioTable[] = {
   {GPIO_CNL_LP_GPP_C21, {GpioPadModeNative1, GpioHostOwnGpio, GpioDirNone,  GpioOutDefault, GpioIntDis, GpioHostDeepReset,  GpioTermNone}},//SERIALIO_UART2_TXD
 };
 
+CONST GPIO_INIT_CONFIG mGpioDebugPortPinTable[] = {
+  {FixedPcdGet32(PcdGpioDebugPortPinPad), {GpioPadModeGpio, GpioHostOwnGpio, GpioDirOut,  GpioOutHigh, GpioIntDis, GpioHostDeepReset,  GpioTermNone}},
+};
+
 typedef enum {
   BootPartition1,
   BootPartition2,
@@ -159,9 +163,7 @@ EarlyPlatformDataCheck (
     SetDebugPort ( PcdGet8 (PcdDebugPortNumber));
   } else {
     SetDebugPort  (StitchData->DebugUart);
-    if ((StitchData->PlatformId > 0) && (StitchData->PlatformId < 32)) {
-      SetPlatformId (StitchData->PlatformId);
-    }
+    SetPlatformId (StitchData->PlatformId);
   }
 }
 
@@ -174,7 +176,7 @@ EarlyPlatformDataCheck (
 **/
 EFI_STATUS
 EFIAPI
-GetBootPartition (
+GetTopSwapRegBootPartition (
   OUT BOOT_PARTITION_SELECT      *BootPartition
   )
 {
@@ -259,9 +261,16 @@ BoardInit (
     if (DebugPort < PCH_MAX_SERIALIO_UART_CONTROLLERS) {
       GpioConfigurePads (2, (GPIO_INIT_CONFIG *)mUartGpioTable + (DebugPort << 1));
     }
+
+    if ((PcdGet32 (PcdDebugOutputDeviceMask) & DEBUG_OUTPUT_DEVICE_DEBUG_PORT) != 0) {
+      if (PcdGet32 (PcdGpioDebugPortMmioBase)  != 0) {
+        GpioConfigurePads (1, (GPIO_INIT_CONFIG *)mGpioDebugPortPinTable);
+      }
+    }
+
     PlatformHookSerialPortInitialize ();
     SerialPortInitialize ();
-    Status = GetBootPartition (&BootPartition);
+    Status = GetTopSwapRegBootPartition (&BootPartition);
     if (!EFI_ERROR(Status)) {
       SetCurrentBootPartition (BootPartition == BootPartition2 ? 1 : 0);
     }

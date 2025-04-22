@@ -61,4 +61,6 @@ Conventions:
 #define PID_GPIOCOM4   0x6A
 #define PID_GPIOCOM5   0x69
 
+#define PCH_PCR_ADDRESS(Pid, Offset)    (PCH_PCR_BASE_ADDRESS | (UINT32) (((Offset) & 0x0F0000) << 8) | ((UINT8)(Pid) << 16) | (UINT16) ((Offset) & 0xFFFF))
+
 #endif

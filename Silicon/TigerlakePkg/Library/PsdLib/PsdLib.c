@@ -118,7 +118,7 @@ GetSecCapability (
 {
   EFI_STATUS                 Status;
   GET_FW_CAPSKU              MsgGenGetFwCapsSku;
-  GET_FW_CAPS_SKU_ACK_DATA   MsgGenGetFwCapsSkuAck;
+  GET_FW_CAPS_SKU_ACK        MsgGenGetFwCapsSkuAck;
 
   if(SecCapability == NULL) {
     DEBUG ((DEBUG_ERROR, "GetSecCapability Failed Status=0x%x\n",EFI_INVALID_PARAMETER));
@@ -129,7 +129,7 @@ GetSecCapability (
   if (EFI_ERROR(Status)) {
     return Status;
   }
-  *SecCapability = MsgGenGetFwCapsSkuAck.FWCap.Data;
+  *SecCapability = MsgGenGetFwCapsSkuAck.Data.FWCap.Data;
   return EFI_SUCCESS;
 }
 
@@ -163,9 +163,6 @@ UpdateAcpiPsdTable (
   mPsdt->Header.Signature               = EFI_ACPI_PSD_SIGNATURE;
   mPsdt->Header.Checksum                = 0;
 
-  if( &(mPsdt->Header.OemId) == NULL) {
-    return RETURN_BUFFER_TOO_SMALL;
-  }
   CopyMem(&mPsdt->Header.OemId, PSDS_EFI_ACPI_OEM_ID, 6);
   mPsdt->Header.OemTableId              = PSDS_EFI_ACPI_OEM_TABLE_ID;
   mPsdt->Header.OemRevision             = PSDS_EFI_ACPI_OEM_REVISION;
@@ -193,9 +190,6 @@ UpdateAcpiPsdTable (
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, " GetSecCFwVersion failed =%x\n",Status));
   }
-  if( &(mPsdt->FwVendor) == NULL) {
-    return RETURN_BUFFER_TOO_SMALL;
-  }
   CopyMem(&mPsdt->FwVendor, EFI_ACPI_PSD_FW_VENDOR, EFI_ACPI_PSD_FW_VENDOR_SIZE);
   PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr();
   if (PlatformData == NULL) {
@@ -203,14 +197,13 @@ UpdateAcpiPsdTable (
     return  EFI_UNSUPPORTED;
   }
 
-  //00 - Secure boot is Disabled; 01 - Verified boot is enabled; 11 - Secure boot (verified + PcdVerifiedBootEnabled) enabled.
-  mPsdt->SecureBoot = (UINT8)(((PlatformData->BtGuardInfo.VerifiedBoot) << 1)| FeaturePcdGet (PcdVerifiedBootEnabled));
+  //000 - Secure boot is Disabled; 010 - Boot Guard Enabled; 100 - Bootloader Verified boot Enabled.
+  mPsdt->SecureBoot = (UINT8)(((PlatformData->BtGuardInfo.VerifiedBoot) << 1)| (FeaturePcdGet (PcdVerifiedBootEnabled)) << 2);
   //Measured boot enabled.
   mPsdt->MeasuredBoot = (UINT8)((PlatformData->BtGuardInfo.MeasuredBoot));
 
   //0 - No HWRoT; 1 - ROM based RoT; 2 - TXE; 3 - CSE; 4 - ACM; 5 - TXT
   mPsdt->HwrotType                      = PSD_HROT_ACM;
-  DumpHex (2, 0, sizeof(EFI_ACPI_PSD_TABLE), (VOID *)Table);
   DEBUG( (DEBUG_VERBOSE, "UpdateAcpiPsdTable() end\n") );
 
   return  EFI_SUCCESS;

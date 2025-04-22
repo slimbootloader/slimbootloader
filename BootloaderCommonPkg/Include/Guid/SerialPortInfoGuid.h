@@ -9,6 +9,8 @@
 #ifndef __SERIAL_PORT_INFO_GUID_H__
 #define __SERIAL_PORT_INFO_GUID_H__
 
+#define LOADER_SERIAL_PORT_INFO_REVISION   2
+
 ///
 /// Serial Port Information GUID
 ///
@@ -23,6 +25,8 @@ typedef struct {
   UINT32     RegWidth;
   UINT32     InputHertz;
   UINT32     UartPciAddr;
+  UINT32     Reserved1;
+  UINT64     BaseAddr64;
 } SERIAL_PORT_INFO;
 
 #endif

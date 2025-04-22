@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -25,6 +25,8 @@
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
   Silicon/CoffeelakePkg/CoffeelakePkg.dec
 
 [LibraryClasses]
@@ -33,4 +35,5 @@
   IoLib
 
 [Pcd]
+  gPlatformModuleTokenSpaceGuid.PcdVtdEnabled
 

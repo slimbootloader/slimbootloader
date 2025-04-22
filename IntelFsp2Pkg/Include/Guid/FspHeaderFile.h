@@ -2,15 +2,22 @@
   Intel FSP Header File definition from Intel Firmware Support Package External
   Architecture Specification v2.0 and above.
 
-  Copyright (c) 2014 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2014 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
+
+#include <Base.h>
 
 #ifndef __FSP_HEADER_FILE_H__
 #define __FSP_HEADER_FILE_H__
 
 #define FSP_HEADER_REVISION_3   3
+#define FSP20_HEADER_REVISION   3
+#define FSP21_HEADER_REVISION   4
+#define FSP22_HEADER_REVISION   5
+#define FSP23_HEADER_REVISION   6
+#define FSP24_HEADER_REVISION   7
 
 #define FSPE_HEADER_REVISION_1  1
 #define FSPP_HEADER_REVISION_1  1
@@ -23,6 +30,13 @@
 #define OFFSET_IN_FSP_INFO_HEADER(x)  (UINT32)&((FSP_INFO_HEADER *)(UINTN)0)->x
 
 #define FSP_INFO_HEADER_SIGNATURE  SIGNATURE_32 ('F', 'S', 'P', 'H')
+
+#define IMAGE_ATTRIBUTE_GRAPHICS_SUPPORT      BIT0
+#define IMAGE_ATTRIBUTE_DISPATCH_MODE_SUPPORT BIT1
+#define IMAGE_ATTRIBUTE_64BIT_MODE_SUPPORT    BIT2
+#define IMAGE_ATTRIBUTE_VAR_SERVICES_SUPPORT  BIT3
+#define FSP_IA32                              0
+#define FSP_X64                               1
 
 #pragma pack(1)
 
@@ -44,14 +58,28 @@ typedef struct {
   UINT8   Reserved1[2];
   ///
   /// Byte 0x0A: Indicates compliance with a revision of this specification in the BCD format.
+  ///            For revision v2.3 the value will be 0x23.
   ///
   UINT8   SpecVersion;
   ///
   /// Byte 0x0B: Revision of the FSP Information Header.
+  ///            The Current value for this field is 0x7.
   ///
   UINT8   HeaderRevision;
   ///
   /// Byte 0x0C: Revision of the FSP binary.
+  ///            Major.Minor.Revision.Build
+  ///            If FSP HeaderRevision is <= 5, the ImageRevision can be decoded as follows:
+  ///               7 : 0  - Build Number
+  ///              15 : 8  - Revision
+  ///              23 : 16 - Minor Version
+  ///              31 : 24 - Major Version
+  ///            If FSP HeaderRevision is >= 6, ImageRevision specifies the low-order bytes of the build number and revision
+  ///            while ExtendedImageRevision specifies the high-order bytes of the build number and revision.
+  ///               7 : 0  - Low Byte of Build Number
+  ///              15 : 8  - Low Byte of Revision
+  ///              23 : 16 - Minor Version
+  ///              31 : 24 - Major Version
   ///
   UINT32  ImageRevision;
   ///
@@ -68,6 +96,11 @@ typedef struct {
   UINT32  ImageBase;
   ///
   /// Byte 0x20: Attribute for the FSP binary.
+  ///   Bit 0: Graphics Support - Set to 1 when FSP supports enabling Graphics Display.
+  ///   Bit 1: Dispatch Mode Support - Set to 1 when FSP supports the optional Dispatch Mode API defined in Section 7.2 and 9. This bit is only valid if FSP HeaderRevision is >= 4.
+  ///   Bit 2: 64-bit mode support - Set to 1 to indicate FSP supports 64-bit long mode interfaces. Set to 0 to indicate FSP supports 32-bit mode interfaces. This bit is only valid if FSP HeaderRevision is >= 7.
+  ///   Bit 3: FSP Variable Services Support - Set to 1 to indicate FSP utilizes the FSP Variable Services defined in Section 9.6 to store non-volatile data. This bit is only valid if FSP HeaderRevision is >= 7.
+  ///   Bits 15:4 - Reserved
   ///
   UINT16  ImageAttribute;
   ///
@@ -116,6 +149,27 @@ typedef struct {
   ///            If the value is set to 0x00000000, then this API is not available in this component.
   ///
   UINT32  FspMultiPhaseSiInitEntryOffset;
+  ///
+  /// Byte 0x4C: Extended revision of the FSP binary.
+  ///            This value is only valid if FSP HeaderRevision is >= 6.
+  ///            ExtendedImageRevision specifies the high-order byte of the revision and build number in the FSP binary revision.
+  ///               7 : 0 - High Byte of Build Number
+  ///              15 : 8 - High Byte of Revision
+  ///            The FSP binary build number can be decoded as follows:
+  ///            Build Number = (ExtendedImageRevision[7:0] << 8) | ImageRevision[7:0]
+  ///            Revision = (ExtendedImageRevision[15:8] << 8) | ImageRevision[15:8]
+  ///            Minor Version = ImageRevision[23:16]
+  ///            Major Version = ImageRevision[31:24]
+  ///
+  UINT16  ExtendedImageRevision;
+  ///
+  /// Byte 0x4E: Reserved4.
+  ///
+  UINT16  Reserved4;
+  ///
+  /// Byte 0x50: Multi Phase Mem Init offset.
+  ///
+  UINT32  FspMultiPhaseMemInitEntryOffset;
 } FSP_INFO_HEADER;
 
 ///

@@ -1,0 +1,36 @@
+## @file
+# Component Description File for Heci Init Lib Pei Module
+#
+# Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+################################################################################
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = HeciDxeMeExtLib
+  FILE_GUID                      = 3722db23-d4c0-4593-b6f2-c92e16dd7951
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = HeciDxeMeExtLib
+
+
+[LibraryClasses]
+  BaseMemoryLib
+  BaseLib
+  DebugLib
+  HobLib
+  HeciLib
+
+[Packages]
+  MdePkg/MdePkg.dec
+  IntelFsp2Pkg/IntelFsp2Pkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  Silicon/AlderlakePkg/AlderlakePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+
+[Guids]
+  gMeBiosPayloadHobGuid
+
+[Sources]
+  HeciMeExtLib.c

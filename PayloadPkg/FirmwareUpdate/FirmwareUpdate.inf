@@ -1,5 +1,5 @@
 ## @file
-#  Copyright (c) 2008 - 2018, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2008 - 2023, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -26,7 +26,6 @@
   FirmwareUpdateHelper.c
   GetCapsuleImage.c
   CsmeFwUpdate.c
-  ErrorList.c
   CmdFwUpdate.c
 
 [Packages]
@@ -34,6 +33,8 @@
   BootloaderCommonPkg/BootloaderCommonPkg.dec
   PayloadPkg/PayloadPkg.dec
   Platform/CommonBoardPkg/CommonBoardPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
 
 [LibraryClasses]
   FirmwareUpdateLib
@@ -49,6 +50,11 @@
   ConfigDataLib
   ContainerLib
   StringSupportLib
+  BootOptionLib
+  TimerLib
+  BootGuardLib
+  WatchDogTimerLib
+  TcoTimerLib
 
 [Guids]
   gLoaderMemoryMapInfoGuid
@@ -58,16 +64,24 @@
   gFirmwareUpdateImageFileGuid
   gFlashMapInfoGuid
   gBootLoaderVersionFileGuid
+  gBootLoaderVersionGuid
+  gEfiGraphicsInfoHobGuid
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
   gPayloadTokenSpaceGuid.PcdPayloadHobList
   gPlatformCommonLibTokenSpaceGuid.PcdAcpiPmTimerBase
   gPayloadTokenSpaceGuid.PcdFwUpdStatusBase
-  gPayloadTokenSpaceGuid.PcdRsvdRegionBase
   gPlatformCommonLibTokenSpaceGuid.PcdLowestSupportedFwVer
   gPayloadTokenSpaceGuid.PcdCsmeUpdateEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg
+  gPlatformCommonLibTokenSpaceGuid.PcdConsoleOutDeviceMask
+  gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleWidth
+  gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleHeight
+  gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled
+  gPlatformModuleTokenSpaceGuid.PcdBootFailureThreshold
+  gPlatformModuleTokenSpaceGuid.PcdUcodeSlotSize
+  gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
 
 [Depex]
   TRUE

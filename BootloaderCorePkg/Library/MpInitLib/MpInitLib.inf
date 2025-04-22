@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -22,8 +22,10 @@
 [Sources]
   MpInitLibInternal.h
   MpInitLib.c
+  Common/MpEqu.inc
+  Common/MpCommon.nasm
 
-[Sources.IA32]
+[Sources.Ia32]
   Ia32/MpFuncs.nasm
 
 [Sources.X64]
@@ -45,15 +47,20 @@
   SynchronizationLib
   SortLib
   ExtraBaseLib
+  MtrrLib
 
 [Guids]
 
 
 [FixedPcd]
   gPlatformModuleTokenSpaceGuid.PcdCpuMaxLogicalProcessorNumber
+  gPlatformModuleTokenSpaceGuid.PcdCpuSortMethod
+  gPlatformModuleTokenSpaceGuid.PcdCpuApInitWaitInMicroSeconds
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize
   gPlatformModuleTokenSpaceGuid.PcdSmmRebaseMode
   gPlatformModuleTokenSpaceGuid.PcdFuncCpuInitHook
+  gPlatformCommonLibTokenSpaceGuid.PcdCpuX2ApicEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdBuildSmmHobs

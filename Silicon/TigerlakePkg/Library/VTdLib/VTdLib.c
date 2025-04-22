@@ -97,6 +97,7 @@ UpdateDrhd (
   UINT16                        DisableBit;
   BOOLEAN                       NeedRemove;
   EFI_ACPI_DRHD_ENGINE1_STRUCT  *DrhdEngine;
+  UINT32                        VidDid;
 
   //
   // Convert DrhdEnginePtr to EFI_ACPI_DRHD_ENGINE1_STRUCT Pointer
@@ -109,15 +110,15 @@ UpdateDrhd (
                  );
   NeedRemove = FALSE;
 
+  VidDid = PciRead32 (PCI_LIB_ADDRESS (0, DrhdEngine->DeviceScope[0].PciPath.Device, DrhdEngine->DeviceScope[0].PciPath.Function, 0x00));
   if ((DisableBit == 0xFF) ||
       (DrhdEngine->DrhdHeader.RegisterBaseAddress == 0) ||
-      ((DisableBit == 0x80) &&
-       (PciRead32 (PCI_LIB_ADDRESS (0, DrhdEngine->DeviceScope[0].PciPath.Device, DrhdEngine->DeviceScope[0].PciPath.Function, 0x00)) == 0xFFFFFFFF))
+      ((DisableBit == 0x80) && (VidDid == 0xFFFFFFFF))
       ) {
     NeedRemove = TRUE;
   }
   if ((DrhdEngine->DeviceScope[0].PciPath.Device == SA_IGD_DEV) && (DrhdEngine->DeviceScope[0].PciPath.Function == SA_IGD_FUN_0) &&
-      (PciRead32 (PCI_LIB_ADDRESS (0, DrhdEngine->DeviceScope[0].PciPath.Device, DrhdEngine->DeviceScope[0].PciPath.Function, 0x00)) == 0xFFFFFFFF)) {
+      (VidDid != 0xFFFFFFFF)) {
     NeedRemove = IsDisplayOnlySku();
   }
   if (NeedRemove) {

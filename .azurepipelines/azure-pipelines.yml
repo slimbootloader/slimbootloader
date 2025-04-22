@@ -1,7 +1,7 @@
 ## @file
 # Azure Pipeline build file for Slim Bootloader
 #
-# Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
@@ -18,12 +18,14 @@ jobs:
 - job: QEMU
 
   pool:
-    vmImage: 'ubuntu-latest'
+    vmImage: 'ubuntu-20.04'
 
   steps:
+  - checkout: self
+    submodules: recursive
   - task: UsePythonVersion@0
     inputs:
-      versionSpec: '3.6.x'
+      versionSpec: '3.8.x'
       architecture: 'x64'
     displayName: Set Python version
 
@@ -40,7 +42,7 @@ jobs:
     condition: eq(variables['Build.Reason'], 'PullRequest')
 
   - bash: |
-      sudo apt-get install -y nasm uuid-dev iasl qemu
+      sudo apt-get install -y nasm uuid-dev iasl qemu-system-x86
     displayName: Install required tools
 
   - script: |
@@ -65,26 +67,72 @@ jobs:
         Build.Name:   "apl"
         Build.Arch:   "-a x64"
         Build.Target: ""
-      # CFL_X64_RELEASE:
-      #   Build.Name:   "cfl"
-      #   Build.Arch:   "-a x64"
-      #   Build.Target: "-r"
-      # CML_X86_DEBUG:
-      #   Build.Name:   "cml"
-      #   Build.Arch:   ""
-      #   Build.Target: ""
-      # CMLV_X64_DEBUG:
-      #   Build.Name:   "cmlv"
-      #   Build.Arch:   "-a x64"
-      #   Build.Target: ""
+      CFL_X64_RELEASE:
+        Build.Name:   "cfl"
+        Build.Arch:   "-a x64"
+        Build.Target: "-r"
+      CML_X86_DEBUG:
+        Build.Name:   "cml"
+        Build.Arch:   ""
+        Build.Target: ""
+      CMLV_X64_DEBUG:
+        Build.Name:   "cmlv"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      TGL_X86_DEBUG:
+        Build.Name:   "tgl"
+        Build.Arch:   ""
+        Build.Target: ""
+      EHL_X86_DEBUG:
+        Build.Name:   "ehl"
+        Build.Arch:   ""
+        Build.Target: ""
+      ADLS_X86_DEBUG:
+        Build.Name:   "adls"
+        Build.Arch:   ""
+        Build.Target: ""
+      ADLP_X64_RELEASE:
+        Build.Name:   "adlp"
+        Build.Arch:   "-a x64"
+        Build.Target: "-r"
+      ADLPS_X86_DEBUG:
+        Build.Name:   "adlps"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      ADLN_X86_RELEASE:
+        Build.Name:   "adln"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      IDV_X64_DEBUG:
+        Build.Name:   "idv"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      RPLS_X86_DEBUG:
+        Build.Name:   "rpls"
+        Build.Arch:   ""
+        Build.Target: ""
+      RPLP_X86_DEBUG:
+        Build.Name:   "rplp"
+        Build.Arch:   ""
+        Build.Target: ""
+      AZB_X86_DEBUG:
+        Build.Name:   "azb"
+        Build.Arch:   ""
+        Build.Target: ""
+      AZB_X86_RELEASE:
+        Build.Name:   "azb"
+        Build.Arch:   ""
+        Build.Target: "-r"
 
   pool:
-    vmImage: 'ubuntu-latest'
+    vmImage: 'ubuntu-20.04'
 
   steps:
+  - checkout: self
+    submodules: recursive
   - task: UsePythonVersion@0
     inputs:
-      versionSpec: '3.6.x'
+      versionSpec: '3.8.x'
       architecture: 'x64'
     displayName: Set Python version
 
@@ -93,14 +141,80 @@ jobs:
       git config --global user.name  "Your Name"
       sudo apt-get update
       sudo apt-get install -y nasm uuid-dev
-      wget --no-check-certificate http://archive.ubuntu.com/ubuntu/pool/universe/a/acpica-unix/acpica-tools_20180105-1_amd64.deb -P ~/asl/
-      sudo dpkg -i ~/asl/acpica-tools_20180105-1_amd64.deb
+
+      wget --no-check-certificate http://archive.ubuntu.com/ubuntu/pool/universe/a/acpica-unix/acpica-tools_20190509-1_amd64.deb -P ~/asl/
+      sudo dpkg -i ~/asl/acpica-tools_20190509-1_amd64.deb
+
     displayName: Install required tools
 
   - script: |
       python BuildLoader.py build $(Build.Name) $(Build.Arch) $(Build.Target) -k
     displayName: 'Run $(Build.Name) build'
 
+- job: Linux2204
+
+  strategy:
+    matrix:
+      MTL_X86_DEBUG:
+        Build.Name:   "mtl"
+        Build.Arch:   ""
+        Build.Target: ""
+      MTLPS_X86_RELEASE:
+        Build.Name:   "mtlps"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      ARLS_X64_DEBUG:
+        Build.Name:   "arls"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      ARLS_X64_RELEASE:
+        Build.Name:   "arls"
+        Build.Arch:   "-a x64"
+        Build.Target: "-r"
+      ARLH_X64_DEBUG:
+        Build.Name:   "arlh"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      ARLH_X64_RELEASE:
+        Build.Name:   "arlh"
+        Build.Arch:   "-a x64"
+        Build.Target: "-r"
+      ARLU_X64_DEBUG:
+        Build.Name:   "arlu"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      ARLU_X64_RELEASE:
+        Build.Name:   "arlu"
+        Build.Arch:   "-a x64"
+        Build.Target: "-r"
+
+  pool:
+    vmImage: 'ubuntu-22.04'
+
+  steps:
+  - checkout: self
+    submodules: recursive
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.8.x'
+      architecture: 'x64'
+    displayName: Set Python version
+
+  - bash: |
+      git config --global user.email "you@example.com"
+      git config --global user.name  "Your Name"
+      sudo apt-get update
+      sudo apt-get install -y uuid-dev
+      wget --no-check-certificate http://archive.ubuntu.com/ubuntu/pool/universe/a/acpica-unix/acpica-tools_20200925-6_amd64.deb -P ~/asl/
+      sudo dpkg -i ~/asl/acpica-tools_20200925-6_amd64.deb
+
+      wget --no-check-certificate http://ftp.us.debian.org/debian/pool/main/n/nasm/nasm_2.15.05-1_amd64.deb -P ~/nasm/
+      sudo dpkg -i ~/nasm/nasm_2.15.05-1_amd64.deb
+    displayName: Install required tools
+
+  - script: |
+      python BuildLoader.py build $(Build.Name) $(Build.Arch) $(Build.Target) -k
+    displayName: 'Run $(Build.Name) build'
 
 - job: Windows
 
@@ -138,22 +252,168 @@ jobs:
         Build.Name:   "cmlv"
         Build.Arch:   "-a x64"
         Build.Target: ""
-
+      TGL_X86_RELEASE:
+        Build.Name:   "tgl"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      TGL_X64_DEBUG:
+        Build.Name:   "tgl"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      EHL_X86_RELEASE:
+        Build.Name:   "ehl"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      EHL_X64_DEBUG:
+        Build.Name:   "ehl"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      ADLS_X86_RELEASE:
+        Build.Name:   "adls"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      ADLS_X64_DEBUG:
+        Build.Name:   "adls"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      ADLP_X64_RELEASE:
+        Build.Name:   "adlp"
+        Build.Arch:   "-a x64"
+        Build.Target: "-r"
+      ADLPS_X64_DEBUG:
+        Build.Name:   "adlps"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      ADLN_X86_RELEASE:
+        Build.Name:   "adln"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      ADLN_X64_DEBUG:
+        Build.Name:   "adln"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      ADLN50_X86_RELEASE:
+        Build.Name:   "adln50"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      ADLN50_X64_DEBUG:
+        Build.Name:   "adln50"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      IDV_X86_RELEASE:
+        Build.Name:   "idv"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      IDVH_X64_DEBUG:
+        Build.Name:   "idvh"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      RPLS_X86_RELEASE:
+        Build.Name:   "rpls"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      RPLS_X64_DEBUG:
+        Build.Name:   "rpls"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      RPLP_X86_RELEASE:
+        Build.Name:   "rplp"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      RPLP_X64_DEBUG:
+        Build.Name:   "rplp"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      RPLPS_X86_RELEASE:
+        Build.Name:   "rplps"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      RPLPS_X64_DEBUG:
+        Build.Name:   "rplps"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      AZB_X86_DEBUG:
+        Build.Name:   "azb"
+        Build.Arch:   ""
+        Build.Target: ""
+      AZB_X86_RELEASE:
+        Build.Name:   "azb"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      MTL_X86_RELEASE:
+        Build.Name:   "mtl"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      MTL_X64_DEBUG:
+        Build.Name:   "mtl"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      MTLPS_X86_RELEASE:
+        Build.Name:   "mtlps"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      MTLPS_X64_DEBUG:
+        Build.Name:   "mtlps"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      ARLS_X64_RELEASE:
+        Build.Name:   "arls"
+        Build.Arch:   "-a x64"
+        Build.Target: "-r"
+      ARLS_X64_DEBUG:
+        Build.Name:   "arls"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      ARLH_X64_RELEASE:
+        Build.Name:   "arlh"
+        Build.Arch:   "-a x64"
+        Build.Target: "-r"
+      ARLH_X64_DEBUG:
+        Build.Name:   "arlh"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      ARLU_X64_RELEASE:
+        Build.Name:   "arlu"
+        Build.Arch:   "-a x64"
+        Build.Target: "-r"
+      ARLU_X64_DEBUG:
+        Build.Name:   "arlu"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
   pool:
-    vmImage: 'windows-latest'
+    vmImage: 'windows-2019'
 
   steps:
+  - checkout: self
+    submodules: recursive
   - task: UsePythonVersion@0
     inputs:
-      versionSpec: '3.6.x'
+      versionSpec: '3.8.x'
       architecture: 'x64'
     displayName: Set Python version
 
   - powershell: |
       [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-      Invoke-WebRequest -Uri https://www.nasm.us/pub/nasm/releasebuilds/2.14.02/win64/nasm-2.14.02-win64.zip -OutFile nasm.zip
+      add-type @"
+      using System.Net;
+      using System.Security.Cryptography.X509Certificates;
+      public class TrustAllCertsPolicy : ICertificatePolicy {
+          public bool CheckValidationResult(
+              ServicePoint srvPoint, X509Certificate certificate,
+              WebRequest request, int certificateProblem) {
+              return true;
+          }
+      }
+      "@
+      echo "Create a new object"
+      [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+      echo "Download nasm"
+      Invoke-WebRequest -Uri https://gstreamer.freedesktop.org/src/mirror/nasm-2.14.02-win64.zip -OutFile nasm.zip
+      echo "Expand nasm"
       Expand-Archive .\nasm.zip C:\
-      Invoke-WebRequest -Uri https://acpica.org/sites/acpica/files/iasl-win-20160831_0.zip -OutFile iasl.zip
+
+      echo "Download iasl"
+      Invoke-WebRequest -Uri https://cdrdv2.intel.com/v1/dl/getContent/774881 -OutFile iasl.zip
       Expand-Archive .\iasl.zip C:\iasl
       echo "##vso[task.setvariable variable=nasm_prefix;]C:\nasm-2.14.02\"
       echo "##vso[task.setvariable variable=iasl_prefix;]C:\iasl\"
@@ -166,7 +426,5 @@ jobs:
     displayName: Environment configuration
 
   - script: |
-      python BuildLoader.py build $(Build.Name) $(Build.Arch) $(Build.Target) -k
+      python BuildLoader.py build $(Build.Name) $(Build.Arch) $(Build.Target) -t vs2019 -k
     displayName: 'Run $(Build.Name) build'
-
-

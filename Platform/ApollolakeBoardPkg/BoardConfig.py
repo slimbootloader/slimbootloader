@@ -80,6 +80,7 @@ class Board(BaseBoard):
         self.ENABLE_FRAMEBUFFER_INIT  = 1
         self.ENABLE_GRUB_CONFIG       = 1
         self.ENABLE_DMA_PROTECTION    = 0
+        self.ENABLE_SMM_REBASE        = 2
 
         # G9 for 384 | W7 Opt for SHA384| Ni  Opt for SHA256| V8 Opt for SHA256
         self.ENABLE_CRYPTO_SHA_OPT    = IPP_CRYPTO_OPTIMIZATION_MASK['SHA256_NI']
@@ -111,11 +112,11 @@ class Board(BaseBoard):
         self.FSP_IMAGE_ID         = '$APLFSP$'
 
         self.STAGE1A_SIZE         = 0x00008000
-        self.STAGE1B_SIZE         = 0x00035000
+        self.STAGE1B_SIZE         = 0x00038000
         if self.ENABLE_SOURCE_DEBUG:
             self.STAGE1B_SIZE += 0x2000
-        self.STAGE2_SIZE          = 0x00032000
-        self.PAYLOAD_SIZE         = 0x0001F000
+        self.STAGE2_SIZE          = 0x00034000
+        self.PAYLOAD_SIZE         = 0x00023000
 
         if len(self._PAYLOAD_NAME.split(';')) > 1:
             # EPAYLOAD is specified
@@ -133,9 +134,12 @@ class Board(BaseBoard):
         self.STAGE1A_XIP          = 0
         self.STAGE1A_LOAD_BASE    = 0xFEF00000
         self.STAGE1B_XIP          = 0
+        self.REMAP_STAGE1B        = 1
         self.STAGE1B_LOAD_BASE    = 0xFEF10000
         self.STAGE1B_FD_BASE      = 0xFEF80000
-        self.STAGE1B_FD_SIZE      = 0x0006B000
+        self.STAGE1B_FD_SIZE      = 0x0006D000
+        if self.ENABLE_SOURCE_DEBUG:
+            self.STAGE1B_FD_SIZE += 0x00001000
         if self.RELEASE_MODE == 0:
             self.STAGE1B_FD_SIZE += 0x00002000
             self.PAYLOAD_SIZE    += 0x00007000
@@ -167,9 +171,9 @@ class Board(BaseBoard):
         self.SBLRSVD_SIZE         = 0x00001000
 
         if len(self._PAYLOAD_NAME.split(';')) > 1:
-            self.SPI_IAS1_SIZE    = 0x00001000
+            self.SPI_CONTAINER1_SIZE    = 0x00001000
         else:
-            self.SPI_IAS1_SIZE    = 0x00150000
+            self.SPI_CONTAINER1_SIZE    = 0x00150000
 
         self._CFGDATA_INT_FILE = ['CfgData_Int_LeafHill.dlt']
         self._CFGDATA_EXT_FILE = ['CfgData_Ext_Gpmrb.dlt', 'CfgData_Ext_Up2.dlt','CfgData_Ext_OxbHill.dlt','CfgData_Ext_MB3.dlt','CfgData_Ext_JuniperHill.dlt']
@@ -193,7 +197,7 @@ class Board(BaseBoard):
             'GpioLib|Silicon/$(SILICON_PKG_NAME)/Library/GpioLib/GpioLib.inf',
             'PchSpiLib|Silicon/CommonSocPkg/Library/PchSpiLib/PchSpiLib.inf',
             'SpiFlashLib|Silicon/CommonSocPkg/Library/SpiFlashLib/SpiFlashLib.inf',
-            'IgdOpRegionLib|Silicon/$(SILICON_PKG_NAME)/Library/IgdOpRegionLib/IgdOpRegionLib.inf',
+            'IgdOpRegionLib|Silicon/CommonSocPkg/Library/IgdOpRegionLib/IgdOpRegionLib.inf',
             'IocIpcLib|Platform/$(BOARD_PKG_NAME)/Library/IocIpcLib/IocIpcLib.inf',
             'BootGuardLib|Silicon/$(SILICON_PKG_NAME)/Library/BootGuardLib20/BootGuardLib20.inf',
             'HeciLib|Silicon/CommonSocPkg/Library/HeciLib/HeciLib.inf',
@@ -203,10 +207,12 @@ class Board(BaseBoard):
             'BootMediaLib|Silicon/ApollolakePkg/Library/BootMediaLib/BootMediaLib.inf',
             'FlashDescriptorLib|Silicon/ApollolakePkg/Library/FlashDescriptorLib/FlashDescriptorLib.inf',
             'VtdLib|Silicon/$(SILICON_PKG_NAME)/Library/VtdLib/VtdLib.inf',
-            'SmbusLib|Silicon/$(SILICON_PKG_NAME)/Library/SmbusLib/SmbusLib.inf',
             'HdaLib|Platform/$(BOARD_PKG_NAME)/Library/HdaLib/HdaLib.inf',
             'VtdPmrLib|Silicon/CommonSocPkg/Library/VtdPmrLib/VtdPmrLib.inf',
-            'BaseIpcLib|Silicon/$(SILICON_PKG_NAME)/Library/BaseIpcLib/BaseIpcLib.inf'
+            'BaseIpcLib|Silicon/$(SILICON_PKG_NAME)/Library/BaseIpcLib/BaseIpcLib.inf',
+            'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
+            'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf',
+            'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf'
         ]
         dsc['LibraryClasses.%s' % self.BUILD_ARCH] = common_libs
         return dsc
@@ -272,7 +278,7 @@ class Board(BaseBoard):
         return pub_key_list
 
     def GetImageLayout (self):
-        ias1_flag = 0 if self.SPI_IAS1_SIZE > 0 else STITCH_OPS.MODE_FILE_IGNOR
+        container1_flag = 0 if self.SPI_CONTAINER1_SIZE > 0 else STITCH_OPS.MODE_FILE_IGNOR
         fwu_flag = 0 if self.ENABLE_FWU else STITCH_OPS.MODE_FILE_IGNOR
         img_list  = []
         img_list.extend ([
@@ -290,7 +296,7 @@ class Board(BaseBoard):
                         ('FWUPDATE.bin' ,  'Lzma', self.FWUPDATE_SIZE, STITCH_OPS.MODE_FILE_PAD | fwu_flag, STITCH_OPS.MODE_POS_TAIL)]
                     ),
                     ('Stitch_FB.bin', [
-                        ('SPI_IAS1.bin',  '',    self.SPI_IAS1_SIZE,  STITCH_OPS.MODE_FILE_PAD | ias1_flag, STITCH_OPS.MODE_POS_TAIL)]
+                        ('SPI_CONTAINER1.bin', '', self.SPI_CONTAINER1_SIZE,  STITCH_OPS.MODE_FILE_PAD | container1_flag, STITCH_OPS.MODE_POS_TAIL)]
                     ),
                     ('Stitch_PLD.bin', [
                         ('PAYLOAD.bin',  'Lz4', self.PAYLOAD_SIZE,   STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL)]

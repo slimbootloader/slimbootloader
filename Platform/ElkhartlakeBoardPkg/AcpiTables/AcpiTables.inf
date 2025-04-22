@@ -1,0 +1,64 @@
+## @file
+# Component description file for PlatformAcpiTable module.
+#
+#  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = AcpiTables
+  FILE_GUID                      = 7E374E25-8E01-4FEE-87F2-390C23C606CD
+  MODULE_TYPE                    = USER_DEFINED
+  VERSION_STRING                 = 1.0
+  EDK_RELEASE_VERSION            = 0x00020000
+  EFI_SPECIFICATION_VERSION      = 0x00020000
+
+[sources.common]
+  AcpiTablePlatform.h
+  Madt/Madt.h
+  Dsdt/PlatformBoardId.h
+  Dmar/Dmar.h
+  Dsdt/GpioAcpiDefinesVer3.h
+  Dsdt/PchSerialIoAcpiDefinesEhl.h
+  Hpet/Hpet.h
+  Fadt/Fadt6.1.h
+  Dsdt/Dsdt.asl
+  Facs/Facs.aslc
+  Fadt/Fadt6.1.act
+  Fwst/Fwst.aslc
+  Madt/Madt30.aslc
+  Mcfg/Mcfg.aslc
+  Hpet/Hpet.act
+  Platform/CommonBoardPkg/AcpiTables/Fpdt/Fpdt.aslc
+  Ssdt/SaSsdt.asl
+  Ssdt/Thermal.asl
+  SsdtRtd3/EhlCrbRtd3.asl
+  Lpit/Lpit.act
+  Dmar/Dmar.aslc
+  CpuSsdt/Cpu0Cst.asl
+  CpuSsdt/Cpu0Hwp.asl
+  CpuSsdt/Cpu0Ist.asl
+  CpuSsdt/Cpu0Psd.asl
+  CpuSsdt/ApCst.asl
+  CpuSsdt/ApHwp.asl
+  CpuSsdt/ApIst.asl
+  CpuSsdt/ApPsd.asl
+  CpuSsdt/CpuSsdt.asl
+  SsdtXhci/UsbPortXhciEhlLp4xCrb.asl
+  Platform/CommonBoardPkg/AcpiTables/Tpm/Tpm2.aslc
+  Platform/CommonBoardPkg/AcpiTables/Tpm/TpmSsdt.asl
+  BdatTable/BdatTable.aslc
+  Platform/CommonBoardPkg/AcpiTables/Dsdt/AslInc.h
+  PsdTable/PsdTable.aslc
+
+[Binaries.IA32]
+  BIN|Dsdt/NhltEhl.bin
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+  Silicon/ElkhartlakePkg/ElkhartlakePkg.dec

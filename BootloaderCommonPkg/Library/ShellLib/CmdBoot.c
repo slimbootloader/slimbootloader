@@ -1,7 +1,7 @@
 /** @file
   Shell command `boot` to print or modify the OS boot option list.
 
-  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -138,9 +138,29 @@ GetBootDeviceInfo (
   BOOLEAN                    IsHex;
 
   do {
-    ShellPrint (L"Enter DevType (SATA 0x%X, SD 0x%X, eMMC 0x%X, UFS 0x%X, SPI 0x%X, USB 0x%X, NVMe 0x%X)\n",
-                OsBootDeviceSata, OsBootDeviceSd, OsBootDeviceEmmc, OsBootDeviceUfs, OsBootDeviceSpi, OsBootDeviceUsb, OsBootDeviceNvme
+    ShellPrint (L"Enter ImageType (Default 0x%X, Fastboot 0x%X)\n",
+                EnumImageTypeDefault, EnumImageTypeFastboot
                 );
+    ShellPrint (L"(default 0x%X) ", CurrOption->ImageType);
+    Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+    BootOption->ImageType = (BOOT_IMAGE_TYPE) ((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
+
+    if (StrLen (Buffer) == 0) {
+      BootOption->ImageType = CurrOption->ImageType;
+      break;
+    } else if (BootOption->ImageType < EnumImageTypeMax) {
+      break;
+    }
+    ShellPrint (L"Invalid ImageType value '%s', please re-enter\n", Buffer);
+  } while (1);
+
+  do {
+    ShellPrint (L"Enter DevType (SATA 0x%X, SD 0x%X, eMMC 0x%X, UFS 0x%X, SPI 0x%X, USB 0x%X, NVMe 0x%X, MEM 0x%X)\n",
+                OsBootDeviceSata, OsBootDeviceSd, OsBootDeviceEmmc, OsBootDeviceUfs, OsBootDeviceSpi, OsBootDeviceUsb,
+                OsBootDeviceNvme, OsBootDeviceMemory);
     ShellPrint (L"(default 0x%X) ", CurrOption->DevType);
     Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
     if (EFI_ERROR (Status)) {
@@ -157,6 +177,10 @@ GetBootDeviceInfo (
     ShellPrint (L"Invalid DevType value '%s', please re-enter\n", Buffer);
   } while (1);
 
+  if (BootOption->DevType == OsBootDeviceMemory) {
+    return Status;
+  }
+
   ShellPrint (L"Enter DevInstance (uint)\n");
   ShellPrint (L"(default 0x%X) ", CurrOption->DevInstance);
   Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
@@ -170,7 +194,7 @@ GetBootDeviceInfo (
   }
 
   do {
-    ShellPrint (L"Enter BootFlags (MISC 0x1, CRASH_OS 0x2, TRUSTY 0x4, EXTRA 0x8, MENDER 0x10)\n");
+    ShellPrint (L"Enter BootFlags (NORMAL 0x0, MISC 0x1, CRASH_OS 0x2, PREOS 0x4, EXTRA 0x8, MENDER 0x10)\n");
     ShellPrint (L"(default 0x%X) ", CurrOption->BootFlags);
     Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
     if (EFI_ERROR (Status)) {
@@ -181,7 +205,7 @@ GetBootDeviceInfo (
       break;
     }
     BootOption->BootFlags = (OS_FILE_SYSTEM_TYPE) ((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
-    if (((UINT8)BootOption->BootFlags) <= ((UINT8)BOOT_FLAGS_MISC | BOOT_FLAGS_CRASH_OS | BOOT_FLAGS_TRUSTY | BOOT_FLAGS_EXTRA | BOOT_FLAGS_MENDER)) {
+    if (((UINT8)BootOption->BootFlags) <= ((UINT8)BOOT_FLAGS_MISC | BOOT_FLAGS_CRASH_OS | BOOT_FLAGS_PREOS | BOOT_FLAGS_EXTRA | BOOT_FLAGS_MENDER)) {
       break;
     }
     ShellPrint (L"Invalid value '%s', please re-enter\n", Buffer);
@@ -219,25 +243,6 @@ GetBootDeviceInfo (
     ShellPrint (L"Invalid value '%s', please re-enter\n", Buffer);
   } while (1);
 
-  if (BootOption->FsType == EnumFileSystemMax) {
-    return EFI_SUCCESS;
-  }
-
-  //
-  // Get software partition for file system
-  //
-  ShellPrint (L"Enter SwPart (uint)\n");
-  ShellPrint (L"(default 0x%X) ", CurrOption->SwPart);
-  Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-  if (StrLen (Buffer) == 0) {
-    BootOption->SwPart = CurrOption->SwPart;
-  } else {
-    BootOption->SwPart = (UINT8) ((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
-  }
-
   return EFI_SUCCESS;
 }
 
@@ -252,6 +257,7 @@ GetBootDeviceInfo (
   @param[in]      CurrOption   the current boot entry value
 
   @retval EFI_SUCCESS
+  @retval EFI_NO_MAPPING       LoadImageType is not a valid Image index value
 
 **/
 EFI_STATUS
@@ -260,28 +266,78 @@ GetBootFileInfo (
   IN OUT CHAR16              *Buffer,
   IN     UINTN               BufferSize,
   OUT    OS_BOOT_OPTION      *BootOption,
-  IN     OS_BOOT_OPTION      *CurrOption
+  IN     OS_BOOT_OPTION      *CurrOption,
+  IN     UINT8               LoadImageType
   )
 {
   EFI_STATUS                 Status;
+  BOOLEAN                    IsHex;
   UINTN                      Length;
 
+  if (LoadImageType >= LoadImageTypeMax) {
+    ShellPrint (L"Invalid LoadImageType '0x%X'\n", LoadImageType);
+    return EFI_NO_MAPPING;
+  }
+
+  if (BootOption->DevType == OsBootDeviceMemory) {
+    do {
+      ShellPrint (L"Enter Image Address in Memory\n");
+
+      ShellPrint (L"(default '#0x%x') #", CurrOption->Image[LoadImageType].LbaImage.LbaAddr);
+      Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
+      if (!EFI_ERROR (Status)) {
+        BootOption->Image[LoadImageType].LbaImage.LbaAddr = (UINT32) ((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
+        BootOption->Image[LoadImageType].LbaImage.Valid   = 1;
+        ShellPrint(L"Get Memory address: 0x%x\n", BootOption->Image[LoadImageType].LbaImage.LbaAddr);
+        break;
+      }
+      ShellPrint(L"Not able to read from shell");
+    } while (1);
+    return Status;
+  }
+
+  ShellPrint (L"Enter SwPart (uint)\n");
+  ShellPrint (L"(default 0x%X) ", CurrOption->Image[LoadImageType].FileImage.SwPart);
+  Status = ShellReadUintn (Shell, Buffer, BufferSize, &IsHex);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+  if (StrLen (Buffer) == 0) {
+    BootOption->Image[LoadImageType].FileImage.SwPart = CurrOption->Image[LoadImageType].FileImage.SwPart;
+  } else {
+    BootOption->Image[LoadImageType].FileImage.SwPart = (UINT8) ((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
+  }
+  if (LoadImageType == LoadImageTypeNormal) {
+    BootOption->SwPart = BootOption->Image[LoadImageType].FileImage.SwPart;
+  }
+
   do {
-    ShellPrint (L"Enter file path string (max length of %d)\n",
-                sizeof (BootOption->Image[0].FileName) - 1
-                );
-    ShellPrint (L"(default '%a') ", CurrOption->Image[0].FileName);
+    if (LoadImageType == LoadImageTypeNormal){
+      ShellPrint (L"Enter file path string (max length of %d)\n",
+                  sizeof (BootOption->Image[LoadImageType].FileImage.FileName) - 1
+                  );
+    } else if (LoadImageType == LoadImageTypePreOs){
+        ShellPrint (L"Enter Pre-OS file path string (max length of %d)\n",
+                    sizeof (BootOption->Image[LoadImageType].FileImage.FileName) - 1
+                    );
+    } else if (LoadImageType >= LoadImageTypeExtra0 && LoadImageType < LoadImageTypeMax){
+        ShellPrint (L"Enter Extra Image %d file path string (max length of %d)\n",
+                    LoadImageType - LoadImageTypeExtra0,
+                    sizeof (BootOption->Image[LoadImageType].FileImage.FileName) - 1
+                    );
+    }
+    ShellPrint (L"(default '%a') ", CurrOption->Image[LoadImageType].FileImage.FileName);
     Status = ShellReadLine (Shell, Buffer, BufferSize);
     if (EFI_ERROR (Status)) {
       return Status;
     }
     Length = StrLen (Buffer);
     if (Length == 0) {
-      CopyMem (BootOption->Image[0].FileName, CurrOption->Image[0].FileName, sizeof (CurrOption->Image[0].FileName));
+      CopyMem (BootOption->Image[LoadImageType].FileImage.FileName, CurrOption->Image[LoadImageType].FileImage.FileName, sizeof (CurrOption->Image[LoadImageType].FileImage.FileName));
       break;
     }
-    if (Length < sizeof (BootOption->Image[0].FileName)) {
-      UnicodeStrToAsciiStrS (Buffer, (CHAR8 *)BootOption->Image[0].FileName, sizeof (BootOption->Image[0].FileName));
+    if (Length < sizeof (BootOption->Image[LoadImageType].FileImage.FileName)) {
+      UnicodeStrToAsciiStrS (Buffer, (CHAR8 *)BootOption->Image[LoadImageType].FileImage.FileName, sizeof (BootOption->Image[LoadImageType].FileImage.FileName));
       break;
     }
     ShellPrint (L"Invalid, too long: '%s' len=%d, please re-enter\n", Buffer, Length);
@@ -325,6 +381,7 @@ GetBootLbaInfo (
   } else {
     BootOption->Image[0].LbaImage.SwPart = (UINT8) ((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
   }
+  BootOption->SwPart = BootOption->Image[0].LbaImage.SwPart;
 
   ShellPrint (L"Enter LBA Address (uint)\n");
   ShellPrint (L"(default 0x%X) ", CurrOption->Image[0].LbaImage.LbaAddr);
@@ -342,6 +399,43 @@ GetBootLbaInfo (
 }
 
 /**
+  Print Pre-OS or/and extra images.
+
+  @param[in] BootOption     the boot options
+  @param[in] Flags          the boot flags
+  @param[in] ImageType      the image types
+
+**/
+VOID
+PrintExtraImage (
+  OS_BOOT_OPTION *BootOption,
+  UINT8 Flags,
+  LOAD_IMAGE_TYPE ImageType
+  )
+{
+  BOOT_IMAGE *BootImage;
+
+  BootImage = &BootOption->Image[ImageType];
+  if ((BootOption->BootFlags & Flags) != 0){
+    if (BootImage->LbaImage.Valid == 1) {
+      ShellPrint (L"                                %6a | %4a | %4x | 0x%x\n",
+                  GetLoadedImageTypeNameString(ImageType),
+                  "RAW",
+                  BootImage->LbaImage.SwPart,
+                  BootImage->LbaImage.LbaAddr
+                 );
+    } else if (BootImage->FileImage.FileName[0] != '\0') {
+      ShellPrint (L"                                %6a | %4a | %4x | %a\n",
+                  GetLoadedImageTypeNameString(ImageType),
+                  GetFsTypeString(BootImage->FileImage.FsType),
+                  BootImage->FileImage.SwPart,
+                  BootImage->FileImage.FileName
+                 );
+    }
+  }
+}
+
+/**
   Print the OS boot option list.
 
   @param[in]  OsBootOptionList    the OS boot option list
@@ -353,7 +447,6 @@ PrintBootOption (
   )
 {
   UINT32                     Index;
-  UINT32                     ExtraIndex;
   OS_BOOT_OPTION             *BootOption;
 
   ShellPrint (L"Boot options (in HEX):\n\n");
@@ -361,7 +454,15 @@ PrintBootOption (
   ShellPrint (L"Idx|ImgType|DevType|DevNum|Flags|HwPart|FsType|SwPart|File/Lbaoffset\n");
   for (Index = 0; Index < OsBootOptionList->OsBootOptionCount; Index++) {
     BootOption = &OsBootOptionList->OsBootOption[Index];
-    if (BootOption->FsType < EnumFileSystemMax) {
+    if (BootOption->DevType == OsBootDeviceMemory) {
+      ShellPrint (L"%3x|%7x| %5a |   -  | %3x |   -  |   -  |   -  | 0x%x", \
+                 Index, \
+                 BootOption->ImageType, \
+                 GetBootDeviceNameString(BootOption->DevType), \
+                 BootOption->BootFlags, \
+                 BootOption->Image[0].LbaImage.LbaAddr \
+                 );
+    } else if (BootOption->FsType < EnumFileSystemMax) {
       ShellPrint (L"%3x|%7x| %5a | %4x | %3x | %4x | %4a | %4x | %a", \
                  Index, \
                  BootOption->ImageType, \
@@ -370,8 +471,8 @@ PrintBootOption (
                  BootOption->BootFlags, \
                  BootOption->HwPart,  \
                  GetFsTypeString (BootOption->FsType), \
-                 BootOption->SwPart,  \
-                 BootOption->Image[0].FileName \
+                 BootOption->Image[0].FileImage.SwPart,  \
+                 BootOption->Image[0].FileImage.FileName \
                  );
     } else {
       ShellPrint (L"%3x|%7x| %5a | %4x | %3x | %4x | %4a | %4x | 0x%x", \
@@ -387,22 +488,22 @@ PrintBootOption (
                  );
     }
 
-    for (ExtraIndex = 1; ExtraIndex < LoadImageTypeMax; ExtraIndex++) {
-      if (BootOption->Image[ExtraIndex].LbaImage.Valid == 1) {
-        ShellPrint (L" [%x|0x%x]", BootOption->Image[ExtraIndex].LbaImage.SwPart, \
-          BootOption->Image[ExtraIndex].LbaImage.LbaAddr);
-      } else if (BootOption->Image[ExtraIndex].FileName[0] != '\0') {
-        ShellPrint (L" [%a]", BootOption->Image[ExtraIndex].FileName);
-      }
-    }
-
     if (Index == OsBootOptionList->CurrentBoot) {
       ShellPrint (L" *Current");
     }
     ShellPrint (L"\n");
-  }
 
-  ShellPrint (L"\n");
+    //Print extra image filename
+    for (UINT8 Type = LoadImageTypeExtra0; Type < LoadImageTypeMax; Type++) {
+      PrintExtraImage (BootOption, BOOT_FLAGS_EXTRA, Type);
+    }
+
+    //Print Pre-OS image filename
+    PrintExtraImage (BootOption,BOOT_FLAGS_PREOS,LoadImageTypePreOs);
+
+    //Print misc image filename
+    PrintExtraImage (BootOption,BOOT_FLAGS_MISC,LoadImageTypeMisc);
+  }
 }
 
 /**
@@ -554,9 +655,22 @@ ShellCommandBootFunc (
     }
 
     if (BootOption.FsType != EnumFileSystemMax) {
-      Status = GetBootFileInfo (Shell, Buffer, sizeof (Buffer), &BootOption, CurrOption);
+      BootOption.Image[LoadImageTypeNormal].FileImage.FsType = BootOption.FsType;
+      Status = GetBootFileInfo (Shell, Buffer, sizeof (Buffer), &BootOption, CurrOption, LoadImageTypeNormal);
       if (EFI_ERROR (Status)) {
         goto ExitBootCmd;
+      }
+      if ((BootOption.BootFlags & BOOT_FLAGS_PREOS) != 0){
+        Status = GetBootFileInfo (Shell, Buffer, sizeof (Buffer), &BootOption, CurrOption, LoadImageTypePreOs);
+        if (EFI_ERROR (Status)) {
+          goto ExitBootCmd;
+        }
+      }
+      if ((BootOption.BootFlags & BOOT_FLAGS_EXTRA) != 0){
+        Status = GetBootFileInfo (Shell, Buffer, sizeof (Buffer), &BootOption, CurrOption, LoadImageTypeExtra0);
+        if (EFI_ERROR (Status)) {
+          goto ExitBootCmd;
+        }
       }
     } else {
       Status = GetBootLbaInfo (Shell, Buffer, sizeof (Buffer), &BootOption, CurrOption);

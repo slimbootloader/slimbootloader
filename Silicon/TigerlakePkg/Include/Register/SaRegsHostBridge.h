@@ -60,21 +60,24 @@
 #define B_SA_GGC_GGMS_MASK    (0xc0)
 #define V_SA_GGC_GGMS_8MB     3
 
-///
-/// Description:
-///  This register contains the base address of stolen DRAM memory for the GTT. BIOS determines the base of GTT stolen memory by subtracting the GTT graphics stolen memory size (PCI Device 0 offset 52 bits 9:8) from the Graphics Base of  Data Stolen Memory (PCI Device 0 offset B0 bits 31:20).
-///
-#define R_SA_BGSM  (0xb4)
+//  This register contains the base address of stolen DRAM memory for the GTT. BIOS determines the base of GTT stolen memory by subtracting the GTT graphics stolen memory size (PCI Device 0 offset 52 bits 9:8) from the Graphics Base of  Data Stolen Memory (PCI Device 0 offset B0 bits 31:20).
+#define R_SA_BGSM        (0xb4)
 
-///
-/// Description:
-///  This register contains the base address of TSEG DRAM memory. BIOS determines the base of TSEG memory which must be at or below Graphics Base of GTT Stolen Memory (PCI Device 0 Offset B4 bits 31:20).
-///
-#define R_SA_TSEGMB  (0xb8)
+//  This register contains the base address of TSEG DRAM memory. BIOS determines the base of TSEG memory which must be at or below Graphics Base of GTT Stolen Memory (PCI Device 0 Offset B4 bits 31:20).
+#define R_SA_TSEGMB      (0xb8)
 
-///
-/// Description:
-///  This register contains the Top of low memory address.
-///
-#define R_SA_TOLUD (0xbc)
+//  This Register contains the size of physical memory.
+#define R_SA_TOM         (0xa0)
+#define B_SA_TOM_MASK    (0x7ffff00000ULL)
+
+//  This 64 bit register defines the Top of Upper Usable DRAM.
+#define R_SA_TOUUD       (0xa8)
+#define B_SA_TOUUD_MASK  (0x7ffff00000ULL)
+
+
+//  This register contains the Top of low memory address.
+#define R_SA_TOLUD       (0xbc)
+#define B_SA_TOLUD_MASK  (0xfff00000)
+
+
 #endif

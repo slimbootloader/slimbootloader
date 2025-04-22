@@ -1,7 +1,7 @@
 /** @file
   Register names for PCH PMC device
 
-  Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -17,18 +17,25 @@
 #define V_ACPI_IO_PM1_CNT_S5                     (BIT12 | BIT11 | BIT10)
 
 #define R_ACPI_IO_PM1_STS                        0x00
+#define B_ACPI_IO_PM1_STS_RTC_EN                 BIT26
+#define B_ACPI_IO_PM1_EN_PWRBTN_EN               BIT24
+#define B_ACPI_IO_PM1_STS_GBL                    BIT21
 #define B_ACPI_IO_PM1_STS_WAK                    BIT15
 #define B_ACPI_IO_PM1_STS_PRBTNOR                BIT11
-#define B_ACPI_IO_PM1_EN_PWRBTN_EN               BIT24
+#define B_ACPI_IO_PM1_STS_RTC                    BIT10
+#define B_ACPI_IO_PM1_STS_PWRBTN                 BIT8
+#define B_ACPI_IO_PM1_STS_TMROF                  BIT0
 
 #define R_ACPI_IO_PM1_CNT                        0x04
+#define B_ACPI_IO_PM1_CNT_SCI_EN                 BIT0
 #define B_ACPI_IO_PM1_CNT_SLP_TYP                (BIT12 | BIT11 | BIT10)
 
 
-#define R_ACPI_IO_SMI_STS                         0x34
+#define R_ACPI_IO_SMI_STS                        0x34
 #define B_ACPI_IO_SMI_STS_SMBUS                  BIT16
 #define B_ACPI_IO_SMI_STS_PERIODIC               BIT14
 #define B_ACPI_IO_SMI_STS_TCO                    BIT13
+#define B_ACPI_IO_SMI_STS_MCSMI                  BIT11
 #define B_ACPI_IO_SMI_STS_SWSMI_TMR              BIT6
 #define B_ACPI_IO_SMI_STS_APM                    BIT5
 #define B_ACPI_IO_SMI_STS_ON_SLP_EN              BIT4
@@ -42,6 +49,8 @@
 #define B_ACPI_IO_SMI_EN_TCO                     BIT13
 
 #define R_ACPI_IO_GPE_CNTL                       0x40
+
+#define R_ACPI_IO_GPE0_STS_127_96                0x8C
 
 #define R_ACPI_IO_GPE0_EN_127_96                 0x9C
 #define B_ACPI_IO_GPE0_STS_127_96_PME_B0         BIT13
@@ -69,7 +78,7 @@
 
 #define R_PMC_PWRM_CFG4                          0x18E8
 
-#define R_PMC_PWRM_GPIO_CFG                      0x1920
+#define R_PMC_PWRM_GPIO_CFG                      0x120
 #define B_PMC_PWRM_GPIO_CFG_GPE0_DW2             (BIT11 | BIT10 | BIT9 | BIT8)
 #define N_PMC_PWRM_GPIO_CFG_GPE0_DW2             8
 #define B_PMC_PWRM_GPIO_CFG_GPE0_DW1             (BIT7 | BIT6 | BIT5 | BIT4)

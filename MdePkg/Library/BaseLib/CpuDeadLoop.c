@@ -6,8 +6,6 @@
 
 **/
 
-
-
 #include <Base.h>
 #include <Library/BaseLib.h>
 
@@ -28,5 +26,7 @@ CpuDeadLoop (
 {
   volatile UINTN  Index;
 
-  for (Index = 0; Index == 0;);
+  for (Index = 0; Index == 0;) {
+    CpuPause ();
+  }
 }

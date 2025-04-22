@@ -1,0 +1,28 @@
+## @file
+#
+#  Copyright (c) 2020 - 2025, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+[Defines]
+  INF_VERSION          = 0x00010005
+  BASE_NAME            = Microcode
+  FILE_GUID            = 40762366-24D3-4A6E-9F43-5AC5085D34EB
+  MODULE_TYPE          = USER_DEFINED
+  VERSION_STRING       = 1.0
+
+[Sources]
+  m_07_90672_0000003a.mcb
+  m_80_906a3_00000434.mcb
+  m_19_b06e0_0000001d.mcb
+
+[UserExtensions.SBL."CloneRepo"]
+  REPO   = https://github.com/slimbootloader/firmwareblob.git
+  COMMIT = 58900f79bf77d5032ce85cf4196b640123e316d8
+
+[UserExtensions.SBL."CopyList"]
+  Microcode/AlderLake/m_07_90672_0000003a.pdb  : Silicon/AlderlakePkg/Microcode/m_07_90672_0000003a.mcb
+  Microcode/AlderLake/m_80_906a3_00000434.pdb  : Silicon/AlderlakePkg/Microcode/m_80_906a3_00000434.mcb
+  Microcode/AlderLake/m_19_b06e0_0000001d.pdb  : Silicon/AlderlakePkg/Microcode/m_19_b06e0_0000001d.mcb

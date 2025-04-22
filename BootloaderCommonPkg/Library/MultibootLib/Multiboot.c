@@ -1,7 +1,7 @@
 /** @file
   This file Multiboot specification (implementation).
 
-  Copyright (c) 2014 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2014 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -14,11 +14,15 @@
 #include <Library/DebugLib.h>
 #include <Library/HobLib.h>
 #include <Library/BootloaderCommonLib.h>
+#include <Library/LinuxLib.h>
 #include <Guid/MemoryMapInfoGuid.h>
 #include <Guid/GraphicsInfoHob.h>
+#include "MultibootLibInternal.h"
 
-#define SUPPORTED_FEATURES  (MULTIBOOT_HEADER_MODS_ALIGNED | MULTIBOOT_HEADER_WANT_MEMORY)
+#define SUPPORTED_FEATURES  (MULTIBOOT_HEADER_MODS_ALIGNED | MULTIBOOT_HEADER_WANT_MEMORY | MULTIBOOT_HEADER_HAS_VBE)
 UINT8 mLoaderName[]        = "Slim BootLoader\0";
+
+VOID DumpMbHeader (CONST MULTIBOOT_HEADER *Mh);
 
 
 /**
@@ -81,6 +85,7 @@ IsMultiboot (
 
   MbHeader = GetMultibootHeader (ImageAddr);
   if (MbHeader != NULL) {
+    DumpMbHeader (MbHeader);
     return TRUE;
   }
   return FALSE;
@@ -118,7 +123,7 @@ GetMemoryMapInfo (
   @param[in]   MemoryMapInfo  Memmap buffer from boot loader
 **/
 VOID
-InitMultibotMmap (
+InitMultibootMmap (
   OUT     MULTIBOOT_MMAP     *MbMmap,
   IN      MEMORY_MAP_INFO    *MemoryMapInfo
   )
@@ -163,7 +168,7 @@ SetupMultibootInfo (
       DEBUG ((DEBUG_INFO, "Multiboot MMap allocation Error\n"));
       ASSERT (MbMmap);
     }
-    InitMultibotMmap (MbMmap, MemoryMapInfo);
+    InitMultibootMmap (MbMmap, MemoryMapInfo);
 
     MbInfo->MmapAddr   = (UINT32 *) MbMmap;
     MbInfo->MmapLength = MmapCount * sizeof (MULTIBOOT_MMAP);
@@ -227,6 +232,81 @@ SetupMultibootInfo (
   MultiBoot->BootState.Ebx = (UINT32)(UINTN)MbInfo;
 }
 
+/**
+  Load Multiboot module string
+
+  @param[in,out] MultiBoot   Point to loaded Multiboot image structure
+  @param[in] ModuleIndex     Module index to load
+  @param[in] File            Source image file
+
+  @retval  EFI_SUCCESS       Load Multiboot module image successfully
+  @retval  Others            There is error when setup image
+**/
+EFI_STATUS
+EFIAPI
+LoadMultibootModString (
+  IN OUT MULTIBOOT_IMAGE     *MultiBoot,
+  IN     UINT16              ModuleIndex,
+  IN     IMAGE_DATA          *File
+  )
+{
+  EFI_STATUS                 Status;
+  UINT32                     Index;
+  IMAGE_DATA                 *CmdFile;
+  UINT8                      *NewCmdBuffer;
+  UINT32                     NewSize;
+
+  if ((MultiBoot == NULL) || (File == NULL) || (ModuleIndex >= MAX_MULTIBOOT_MODULE_NUMBER)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  CmdFile = &MultiBoot->MbModuleData[ModuleIndex].CmdFile;
+  CopyMem (CmdFile, File, sizeof (IMAGE_DATA));
+
+  Status = EFI_SUCCESS;
+
+  if (CmdFile->Addr == NULL || CmdFile->Size == 0) {
+    goto done;
+  }
+
+  // multiboot spec requires a mod string be a zero-terminated ASCII string
+  // fast check: 1st char is zero or zero-terminated
+  if (((UINT8 *)CmdFile->Addr)[0] == '\0') {
+    goto done;
+  }
+
+  for (Index = (CmdFile->Size-1); Index > 0; Index--) {
+    if (((UINT8 *)CmdFile->Addr)[Index] == '\0') {
+      goto done;
+    }
+  }
+
+  // if the mod string is not zero-terminated, allocate a new buffer to append zero char
+  NewCmdBuffer = (UINT8 *) AllocatePages (EFI_SIZE_TO_PAGES (CMDLINE_LENGTH_MAX));
+  if (NewCmdBuffer == NULL) {
+    Status = EFI_OUT_OF_RESOURCES;
+    goto done;
+  }
+
+  // no ASCII check here for performance
+  NewSize = (CmdFile->Size > (CMDLINE_LENGTH_MAX -1)) ? CMDLINE_LENGTH_MAX: (CmdFile->Size + 1);
+  CopyMem (NewCmdBuffer, CmdFile->Addr, NewSize - 1);
+  NewCmdBuffer[NewSize - 1] = '\0';
+
+  // Free Allocated Memory earlier first
+  FreeImageData (CmdFile);
+  // Assign new one
+  CmdFile->Addr = NewCmdBuffer;
+  CmdFile->Size = NewSize;
+  CmdFile->AllocType = ImageAllocateTypePage;
+
+done:
+  if (Status == EFI_SUCCESS) {
+    MultiBoot->MbModule[ModuleIndex].String = (UINT8 *) MultiBoot->MbModuleData[ModuleIndex].CmdFile.Addr;
+  }
+
+  return Status;
+}
 
 /**
   Align multiboot modules if required by spec.
@@ -238,7 +318,7 @@ SetupMultibootInfo (
 **/
 EFI_STATUS
 EFIAPI
-AlignMulitibootModules (
+AlignMultibootModules (
   IN OUT MULTIBOOT_IMAGE     *MultiBoot
   )
 {
@@ -259,12 +339,48 @@ AlignMulitibootModules (
               Index, MbModule->Start, AlignedAddr));
       CopyMem (AlignedAddr, (CONST VOID *)(UINTN)MbModule->Start, (UINTN)ModuleSize);
       MbModule->Start = (UINT32)(UINTN)AlignedAddr;
+      MbModule->End = MbModule->Start + ModuleSize;
     }
   }
 
   return RETURN_SUCCESS;
 }
 
+/**
+  Align multiboot modules if requested by header.
+
+  @param[in,out] MultiBoot    Point to loaded Multiboot image structure
+
+  @retval  RETURN_SUCCESS     Align modules successfully
+  @retval  Others             There is error when align image
+**/
+EFI_STATUS
+EFIAPI
+CheckAndAlignMultibootModules (
+  IN OUT MULTIBOOT_IMAGE     *MultiBoot
+  )
+{
+  EFI_STATUS                 Status;
+  CONST MULTIBOOT_HEADER     *MbHeader;
+
+  if (MultiBoot == NULL) {
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  MbHeader = GetMultibootHeader (MultiBoot->BootFile.Addr);
+  if (MbHeader == NULL) {
+    return RETURN_LOAD_ERROR;
+  }
+
+  if ((MbHeader->Flags & MULTIBOOT_HEADER_MODS_ALIGNED) != 0) {
+    // Modules should be page (4KB) aligned
+    Status = AlignMultibootModules (MultiBoot);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+  }
+  return EFI_SUCCESS;
+}
 
 /**
   Setup Multiboot image and its boot info.
@@ -303,9 +419,14 @@ SetupMultibootImage (
     return RETURN_UNSUPPORTED;
   }
 
+  if ((MbHeader->Flags & MULTIBOOT_HEADER_HAS_VBE) != 0) {
+    // Just print the preferred graphics mode.
+    DEBUG ((DEBUG_INFO, "Mb: ModeType=0x%x, Width=0x%x , Height=0x%x, Depth=0x%x\n", MbHeader->ModeType, MbHeader->Width, MbHeader->Height, MbHeader->Depth));
+  }
+
   if ((MbHeader->Flags & MULTIBOOT_HEADER_MODS_ALIGNED) != 0) {
     // Other modules should be page (4KB) aligned
-    Status = AlignMulitibootModules (MultiBoot);
+    Status = AlignMultibootModules (MultiBoot);
     if (EFI_ERROR (Status)) {
       return Status;
     }
@@ -335,6 +456,34 @@ SetupMultibootImage (
   return EFI_SUCCESS;
 }
 
+
+/**
+  Print out the Multiboot header.
+
+  @param[in]  Mh  The Multiboot header to be printed.
+**/
+VOID
+DumpMbHeader (CONST MULTIBOOT_HEADER *Mh)
+{
+  DEBUG ((DEBUG_INFO, "\nDump MB header @%p:\n", Mh));
+
+  DEBUG ((DEBUG_INFO, "- Magic:             %8x\n", Mh->Magic));
+  DEBUG ((DEBUG_INFO, "- Flags:             %8x\n", Mh->Flags));
+  DEBUG ((DEBUG_INFO, "- Checksum:          %8x\n", Mh->Checksum));
+
+  /* Valid if mh_flags sets MULTIBOOT_HEADER_HAS_ADDR. */
+  DEBUG ((DEBUG_INFO, "- HeaderAddr:        %8x\n", Mh->HeaderAddr));
+  DEBUG ((DEBUG_INFO, "- LoadAddr:          %8x\n", Mh->LoadAddr));
+  DEBUG ((DEBUG_INFO, "- LoadEndAddr:       %8x\n", Mh->LoadEndAddr));
+  DEBUG ((DEBUG_INFO, "- BssEndAddr:        %8x\n", Mh->BssEndAddr));
+  DEBUG ((DEBUG_INFO, "- EntryAddr:         %8x\n", Mh->EntryAddr));
+
+  /* Valid if mh_flags sets MULTIBOOT_HEADER_HAS_VBE. */
+  DEBUG ((DEBUG_INFO, "- ModeType:          %8x\n", Mh->ModeType));
+  DEBUG ((DEBUG_INFO, "- Width:             %8x\n", Mh->Width));
+  DEBUG ((DEBUG_INFO, "- Height:            %8x\n", Mh->Height));
+  DEBUG ((DEBUG_INFO, "- Depth:             %8x\n", Mh->Depth));
+}
 
 /**
   Print out the Multiboot information block.
@@ -383,6 +532,7 @@ DumpMbInfo (
       DEBUG ((DEBUG_INFO, "- Mod[%d].Start:      %08x\n", Index, Mod[Index].Start));
       DEBUG ((DEBUG_INFO, "- Mod[%d].End:        %08x\n", Index, Mod[Index].End));
       DEBUG ((DEBUG_INFO, "- Mod[%d].String:     %08x\n", Index, (UINT32)(UINTN)Mod[Index].String));
+      DEBUG ((DEBUG_INFO, "  string = '%a'\n", Mod[Index].String));
     }
   }
 

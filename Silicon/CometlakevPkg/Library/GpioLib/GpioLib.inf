@@ -20,20 +20,23 @@
 #
 
 [Sources]
-  GpioLibrary.h
-  GpioPrivateLib.h
+  #GpioLibrary.h
+  #GpioPrivateLib.h
   GpioInitLib.h
   GpioInitLib.c
   GpioInit.c
   GpioLib.c
-  GpioNativeLib.c
+  #GpioNativeLib.c
   GpioPrivateLib.c
-  GpioPrivateLibCmlv.c
+  #GpioPrivateLibCmlv.c
 
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
   Silicon/CometlakevPkg/CometlakevPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+
 
 [LibraryClasses]
   BaseLib

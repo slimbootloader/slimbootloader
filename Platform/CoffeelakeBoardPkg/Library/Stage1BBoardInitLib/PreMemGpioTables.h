@@ -6,7 +6,7 @@
 **/
 
 #include <Library/GpioLib.h>
-#include <Library/SiGpioLib.h>
+#include <GpioConfig.h>
 #include <GpioPinsCnlH.h>
 #include <GpioPinsCnlLp.h>
 

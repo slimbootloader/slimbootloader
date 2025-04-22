@@ -1,0 +1,24 @@
+## @file
+#
+#  Copyright (c) 2020 - 2025, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+[Defines]
+  INF_VERSION          = 0x00010005
+  BASE_NAME            = Microcode
+  FILE_GUID            = AFE664F7-8665-4F7D-AEB2-DDC394352C5F
+  MODULE_TYPE          = USER_DEFINED
+  VERSION_STRING       = 1.0
+
+[Sources]
+  m_80_b0650_00000007.mcb # ARL U A0 PO Version
+
+[UserExtensions.SBL."CloneRepo"]
+  REPO   = https://github.com/slimbootloader/firmwareblob.git
+  COMMIT = f9d19aca682f7874a07068920fae2e50cec2be33
+
+[UserExtensions.SBL."CopyList"]
+  Microcode/ArrowLake/m_80_b0650_00000007.pdb  : Silicon/ArrowlakePkg/Arlh/Microcode/m_80_b0650_00000007.mcb

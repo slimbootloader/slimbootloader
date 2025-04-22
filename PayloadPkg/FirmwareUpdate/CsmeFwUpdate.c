@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -8,6 +8,7 @@
 #include <Base.h>
 #include <PiPei.h>
 #include <Uefi/UefiBaseType.h>
+#include <Library/PciLib.h>
 #include <Library/DebugLib.h>
 #include <Library/TimerLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -77,63 +78,91 @@ DisplaySendStatus (
   );
 
 /**
-  Check if the update image has the same version as the flash image.
+  Reads a range of PCI configuration registers into a caller supplied buffer.
 
-  @param[in]  buffer         Buffer of Update Image.
-  @param[in]  bufferLength   Length of the buffer in bytes.
-  @param[in]  UpdateApi      Pointer to update service API's
-  @param[out] isSameVersion  TRUE if same version, FALSE if not. Caller allocated.
+  Reads the range of PCI configuration registers specified by StartAddress and
+  Size into the buffer specified by Buffer. This function only allows the PCI
+  configuration registers from a single PCI function to be read. Size is
+  returned. When possible 32-bit PCI configuration read cycles are used to read
+  from StartAddress to StartAddress + Size. Due to alignment restrictions, 8-bit
+  and 16-bit PCI configuration read cycles may be used at the beginning and the
+  end of the range.
 
-  @retval  EFI_SUCCESS      Update successful
-  @retval  other            error status from the routine
+  StartAddress is in EFI_PCI_ROOT_BRIDGE_IO_PROTOCOL_PCI_ADDRESS format.
+  - when register offset is  < 0x100, it is :    bbddffrr
+  - when register offset is >= 0x100, it is : rrrbbddff00
+
+  If StartAddress is not aligned with format defined, then ASSERT().
+  If the range to be read exceeds a single PCI function, then ASSERT().
+  If Buffer is NULL or Size == 0, then ASSERT().
+
+  @param  StartAddress  The starting address that encodes the PCI Bus, Device,
+                        Function and Register.
+  @param  Size          The size in bytes of the transfer.
+  @param  Buffer        The pointer to a buffer receiving the data read.
+
+  @return EFI_SUCCESS        if data is read into buffer
+  @return EFI_NOT_FOUND      if data is NOT read into buffer
+  @return EFI_INVALID_PARAMETER  Invalid parameter
 **/
-static UINT32
-IsUpdateToSameVersion(
-  IN  UINT8   *Buffer,
-  IN  UINT32  BufferLength,
-  IN  CSME_UPDATE_DRIVER_OUTPUT *UpdateApi,
-  OUT BOOLEAN *IsSameVersion
+EFI_STATUS
+EFIAPI
+CsmePciReadBuffer (
+  IN      UINT64    StartAddress,
+  IN      UINTN     Size,
+  OUT     VOID      *Buffer
   )
 {
-  UINT32   Status;
-  UINT16   flashMajor   = 0;
-  UINT16   flashMinor   = 0;
-  UINT16   flashHotfix  = 0;
-  UINT16   flashBuild   = 0;
-  UINT16   bufferMajor  = 0;
-  UINT16   bufferMinor  = 0;
-  UINT16   bufferHotfix = 0;
-  UINT16   bufferBuild  = 0;
+  UINT8   Bus;
+  UINT8   Device;
+  UINT8   Function;
+  UINT16  Register;
+  UINTN   ReadCount;
+  UINT32  StartAddressHi;
+  UINT32  StartAddressLo;
 
-  if (Buffer == NULL || BufferLength == 0 || IsSameVersion == NULL) {
-    Status = INTERNAL_ERROR;
-    return Status;
+  if ((Buffer == NULL) || (Size == 0)) {
+    return EFI_INVALID_PARAMETER;
   }
 
-  *IsSameVersion = FALSE;
+  //
+  // A valid PCI address should contain 1's only in the low 32 bits or in bit range [43:8]
+  //
+  StartAddressHi = (UINT32)RShiftU64 (StartAddress, 32);
+  StartAddressLo = (UINT32)StartAddress;
 
-  Status = UpdateApi->FwuPartitionVersionFromFlash(FPT_PARTITION_NAME_FTPR, &flashMajor, &flashMinor, &flashHotfix, &flashBuild);
-  if (Status != SUCCESS) {
-    return Status;
+  if ((StartAddressHi & (~0xFFF)) != 0) {
+    return EFI_INVALID_PARAMETER;
   }
 
-  Status = UpdateApi->FwuPartitionVersionFromBuffer(Buffer, BufferLength, FPT_PARTITION_NAME_FTPR, &bufferMajor, &bufferMinor, &bufferHotfix, &bufferBuild);
-  if (Status != SUCCESS) {
-    return Status;
+  if (((StartAddressHi & 0xFFF) != 0) && ((StartAddressLo & 0xFF) != 0)) {
+    return EFI_INVALID_PARAMETER;
   }
 
-  if (flashMajor == bufferMajor &&
-      flashMinor == bufferMinor &&
-      flashHotfix == bufferHotfix &&
-      flashBuild == bufferBuild)
-  {
-    *IsSameVersion = TRUE;
+  Register = (UINT16)(StartAddressHi & 0xFFF);
+  if (Register == 0) {
+    Register = (UINT16)(StartAddressLo & 0xFF);
   }
 
-  DEBUG((DEBUG_ERROR, "OldVer %d.%d.%d.%d\n", flashMajor, flashMinor, flashHotfix, flashBuild));
-  DEBUG((DEBUG_ERROR, "NewVer %d.%d.%d.%d\n", bufferMajor, bufferMinor, bufferHotfix, bufferBuild));
+  if ((Register + Size) > 0x1000) {
+      return EFI_INVALID_PARAMETER;
+  }
 
-  return Status;
+  Bus = (UINT8)((StartAddressLo >> 24) & 0xFF);
+  Device = (UINT8)((StartAddressLo >> 16) & 0xFF);
+  Function = (UINT8)((StartAddressLo >> 8) & 0xFF);
+
+  ReadCount = PciReadBuffer (
+                PCI_LIB_ADDRESS(Bus, Device, Function, Register),
+                Size * sizeof(UINT32),
+                Buffer
+                );
+
+  if (ReadCount != 0) {
+    return EFI_SUCCESS;
+  }
+
+  return EFI_NOT_FOUND;
 }
 
 /**
@@ -154,7 +183,7 @@ DisplaySendStatus (
   UINT32 value = bytesSentToFw * 100 / totalBytesToSendToFw;
 
   if (value != 100) {
-    DEBUG((DEBUG_ERROR, " Sending the update image to FW for verification:  [ %u%% ] \r \n", value));
+    DEBUG((DEBUG_ERROR, " Sending the update image to FW for verification:  [ %u%% ] \r", value));
   } else {
     DEBUG((DEBUG_ERROR, " Sending the update image to FW for verification:  [ COMPLETE ] \n"));
   }
@@ -180,9 +209,7 @@ StartCsmeUpdate (
   )
 {
   UINT32            UpdateStatus;
-  BOOLEAN           AllowSameVersion;
   UINT16            EnabledState;
-  BOOLEAN           IsSameVersion;
   UINT32            FirmwareType;
   UINT32            PchSku;
   UINT32            Index;
@@ -195,9 +222,7 @@ StartCsmeUpdate (
   UINT32            Timer;
   UINT32            PreviousPercent;
 
-  AllowSameVersion  = FALSE;
   EnabledState      = FALSE;
-  IsSameVersion     = FALSE;
   InProgress        = FALSE;
   FirmwareType      = FWU_FW_TYPE_INVALID;
   PchSku            = FWU_PCH_SKU_INVALID;
@@ -221,22 +246,6 @@ StartCsmeUpdate (
 
   if (EnabledState == FW_UPDATE_DISABLED) {
     UpdateStatus = FWU_LOCAL_DIS;
-    goto End;
-  }
-
-  //
-  // For full update, check if update to the same version
-  //
-  UpdateStatus = IsUpdateToSameVersion(Buffer, (UINT32)BufferLength, UpdateApi, &IsSameVersion);
-  if (UpdateStatus != SUCCESS) {
-    goto End;
-  }
-
-  //
-  // Need /s option for same version
-  //
-  if (IsSameVersion && !AllowSameVersion) {
-    UpdateStatus = FWU_ALLOWSV_RS_MISSING;
     goto End;
   }
 
@@ -317,8 +326,6 @@ StartCsmeUpdate (
       break;
     case CMD_LINE_STATUS_UPDATE_4:
       ProgressChar = '\\';
-      break;
-    default:
       break;
     }
 
@@ -403,7 +410,7 @@ StartCsmeUpdate (
 
 End:
   if (UpdateStatus != SUCCESS) {
-    DEBUG((DEBUG_ERROR, "%a\n", GetErrorString (UpdateStatus)));
+    DEBUG((DEBUG_ERROR, "CSME update failed. Error Code: 0x%X\n", UpdateStatus));
     return EFI_DEVICE_ERROR;
   }
   return EFI_SUCCESS;

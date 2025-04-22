@@ -1,6 +1,6 @@
 /**@file
 
-  Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -128,9 +128,9 @@ typedef struct {
   UINT32   Pcie1WakeGpioNo;                         ///< Offset 255     PCIe1 RTD3 Device Wake GPIO Number
   UINT32   Pcie2WakeGpioNo;                         ///< Offset 259     PCIe2 RTD3 Device Wake GPIO Number
   UINT8    VtdDisable;                              ///< Offset 263     VT-d Enable/Disable
-  UINT32   VtdBaseAddress1;                         ///< Offset 264     VT-d Base Address 1
-  UINT32   VtdBaseAddress2;                         ///< Offset 268     VT-d Base Address 2
-  UINT32   VtdBaseAddress3;                         ///< Offset 272     VT-d Base Address 3
+  UINT32   VtdBaseAddress[3];                       ///< Offset 264     VT-d Base Address 1
+                                                    ///< Offset 268     VT-d Base Address 2
+                                                    ///< Offset 272     VT-d Base Address 3
   UINT16   VtdEngine1Vid;                           ///< Offset 276     VT-d Engine#1 Vendor ID
   UINT16   VtdEngine2Vid;                           ///< Offset 278     VT-d Engine#2 Vendor ID
   UINT8    Pcie3SecBusNum;                          ///< Offset 280     PCIe3 Secondary Bus Number (PCIe3 Endpoint Bus Number)

@@ -337,3 +337,63 @@ BuildResourceDescriptorWithOwnerHob (
 
   CopyGuid (&Hob->Owner, OwnerGUID);
 }
+
+/**
+  Builds a HOB for the CPU.
+
+  @param  SizeOfMemorySpace   The maximum physical memory addressability of the processor.
+  @param  SizeOfIoSpace       The maximum physical I/O addressability of the processor.
+**/
+VOID
+EFIAPI
+BuildCpuHob (
+  IN UINT8                       SizeOfMemorySpace,
+  IN UINT8                       SizeOfIoSpace
+  )
+{
+  EFI_HOB_CPU  *Hob;
+
+  Hob = InternalPeiCreateHob (EFI_HOB_TYPE_CPU, sizeof (EFI_HOB_CPU));
+
+  Hob->SizeOfMemorySpace = SizeOfMemorySpace;
+  Hob->SizeOfIoSpace     = SizeOfIoSpace;
+
+  //
+  // Zero the reserved space to match HOB spec
+  //
+  ZeroMem (Hob->Reserved, sizeof (Hob->Reserved));
+}
+
+
+/**
+  Builds a HOB for the memory allocation.
+
+  @param  BaseAddress   The 64 bit physical address of the memory.
+  @param  Length        The length of the memory allocation in bytes.
+  @param  MemoryType    Type of memory allocated by this HOB.
+
+**/
+VOID
+EFIAPI
+BuildMemoryAllocationHob (
+  IN EFI_PHYSICAL_ADDRESS        BaseAddress,
+  IN UINT64                      Length,
+  IN EFI_MEMORY_TYPE             MemoryType
+  )
+{
+  EFI_HOB_MEMORY_ALLOCATION  *Hob;
+
+  ASSERT (((BaseAddress & (EFI_PAGE_SIZE - 1)) == 0) && ((Length & (EFI_PAGE_SIZE - 1)) == 0));
+
+  Hob = InternalPeiCreateHob (EFI_HOB_TYPE_MEMORY_ALLOCATION, sizeof (EFI_HOB_MEMORY_ALLOCATION));
+
+  ZeroMem (&(Hob->AllocDescriptor.Name), sizeof (EFI_GUID));
+  Hob->AllocDescriptor.MemoryBaseAddress = BaseAddress;
+  Hob->AllocDescriptor.MemoryLength      = Length;
+  Hob->AllocDescriptor.MemoryType        = MemoryType;
+  //
+  // Zero the reserved space to match HOB spec
+  //
+  ZeroMem (Hob->AllocDescriptor.Reserved, sizeof (Hob->AllocDescriptor.Reserved));
+}
+

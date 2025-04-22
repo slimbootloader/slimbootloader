@@ -1,0 +1,45 @@
+## @file
+#
+#  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = StageCommonBoardInitLib
+  FILE_GUID                      = 84E8860E-3CA0-4C1C-9EAB-403FB6604165
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = StageCommonBoardInitLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  StageCommonBoardInitLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  IntelFsp2Pkg/IntelFsp2Pkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Platform/IdavilleBoardPkg/IdavilleBoardPkg.dec
+  Silicon/IdavillePkg/IdavillePkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  BootloaderCommonLib
+  VariableLib
+  PagingLib
+
+[Guids]
+
+[Pcd]
+  gPlatformModuleTokenSpaceGuid.PcdStage1ASize
+  gPlatformModuleTokenSpaceGuid.PcdFlashSize
+  gPlatformModuleTokenSpaceGuid.PcdCfgDataBase

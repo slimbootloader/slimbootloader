@@ -1,6 +1,6 @@
 ## @ GenCfgData.py
 #
-# Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -15,6 +15,7 @@ import string
 import operator as op
 import ast
 import binascii
+import fnmatch
 from   datetime    import date
 from   collections import OrderedDict
 
@@ -98,7 +99,7 @@ def read_lines (file):
 
 def expand_file_value (path, value_str):
     result = bytearray()
-    match  = re.match("\{\s*FILE:(.+)\}", value_str)
+    match  = re.match("\\{\\s*FILE:(.+)\\}", value_str)
     if match:
         file_list = match.group(1).split(',')
         for file in file_list:
@@ -553,17 +554,18 @@ class CFG_YAML():
 
 
 class DefTemplate(string.Template):
-    idpattern = '\([_A-Z][_A-Z0-9]*\)|[_A-Z][_A-Z0-9]*'
+    idpattern = '\\([_A-Z][_A-Z0-9]*\\)|[_A-Z][_A-Z0-9]*'
 
 
 class CGenCfgData:
     STRUCT         = '$STRUCT'
+    PADDINGNAME    = '__reserved'
     bits_width     = {'b':1, 'B':8, 'W':16, 'D':32, 'Q':64}
     builtin_option = {'$EN_DIS' : [('0', 'Disable'), ('1', 'Enable')]}
     exclude_struct = ['GPIO_GPP_*', 'GPIO_CFG_DATA', 'GpioConfPad*',  'GpioPinConfig',
-                      'BOOT_OPTION*', 'PLATFORMID_CFG_DATA', '\w+_Half[01]']
+                      'BOOT_OPTION*', 'PLATFORMID_CFG_DATA', '\\w+_Half[01]']
     include_tag    = ['GPIO_CFG_DATA']
-    keyword_set    = set(['name', 'type', 'option', 'help', 'length', 'value', 'order', 'struct', 'condition'])
+    keyword_set    = set(['name', 'type', 'option', 'help', 'length', 'value', 'order', 'struct', 'condition', 'altpage'])
 
     def __init__(self):
         self.initialize ()
@@ -618,7 +620,7 @@ class CGenCfgData:
 
         new_lines = []
         for line_num, line in enumerate(lines):
-            match = re.match("^!include\s*(.+)?$", line.strip())
+            match = re.match("^!include\\s*(.+)?$", line.strip())
             if match:
                 inc_path = match.group(1)
                 tmp_path = os.path.join(cur_dir, inc_path)
@@ -709,7 +711,8 @@ class CGenCfgData:
             return self._cfg_list
         else:
             # build a new list for items under a page ID
-            cfgs =  [i for i in self._cfg_list if i['cname'] and (i['page'] == page_id)]
+            cfgs =  [i for i in self._cfg_list if i['cname'] and ((i['page'] == page_id)
+                     or (('altpage' in i) and (i['altpage'] == page_id)))]
             return cfgs
 
 
@@ -769,6 +772,8 @@ class CGenCfgData:
 
     def get_value (self, value_str, bit_length, array = True):
         value_str = value_str.strip()
+        if len(value_str) == 0:
+            return 0
         if value_str[0] == "'" and value_str[-1] == "'" or \
            value_str[0] == '"' and value_str[-1] == '"':
             value_str = value_str[1:-1]
@@ -815,7 +820,7 @@ class CGenCfgData:
                     if each[0] in "'" + '"':
                         each_value = bytearray(each[1:-1], 'utf-8')
                     elif ':' in each:
-                        match    = re.match("^(.+):(\d+)([b|B|W|D|Q])$", each)
+                        match    = re.match("^(.+):(\\d+)([b|B|W|D|Q])$", each)
                         if match is None:
                             raise SystemExit("Exception: Invald value list format '%s' !" % each)
                         if match.group(1) == '0' and match.group(2) == '0':
@@ -873,9 +878,29 @@ class CGenCfgData:
                     try:
                         (op_val, op_str) = option.split(':')
                     except:
-                        raise SystemExit ("Exception: Invalide option format '%s' !" % option)
+                        raise SystemExit ("Exception: Invalid option format '%s' for item '%s' !" % (option, item['cname']))
                     tmp_list.append((op_val, op_str))
         return  tmp_list
+
+
+    def find_page_path (self, page_id):
+        def find_page (page_id, top):
+            for node in top['child']:
+                page_key = next(iter(node))
+                path[-1] = page_key
+                if page_id == page_key:
+                    return True
+                else:
+                    path.append ('')
+                    result = find_page (page_id, node[page_key])
+                    if result is not None:
+                        return result
+                    path.pop()
+
+        # path contains a page id list from top level to leaf
+        path = ['']
+        find_page (page_id, self.get_cfg_page()['root'])
+        return path
 
 
     def get_page_title(self, page_id, top = None):
@@ -1000,6 +1025,36 @@ class CGenCfgData:
         self.traverse_cfg_tree (_print_cfgs)
 
 
+    def find_item_by_name (self, find_name, key = 0):
+        def _find_cfgs (name, cfgs, level):
+            if 'indx' in cfgs:
+                act_cfg = self.get_item_by_index (cfgs['indx'])
+                cfg_name = act_cfg['name'].lower()
+                if cfg_name:
+                    if wildcard:
+                        found = fnmatch.fnmatch(cfg_name, find_name)
+                    else:
+                        found = find_name in cfg_name
+                    if found:
+                        if instance[0] == key:
+                            result.append (act_cfg)
+                        instance[0] += 1
+
+        result    = []
+        instance  = [0]
+        find_name = find_name.lower()
+        if '*' in find_name or '?' in find_name:
+            wildcard = True
+        else:
+            wildcard = False
+
+        self.traverse_cfg_tree (_find_cfgs)
+        if len(result) == 0:
+            return None
+        else:
+            return result[0]
+
+
     def build_var_dict (self):
         def _build_var_dict (name, cfgs, level):
             if level <= 2:
@@ -1101,7 +1156,7 @@ class CGenCfgData:
 
         length = item.get('length', 0)
         if type(length) is str:
-            match = re.match("^(\d+)([b|B|W|D|Q])([B|W|D|Q]?)\s*$", length)
+            match = re.match("^(\\d+)([b|B|W|D|Q])([B|W|D|Q]?)\\s*$", length)
             if match:
                 unit_len = CGenCfgData.bits_width[match.group(2)]
                 length = int(match.group(1), 10) * unit_len
@@ -1155,6 +1210,8 @@ class CGenCfgData:
             order = offset
 
         cfg_item = dict()
+        if name == 'CfgHeader':
+            cfg_item['tag'] = self.get_cfg_hdr_tag(item)
         cfg_item['length'] = length
         cfg_item['offset'] = offset
         cfg_item['value']  = value
@@ -1167,6 +1224,9 @@ class CGenCfgData:
         cfg_item['order']  = order
         cfg_item['path']   = '.'.join(path)
         cfg_item['condition']  = condition
+        altpage = item.get('altpage', '')
+        if altpage:
+            cfg_item['altpage'] = str(altpage)
         if 'struct' in item:
             cfg_item['struct'] = item['struct']
         self._cfg_list.append(cfg_item)
@@ -1182,10 +1242,18 @@ class CGenCfgData:
 
         return length
 
+    def get_cfg_hdr_tag(self, cfg_hdr):
+        cfg_hdr_yaml_vals = strip_delimiter(cfg_hdr['value'],'{}').split(',')
+        cfg_id_str = cfg_hdr_yaml_vals[-1]
+        tag_id_str = cfg_id_str.strip().split(':')[0]
+        tag_id = eval(tag_id_str)
+        return tag_id
 
     def build_cfg_list (self, cfg_name ='', top = None, path = [], info = {'offset': 0}):
         if top is None:
             top = self._cfg_tree
+            # reset the offset for a fresh load_yaml()
+            info['offset'] = 0
 
         start = info['offset']
         is_leaf = True
@@ -1213,7 +1281,17 @@ class CGenCfgData:
             struct_node['length'] = info['offset'] - start
             if struct_node['length'] % 8 != 0:
                 raise SystemExit("Error: Bits length not aligned for %s !" % str(path))
-
+            # Ensure Cfg struct is 4-byte aligned
+            if 'CfgHeader' in top and (struct_node['length']//8)%4:
+                padding = 4 - (struct_node['length']//8)%4
+                pad_bytes = OrderedDict({})
+                pad_bytes['length'] = str(padding)
+                pad_bytes['value'] = str(0)
+                top[CGenCfgData.PADDINGNAME] = pad_bytes
+                path.append(CGenCfgData.PADDINGNAME)
+                self.build_cfg_list(CGenCfgData.PADDINGNAME,pad_bytes,path,info)
+                path.pop()
+                struct_node['length'] = info['offset'] - start
 
     def get_field_value (self, top = None):
         def _get_field_value (name, cfgs, level):
@@ -1317,7 +1395,7 @@ class CGenCfgData:
             line = line.strip()
             if not line or line.startswith('#'):
                 continue
-            match = re.match("\s*([\w\.]+)\s*\|\s*(.+)", line)
+            match = re.match("\\s*([\\w\\.]+)\\s*\\|\\s*(.+)", line)
             if not match:
                 raise Exception("Unrecognized line '%s' (File:'%s' Line:%d) !" %
                                 (line, file_path, line_num + 1))
@@ -1693,7 +1771,7 @@ class CGenCfgData:
 
             bit_length = None
             length = (item['length'] + 7) // 8
-            match  = re.match("^(\d+)([b|B|W|D|Q])([B|W|D|Q]?)", t_item['length'])
+            match  = re.match("^(\\d+)([b|B|W|D|Q])([B|W|D|Q]?)", t_item['length'])
             if match and match.group(2) == 'b':
                 bit_length = int(match.group(1))
                 if match.group(3) != '':
@@ -1761,7 +1839,7 @@ class CGenCfgData:
             if 'struct' in cfgs['$STRUCT']:
                 each['alias'], array_num, var = self.get_struct_array_info (cfgs['$STRUCT']['struct'])
             else:
-                match = re.match('(\w+)(_\d+)', each['name'])
+                match = re.match('(\\w+)(_\\d+)', each['name'])
                 if match:
                     each['alias'] = match.group(1)
                 else:

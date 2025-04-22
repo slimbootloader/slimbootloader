@@ -3,12 +3,12 @@
   For more details, consult 'Event Logging' chapter in TCG  PC Client
   Platform Firmware Profile  specification.
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-
+#include <PiPei.h>
 #include <Library/DebugLib.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -17,6 +17,7 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/TpmLib.h>
 #include <Library/PcdLib.h>
+#include <Library/HobLib.h>
 #include <Pi/PiBootMode.h>
 #include <IndustryStandard/Tpm2Acpi.h>
 #include "Tpm2CommandLib.h"
@@ -110,8 +111,10 @@ GetUnCompressedTCGEventSize (
   EventSize = sizeof(*EventHdr) - sizeof(TPML_DIGEST_VALUES);
 
   EventSize += sizeof(EventHdr->Digests.count);
+
   for (Count = 0 ; Count < EventHdr->Digests.count; Count++) {
     EventSize += sizeof (TPMI_ALG_HASH);
+
     EventSize += GetHashSizeFromAlgo (EventHdr->Digests.digests[Count].hashAlg);
   }
   EventSize += EventHdr->EventSize;
@@ -158,6 +161,73 @@ TpmTcgLogInit (
   return RETURN_SUCCESS;
 }
 
+/**
+  Create a TPM event log from bootloader
+
+  @retval RETURN_SUCCESS     Operation completed successfully.
+  @retval Others             Unable to create TCG event log.
+
+**/
+RETURN_STATUS
+EFIAPI
+CreateTpmEventLogHob (
+  )
+{
+  VOID                  *HobData;
+  TCG_PCR_EVENT2        *TcgPcrEvent2;
+  UINT8                 *DigestBuffer;
+
+  UINT32                Lasa;            //LogAreaStartAddress
+  UINT32                Laml;            //LogAreaMinimumLength
+  TCG_PCR_EVENT2_HDR    *EmptySlot;
+  TCG_PCR_EVENT_HDR     *FirstEvent;
+  UINT32                EventSize;
+  UINT32                HobSize;
+  UINT32                *EventSizePtr;
+
+  GetTCGLasa (&Lasa, &Laml);
+  if (Lasa == 0 || Laml == 0 ) {
+    DEBUG ((DEBUG_WARN, "Unable to get log area for TCG 2.0 format events !!\n"));
+    return RETURN_BUFFER_TOO_SMALL;
+  }
+
+  FirstEvent = (TCG_PCR_EVENT_HDR *)(UINTN)Lasa;
+  EmptySlot  = (TCG_PCR_EVENT2_HDR *)
+               ((UINT8 *)FirstEvent + sizeof (TCG_PCR_EVENT_HDR) + FirstEvent->EventSize);
+
+  while (EmptySlot < (TCG_PCR_EVENT2_HDR *)(UINTN)(Lasa + Laml - 1)) {
+
+    HobSize   = sizeof(EmptySlot->PCRIndex) + sizeof(EmptySlot->EventType) + GetDigestListSize (&EmptySlot->Digests);
+    EventSizePtr = (UINT32 *) ((UINT8 *) EmptySlot + HobSize);
+    HobSize = HobSize + sizeof(EmptySlot->EventSize) + *EventSizePtr;
+
+    HobData = BuildGuidHob (
+               &gTcgEvent2EntryHobGuid,
+               HobSize
+               );
+    if (HobData == NULL) {
+      return EFI_OUT_OF_RESOURCES;
+    }
+
+    TcgPcrEvent2 = HobData;
+    TcgPcrEvent2->PCRIndex = EmptySlot->PCRIndex;
+    TcgPcrEvent2->EventType = EmptySlot->EventType;
+    DigestBuffer = (UINT8 *)&TcgPcrEvent2->Digest;
+    DigestBuffer = CopyDigestListToBuffer (DigestBuffer, &EmptySlot->Digests, HASH_ALG_SHA256);
+    CopyMem (DigestBuffer, EventSizePtr, sizeof(TcgPcrEvent2->EventSize));
+    DigestBuffer = DigestBuffer + sizeof(TcgPcrEvent2->EventSize);
+    CopyMem (DigestBuffer, (UINT8 *) ((UINT8 *) EventSizePtr + sizeof(EmptySlot->EventType)), *EventSizePtr);
+
+    EventSize = GetCompressedTCGEventSize (EmptySlot);
+    if (EventSize == 0) {
+      break;
+    } else {
+      EmptySlot = (TCG_PCR_EVENT2_HDR *) ((UINT8 *)EmptySlot + EventSize);
+    }
+  }
+
+  return EFI_SUCCESS;
+}
 
 
 /**
@@ -196,6 +266,7 @@ AddEventTCGLog (
 
     // Copy the hash
     CopyMem (Loc, & (EventHdr->Digests.digests[Idx].digest), GetHashSizeFromAlgo (HashAlg));
+    DEBUG ((DEBUG_INFO, "HASH Extended %llx\n", EventHdr->Digests.digests[Idx].digest));
     Loc += GetHashSizeFromAlgo (HashAlg);
   }
 
@@ -207,6 +278,8 @@ AddEventTCGLog (
 
   return;
 }
+
+
 
 
 /**
@@ -308,6 +381,7 @@ TpmLogSpecIDEvent (
   @retval Others           Unable to log event in TCG Event log.
 **/
 RETURN_STATUS
+EFIAPI
 TpmLogEvent (
   IN  CONST  TCG_PCR_EVENT2_HDR      *EventHdr,
   IN  CONST  UINT8                   *EventData
@@ -326,6 +400,7 @@ TpmLogEvent (
     DEBUG ((DEBUG_WARN, "Unable to get log area for TCG 2.0 format events !!\n"));
     return RETURN_BUFFER_TOO_SMALL;
   }
+
 
   // Navigate log area to Locate the empty space for new event log
   // Note : First Event is of type TPM 1.2 (TCG_PCR_EVENT_HDR)

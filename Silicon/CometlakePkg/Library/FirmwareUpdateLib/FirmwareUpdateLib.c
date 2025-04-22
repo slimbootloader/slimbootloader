@@ -12,11 +12,9 @@
 #include <Uefi/UefiBaseType.h>
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
-#include <Library/PciLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/TimerLib.h>
-#include <Service/SpiFlashService.h>
 #include <Library/FirmwareUpdateLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Library/PchSbiAccessLib.h>
@@ -24,94 +22,8 @@
 #include <Library/HeciLib.h>
 #include <CsmeUpdateDriver.h>
 
-SPI_FLASH_SERVICE   *mFwuSpiService = NULL;
-
 #define FWU_BOOT_MODE_OFFSET   0x40
 #define FWU_BOOT_MODE_VALUE    0x5A
-
-/**
-  This function initialized boot media.
-
-  It initializes SPI services and SPI Flash size information.
-
-**/
-VOID
-EFIAPI
-InitializeBootMedia(
-  VOID
-  )
-{
-  mFwuSpiService = (SPI_FLASH_SERVICE *)GetServiceBySignature (SPI_FLASH_SERVICE_SIGNATURE);
-  if (mFwuSpiService == NULL) {
-    return;
-  }
-
-  mFwuSpiService->SpiInit ();
-}
-
-/**
-  This function reads blocks from the SPI device.
-
-  @param[in]  Address             The block address in the FlashRegionAll to read from on the SPI.
-  @param[in]  ByteCount           Size of the Buffer in bytes.
-  @param[out] Buffer              Pointer to caller-allocated buffer containing the data received during the SPI cycle.
-
-  @retval EFI_SUCCESS             Read completes successfully.
-  @retval others                  Device error, the command aborts abnormally.
-
-**/
-EFI_STATUS
-EFIAPI
-BootMediaRead (
-  IN     UINT64   Address,
-  IN     UINT32   ByteCount,
-  OUT    UINT8    *Buffer
-  )
-{
-  return mFwuSpiService->SpiRead (FlashRegionBios, (UINT32)Address, ByteCount, Buffer);
-}
-
-/**
-  This function writes blocks from the SPI device.
-
-  @param[in]   Address            The block address in the FlashRegionAll to read from on the SPI.
-  @param[in]   ByteCount          Size of the Buffer in bytes.
-  @param[out]  Buffer             Pointer to the data to write.
-
-  @retval EFI_SUCCESS             Write completes successfully.
-  @retval others                  Device error, the command aborts abnormally.
-
-**/
-EFI_STATUS
-EFIAPI
-BootMediaWrite (
-  IN     UINT64   Address,
-  IN     UINT32   ByteCount,
-  OUT    UINT8    *Buffer
-  )
-{
-  return mFwuSpiService->SpiWrite (FlashRegionBios, (UINT32)Address, ByteCount, Buffer);
-}
-
-/**
-  This function erases blocks from the SPI device.
-
-  @param[in]  Address             The block address in the FlashRegionAll to read from on the SPI.
-  @param[in]  ByteCount           Size of the region to erase in bytes.
-
-  @retval EFI_SUCCESS             Erase completes successfully.
-  @retval others                  Device error, the command aborts abnormally.
-
-**/
-EFI_STATUS
-EFIAPI
-BootMediaErase (
-  IN     UINT64   Address,
-  IN     UINT32   ByteCount
-  )
-{
-  return mFwuSpiService->SpiErase (FlashRegionBios, (UINT32)Address, ByteCount);
-}
 
 /**
   Initializes input structure for csme update driver.
@@ -144,7 +56,7 @@ InitCsmeUpdInputData (
   CsmeUpdDriverInput->SetMem           = (VOID *)((UINTN)SetMem);
   CsmeUpdDriverInput->CompareMem       = (VOID *)((UINTN)CompareMem);
   CsmeUpdDriverInput->Stall            = (VOID *)((UINTN)MicroSecondDelay);
-  CsmeUpdDriverInput->PciRead          = (VOID *)((UINTN)PciReadBuffer);
+  CsmeUpdDriverInput->PciRead          = (VOID *)((UINTN)CsmePciReadBuffer);
   CsmeUpdDriverInput->HeciReadMessage  = (VOID *)((UINTN)HeciReceive);
   CsmeUpdDriverInput->HeciSendMessage  = (VOID *)((UINTN)HeciSend);
   CsmeUpdDriverInput->HeciReset        = (VOID *)((UINTN)ResetHeciInterface);
@@ -199,42 +111,7 @@ PlatformGetStage1AOffset (
   OUT UINT32     *Size
   )
 {
-  EFI_STATUS                Status;
-  FLASH_MAP                 *FlashMap;
-
-  if ((Base == NULL) || (Size == NULL)) {
-    return EFI_INVALID_PARAMETER;
-  }
-
-  FlashMap = GetFlashMapPtr();
-  if (FlashMap == NULL) {
-    return EFI_NOT_FOUND;
-  }
-
-  //
-  // Get stage 1A base and size
-  //
-  Status = GetComponentInfoByPartition (FLASH_MAP_SIG_STAGE1A, IsBackupPartition, Base, Size);
-  if (IsBackupPartition && (Status == EFI_NOT_FOUND)) {
-    Status = GetComponentInfoByPartition (FLASH_MAP_SIG_STAGE1A, FALSE, Base, Size);
-  }
-  if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, "Could not get component information from flash map \n"));
-    return Status;
-  }
-
-  //
-  // Convert base address to offset in the BIOS region
-  //
-  *Base = (UINT32)(FlashMap->RomSize - (0x100000000ULL - *Base));
-
-  //
-  // Calculate base address of the component in the capsule image
-  // Capsule image address + bios region offset + offset of the component
-  //
-  *Base  = (UINT32)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER) + *Base);
-
-  return EFI_SUCCESS;
+  return EFI_UNSUPPORTED;
 }
 
 /**
@@ -487,6 +364,26 @@ SetFlashDescriptorLock (
 EFI_STATUS
 EFIAPI
 SetArbSvnCommit (
+   IN  CHAR8     *CmdDataBuf,
+   IN  UINTN     CmdDataSize
+   )
+{
+  return EFI_UNSUPPORTED;
+}
+
+/**
+  Oem Key Revocation
+
+  @param[in]  CmdDataBuf    Pointer to command buffer.
+  @param[in]  CmdDataSize   size of command data.
+
+  @retval  EFI_SUCCESS      Oem Key Revocation is successful.
+  @retval  others           Error happening when updating.
+
+**/
+EFI_STATUS
+EFIAPI
+SetOemKeyRevocation (
    IN  CHAR8     *CmdDataBuf,
    IN  UINTN     CmdDataSize
    )

@@ -1,4 +1,4 @@
-From 88041e41c986da377a5ca13bd77698660c16b2e4 Mon Sep 17 00:00:00 2001
+From 3564c621f1cce667d0e1380687ab13096ef784dc Mon Sep 17 00:00:00 2001
 From: Aiden Park <aiden.park@intel.com>
 Date: Wed, 11 Dec 2019 10:00:41 -0800
 Subject: [PATCH] Build QEMU FSP 2.0 binaries
@@ -6,18 +6,20 @@ Subject: [PATCH] Build QEMU FSP 2.0 binaries
 Signed-off-by: Aiden Park <aiden.park@intel.com>
 Signed-off-by: Maurice Ma <maurice.ma@intel.com>
 ---
+ BaseTools/Source/C/GNUmakefile                |   2 -
+ BaseTools/Source/C/Makefile                   |   2 -
  BaseTools/Source/C/Makefiles/NmakeSubdirs.py  |   2 +-
- BuildFsp.py                                   | 395 +++++++++
- IntelFsp2Pkg/Tools/PatchFv.py                 |   7 +
+ BuildFsp.py                                   | 394 +++++++++
+ IntelFsp2Pkg/Tools/PatchFv.py                 |   9 +-
  QemuFspPkg/BuildFv.cmd                        | 248 ++++++
  QemuFspPkg/FspDescription/FspDescription.inf  |  29 +
  QemuFspPkg/FspDescription/FspDescription.txt  |   2 +
- QemuFspPkg/FspHeader/FspHeader.aslc           |  90 +++
+ QemuFspPkg/FspHeader/FspHeader.aslc           |  90 ++
  QemuFspPkg/FspHeader/FspHeader.inf            |  49 ++
- QemuFspPkg/FspmInit/FspmInit.c                | 671 +++++++++++++++
+ QemuFspPkg/FspmInit/FspmInit.c                | 800 ++++++++++++++++++
  QemuFspPkg/FspmInit/FspmInit.h                |  77 ++
  QemuFspPkg/FspmInit/FspmInit.inf              |  67 ++
- QemuFspPkg/FspsInit/FspsInit.c                | 234 ++++++
+ QemuFspPkg/FspsInit/FspsInit.c                | 234 +++++
  QemuFspPkg/FspsInit/FspsInit.h                | 124 +++
  QemuFspPkg/FspsInit/FspsInit.inf              |  55 ++
  QemuFspPkg/Include/BootLoaderPlatformData.h   |  33 +
@@ -26,25 +28,26 @@ Signed-off-by: Maurice Ma <maurice.ma@intel.com>
  QemuFspPkg/Include/FspmUpd.h                  | 108 +++
  QemuFspPkg/Include/FspsUpd.h                  | 101 +++
  QemuFspPkg/Include/FsptUpd.h                  | 101 +++
- QemuFspPkg/Include/OvmfPlatforms.h            |  44 +
- QemuFspPkg/Include/Q35MchIch9.h               | 112 +++
- .../Library/PlatformSecLib/Ia32/Chipset.inc   | 119 +++
+ QemuFspPkg/Include/OvmfPlatforms.h            |  45 +
+ QemuFspPkg/Include/Q35MchIch9.h               | 113 +++
+ QemuFspPkg/Include/X58Ich10.h                 |  51 ++
+ .../Library/PlatformSecLib/Ia32/Chipset.inc   | 121 +++
  .../Library/PlatformSecLib/Ia32/Ia32Nasm.inc  | 169 ++++
  .../PlatformSecLib/Ia32/PlatformNasm.inc      | 143 ++++
  .../PlatformSecLib/Ia32/SecCoreNasm.inc       |  61 ++
- .../Library/PlatformSecLib/Ia32/SecEntry.nasm | 706 ++++++++++++++++
+ .../Library/PlatformSecLib/Ia32/SecEntry.nasm | 730 ++++++++++++++++
  .../Library/PlatformSecLib/PlatformSecLib.c   |  85 ++
  .../Library/PlatformSecLib/PlatformSecLib.h   |  48 ++
  .../PlatformSecLib/Vtf0PlatformSecMLib.inf    |  61 ++
  .../PlatformSecLib/Vtf0PlatformSecSLib.inf    |  63 ++
  .../PlatformSecLib/Vtf0PlatformSecTLib.inf    |  67 ++
  QemuFspPkg/QemuFspPkg.dec                     |  51 ++
- QemuFspPkg/QemuFspPkg.dsc                     | 435 ++++++++++
- QemuFspPkg/QemuFspPkg.fdf                     | 278 +++++++
- QemuFspPkg/QemuVideo/QemuVideo.c              | 761 ++++++++++++++++++
- QemuFspPkg/QemuVideo/QemuVideo.h              | 115 +++
+ QemuFspPkg/QemuFspPkg.dsc                     | 436 ++++++++++
+ QemuFspPkg/QemuFspPkg.fdf                     | 278 ++++++
+ QemuFspPkg/QemuVideo/QemuVideo.c              | 780 +++++++++++++++++
+ QemuFspPkg/QemuVideo/QemuVideo.h              | 116 +++
  QemuFspPkg/QemuVideo/QemuVideo.inf            |  56 ++
- 38 files changed, 5837 insertions(+), 1 deletion(-)
+ 41 files changed, 6066 insertions(+), 6 deletions(-)
  create mode 100644 BuildFsp.py
  create mode 100644 QemuFspPkg/BuildFv.cmd
  create mode 100644 QemuFspPkg/FspDescription/FspDescription.inf
@@ -65,6 +68,7 @@ Signed-off-by: Maurice Ma <maurice.ma@intel.com>
  create mode 100644 QemuFspPkg/Include/FsptUpd.h
  create mode 100644 QemuFspPkg/Include/OvmfPlatforms.h
  create mode 100644 QemuFspPkg/Include/Q35MchIch9.h
+ create mode 100644 QemuFspPkg/Include/X58Ich10.h
  create mode 100644 QemuFspPkg/Library/PlatformSecLib/Ia32/Chipset.inc
  create mode 100644 QemuFspPkg/Library/PlatformSecLib/Ia32/Ia32Nasm.inc
  create mode 100644 QemuFspPkg/Library/PlatformSecLib/Ia32/PlatformNasm.inc
@@ -82,8 +86,34 @@ Signed-off-by: Maurice Ma <maurice.ma@intel.com>
  create mode 100644 QemuFspPkg/QemuVideo/QemuVideo.h
  create mode 100644 QemuFspPkg/QemuVideo/QemuVideo.inf
 
+diff --git a/BaseTools/Source/C/GNUmakefile b/BaseTools/Source/C/GNUmakefile
+index 464f432774..c20a227334 100644
+--- a/BaseTools/Source/C/GNUmakefile
++++ b/BaseTools/Source/C/GNUmakefile
+@@ -48,8 +48,6 @@ all: makerootdir subdirs
+ LIBRARIES = Common
+ VFRAUTOGEN = VfrCompile/VfrLexer.h
+ APPLICATIONS = \
+-  BrotliCompress \
+-  VfrCompile \
+   EfiRom \
+   GenFfs \
+   GenFv \
+diff --git a/BaseTools/Source/C/Makefile b/BaseTools/Source/C/Makefile
+index e8f8abe59a..008f3f5a20 100644
+--- a/BaseTools/Source/C/Makefile
++++ b/BaseTools/Source/C/Makefile
+@@ -10,8 +10,6 @@ HOST_ARCH = IA32
+ 
+ LIBRARIES = Common
+ APPLICATIONS = \
+-  VfrCompile \
+-  BrotliCompress \
+   EfiRom \
+   GenCrc32 \
+   GenFfs \
 diff --git a/BaseTools/Source/C/Makefiles/NmakeSubdirs.py b/BaseTools/Source/C/Makefiles/NmakeSubdirs.py
-index 356f5aca63..c77bfb095c 100644
+index 1f4a45004f..49a0ccee7b 100644
 --- a/BaseTools/Source/C/Makefiles/NmakeSubdirs.py
 +++ b/BaseTools/Source/C/Makefiles/NmakeSubdirs.py
 @@ -33,7 +33,7 @@ def RunCommand(WorkDir=None, *Args, **kwargs):
@@ -97,10 +127,10 @@ index 356f5aca63..c77bfb095c 100644
      message = ""
 diff --git a/BuildFsp.py b/BuildFsp.py
 new file mode 100644
-index 0000000000..dd3f3ccb6e
+index 0000000000..c1475be22a
 --- /dev/null
 +++ b/BuildFsp.py
-@@ -0,0 +1,395 @@
+@@ -0,0 +1,394 @@
 +#!/usr/bin/env python
 +## @ BuildFsp.py
 +# Build FSP main script
@@ -122,7 +152,6 @@ index 0000000000..dd3f3ccb6e
 +import os
 +import sys
 +import re
-+import imp
 +import errno
 +import shutil
 +import argparse
@@ -187,7 +216,7 @@ index 0000000000..dd3f3ccb6e
 +                vscommon_path = each
 +        vcver_file = vscommon_path + '\\VC\\Auxiliary\\Build\\Microsoft.VCToolsVersion.default.txt'
 +        if os.path.exists(vcver_file):
-+            for vs_ver in ['2017']:
++            for vs_ver in ['2019', '2017']:
 +                check_path = '\\Microsoft Visual Studio\\%s\\' % vs_ver
 +                if check_path in vscommon_path:
 +                    toolchain_ver    = get_file_data (vcver_file, 'r').strip()
@@ -373,14 +402,14 @@ index 0000000000..dd3f3ccb6e
 +    cmd = 'python %s/IntelFsp2Pkg/Tools/GenCfgOpt.py HEADER %s/%s.dsc Build/%s/%s_%s/FV %s/Include/BootLoaderPlatformData.h' % (
 +          workspace, pkgname, pkgname, pkgname, target, toolchain, pkgname)
 +    ret = subprocess.call(cmd.split(' '))
-+    if ret:
++    if ret and (ret != 256):
 +        Fatal('Failed to generate UPD header file !')
 +
 +    print('Generate BSF File ...')
 +    cmd = 'python %s/IntelFsp2Pkg/Tools/GenCfgOpt.py GENBSF %s/%s.dsc Build/%s/%s_%s/FV %s/QemuFsp.bsf' % (
 +          workspace, pkgname, pkgname, pkgname, target, toolchain, fvdir)
 +    ret = subprocess.call(cmd.split(' '))
-+    if ret:
++    if ret and (ret != 256):
 +        Fatal('Failed to generate UPD BSF file !')
 +
 +    for fliename in ['FspUpd.h', 'FsptUpd.h', 'FspmUpd.h', 'FspsUpd.h']:
@@ -497,10 +526,15 @@ index 0000000000..dd3f3ccb6e
 +if __name__ == '__main__':
 +    sys.exit(Main())
 diff --git a/IntelFsp2Pkg/Tools/PatchFv.py b/IntelFsp2Pkg/Tools/PatchFv.py
-index edb30c816b..c1594f1a96 100644
+index 112de4077a..8bb296563d 100644
 --- a/IntelFsp2Pkg/Tools/PatchFv.py
 +++ b/IntelFsp2Pkg/Tools/PatchFv.py
-@@ -420,6 +420,13 @@ class Symbols:
+@@ -419,10 +419,17 @@ class Symbols:
+         if reportLine.strip().find("Archive member included") != -1:
+             #GCC
+             #                0x0000000000001d55                IoRead8
+-            patchMapFileMatchString = "\s+(0x[0-9a-fA-F]{16})\s+([^\s][^0x][_a-zA-Z0-9\-]+)\s"
++            patchMapFileMatchString = "\s+(0x[0-9a-fA-F]{8,16})\s+([^\s][^0x][_a-zA-Z0-9\-]+)\s"
              matchKeyGroupIndex = 2
              matchSymbolGroupIndex  = 1
              prefix = '_'
@@ -964,10 +998,10 @@ index 0000000000..d5ffe3d433
 +  gIntelFsp2PkgTokenSpaceGuid.PcdFspMaxPatchEntry
 diff --git a/QemuFspPkg/FspmInit/FspmInit.c b/QemuFspPkg/FspmInit/FspmInit.c
 new file mode 100644
-index 0000000000..07a72dc19a
+index 0000000000..edfbdfd50c
 --- /dev/null
 +++ b/QemuFspPkg/FspmInit/FspmInit.c
-@@ -0,0 +1,671 @@
+@@ -0,0 +1,800 @@
 +/** @file
 +  FSP-M component implementation.
 +
@@ -1326,10 +1360,12 @@ index 0000000000..07a72dc19a
 +/**
 +  Initialize PCI Express BAR
 +
++  @param[in] Did         Host bridge PCI DID.
++
 +**/
 +VOID
 +PciExBarInitialization (
-+  VOID
++  IN  UINT16  Did
 +  )
 +{
 +  union {
@@ -1351,30 +1387,41 @@ index 0000000000..07a72dc19a
 +  PciExBarBase.Uint64 = PcdGet64 (PcdPciExpressBaseAddress);
 +  ASSERT ((PciExBarBase.Uint32[1] & MCH_PCIEXBAR_HIGHMASK) == 0);
 +  ASSERT ((PciExBarBase.Uint32[0] & MCH_PCIEXBAR_LOWMASK) == 0);
++  if (Did == INTEL_X58_MCH_DEVICE_ID) {
++    //
++    // Programe PCI MMCFG BAR for X58
++    //
++    PciCf8Write32 (
++      REGISTER_X58_PCIEXBAR,
++      PciExBarBase.Uint32[0] | MCH_PCIEXBAR_EN
++      );
++  } else {
++    //
++    // Clear the PCIEXBAREN bit first, before programming the high register.
++    //
++    PciCf8Write32 (DRAMC_REGISTER_Q35 (MCH_PCIEXBAR_LOW), 0);
 +
-+  //
-+  // Clear the PCIEXBAREN bit first, before programming the high register.
-+  //
-+  PciCf8Write32 (DRAMC_REGISTER_Q35 (MCH_PCIEXBAR_LOW), 0);
-+
-+  //
-+  // Program the high register. Then program the low register, setting the
-+  // MMCONFIG area size and enabling decoding at once.
-+  //
-+  PciCf8Write32 (DRAMC_REGISTER_Q35 (MCH_PCIEXBAR_HIGH), PciExBarBase.Uint32[1]);
-+  PciCf8Write32 (
-+    DRAMC_REGISTER_Q35 (MCH_PCIEXBAR_LOW),
-+    PciExBarBase.Uint32[0] | MCH_PCIEXBAR_BUS_FF | MCH_PCIEXBAR_EN
-+    );
++    //
++    // Program the high register. Then program the low register, setting the
++    // MMCONFIG area size and enabling decoding at once.
++    //
++    PciCf8Write32 (DRAMC_REGISTER_Q35 (MCH_PCIEXBAR_HIGH), PciExBarBase.Uint32[1]);
++    PciCf8Write32 (
++      DRAMC_REGISTER_Q35 (MCH_PCIEXBAR_LOW),
++      PciExBarBase.Uint32[0] | MCH_PCIEXBAR_BUS_FF | MCH_PCIEXBAR_EN
++      );
++  }
 +}
 +
 +/**
 +  Miscellaneous chipset initialization
 +
++  @param[in] Did         Host bridge PCI DID.
++
 +**/
 +VOID
 +MiscInitialization (
-+  VOID
++  IN  UINT16  Did
 +  )
 +{
 +  UINTN         PmCmd;
@@ -1392,12 +1439,21 @@ index 0000000000..07a72dc19a
 +  //
 +  // Determine platform type and save Host Bridge DID to PCD
 +  //
-+  PmCmd      = POWER_MGMT_REGISTER_Q35 (PCI_COMMAND_OFFSET);
-+  Pmba       = POWER_MGMT_REGISTER_Q35 (ICH9_PMBASE);
-+  PmbaAndVal = ~(UINT32)ICH9_PMBASE_MASK;
-+  PmbaOrVal  = ICH9_PMBASE_VALUE;
-+  AcpiCtlReg = POWER_MGMT_REGISTER_Q35 (ICH9_ACPI_CNTL);
-+  AcpiEnBit  = ICH9_ACPI_CNTL_ACPI_EN;
++  if (Did == INTEL_X58_MCH_DEVICE_ID) {
++    PmCmd      = POWER_MGMT_REGISTER_ICH10 (PCI_COMMAND_OFFSET);
++    Pmba       = POWER_MGMT_REGISTER_ICH10 (ICH10_PMBASE);
++    PmbaAndVal = ~(UINT32)ICH10_PMBASE_MASK;
++    PmbaOrVal  = ICH10_PMBASE_IO;
++    AcpiCtlReg = POWER_MGMT_REGISTER_ICH10 (ICH10_ACPI_CNTL);
++    AcpiEnBit  = ICH10_ACPI_CNTL_ACPI_EN;
++  } else {
++    PmCmd      = POWER_MGMT_REGISTER_Q35 (PCI_COMMAND_OFFSET);
++    Pmba       = POWER_MGMT_REGISTER_Q35 (ICH9_PMBASE);
++    PmbaAndVal = ~(UINT32)ICH9_PMBASE_MASK;
++    PmbaOrVal  = ICH9_PMBASE_VALUE;
++    AcpiCtlReg = POWER_MGMT_REGISTER_Q35 (ICH9_ACPI_CNTL);
++    AcpiEnBit  = ICH9_ACPI_CNTL_ACPI_EN;
++  }
 +
 +  //
 +  // If the appropriate IOspace enable bit is set, assume the ACPI PMBA
@@ -1422,10 +1478,41 @@ index 0000000000..07a72dc19a
 +    PciOr8 (AcpiCtlReg, AcpiEnBit);
 +  }
 +
++  if (Did == INTEL_X58_MCH_DEVICE_ID) {
++    //
++    // Set Root Complex Register Block BAR
++    //
++    PciWrite32 (
++      POWER_MGMT_REGISTER_ICH10 (ICH10_RCBA),
++      ICH10_ROOT_COMPLEX_BASE | ICH10_RCBA_EN
++      );
++
++    //
++    // Enable AHCI and all ports on the SATA controller.
++    //
++    // Address MAP Reg, setting AHCI mode
++    //
++    PciOr16 (PCI_LIB_ADDRESS (0, 31, 2, 0x90), 0x0060);
++    //
++    //Enabling Ports 0-5
++    //
++    PciOr16 (PCI_LIB_ADDRESS (0, 31, 2, 0x92), 0x003F);
++    //
++    //Disabling Sata Controller 2, bit 25 = 1, bit 0 = 1
++    //
++    MmioWrite32(0xFED1F418, 0x02000001);
++    //
++    //Config and enable APIC
++    //
++    MmioWrite8(ICH10_ROOT_COMPLEX_BASE + 0x31FF, 0x01);
++  }
++
 +}
 +
 +/**
 +  Platform  chipset initialization
++
++  @param  HostBridgeDevId   The DID for PCI host bridge.
 +
 +  @retval EFI_UNSUPPORTED        Unsupported chipset.
 +  @retval EFI_SUCCESS            Platform has been initialized successfully.
@@ -1433,24 +1520,12 @@ index 0000000000..07a72dc19a
 +**/
 +EFI_STATUS
 +PlatformInit (
-+  VOID
++  IN UINT16      HostBridgeDevId
 +)
 +{
-+  UINT16      HostBridgeDevId;
++  PciExBarInitialization (HostBridgeDevId);
 +
-+  //
-+  // Query Host Bridge DID
-+  //
-+  HostBridgeDevId = PciCf8Read16 (OVMF_HOSTBRIDGE_DID);
-+  if (HostBridgeDevId != INTEL_Q35_MCH_DEVICE_ID) {
-+    DEBUG ((DEBUG_ERROR, "Unknown Host Bridge Device ID: 0x%04x\n"));
-+    ASSERT (FALSE);
-+    return EFI_UNSUPPORTED;
-+  }
-+
-+  PciExBarInitialization ();
-+
-+  MiscInitialization ();
++  MiscInitialization (HostBridgeDevId);
 +
 +  return EFI_SUCCESS;
 +}
@@ -1493,6 +1568,7 @@ index 0000000000..07a72dc19a
 +  } else {
 +    TsegMbytes = ExtendedTsegMbytes;
 +  }
++
 +  return (UINT32)TsegMbytes << 20;
 +}
 +
@@ -1522,13 +1598,30 @@ index 0000000000..07a72dc19a
 +  UINT64                          HighMemLen;
 +  UINT32                          TsegSize;
 +  UINT32                          TsegBase;
++  UINT8                           EsmramcVal;
++  UINT8                           Q35TsegMbytes;
++  UINT32                          TopOfLowRam;
++  UINT32                          TopOfLowRamMb;
++  UINT16                          HostBridgeDevId;
 +
 +  DEBUG ((DEBUG_INFO, "FspmInitPoint() - Begin\n"));
++
++
++
++  //
++  // Query Host Bridge DID
++  //
++  HostBridgeDevId = PciCf8Read16 (OVMF_HOSTBRIDGE_DID);
++  if ((HostBridgeDevId != INTEL_Q35_MCH_DEVICE_ID) && (HostBridgeDevId != INTEL_X58_MCH_DEVICE_ID)) {
++    DEBUG ((DEBUG_ERROR, "Unknown Host Bridge Device ID: 0x%04x\n", HostBridgeDevId));
++    ASSERT (FALSE);
++    return EFI_UNSUPPORTED;
++  }
 +
 +  //
 +  // QEMU init
 +  //
-+  Status = PlatformInit ();
++  Status = PlatformInit (HostBridgeDevId);
 +
 +  //
 +  // Get the Boot Mode
@@ -1553,9 +1646,79 @@ index 0000000000..07a72dc19a
 +
 +  LowMemLen  = GetSystemMemorySizeBelow4Gb();
 +  HighMemLen = GetSystemMemorySizeAbove4Gb();
-+
-+  TsegSize   = InitializeSmramTsegSize ();
++  if (HostBridgeDevId == INTEL_X58_MCH_DEVICE_ID) {
++    TsegSize = SIZE_8MB;
++  } else {
++    TsegSize = InitializeSmramTsegSize ();
++  }
 +  TsegBase   = LowMemLen - TsegSize;
++
++  //
++  // Confirm if QEMU supports SMRAM.
++  //
++  // With no support for it, the ESMRAMC (Extended System Management RAM
++  // Control) register reads as zero. If there is support, the cache-enable
++  // bits are hard-coded as 1 by QEMU.
++  //
++  EsmramcVal = PciRead8 (DRAMC_REGISTER_Q35 (MCH_ESMRAMC));
++
++  TopOfLowRam = LowMemLen;
++  ASSERT ((TopOfLowRam & (SIZE_1MB - 1)) == 0);
++  TopOfLowRamMb = TopOfLowRam >> 20;
++
++  //
++  // Some of the following registers are no-ops for QEMU at the moment, but it
++  // is recommended to set them correctly, since the ESMRAMC that we ultimately
++  // care about is in the same set of registers.
++  //
++  // First, we disable the integrated VGA, and set both the GTT Graphics Memory
++  // Size and the Graphics Mode Select memory pre-allocation fields to zero.
++  // This takes just one write to the Graphics Control Register.
++  //
++  PciWrite16 (DRAMC_REGISTER_Q35 (MCH_GGC), MCH_GGC_IVD);
++
++  //
++  // Set Top of Low Usable DRAM.
++  //
++  PciWrite16 (DRAMC_REGISTER_Q35 (MCH_TOLUD),
++    (UINT16)(TopOfLowRamMb << MCH_TOLUD_MB_SHIFT));
++
++  //
++  // Given the zero graphics memory sizes configured above, set the
++  // graphics-related stolen memory bases to the same as TOLUD.
++  //
++  PciWrite32 (DRAMC_REGISTER_Q35 (MCH_GBSM),
++    TopOfLowRamMb << MCH_GBSM_MB_SHIFT);
++  PciWrite32 (DRAMC_REGISTER_Q35 (MCH_BGSM),
++    TopOfLowRamMb << MCH_BGSM_MB_SHIFT);
++
++  //
++  // Set TSEG Memory Base.
++  //
++  PciWrite32 (DRAMC_REGISTER_Q35 (MCH_TSEGMB),
++    (TopOfLowRamMb << MCH_TSEGMB_MB_SHIFT) - TsegSize);
++
++  Q35TsegMbytes = (UINT8)(TsegSize >> MCH_TSEGMB_MB_SHIFT);
++
++  //
++  // Set TSEG size, and disable TSEG visibility outside of SMM. Note that the
++  // T_EN bit has inverse meaning; when T_EN is set, then TSEG visibility is
++  // *restricted* to SMM.
++  //
++  EsmramcVal &= ~(UINT32)MCH_ESMRAMC_TSEG_MASK;
++  EsmramcVal |= Q35TsegMbytes == 8 ? MCH_ESMRAMC_TSEG_8MB :
++                Q35TsegMbytes == 2 ? MCH_ESMRAMC_TSEG_2MB :
++                Q35TsegMbytes == 1 ? MCH_ESMRAMC_TSEG_1MB :
++                MCH_ESMRAMC_TSEG_EXT;
++  EsmramcVal |= MCH_ESMRAMC_T_EN;
++  PciWrite8 (DRAMC_REGISTER_Q35 (MCH_ESMRAMC), EsmramcVal);
++
++  //
++  // TSEG should be closed (see above), but unlocked, initially. Set G_SMRAME
++  // (Global SMRAM Enable) too, as both D_LCK and T_EN depend on it.
++  //
++  PciAndThenOr8 (DRAMC_REGISTER_Q35 (MCH_SMRAM),
++    (UINT8)((~(UINT32)MCH_SMRAM_D_LCK) & 0xff), MCH_SMRAM_G_SMRAME);
 +
 +  PeiMemSize = PcdGet32(PcdFspReservedMemoryLength);
 +  ASSERT (LowMemLen > PeiMemSize + TsegSize);
@@ -2678,10 +2841,10 @@ index 0000000000..4340184d3f
 +#endif
 diff --git a/QemuFspPkg/Include/OvmfPlatforms.h b/QemuFspPkg/Include/OvmfPlatforms.h
 new file mode 100644
-index 0000000000..74ce51d6ea
+index 0000000000..251a22b2f2
 --- /dev/null
 +++ b/QemuFspPkg/Include/OvmfPlatforms.h
-@@ -0,0 +1,44 @@
+@@ -0,0 +1,45 @@
 +/** @file
 +  OVMF Platform definitions
 +
@@ -2703,6 +2866,7 @@ index 0000000000..74ce51d6ea
 +#include <Library/PciLib.h>
 +#include <IndustryStandard/Pci22.h>
 +#include <Q35MchIch9.h>
++#include <X58Ich10.h>
 +
 +//
 +// OVMF Host Bridge DID Address
@@ -2728,10 +2892,10 @@ index 0000000000..74ce51d6ea
 +#endif
 diff --git a/QemuFspPkg/Include/Q35MchIch9.h b/QemuFspPkg/Include/Q35MchIch9.h
 new file mode 100644
-index 0000000000..09201f52f0
+index 0000000000..f559740fee
 --- /dev/null
 +++ b/QemuFspPkg/Include/Q35MchIch9.h
-@@ -0,0 +1,112 @@
+@@ -0,0 +1,113 @@
 +/** @file
 +  Various register numbers and value bits based on the following publications:
 +  - Intel(R) datasheet 316966-002
@@ -2792,6 +2956,7 @@ index 0000000000..09201f52f0
 +#define MCH_ESMRAMC_TSEG_2MB    BIT1
 +#define MCH_ESMRAMC_TSEG_1MB    0
 +#define MCH_ESMRAMC_TSEG_MASK   (BIT2 | BIT1)
++#define MCH_ESMRAMC_TSEG_EXT    MCH_ESMRAMC_TSEG_MASK
 +#define MCH_ESMRAMC_T_EN        BIT0
 +
 +#define MCH_GBSM              0xA4
@@ -2844,12 +3009,69 @@ index 0000000000..09201f52f0
 +#define ICH9_ROOT_COMPLEX_BASE 0xFED1C000
 +
 +#endif
+diff --git a/QemuFspPkg/Include/X58Ich10.h b/QemuFspPkg/Include/X58Ich10.h
+new file mode 100644
+index 0000000000..9de5b8bd72
+--- /dev/null
++++ b/QemuFspPkg/Include/X58Ich10.h
+@@ -0,0 +1,51 @@
++/** @file
++  Various register numbers and value bits based on the following publications:
++  - Intel(R) datasheet 316966-002
++  - Intel(R) datasheet 316972-004
++
++  Copyright (C) 2015, Red Hat, Inc.
++  Copyright (c) 2014, Gabriel L. Somlo <somlo@cmu.edu>
++
++  This program and the accompanying materials are licensed and made available
++  under the terms and conditions of the BSD License which accompanies this
++  distribution.   The full text of the license may be found at
++  http://opensource.org/licenses/bsd-license.php
++
++  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS, WITHOUT
++  WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
++**/
++
++#ifndef __X58_ICH10_H__
++#define __X58_ICH10_H__
++
++//
++// Host Bridge Device ID (DID) value for Q35/MCH
++//
++#define INTEL_X58_MCH_DEVICE_ID 0x3400
++
++#define REGISTER_X58_PCIEXBAR  PCI_CF8_LIB_ADDRESS (0xFF, 0, 1, 0x50)
++
++//
++// B/D/F/Type: 0/0x1f/0/PCI
++//
++#define POWER_MGMT_REGISTER_ICH10(Offset) \
++  PCI_LIB_ADDRESS (0, 0x1f, 0, (Offset))
++
++#define ICH10_PMBASE               0x40
++#define ICH10_PMBASE_MASK            (BIT15 | BIT14 | BIT13 | BIT12 | BIT11 | \
++                                     BIT10 | BIT9  | BIT8  | BIT7)
++
++#define ICH10_ACPI_CNTL            0x44
++#define ICH10_ACPI_CNTL_ACPI_EN      BIT7
++
++#define ICH10_GEN_PMCON_1          0xA0
++#define ICH10_GEN_PMCON_1_SMI_LOCK   BIT4
++
++#define ICH10_RCBA                 0xF0
++#define ICH10_RCBA_EN                BIT0
++
++#define ICH10_PMBASE_IO            0x400
++
++#define ICH10_ROOT_COMPLEX_BASE    0xFED1C000
++
++#endif
 diff --git a/QemuFspPkg/Library/PlatformSecLib/Ia32/Chipset.inc b/QemuFspPkg/Library/PlatformSecLib/Ia32/Chipset.inc
 new file mode 100644
-index 0000000000..7c0183d1fe
+index 0000000000..a9b6e03024
 --- /dev/null
 +++ b/QemuFspPkg/Library/PlatformSecLib/Ia32/Chipset.inc
-@@ -0,0 +1,119 @@
+@@ -0,0 +1,121 @@
 +;; @file
 +; Chipset constants and macros
 +;
@@ -2904,6 +3126,8 @@ index 0000000000..7c0183d1fe
 +  B_LPC_IO_BASE_EN        EQU BIT1
 +
 +  B_LPC_MPHY_BASE_EN      EQU BIT1
++
++PCH_RCBA_BASE_ADDRESS     EQU 0FED1C000h
 +
 +MCH_BASE_ADDRESS              EQU 0FED10000h
 +  B_MCH_BASE_ADDRESS_EN       EQU BIT0
@@ -3362,10 +3586,10 @@ index 0000000000..5651e377e6
 +AP_SIPI_SWITCH_BSP          EQU   003h
 diff --git a/QemuFspPkg/Library/PlatformSecLib/Ia32/SecEntry.nasm b/QemuFspPkg/Library/PlatformSecLib/Ia32/SecEntry.nasm
 new file mode 100644
-index 0000000000..c0f2520d3f
+index 0000000000..b564667425
 --- /dev/null
 +++ b/QemuFspPkg/Library/PlatformSecLib/Ia32/SecEntry.nasm
-@@ -0,0 +1,706 @@
+@@ -0,0 +1,730 @@
 +;; @file
 +; This is the code that initializes CAR mode for QEMU.
 +;
@@ -3517,6 +3741,22 @@ index 0000000000..c0f2520d3f
 +  RET_ESI
 +
 +PlatformInitialization:
++  ;
++  ; Set RCBA base
++  ;
++  mov     edx, 0xCF8
++  mov     eax, 0x8000F8F0
++  out     dx,  eax
++  mov     edx, 0xCFC
++  mov     eax, PCH_RCBA_BASE_ADDRESS + 1
++  out     dx,  eax
++  ;
++  ; Enable HPET decoding
++  ;
++  mov     edx, PCH_RCBA_BASE_ADDRESS + 0x3404
++  mov     al,  0x80
++  mov     [edx], al
++
 +  xor     eax, eax
 +  jmp     ebp
 +
@@ -3842,10 +4082,14 @@ index 0000000000..c0f2520d3f
 +  ;   Enable No-Eviction Mode Setup State by setting
 +  ;   NO_EVICT_MODE  MSR 2E0h bit [0] = '1'.
 +  ;
++
++  ;   Skip MSR setting for QEMU to allow running with KVM
++%if 0
 +  mov     ecx, NO_EVICT_MODE
 +  rdmsr
 +  or      eax, 1
 +  wrmsr
++%endif
 +
 +  ;
 +  ;   One location in each 64-byte cache line of the DataStack region
@@ -3878,10 +4122,14 @@ index 0000000000..c0f2520d3f
 +  ;   Enable No-Eviction Mode Run State by setting
 +  ;   NO_EVICT_MODE MSR 2E0h bit [1] = '1'.
 +  ;
++
++  ;   Skip MSR setting for QEMU to allow running with KVM
++%if 0
 +  mov     ecx, NO_EVICT_MODE
 +  rdmsr
 +  or      eax, 2
 +  wrmsr
++%endif
 +
 +  ;
 +  ; Finished with cache configuration
@@ -4485,10 +4733,10 @@ index 0000000000..8c437138ed
 +
 diff --git a/QemuFspPkg/QemuFspPkg.dsc b/QemuFspPkg/QemuFspPkg.dsc
 new file mode 100644
-index 0000000000..4c066d392f
+index 0000000000..2abb3abf89
 --- /dev/null
 +++ b/QemuFspPkg/QemuFspPkg.dsc
-@@ -0,0 +1,435 @@
+@@ -0,0 +1,436 @@
 +## @file
 +# FSP DSC build file for QEMU platform
 +#
@@ -4584,6 +4832,7 @@ index 0000000000..4c066d392f
 +  UefiDecompressLib|MdePkg/Library/BaseUefiDecompressLib/BaseUefiDecompressLib.inf
 +  SynchronizationLib|MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf
 +  CpuLib|MdePkg/Library/BaseCpuLib/BaseCpuLib.inf
++  UefiCpuLib|UefiCpuPkg/Library/BaseUefiCpuLib/BaseUefiCpuLib.inf
 +  ExtractGuidedSectionLib|MdePkg/Library/PeiExtractGuidedSectionLib/PeiExtractGuidedSectionLib.inf
 +  CacheLib|IntelFsp2Pkg/Library/BaseCacheLib/BaseCacheLib.inf
 +  CacheAsRamLib|IntelFsp2Pkg/Library/BaseCacheAsRamLibNull/BaseCacheAsRamLibNull.inf
@@ -5210,10 +5459,10 @@ index 0000000000..7ab51f9d1b
 +  }
 diff --git a/QemuFspPkg/QemuVideo/QemuVideo.c b/QemuFspPkg/QemuVideo/QemuVideo.c
 new file mode 100644
-index 0000000000..acf84a670b
+index 0000000000..8967e3de88
 --- /dev/null
 +++ b/QemuFspPkg/QemuVideo/QemuVideo.c
-@@ -0,0 +1,761 @@
+@@ -0,0 +1,780 @@
 +/** @file
 +  Graphics Output Protocol functions for the QEMU video controller.
 +
@@ -5817,7 +6066,12 @@ index 0000000000..acf84a670b
 +  UINT16                   Data
 +  )
 +{
-+  MmioWrite16  (Private->Bar2 + 0x500 + (Reg << 1), Data);
++  if (Private->Bar2 == 0) {
++    IoWrite16 (VBE_DISPI_IOPORT_INDEX, Reg);
++    IoWrite16 (VBE_DISPI_IOPORT_DATA,  Data);
++  } else {
++    MmioWrite16  (Private->Bar2 + 0x500 + (Reg << 1), Data);
++  }
 +}
 +
 +/**
@@ -5834,7 +6088,12 @@ index 0000000000..acf84a670b
 +  UINT16                   Reg
 +  )
 +{
-+  return MmioRead16  (Private->Bar2 + 0x500 + (Reg << 1));
++  if (Private->Bar2 == 0) {
++    IoWrite16 (VBE_DISPI_IOPORT_INDEX, Reg);
++    return IoRead16 (VBE_DISPI_IOPORT_DATA);
++  } else {
++    return MmioRead16  (Private->Bar2 + 0x500 + (Reg << 1));
++  }
 +}
 +
 +VOID
@@ -5844,7 +6103,11 @@ index 0000000000..acf84a670b
 +  UINT8                    Data
 +  )
 +{
-+  MmioWrite8  (Private->Bar2 + 0x400 - 0x3c0 + Reg, Data);
++  if (Private->Bar2 == 0) {
++    IoWrite8 (Reg, Data);
++  } else {
++    MmioWrite8  (Private->Bar2 + 0x400 - 0x3c0 + Reg, Data);
++  }
 +}
 +
 +/**
@@ -5867,15 +6130,21 @@ index 0000000000..acf84a670b
 +  QEMU_VIDEO_PRIVATE_DATA  *Private;
 +  UINT32  Address;
 +  UINT32  Data;
++  UINT8   Dev;
 +
-+  Address = PCI_LIB_ADDRESS (0, 1, 0, PCI_VENDOR_ID_OFFSET);
-+  if (PciRead32(Address) != QEMU_VGA_VID_DID) {
-+    DEBUG ((DEBUG_ERROR, "Not supported GFX device!\n"));
-+    return;
++  Dev = 1;
++  Address = PCI_LIB_ADDRESS (0, Dev, 0, PCI_VENDOR_ID_OFFSET);
++  if ((PciRead32(Address) != QEMU_VGA_VID_DID) && (PciRead32(Address) != QEMU_VGA_VID_DID2)) {
++    Dev = 0x0f;
++    Address = PCI_LIB_ADDRESS (0, Dev, 0, PCI_VENDOR_ID_OFFSET);
++    if ((PciRead32(Address) != QEMU_VGA_VID_DID) && (PciRead32(Address) != QEMU_VGA_VID_DID2)) {
++      DEBUG ((DEBUG_ERROR, "Not supported GFX device!\n"));
++      return;
++    }
 +  }
 +
 +  Private = &mPrivate;
-+  Address = PCI_LIB_ADDRESS (0, 1, 0, PCI_BASE_ADDRESSREG_OFFSET + 0 * 4);
++  Address = PCI_LIB_ADDRESS (0, Dev, 0, PCI_BASE_ADDRESSREG_OFFSET + 0 * 4);
 +  Data    = PciRead32(Address) & ~0xF;
 +  if (Data == 0) {
 +    PciWrite32 (Address, PciBase);
@@ -5884,12 +6153,11 @@ index 0000000000..acf84a670b
 +  }
 +  mMode->FrameBufferBase = Data;
 +
-+  Address = PCI_LIB_ADDRESS (0, 1, 0, PCI_BASE_ADDRESSREG_OFFSET + 2 * 4);
++  Address = PCI_LIB_ADDRESS (0, Dev, 0, PCI_BASE_ADDRESSREG_OFFSET + 2 * 4);
 +  mPrivate.Bar2 = PciRead32(Address) & ~0xF;
 +
-+  Address = PCI_LIB_ADDRESS (0, 1, 0, PCI_COMMAND_OFFSET);
++  Address = PCI_LIB_ADDRESS (0, Dev, 0, PCI_COMMAND_OFFSET);
 +  PciWrite8(Address, EFI_PCI_COMMAND_BUS_MASTER | EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_IO_SPACE);
-+
 +  BochsWrite (Private, VBE_DISPI_INDEX_ENABLE,      0);
 +  BochsWrite (Private, VBE_DISPI_INDEX_BANK,        0);
 +  BochsWrite (Private, VBE_DISPI_INDEX_X_OFFSET,    0);
@@ -5977,10 +6245,10 @@ index 0000000000..acf84a670b
 +
 diff --git a/QemuFspPkg/QemuVideo/QemuVideo.h b/QemuFspPkg/QemuVideo/QemuVideo.h
 new file mode 100644
-index 0000000000..fd51bb4ebc
+index 0000000000..52792d7949
 --- /dev/null
 +++ b/QemuFspPkg/QemuVideo/QemuVideo.h
-@@ -0,0 +1,115 @@
+@@ -0,0 +1,116 @@
 +/** @file
 +  QEMU video controller register definitions.
 +
@@ -6000,6 +6268,7 @@ index 0000000000..fd51bb4ebc
 +#define _QEMU_VIDEO_H_
 +
 +#define QEMU_VGA_VID_DID                 0x11111234
++#define QEMU_VGA_VID_DID2                0x11114321
 +
 +#define VBE_DISPI_IOPORT_INDEX           0x01CE
 +#define VBE_DISPI_IOPORT_DATA            0x01D0
@@ -6159,5 +6428,5 @@ index 0000000000..4c6bc6a0f1
 +  TRUE
 +
 -- 
-2.21.0 (Apple Git-122.2)
+2.48.1.windows.1
 

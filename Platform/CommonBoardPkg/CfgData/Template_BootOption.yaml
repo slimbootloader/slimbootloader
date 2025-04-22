@@ -2,7 +2,7 @@
 #
 #  Slim Bootloader Platform CFGDATA Template File.
 #
-#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -14,24 +14,29 @@ BOOT_OPTION_TMPL: >
   - $ACTION      :
       page         : OS_$(1)
   - BOOT_OPTION_CFG_DATA_$(1) :
-    - !expand { CFGHDR_TMPL : [ BOOT_OPTION_CFG_DATA_$(1), 0x05$(1), 0, 0 ] }
+    - !expand { CFGHDR_TMPL : [ BOOT_OPTION_CFG_DATA_$(1), (0x050 + $(1)), 0, 0 ] }
     - ImageType_$(1) :
         name         : Image Type
         type         : Combo
-        option       : 0:Default, 1:Android, 2:ClearLinux, 3:Acrn, 4:Fastboot, 0xFE:Addendum, 0xFF:Not used
+        option       : 0:Default, 1:Fastboot, 0x1E:Extra image, 0x9E:PreOS image, 0xBE: Misc image, 0xFF:Not used
         help         : >
                        Specify boot image type.
-                       Specially 'Addendum' indicates this option is not a standalone boot option. Instead, it provides additional information for the previous boot option.
+                       Extra and PreOS image type indicates this option is not a standalone boot option. Instead, it provides additional information for the previous boot option.
+                       Extra image means load and run extra image before normal OS image. The extra image will return to SBL and SBL will continue run normal OS.
+                       PreOs image means load and run PreOS image before normal OS image. SBL prepares normal OS info and passes to PreOS so the PreOs will not return to SBL.
                        'Not used' indicates this option will be ignored.
         length       : 0x01
         value        : $(2)
     - BootFlags_$(1) :
         name         : Boot Flags
         type         : Combo
-        option       : 0:Normal, 1:A/B support, 2:Crash OS, 4:Trusty support, 5:Trusty and A/B support, 16:Mender support
+        option       : 0:Normal, 1: Misc support, 4:PreOS support, 8:Extra image support, 9:Misc and extra image support, 12:PreOS and extra image support, 16:Mender support, 20:PreOS and mender support
         help         : >
                        Specify boot flags (options)
-        condition    : $BOOT_OPTION_CFG_DATA_$(1).ImageType_$(1) < 0xFE
+                       When extra image or PreOS image is selected, need config them in next boot option with proper image type.
+                       Extra image means load and run extra image before normal OS image. The extra image will return to SBL and SBL will continue run normal OS.
+                       PreOs image means load and run PreOS image before normal OS image. SBL prepares normal OS info and passes to PreOS so the PreOs will not return to SBL.
+        condition    : ($BOOT_OPTION_CFG_DATA_$(1).ImageType_$(1) & 0x1F) < 0x1E
         length       : 0x01
         value        : $(3)
     - Reserved_$(1) :
@@ -44,7 +49,7 @@ BOOT_OPTION_TMPL: >
         help         : >
                        Specify boot device type
         order        : 0000.0000
-        condition    : $BOOT_OPTION_CFG_DATA_$(1).ImageType_$(1) < 0xFE
+        condition    : ($BOOT_OPTION_CFG_DATA_$(1).ImageType_$(1) & 0x1F) < 0x1E
         length       : 0x01
         value        : $(4)
     - BootDeviceInstance_$(1) :
@@ -54,7 +59,7 @@ BOOT_OPTION_TMPL: >
         help         : >
                        Specify boot device instance when then are multiple instances
         order        : 0000.0000
-        condition    : $BOOT_OPTION_CFG_DATA_$(1).ImageType_$(1) < 0xFE
+        condition    : ($BOOT_OPTION_CFG_DATA_$(1).ImageType_$(1) & 0x1F) < 0x1E
         length       : 0x01
         value        : $(5)
     - HwPart_$(1)  :
@@ -66,7 +71,7 @@ BOOT_OPTION_TMPL: >
                        If boot device type is SPI, the hardware partition refers to SPI flash region- 0-Descriptor, 1-BIOS, 2-ME, 3-GbE, 4-PDR Regions.
                        If boot device type is SATA, the hardware partition refers to the SATA port number on the system; setting to 255 uses the first detected SATA device.
                        If boot device type is USB, the hardware partition refers to the order in which the USB block devices are detected when multiple USB block devices are connected.
-        condition    : $BOOT_OPTION_CFG_DATA_$(1).ImageType_$(1) < 0xFE
+        condition    : ($BOOT_OPTION_CFG_DATA_$(1).ImageType_$(1) & 0x1F) < 0x1E
         length       : 0x01
         value        : $(6)
     - SwPart_$(1)  :
@@ -75,7 +80,7 @@ BOOT_OPTION_TMPL: >
         help         : >
                        Specify software partition number. A value of 255 indicates raw booting via the absolute LBA instead of a relative LBA
                        (e.g. relative to a software partition's starting LBA).
-        condition    : $BOOT_OPTION_CFG_DATA_$(1).ImageType_$(1) < 0xFF
+        condition    : ($BOOT_OPTION_CFG_DATA_$(1).ImageType_$(1) & 0x1F) < 0x1F
         length       : 0x01
         value        : $(7)
     - FsType_$(1)  :
@@ -84,15 +89,15 @@ BOOT_OPTION_TMPL: >
         option       : 0:FAT, 1:EXT2, 2:AUTO, 3:RAW
         help         : >
                        Image is loaded from file system instead of raw data
-        condition    : $BOOT_OPTION_CFG_DATA_$(1).ImageType_$(1) < 0xFE
+        condition    : ($BOOT_OPTION_CFG_DATA_$(1).ImageType_$(1) & 0x1F) < 0x1E
         length       : 0x01
         value        : $(8)
     - BootImage_$(1) :
         name         : Normal OS info or LBA address
         type         : EditText
         help         : >
-                       Specify file name of normal OS or LBA address (16-byte max length).
-                       For LBA address, please use HEX prefix "#0x". EX- #0x12345678
-        condition    : $BOOT_OPTION_CFG_DATA_$(1).ImageType_$(1) < 0xFF
+                       Specify file name of normal OS or LBA address or Container image memory address (16-byte max length).
+                       For LBA address or Container image memory address, please use HEX prefix "#0x". EX- #0x12345678
+        condition    : ($BOOT_OPTION_CFG_DATA_$(1).ImageType_$(1) & 0x1F) < 0x1F
         length       : 0x10
         value        : $(9)

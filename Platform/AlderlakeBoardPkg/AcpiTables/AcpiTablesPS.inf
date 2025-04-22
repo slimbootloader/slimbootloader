@@ -1,0 +1,83 @@
+## @file
+# Component description file for PlatformAcpiTable module.
+#
+# Build acpi table data required by system boot.
+#  All .asi files tagged with "ToolCode="DUMMY"" in following file list are device description and are included
+#  by top level ASL file which will be dealed with by asl.exe application.
+#
+# Copyright (c) 2022, Intel Corporation. All rights reserved
+#
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = AcpiTables
+  FILE_GUID                      = 7E374E25-8E01-4FEE-87F2-390C23C606CD
+  MODULE_TYPE                    = USER_DEFINED
+  VERSION_STRING                 = 1.0
+  EDK_RELEASE_VERSION            = 0x00020000
+  EFI_SPECIFICATION_VERSION      = 0x00020000
+
+[sources.common]
+  AcpiTablePlatform.h
+  Facs/Facs.h
+  Madt/Madt.h
+  Dmar/Dmar.h
+  Hpet/Hpet.h
+  Fadt/Fadt6.3.h
+  Dsdt/Dsdt.asl
+  Facs/Facs.act
+  Fadt/Fadt6.3.act
+  Madt/Madt.act
+  Hpet/Hpet.act
+  Ssdt/SocCommonSsdt.asl
+  Ssdt/SocGpeSsdt.asl
+  Ssdt/IgfxSsdt.asl
+  Ssdt/AdlSRvpRtd3.asl
+  SaSsdt/SaSsdt.asl
+  SaSsdt/Thermal.asl
+  CpuSsdt/Cpu0Cst.asl
+  CpuSsdt/Cpu0Hwp.asl
+  CpuSsdt/Cpu0Ist.asl
+  CpuSsdt/Cpu0Tst.asl
+  CpuSsdt/Cpu0Psd.asl
+  CpuSsdt/ApCst.asl
+  CpuSsdt/ApHwp.asl
+  CpuSsdt/ApIst.asl
+  CpuSsdt/ApTst.asl
+  CpuSsdt/ApPsd.asl
+  CpuSsdt/CpuSsdt.asl
+  Mcfg/Mcfg.aslc
+  Platform/CommonBoardPkg/AcpiTables/Fpdt/Fpdt.aslc
+  Platform/CommonBoardPkg/AcpiTables/Tpm/Tpm2.aslc
+  Platform/CommonBoardPkg/AcpiTables/Tpm/TpmSsdt.asl
+  BdatTable/BdatTable.aslc
+  Ecdt/Ecdt.act
+  Fwst/Fwst.aslc
+  Platform/CommonBoardPkg/AcpiTables/Dsdt/AslInc.h
+  Dmar/Dmar.aslc
+  Psd/Psd.aslc
+  Rtct/Rtct.act
+  Lpit/Lpit.act
+  Bert/Bert.aslc
+  Dptf/Dptf.asl
+
+[FixedPcd]
+  gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport
+  gPlatformAlderLakeTokenSpaceGuid.PcdAdlNSupport
+
+[Binaries.IA32]
+  BIN|Dsdt/NhltConf2DmicX4_38_4.bin
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+  Silicon/AlderlakePkg/AlderlakePkg.dec
+  Platform/AlderlakeBoardPkg/AlderlakeBoardPkg.dec
+
+[BuildOptions]
+  *_*_*_ASL_FLAGS = -ve -oi

@@ -13,6 +13,7 @@
 #include <GpioDefines.h>
 #include <Library/ScSbiAccessLib.h>
 #include <Library/BootloaderCommonLib.h>
+#include <Library/GpioLibApl.h>
 
 //
 // Structure for storing information about registers offset, community,
@@ -25,7 +26,7 @@ typedef struct {
   UINT16 PadCfgLockOffset;
   UINT16 PadCfgLockTxOffset;
   UINT8  PadPerGroup;
-} GPIO_GROUP_INFO;
+} GPIO_GROUP_INFO_STRUCT;
 
 // GPIO Community Port ID definition
 #define GPIO_SOUTHWEST_COMMUNITY     0xC0
@@ -39,7 +40,7 @@ typedef struct {
 #define GPIO_GET_PAD_NUMBER(Offset)   ((Offset - GPIO_PADBAR) / 8)
 
 //
-// If in GPIO_GROUP_INFO structure certain register doesn't exist
+// If in GPIO_GROUP_INFO_STRUCT structure certain register doesn't exist
 // it will have value equal to NO_REGISTER_FOR_PROPERTY
 //
 #define NO_REGISTER_FOR_PROPERTY 0xFFFF
@@ -60,7 +61,7 @@ typedef enum {
 
 typedef UINT32 GPIO_GROUP;
 
-GLOBAL_REMOVE_IF_UNREFERENCED GPIO_GROUP_INFO mBxtpGpioGroupInfo[] = {
+GLOBAL_REMOVE_IF_UNREFERENCED GPIO_GROUP_INFO_STRUCT mBxtpGpioGroupInfo[] = {
   {GPIO_SOUTHWEST_COMMUNITY, R_PCR_GPIO_SMI_STS_0, R_PCR_GPIO_SMI_EN_0, R_PCR_GPIO_PADCFGLOCK_0, R_PCR_GPIO_PADCFGLOCKTX_0, 32},
   {GPIO_SOUTHWEST_COMMUNITY, R_PCR_GPIO_SMI_STS_1, R_PCR_GPIO_SMI_EN_1, R_PCR_GPIO_PADCFGLOCK_1, R_PCR_GPIO_PADCFGLOCKTX_1, 11},
   {GPIO_WEST_COMMUNITY,      R_PCR_GPIO_SMI_STS_0, R_PCR_GPIO_SMI_EN_0, R_PCR_GPIO_PADCFGLOCK_0, R_PCR_GPIO_PADCFGLOCKTX_0, 32},
@@ -73,7 +74,7 @@ GLOBAL_REMOVE_IF_UNREFERENCED GPIO_GROUP_INFO mBxtpGpioGroupInfo[] = {
   {GPIO_NORTH_COMMUNITY,     R_PCR_GPIO_SMI_STS_2, R_PCR_GPIO_SMI_EN_2, R_PCR_GPIO_PADCFGLOCK_2, R_PCR_GPIO_PADCFGLOCKTX_2, 13},
 };
 
-GLOBAL_REMOVE_IF_UNREFERENCED GPIO_GROUP_INFO mBxtGpioGroupInfo[] = {
+GLOBAL_REMOVE_IF_UNREFERENCED GPIO_GROUP_INFO_STRUCT mBxtGpioGroupInfo[] = {
   {GPIO_SOUTH_COMMUNITY,     R_PCR_GPIO_SMI_STS_0, R_PCR_GPIO_SMI_EN_0, R_PCR_GPIO_PADCFGLOCK_0, R_PCR_GPIO_PADCFGLOCKTX_0, 20},
   {GPIO_SOUTHWEST_COMMUNITY, R_PCR_GPIO_SMI_STS_0, R_PCR_GPIO_SMI_EN_0, R_PCR_GPIO_PADCFGLOCK_0, R_PCR_GPIO_PADCFGLOCKTX_0, 31},
   {GPIO_WEST_COMMUNITY,      R_PCR_GPIO_SMI_STS_0, R_PCR_GPIO_SMI_EN_0, R_PCR_GPIO_PADCFGLOCK_0, R_PCR_GPIO_PADCFGLOCKTX_0, 32},
@@ -145,7 +146,8 @@ GetBxtSeries (
   @retval      Pointer to GPIO group table
 
 **/
-GPIO_GROUP_INFO*
+GPIO_GROUP_INFO_STRUCT*
+EFIAPI
 GpioGetGroupInfoTable (
   OUT UINT32 *GpioGroupInfoTableLength
   )
@@ -154,10 +156,10 @@ GpioGetGroupInfoTable (
 
   BxtSeries = GetBxtSeries ();
   if (BxtSeries == BxtP) {
-    *GpioGroupInfoTableLength = sizeof (mBxtpGpioGroupInfo) / sizeof (GPIO_GROUP_INFO);
+    *GpioGroupInfoTableLength = sizeof (mBxtpGpioGroupInfo) / sizeof (GPIO_GROUP_INFO_STRUCT);
     return mBxtpGpioGroupInfo;
   } else if (BxtSeries == Bxt || (BxtSeries == Bxt1)) {
-    *GpioGroupInfoTableLength = sizeof (mBxtGpioGroupInfo) / sizeof (GPIO_GROUP_INFO);
+    *GpioGroupInfoTableLength = sizeof (mBxtGpioGroupInfo) / sizeof (GPIO_GROUP_INFO_STRUCT);
     return mBxtGpioGroupInfo;
   } else {
     *GpioGroupInfoTableLength = 0;
@@ -234,6 +236,7 @@ SideBandWrite32(
 
 // Common interface for GPIO register read
 UINT32
+EFIAPI
 GpioRead(
   IN UINT8 Community,
   IN UINT16 Offset
@@ -244,6 +247,7 @@ GpioRead(
 
 // Common interface for GPIO register write
 EFI_STATUS
+EFIAPI
 GpioWrite(
   IN UINT8 Community,
   IN UINT16 Offset,
@@ -317,6 +321,7 @@ ConfigureDirectIrqWakeEvent (
 
 **/
 UINT32
+EFIAPI
 GpioPadRead (
   IN UINT32    CommAndOffset
   )
@@ -345,6 +350,7 @@ GpioPadRead (
 
 **/
 EFI_STATUS
+EFIAPI
 GpioPadWrite (
   IN UINT32    CommAndOffset,
   IN UINT32    Value
@@ -475,7 +481,7 @@ GpioWriteLockReg (
 {
   UINT8            Response;
   EFI_STATUS       Status;
-  GPIO_GROUP_INFO  *GpioGroupInfo;
+  GPIO_GROUP_INFO_STRUCT  *GpioGroupInfo;
   UINT32           GpioGroupInfoLength;
   UINT32           RegOffset;
   UINT32           OldPadCfgLockRegVal;
@@ -546,6 +552,7 @@ GpioWriteLockReg (
 
 **/
 EFI_STATUS
+EFIAPI
 GpioLockPadCfg (
   IN UINT32    GpioPad
   )
@@ -582,6 +589,7 @@ GpioLockPadCfg (
 
 **/
 EFI_STATUS
+EFIAPI
 GpioLockPadCfgTx (
   IN UINT32    GpioPad
   )
@@ -606,11 +614,12 @@ GpioLockPadCfgTx (
   return Status;
 }
 
-VOID
-GpioPadConfigTable (
-  IN UINT32              Gpio_Pin_Num,
-  IN VOID               *Gpio_Table
-)
+EFI_STATUS
+EFIAPI
+GpioConfigurePads (
+  IN UINT32                    NumberOfItems,
+  IN VOID                     *GpioInitTableAddress
+  )
 /*++
 
 Routine Description:
@@ -619,8 +628,8 @@ Routine Description:
 
 Arguments:
 
-  Gpio_Pin_Num               - GPIO Pin Number to configure
-  Gpio_Conf_Data            - GPIO_CONF_PAD_INIT data array for each GPIO communities.
+  NumberOfItems               - GPIO Pin Number to configure
+  GpioInitTableAddress        - GPIO_CONF_PAD_INIT data array for each GPIO communities.
 
 --*/
 {
@@ -628,8 +637,8 @@ Arguments:
   BXT_GPIO_PAD_INIT*  Gpio_Conf_Data;
   BXT_GPIO_CONFIG  mGpioConfigItem = {0};
 
-  Gpio_Conf_Data = (BXT_GPIO_PAD_INIT *)Gpio_Table;
-  for (index = 0; index < Gpio_Pin_Num; index++) {
+  Gpio_Conf_Data = (BXT_GPIO_PAD_INIT *) (UINTN) GpioInitTableAddress;
+  for (index = 0; index < NumberOfItems; index++) {
     mGpioConfigItem.CommAndOffset = (((UINT32)Gpio_Conf_Data[index].Community)<<16)+Gpio_Conf_Data[index].MMIO_ADDRESS;
     mGpioConfigItem.padConfg0.padCnf0 = Gpio_Conf_Data[index].padConfg0.padCnf0;
     mGpioConfigItem.padConfg1.padCnf1 = Gpio_Conf_Data[index].padConfg1.padCnf1;
@@ -637,6 +646,8 @@ Arguments:
     mGpioConfigItem.WakeEnabled = Gpio_Conf_Data[index].WakeEnabled;
     GpioPadConfigItem(mGpioConfigItem);
   }
+
+  return EFI_SUCCESS;
 }
 
 /**
@@ -685,7 +696,8 @@ GpioSmipPadConfigTable (
   @retval EFI_INVALID_PARAMETER   Invalid GpioPad
 **/
 EFI_STATUS
-GpioGetInputValue (
+EFIAPI
+GpioGetInputValueWithTerm (
   IN  UINT32       GpioPad,
   IN  UINT32       Term,
   OUT UINT32      *InputVal

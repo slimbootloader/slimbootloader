@@ -23,13 +23,13 @@
   @param[in]  Signature       Signature header for singanture data.
   @param[in]  PubKeyHdr       Public key header for key data
   @param[in]  PubKeyHashAlg   Hash Alg for PubKeyHash.
-  @param[in]  PubKeyHash      Public key hash value when ComponentType is not used.
+  @param[in]  PubKeyHash      Public key hash value when hash component usage is 0.
   @param[out] OutHash         Calculated data hash value.
 
 
   @retval RETURN_SUCCESS             RSA verification succeeded.
-  @retval RETURN_NOT_FOUND           Hash data for ComponentType is not found.
-  @retval RETURN_UNSUPPORTED         Hash component type is not supported.
+  @retval RETURN_NOT_FOUND           Hash data for hash component usage is not found.
+  @retval RETURN_UNSUPPORTED         Hash alg type is not supported.
   @retval RETURN_SECURITY_VIOLATION  PubKey or Signature verification failed.
 
 **/
@@ -51,6 +51,7 @@ DoRsaVerify (
   UINT8            Digest[HASH_DIGEST_MAX];
   UINT8            DigestSize;
 
+  ZeroMem (&Digest, sizeof(Digest));
 
   PublicKey = PubKeyHdr;
   if ((PublicKey->Identifier != PUBKEY_IDENTIFIER) || (SignatureHdr->Identifier != SIGNATURE_IDENTIFIER)){
@@ -85,7 +86,12 @@ DoRsaVerify (
       CopyMem (OutHash, Digest, DigestSize);
     }
 
+#if FixedPcdGetBool(PcdIppcrypto2Lib)
+    // RSA Pkcs 1.5 requires to pass message to be verified
+    Status = RsaVerify2_Pkcs_1_5 (PublicKey, SignatureHdr, Data, Length);
+#else
     Status = RsaVerify_Pkcs_1_5 (PublicKey, SignatureHdr, Digest);
+#endif
 
   } else if(SignatureHdr->SigType == SIGNING_TYPE_RSA_PSS) {
 

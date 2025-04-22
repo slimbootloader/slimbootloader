@@ -11,6 +11,36 @@
 
 typedef UINT8          PCH_SBI_PID;
 
+#include <GpioConfig.h>
+#include <Library/GpioLib.h>
+#include <Library/GpioSiLib.h>
+#include <Base.h>
+#include <Uefi/UefiBaseType.h>
+#include <Library/IoLib.h>
+#include <Library/DebugLib.h>
+#include <Library/BaseMemoryLib.h>
+#include <Library/PchInfoLib.h>
+#include <Library/PchCycleDecodingLib.h>
+#include <Library/PchSbiAccessLib.h>
+#include <Library/PchPcrLib.h>
+#include <RegAccess.h>
+
+#define GPIO_PAD_DEF(Group,Pad)               (UINT32)(((Group) << 16) + (Pad))
+#define GPIO_GROUP_DEF(Index,ChipsetId)       ((Index) | ((ChipsetId) << 8))
+#define GPIO_GET_GROUP_INDEX(Group)           ((Group) & 0xFF)
+#define GPIO_GET_GROUP_FROM_PAD(Pad)          ((Pad) >> 16)
+#define GPIO_GET_GROUP_INDEX_FROM_PAD(Pad)    GPIO_GET_GROUP_INDEX (((Pad) >> 16))
+#define GPIO_GET_PAD_NUMBER(Pad)              ((Pad) & 0xFFFF)
+#define GPIO_GET_CHIPSET_ID(Pad)              ((Pad) >> 24)
+
+#define GPIO_GET_PAD_POSITION(PadNumber)      ((PadNumber) % 32)
+#define GPIO_GET_DW_NUM(PadNumber)            ((PadNumber) / 32u)
+
+//
+// Number of PADCFG_DW registers
+//
+#define GPIO_PADCFG_DW_REG_NUMBER  4
+
 //
 // If in GPIO_GROUP_INFO structure certain register doesn't exist
 // it will have value equal to NO_REGISTER_FOR_PROPERTY
@@ -56,96 +86,71 @@ typedef enum {
   GpioPadLockOutputRegister
 } GPIO_REG;
 
-//
-// Structure for storing information about registers offset, community,
-// maximal pad number for available groups
-//
-typedef struct {
-  PCH_SBI_PID  Community;
-  UINT16       PadOwnOffset;
-  UINT16       HostOwnOffset;
-  UINT16       GpiIsOffset;
-  UINT16       GpiIeOffset;
-  UINT16       GpiGpeStsOffset;
-  UINT16       GpiGpeEnOffset;
-  UINT16       SmiStsOffset;
-  UINT16       SmiEnOffset;
-  UINT16       NmiStsOffset;
-  UINT16       NmiEnOffset;
-  UINT16       PadCfgLockOffset;
-  UINT16       PadCfgLockTxOffset;
-  UINT16       PadCfgOffset;
-  UINT16       PadPerGroup;
-} GPIO_GROUP_INFO;
-
 /**
-  This procedure will retrieve address and length of GPIO info table
+  Generates GPIO group name from GroupIndex
 
-  @param[out]  GpioGroupInfoTableLength   Length of GPIO group table
+  @param[in] GroupIndex  Gpio GroupIndex
 
-  @retval Pointer to GPIO group table
-
+  @retval CHAR8*  Pointer to the GPIO group name
 **/
-CONST GPIO_GROUP_INFO*
-GpioGetGroupInfoTable (
-  OUT UINT32              *GpioGroupInfoTableLength
-  );
-
-
-/**
-  This procedure will clear PadCfgLock for selected pads within one group.
-  This function should be used only inside SMI.
-
-  @param[in]  Group               GPIO group
-  @param[in]  DwNum               PadCfgLock register number for current group.
-                                  For group which has less then 32 pads per group DwNum must be 0.
-  @param[in]  PadsToUnlock        Bitmask for pads which are going to be unlocked,
-                                  Bit position - PadNumber
-                                  Bit value - 0: DoNotUnlock, 1: Unlock
-
-  @retval EFI_SUCCESS             The function completed successfully
-  @retval EFI_INVALID_PARAMETER   Invalid group or pad number
-**/
-EFI_STATUS
-GpioUnlockPadCfgForGroupDw (
-  IN GPIO_GROUP                Group,
-  IN UINT32                    DwNum,
-  IN UINT32                    PadsToUnlock
+CONST
+CHAR8*
+GpioGetGroupName (
+  IN UINT32  GroupIndex
   );
 
 /**
-  This procedure will clear PadCfgLockTx for selected pads within one group.
-  This function should be used only inside SMI.
+  This procedure will return Port ID of GPIO Community from GpioPad
 
-  @param[in]  Group               GPIO group
-  @param[in]  DwNum               PadCfgLockTx register number for current group.
-                                  For group which has less then 32 pads per group DwNum must be 0.
-  @param[in]  PadsToUnlockTx      Bitmask for pads which are going to be unlocked,
-                                  Bit position - PadNumber
-                                  Bit value - 0: DoNotUnLockTx, 1: LockTx
+  @param[in] GpioPad            GpioPad
 
-  @retval EFI_SUCCESS             The function completed successfully
-  @retval EFI_INVALID_PARAMETER   Invalid group or pad number
+  @retval GpioCommunityPortId   Port ID of GPIO Community
 **/
-EFI_STATUS
-GpioUnlockPadCfgTxForGroupDw (
-  IN GPIO_GROUP                Group,
-  IN UINT32                    DwNum,
-  IN UINT32                    PadsToUnlockTx
+UINT8
+GpioGetGpioCommunityPortIdFromGpioPad (
+  IN GPIO_PAD        GpioPad
   );
 
+/**
+  This procedure will return PadCfg address from GpioPad
+
+  @param[in] GpioPad            GpioPad
+
+  @retval GpioPadCfgAddress     PadCfg Address of GpioPad
+**/
+UINT32
+GpioGetGpioPadCfgAddressFromGpioPad (
+  IN GPIO_PAD        GpioPad
+  );
 
 /**
-  This internal procedure will check if group is within DeepSleepWell.
+  This procedure will check if GpioPad argument is valid.
+  Function will check below conditions:
+   - GpioPad represents a pad for current PCH
+   - GpioPad belongs to valid GpioGroup
+   - GPIO PadNumber is not greater than number of pads for this group
 
-  @param[in]  Group               GPIO Group
+  @param[in] GpioPad       GPIO pad
 
-  @retval GroupWell               TRUE:  This is DSW Group
-                                  FALSE: This is not DSW Group
+  @retval TRUE             GPIO pad is valid and can be used with GPIO lib API
+  @retval FALSE            GPIO pad is invalid and cannot be used with GPIO lib API
 **/
 BOOLEAN
-GpioIsDswGroup (
-  IN  GPIO_GROUP         Group
+GpioIsPadValid (
+  IN GPIO_PAD             GpioPad
+  );
+
+/**
+  This procedure will check if GpioPad is owned by host.
+
+  @param[in] GpioPad       GPIO pad
+
+  @retval TRUE             GPIO pad is owned by host
+  @retval FALSE            GPIO pad is not owned by host and should not be used with GPIO lib API
+**/
+BOOLEAN
+GpioIsPadHostOwned (
+  IN GPIO_PAD             GpioPad
   );
 
 /**

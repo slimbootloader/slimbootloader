@@ -1,0 +1,16 @@
+## @file
+#
+#  TSN feature Configuration Delta File.
+#
+#  Copyright (c) 2023, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+#
+
+SILICON_CFG_DATA.PchTsnEnable     | 1
+
+# TSN Multi-VC is not enabled by default
+SILICON_CFG_DATA.PchTsnMultiVcEnable | 0
+
+SILICON_CFG_DATA.PchTsnLinkSpeed  | 3

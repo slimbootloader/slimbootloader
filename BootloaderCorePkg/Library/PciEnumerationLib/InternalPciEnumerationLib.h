@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -49,6 +49,7 @@
 
 #define PPB_BAR_0                             0
 #define PPB_BAR_1                             1
+#define PPB_MAX_BAR                           2
 
 #define PCI_IO_DEVICE_FROM_LINK(a)       BASE_CR (a, PCI_IO_DEVICE, Link)
 #define PCI_BAR_RESOURCE_FROM_LINK(a)    BASE_CR (a, PCI_BAR_RESOURCE, Link)
@@ -60,17 +61,32 @@ typedef enum {
   BusScanTypeInvalid  = 0xFF
 } BUS_SCAN_TYPE;
 
+typedef enum {
+  PciResizableBarMin = 0x00,
+  PciResizableBarMax = 0xFF
+} PCI_RESIZABLE_BAR_OPERATION;
+
 typedef struct {
   UINT16            Io32            : 1;
   UINT16            Mem64           : 1;
   UINT16            PMem64          : 1;
-  UINT16            Bus0            : 1;
-  UINT16            Reserved        : 12;
+  // 0: Do not downgrade PCI devices on bus 0
+  // 1: Downgrade all PCI devices on bus 0
+  // 2: Downgrade all PCI devices on bus 0 but GFX
+  // 3: Reserved
+  UINT16            Bus0            : 2;
+  UINT16            Reserved        : 11;
 } PCI_RES_DOWNGRADE;
 
 typedef struct {
+  UINT16            AllocPmemFirst  : 1;
+  UINT16            FlagAllocRomBar : 1;
+  UINT16            Reserved        : 14;
+} PCI_ENUM_FLAG;
+
+typedef struct {
   PCI_RES_DOWNGRADE Downgrade;
-  UINT16            Reserved;
+  PCI_ENUM_FLAG     Flag;
   UINT8             BusScanType;
   UINT8             NumOfBus;
   UINT8             BusScanItems[0];
@@ -121,6 +137,11 @@ struct _PCI_IO_DEVICE {
   PCI_BAR                                   PciBar[PCI_MAX_BAR];
 
   //
+  // PPB Non-Apperture BAR for 0x10/0x14
+  //
+  PCI_BAR                                   PpbBar[PPB_MAX_BAR];
+
+  //
   // The resource decode the bridge supports
   //
   UINT32                                    Decodes;
@@ -136,6 +157,7 @@ struct _PCI_IO_DEVICE {
   BOOLEAN                                   IsPciExp;
   UINT8                                     PciExpressCapabilityOffset;
   UINT32                                    AriCapabilityOffset;
+
   //
   // SR-IOV
   //
@@ -144,6 +166,15 @@ struct _PCI_IO_DEVICE {
   UINT32                                    SystemPageSize;
   UINT16                                    InitialVFs;
   UINT16                                    ReservedBusNum;
+
+  //
+  // Per PCI to PCI Bridge spec, I/O window is 4K aligned,
+  // but some chipsets support non-standard I/O window alignments less than 4K.
+  // This field is used to support this case.
+  //
+  UINT16                                    BridgeIoAlignment;
+  UINT32                                    ResizableBarOffset;
+  UINT32                                    ResizableBarNumber;
 
   //
   // The bridge device this pci device is subject to
@@ -176,6 +207,17 @@ BarExisted (
   IN  UINTN         Offset,
   OUT UINT32        *BarLengthValue,
   OUT UINT32        *OriginalBarValue
+  );
+
+/**
+  Initialize Resizable BAR
+
+  @param[in,out]  PciIoDevice     Pointer to instance of PCI_IO_DEVICE.
+
+**/
+VOID
+InitializeResizeBar (
+  IN OUT  PCI_IO_DEVICE *PciIoDevice
   );
 
 #endif

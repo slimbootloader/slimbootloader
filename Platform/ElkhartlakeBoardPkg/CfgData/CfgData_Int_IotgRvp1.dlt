@@ -1,0 +1,49 @@
+## @file
+#
+#  Platform Configuration Delta File.
+#
+#  Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+#
+# Delta configuration values for platform ID 0x0003
+#
+
+PLATFORMID_CFG_DATA.PlatformId    | 3
+PLAT_NAME_CFG_DATA.PlatformName   | 'EHL_RVP1'
+#GEN_CFG_DATA.PayloadId | 'UEFI'
+
+MEMORY_CFG_DATA.SpdAddressTable   | { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+MEMORY_CFG_DATA.MemorySpdPtr00    | {FILE: Spd_Lpddr4_8G.bin}
+MEMORY_CFG_DATA.MemorySpdPtr10    | {FILE: Spd_Lpddr4_8G.bin}
+
+# Power button GPIO
+GPIO_CFG_DATA.GpioPinConfig0_GPD02.GPIOPADMode_GPD02         | 0x1
+GPIO_CFG_DATA.GpioPinConfig0_GPD02.GPIOHostSoftPadOwn_GPD02  | 0x1
+GPIO_CFG_DATA.GpioPinConfig0_GPD02.GPIODirection_GPD02       | 0x1B
+GPIO_CFG_DATA.GpioPinConfig0_GPD02.GPIOOutputState_GPD02     | 0x0
+GPIO_CFG_DATA.GpioPinConfig0_GPD02.GPIOInterruptConfig_GPD02 | 0xE9
+GPIO_CFG_DATA.GpioPinConfig0_GPD02.GPIOResetConfig_GPD02     | 0x3
+
+GPIO_CFG_DATA.GpioPinConfig1_GPD02.GPIOElectricalCfg_GPD02   | 0x1
+GPIO_CFG_DATA.GpioPinConfig1_GPD02.GPIOLockConfig_GPD02      | 0x3
+GPIO_CFG_DATA.GpioPinConfig1_GPD02.GPIOSkip_GPD02            | 0x0
+
+# Preserve ISI SPI Pins across ResetResume power-cycling
+GPIO_CFG_DATA.GpioPinConfig0_GPP_U04.GPIOResetConfig_GPP_U04 | 0x1
+GPIO_CFG_DATA.GpioPinConfig0_GPP_U05.GPIOResetConfig_GPP_U05 | 0x1
+GPIO_CFG_DATA.GpioPinConfig0_GPP_U06.GPIOResetConfig_GPP_U06 | 0x1
+GPIO_CFG_DATA.GpioPinConfig0_GPP_U08.GPIOResetConfig_GPP_U08 | 0x1
+GPIO_CFG_DATA.GpioPinConfig0_GPP_U09.GPIOResetConfig_GPP_U09 | 0x1
+GPIO_CFG_DATA.GpioPinConfig0_GPP_U10.GPIOResetConfig_GPP_U10 | 0x1
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C22.GPIOResetConfig_GPP_C22 | 0x1
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C23.GPIOResetConfig_GPP_C23 | 0x1
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D17.GPIOResetConfig_GPP_D17 | 0x1
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D18.GPIOResetConfig_GPP_D18 | 0x1
+#To support GPIO Lock in RVP board
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B02.GPIOLockConfig_GPP_B02 | 0x3
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E02.GPIOLockConfig_GPP_E02 | 0x3
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F04.GPIOLockConfig_GPP_F04 | 0x3
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F20.GPIOLockConfig_GPP_F20 | 0x3

@@ -2,13 +2,13 @@
 ## @ GenContainer.py
 # Tools to operate on a container image
 #
-# Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2019 - 2023, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
 import sys
 import argparse
-
+import re
 sys.dont_write_bytecode = True
 from   ctypes import *
 from   CommonUtility import *
@@ -68,9 +68,10 @@ class CONTAINER_HDR (Structure):
     }
 
     _image_type = {
-      'NORMAL'     :  0x00,
-      'CLASSIC'    :  0xF3,
-      'MULTIBOOT'  :  0xF4,
+      'NORMAL'     :  0x00,                 # Used for boot images in FV, regular ELF, PE32, etc. formats
+      'CLASSIC'    :  0xF3,                 # Used for booting Linux with bzImage, cmdline, initrd, etc.
+      'MULTIBOOT'  :  0xF4,                 # Multiboot compliant ELF images
+      'MULTIBOOT_MODULE'  :  0xF5,                 # Multiboot compliant ELF images
     }
 
     def __new__(cls, buf = None):
@@ -329,9 +330,13 @@ class CONTAINER ():
         # calculate auth info for a give component file with specified auth type
         auth_size = CONTAINER.get_auth_size (auth_type_str, True)
         file_data = bytearray(get_file_data (comp_file))
-        lz_header = LZ_HEADER.from_buffer(file_data)
         auth_data = None
         hash_data = bytearray()
+
+        if len(file_data) < sizeof (LZ_HEADER):
+            return file_data, hash_data, auth_data
+
+        lz_header = LZ_HEADER.from_buffer(file_data)
         data      = bytearray()
         if lz_header.signature in LZ_HEADER._compress_alg:
             offset = sizeof(lz_header) + get_aligned_value (lz_header.compressed_len)
@@ -480,6 +485,8 @@ class CONTAINER ():
                     component.attribute = COMPONENT_ENTRY._attr['RESERVED']
                     compress_alg        = 'Dummy'
                     is_last_entry       = True
+                    if auth_type == 'NONE':
+                        raise Exception ("Monolithic signing component with auth type '%s' not valid !" % auth_type)
 
             # compress the component
             lz_file = compress (in_file, compress_alg, svn, self.out_dir, self.tool_dir)
@@ -586,16 +593,27 @@ class CONTAINER ():
 
             # create header entry
             auth_type_str = self.get_auth_type_str (self.header.auth_type)
-            key_file = 'KEY_ID_CONTAINER_RSA2048' if auth_type_str.startswith('RSA') else ''
+            match = re.match('RSA(\\d+)_', auth_type_str)
+            if match:
+                if self.header.signature.decode() == 'BOOT':
+                    key_file = 'KEY_ID_OS1_PRIVATE_RSA%s' % match.group(1)
+                else:
+                    key_file = 'KEY_ID_CONTAINER_RSA%s' % match.group(1)
+            else:
+                key_file = ''
             alignment = self.header.alignment
             image_type_str = CONTAINER.get_image_type_str(self.header.image_type)
             header = ['%s' % self.header.signature.decode(), file_name, image_type_str,  auth_type_str,  key_file]
-            layout = [(' Name', ' ImageFile', ' CompAlg', ' AuthType',  ' KeyFile', ' Alignment', ' Size', 'svn')]
+            layout = [(' Name', ' ImageFile', ' CompAlg', ' AuthType',  ' KeyFile', ' Alignment', ' Size', 'Svn')]
             layout.append(tuple(["'%s'" % x for x in header] + ['0x%x' % alignment, '0', '0x%x' % self.header.svn]))
             # create component entry
             for component in self.header.comp_entry:
                 auth_type_str = self.get_auth_type_str (component.auth_type)
-                key_file      = 'KEY_ID_CONTAINER_COMP_RSA2048' if auth_type_str.startswith('RSA') else ''
+                match = re.match('RSA(\\d+)_', auth_type_str)
+                if match:
+                    key_file = 'KEY_ID_CONTAINER_COMP_RSA%s' % match.group(1)
+                else:
+                    key_file = ''
                 lz_header = LZ_HEADER.from_buffer(component.data)
                 alg = LZ_HEADER._compress_alg[lz_header.signature]
                 svn = lz_header.svn
@@ -611,14 +629,14 @@ class CONTAINER ():
             fo = open (layout_file, 'w')
             fo.write ('# Container Layout File\n#\n')
             for idx, each in enumerate(layout):
-                line = ' %-6s, %-16s, %-10s, %-18s, %-30s, %-10s, %-10s, %-10s' % each
+                line = ' %-6s, %-16s, %-10s, %-24s, %-32s, %-10s, %-10s, %-10s' % each
                 if idx == 0:
                     line = '#  %s\n' % line
                 else:
                     line = '  (%s),\n' % line
                 fo.write (line)
                 if idx == 0:
-                    line = '# %s\n' % ('=' * 120)
+                    line = '# %s\n' % ('=' * 136)
                     fo.write (line)
             fo.close()
 
@@ -667,12 +685,14 @@ def adjust_auth_type (auth_type_str, key_path):
     return auth_type_str
 
 def gen_layout (comp_list, img_type, auth_type_str, svn, out_file, key_dir, key_file):
-    hash_type = CONTAINER._auth_to_hashalg_str[auth_type_str] if auth_type_str else ''
+    if auth_type_str in ['SHA2_256','SHA2_384']:
+        raise Exception ("Invalid 'auth' parameter '%s'. Monolithic signing requires a signature-type auth." % (auth_type_str))
     auth_type = auth_type_str
     key_path  = os.path.join(key_dir, key_file)
     auth_type = adjust_auth_type (auth_type, key_path)
-    if auth_type == '':
-        raise Exception ("'auth' parameter is expected  !")
+    hash_type = CONTAINER._auth_to_hashalg_str[auth_type]
+    if auth_type_str == '':
+        print ("No 'auth' parameter specified. Defaulting to '%s' based on key type." % (auth_type))
 
     # prepare the layout from individual components from '-cl'
     if img_type not in CONTAINER_HDR._image_type.keys():
@@ -810,7 +830,7 @@ def main():
     # '-l' or '-cl', one of them is mandatory
     group.add_argument('-l',  dest='layout',   type=str, help='Container layout input file if no -cl')
     group.add_argument('-cl', dest='comp_list',nargs='+', help='List of each component files, following XXXX:FileName format')
-    cmd_display.add_argument('-t', dest='img_type',  type=str, default='CLASSIC', help='Container Image Type : [NORMAL, CLASSIC, MULTIBOOT]')
+    cmd_display.add_argument('-t', dest='img_type',  type=str, default='CLASSIC', help='Container Image Type : [NORMAL, CLASSIC, MULTIBOOT, MULTIBOOT_MODULE]')
     cmd_display.add_argument('-o', dest='out_path',  type=str, default='.', help='Container output directory/file')
     cmd_display.add_argument('-k', dest='key_path',  type=str, default='', help='Input key directory/file. Use key directoy path when container layout -l option is used \
                                                                                  Use Key Id or key file path when component files with -cl option is specified')

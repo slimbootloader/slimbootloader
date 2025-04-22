@@ -20,11 +20,13 @@
 #define R_ACPI_IO_PM1_STS                        0x00
 #define B_ACPI_IO_PM1_STS_WAK                    BIT15
 #define B_ACPI_IO_PM1_STS_PRBTNOR                BIT11
+#define B_ACPI_IO_PM1_STS_PRBTN                  BIT8
 #define R_ACPI_IO_PM1_EN_MASK                    0xFFFF0000
 #define B_ACPI_IO_PM1_EN_PWRBTN_EN               BIT24
 
 #define R_ACPI_IO_PM1_CNT                        0x04
 #define B_ACPI_IO_PM1_CNT_SLP_TYP                (BIT12 | BIT11 | BIT10)
+#define B_ACPI_IO_PM1_CNT_SLP_EN                 BIT13
 
 #define R_ACPI_IO_PM1_TMR                        0x08
 #define B_ACPI_IO_PM1_TMR_VAL                    0xFFFFFF

@@ -29,11 +29,15 @@
 #include <Library/DebugAgentLib.h>
 #include <Library/ContainerLib.h>
 #include <Library/StageLib.h>
+#include <Library/DebugPrintErrorLevelLib.h>
+#include <Library/TopSwapLib.h>
+#include <Register/Intel/ArchitecturalMsr.h>
 #include <Guid/FspHeaderFile.h>
 #include <Guid/FlashMapInfoGuid.h>
 #include <Guid/LoaderPlatformDataGuid.h>
 #include <Guid/PcdDataBaseSignatureGuid.h>
 #include <VerInfo.h>
+#include <Library/CryptoLib.h>
 
 /**
   Continue Stage 1A execution.
@@ -48,5 +52,14 @@ EFIAPI
 ContinueFunc (
   IN VOID  *Params
   );
+
+/**
+  Reloads segment selectors based on SBL GDT. This is useful if reset
+  vector GDT is different from Stage1A GDT.
+
+**/
+VOID
+EFIAPI
+UpdateSelectors (VOID);
 
 #endif

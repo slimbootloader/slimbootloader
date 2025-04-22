@@ -1,0 +1,85 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Default File.
+#
+#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+variable:
+  COND_PLD_SEL_EN    : ($PLDSEL_CFG_DATA.PldSelGpio.Enable == 1)
+  COND_IIO_PCIE_HP_EN: ($PCIE_CFG_DATA.IIoPcieHotPlugEnable == 1)
+  COND_IIO_PCI_RES_EN: ($PCIE_CFG_DATA.IioRes.Enable == 1)
+  COND_MEM_DOWN      : ($MEMORY_CFG_DATA.GeneralConfig.MemoryDown == 1)
+  COND_TME_EN        : ($MEMORY_CFG_DATA.GeneralConfig.TmeEnable == 1)
+  COND_SPD_1x3       : ($MEMORY_CFG_DATA.GeneralConfig.DimmConfigType == 0x1)
+  COND_SPD_2x2       : ($MEMORY_CFG_DATA.GeneralConfig.DimmConfigType == 0x2)
+  COND_SGX_EN        : ($SGX_CFG_DATA.EnableSgx == 0x1)
+  COND_SGX_EPOCH_UPD : ($SGX_CFG_DATA.EnableSgx == 0x1 and $SGX_CFG_DATA.EpochUpdate == 0x1)
+template:
+
+  - !include Template_CfgData.yaml
+
+
+configs:
+  - $ACTION      :
+      page         : PLT::"Platform", MEM::"Memory Settings", SIL::"Silicon Settings", GEN::"General Settings", GIO::"Gpio Settings", OS::"OS Boot Options", MSC::"Misc Settings", PCI::"PCI Settings", PWR::"Power Mgmt Settings", SEC::"Security Settings"
+  - Signature    :
+      length       : 0x04
+      value        : {'CFGD'}
+  - HeaderLength :
+      length       : 0x01
+      value        : 0x10
+  - Reserved     :
+      length       : 0x03
+      value        : {0,0,0}
+  - UsedLength   :
+      length       : 0x04
+      value        : _LENGTH_
+  - TotalLength  :
+      length       : 0x04
+      value        : 0x2000
+
+  - !include Platform/CommonBoardPkg/CfgData/CfgData_Platform.yaml
+
+  - !include CfgData_PlatformMisc.yaml
+
+  - !include Platform/CommonBoardPkg/CfgData/CfgData_Common.yaml
+
+  - !include Platform/CommonBoardPkg/CfgData/CfgData_Tcc.yaml
+
+  - !include Platform/CommonBoardPkg/CfgData/CfgData_PayloadSelection.yaml
+
+  - !include CfgData_Memory.yaml
+
+  - !include CfgData_MemSpd.yaml
+
+  - !include CfgData_Silicon.yaml
+
+  - !include CfgData_Misc.yaml
+
+  - !include CfgData_Pcie.yaml
+
+  - !include CfgData_Power.yaml
+
+  - !include CfgData_Gpio.yaml
+
+  - !include CfgData_Features.yaml
+
+  - !include CfgData_BootOption.yaml
+
+  - !include CfgData_Hsio.yaml
+
+  - !include CfgData_EmmcDLL.yaml
+
+  - !include CfgData_CapsuleInformation.yaml
+
+  - !include CfgData_Vmd.yaml
+
+  - !include CfgData_Security.yaml
+
+  - !include CfgData_SgxConfig.yaml
+
+  - !include CfgData_Clock.yaml
+

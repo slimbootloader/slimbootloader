@@ -1,0 +1,45 @@
+### @file
+# Boot Partition Descriptor Table library.
+#
+# Copyright (c) 2018 - 2020, Intel Corporation. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+###
+
+[Defines]
+  INF_VERSION          = 0x00010005
+  BASE_NAME            = FirmwareUpdateLib
+  FILE_GUID            = 8EFEE308-844C-4386-A892-D9945549DF21
+  MODULE_TYPE          = BASE
+  VERSION_STRING       = 1.0
+  LIBRARY_CLASS        = FirmwareUpdateLib
+
+[Sources]
+  FirmwareUpdateLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+  Silicon/IdavillePkg/IdavillePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  PayloadPkg/PayloadPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  MemoryAllocationLib
+  IoLib
+  FileSystemLib
+  MmcAccessLib
+  PcdLib
+  PartitionLib
+  LitePeCoffLib
+
+[Guids]
+  gOsBootOptionGuid
+  gSblCompFWUpdateImageFileGuid
+
+[Pcd]
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress

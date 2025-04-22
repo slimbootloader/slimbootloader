@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -100,6 +100,7 @@ UpdateFspConfig (
   FSP_M_TEST_CONFIG               *FspmcfgTest;
   MEMORY_CFG_DATA                 *MemCfgData;
   GPU_CFG_DATA                    *GpuCfgData;
+  PLATFORM_DATA                   *PlatformData;
   UINT16                           PlatformId;
   UINT16                           BomId;
   PEG_GPIO_DATA                   *PegGpioData;
@@ -169,10 +170,7 @@ UpdateFspConfig (
   CopyMem (&Fspmcfg->DqsMapCpu2DramCh0, MemCfgData->DqsMapCpu2DramCh0, sizeof(MemCfgData->DqsMapCpu2DramCh0));
   CopyMem (&Fspmcfg->DqsMapCpu2DramCh1, MemCfgData->DqsMapCpu2DramCh1, sizeof(MemCfgData->DqsMapCpu2DramCh1));
   Fspmcfg->DqPinsInterleaved      = MemCfgData->DqPinsInterleaved;
-  //
-  // Tseg 4MB is enough for both debug/release build with SBL
-  //
-  Fspmcfg->TsegSize               = 0x00400000;
+  Fspmcfg->TsegSize               = MemCfgData->TsegSize;
   Fspmcfg->MmioSize               = MemCfgData->MmioSize;
   Fspmcfg->RMT                    = MemCfgData->RMT;
   FspmcfgTest->BdatEnable         = MemCfgData->BdatEnable;
@@ -224,8 +222,21 @@ UpdateFspConfig (
     DEBUG ((DEBUG_INFO, "FSP-M variables for Intel(R) SGX were NOT updated.\n"));
   }
 
+  PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
+  if (PlatformData != NULL) {
+    PlatformData->PlatformFeatures.VtdEnable = FeaturePcdGet (PcdVtdEnabled) && (!MemCfgData->VtdDisable);
+  }
+
   // Enable VT-d
-  FspmcfgTest->VtdDisable = 0;
+  if (PlatformData->PlatformFeatures.VtdEnable == 1) {
+    FspmcfgTest->VtdDisable = 0;
+    Fspmcfg->X2ApicOptOut = MemCfgData->X2ApicOptOut;
+    Fspmcfg->VtdBaseAddress[0] = 0xFED90000;
+    Fspmcfg->VtdBaseAddress[1] = 0xFED92000;
+    Fspmcfg->VtdBaseAddress[2] = 0xFED91000;
+  } else {
+    FspmcfgTest->VtdDisable = 1;
+  }
 
   Fspmcfg->PlatformDebugConsent = MemCfgData->PlatformDebugConsent;
   Fspmcfg->PchTraceHubMode      = MemCfgData->PchTraceHubMode;
@@ -408,7 +419,6 @@ PlatformFeaturesInit (
   )
 {
   FEATURES_CFG_DATA           *FeaturesCfgData;
-  LOADER_GLOBAL_DATA          *LdrGlobal;
   UINT32                       Features;
   PLATFORM_DATA               *PlatformData;
 
@@ -448,10 +458,8 @@ PlatformFeaturesInit (
     DEBUG ((DEBUG_INFO, "FEATURES CFG DATA NOT FOUND!\n"));
   }
 
-  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-  LdrGlobal->LdrFeatures = Features;
-
-  DEBUG ((DEBUG_INFO, "PlatformFeaturesInit: LdrGlobal->LdrFeatures 0x%x\n",LdrGlobal->LdrFeatures));
+  SetFeatureCfg (Features);
+  DEBUG ((DEBUG_INFO, "PlatformFeaturesInit: Features 0x%x\n", GetFeatureCfg ()));
 }
 
 /**
@@ -509,49 +517,52 @@ GetPlatformPowerState (
   // Clear PWRBTNOR_STS
   //
   if (IoRead16 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS) & B_ACPI_IO_PM1_STS_PRBTNOR) {
-    IoWrite16 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS, B_ACPI_IO_PM1_STS_PRBTNOR);
+    IoWrite16 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS, B_ACPI_IO_PM1_STS_PRBTNOR | B_ACPI_IO_PM1_STS_PRBTN);
   }
 
   //
   // If Global Reset Status, Power Failure. Host Reset Status bits are set, return S5 State
   //
-  if ((PmconA & (B_PMC_PWRM_GEN_PMCON_A_GBL_RST_STS | B_PMC_PWRM_GEN_PMCON_A_PWR_FLR | B_PMC_PWRM_GEN_PMCON_A_HOST_RST_STS)) != 0) {
-    return BOOT_WITH_FULL_CONFIGURATION;
-  }
-
   BootMode = BOOT_WITH_FULL_CONFIGURATION;
-  if (IoRead16 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS) & B_ACPI_IO_PM1_STS_WAK) {
-    switch (IoRead16 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_CNT) & B_ACPI_IO_PM1_CNT_SLP_TYP) {
-      case V_ACPI_IO_PM1_CNT_S3:
-        BootMode = BOOT_ON_S3_RESUME;
-        break;
-      case V_ACPI_IO_PM1_CNT_S4:
-        BootMode = BOOT_ON_S4_RESUME;
-        break;
-      case V_ACPI_IO_PM1_CNT_S5:
-        BootMode = BOOT_ON_S5_RESUME;
-        break;
-      default:
-        BootMode = BOOT_WITH_FULL_CONFIGURATION;
-        break;
+  if ((PmconA & (B_PMC_PWRM_GEN_PMCON_A_GBL_RST_STS | B_PMC_PWRM_GEN_PMCON_A_PWR_FLR | B_PMC_PWRM_GEN_PMCON_A_HOST_RST_STS)) == 0) {
+    if (IoRead16 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS) & B_ACPI_IO_PM1_STS_WAK) {
+      switch (IoRead16 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_CNT) & B_ACPI_IO_PM1_CNT_SLP_TYP) {
+        case V_ACPI_IO_PM1_CNT_S3:
+          BootMode = BOOT_ON_S3_RESUME;
+          break;
+        case V_ACPI_IO_PM1_CNT_S4:
+          BootMode = BOOT_ON_S4_RESUME;
+          break;
+        case V_ACPI_IO_PM1_CNT_S5:
+          BootMode = BOOT_ON_S5_RESUME;
+          break;
+        default:
+          BootMode = BOOT_WITH_FULL_CONFIGURATION;
+          break;
+      }
+    }
+
+    ///
+    /// Clear Wake Status
+    /// Also clear the PWRBTN_EN, it causes SMI# otherwise (SCI_EN is 0)
+    ///
+    IoAndThenOr32 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS, (UINT32)~B_ACPI_IO_PM1_EN_PWRBTN_EN, B_ACPI_IO_PM1_STS_WAK);
+
+    IoAnd32 (ACPI_BASE_ADDRESS + R_ACPI_IO_GPE0_EN_127_96, (UINT32)~B_ACPI_IO_GPE0_STS_127_96_PME_B0);
+
+    if ((MmioRead8 (PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_GEN_PMCON_B) & B_PMC_PWRM_GEN_PMCON_B_RTC_PWR_STS) != 0) {
+      BootMode = BOOT_WITH_FULL_CONFIGURATION;
+
+      ///
+      /// Clear Sleep Type
+      ///
+      IoAndThenOr16 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_CNT, (UINT16) ~B_ACPI_IO_PM1_CNT_SLP_TYP, V_ACPI_IO_PM1_CNT_S0);
     }
   }
 
-  ///
-  /// Clear Wake Status
-  /// Also clear the PWRBTN_EN, it causes SMI# otherwise (SCI_EN is 0)
-  ///
-  IoAndThenOr32 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS, (UINT32)~B_ACPI_IO_PM1_EN_PWRBTN_EN, B_ACPI_IO_PM1_STS_WAK);
-
-  IoAnd32 (ACPI_BASE_ADDRESS + R_ACPI_IO_GPE0_EN_127_96, (UINT32)~B_ACPI_IO_GPE0_STS_127_96_PME_B0);
-
-  if ((MmioRead8 (PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_GEN_PMCON_B) & B_PMC_PWRM_GEN_PMCON_B_RTC_PWR_STS) != 0) {
-    BootMode = BOOT_WITH_FULL_CONFIGURATION;
-
-    ///
-    /// Clear Sleep Type
-    ///
-    IoAndThenOr16 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_CNT, (UINT16) ~B_ACPI_IO_PM1_CNT_SLP_TYP, V_ACPI_IO_PM1_CNT_S0);
+  if ((BootMode == BOOT_WITH_FULL_CONFIGURATION) || (BootMode == BOOT_ON_S5_RESUME)) {
+    // Clear power button status to prevent false power button event detection later on
+    IoWrite16 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS,  B_ACPI_IO_PM1_STS_PRBTN);
   }
 
   return BootMode;
@@ -654,8 +665,10 @@ DEBUG_CODE_END();
     break;
   case PreMemoryInit:
     GpioInit (PlatformId);
+    break;
   case PostMemoryInit:
     DEBUG ((DEBUG_INFO, "PostMemoryInit called\n"));
+    UpdateMemoryInfo ();
     break;
   case PreTempRamExit:
     break;

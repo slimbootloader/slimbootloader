@@ -1,0 +1,29 @@
+#
+# This file contains an 'Intel Peripheral Driver' and is
+# licensed for Intel CPUs and chipsets under the terms of your
+# license agreement with Intel or your vendor.  This file may
+# be modified by the user, subject to additional terms of the
+# license agreement
+#
+#/** @file
+# Platform Package
+#
+# This package provides platform specific modules.
+# Copyright (c) 2009 - 2019, Intel Corporation. All rights reserved.<BR>
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#**/
+
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = ElkhartlakeBoardPkg
+  PACKAGE_GUID                   = E0F11FC4-9850-44CC-A5F0-D2FFF80712CB
+  PACKAGE_VERSION                = 0.1
+
+[Guids]
+  gMeBiosPayloadHobGuid      = { 0x992c52c8, 0xbc01, 0x4ecd, {0x20, 0xbf, 0xf9, 0x57, 0x16, 0x0e, 0x9e, 0xf7 } }
+  gCpuInitDataHobGuid        = { 0x266e31cc, 0x13c5, 0x4807, {0xb9, 0xdc, 0x39, 0xa6, 0xba, 0x88, 0xff, 0x1a } }
+  gSchemaListGuid            = { 0x3047c2ac, 0x5e8e, 0x4c55, {0xa1, 0xcb, 0xea, 0xad, 0x0a, 0x88, 0x86, 0x1b } }
+
+[Includes]
+  Include

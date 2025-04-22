@@ -11,8 +11,8 @@
 // Note: Any Config TAG that is less than 0x100 will be considered as Common TAG
 // and it is applicable for all platforms.
 
-// 0x050 to 0x05F is reserved for boot option tag
-#define  MAX_BOOT_OPTION_CFGDATA_ENTRY  16
+// 0x050 to 0x06F is reserved for boot option tag
+#define  MAX_BOOT_OPTION_CFGDATA_ENTRY  32
 #define  CDATA_BOOT_OPTION_TAG          0x050
 
 #define  CDATA_CAPSULE_TAG              0x080

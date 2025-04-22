@@ -8,10 +8,18 @@
 [Defines]
   DEC_SPECIFICATION              = 0x00010005
   PACKAGE_NAME                   = CommonBoardPkg
-  PACKAGE_GUID                   = BF594493-59FA-4027-8F14-2929415CE6B7
+  PACKAGE_GUID                   = 3A22489E-5443-4135-AD93-237F20BC883B
   PACKAGE_VERSION                = 0.1
 
 [Includes]
   Include
 
+[Guids]
+  gCommonBoardTokenSpaceGuid  = { 0x3a22489e, 0x5443, 0x4135, { 0xad, 0x93, 0x23, 0x7f, 0x20, 0xbc, 0x88, 0x3b } }
 
+[PcdsFixedAtBuild]
+  gCommonBoardTokenSpaceGuid.PcdGpioDebugPortMmioBase    | 0x00000000 | UINT32 | 0x20000800
+  gCommonBoardTokenSpaceGuid.PcdGpioDebugPortMmioMask    | 0x00000001 | UINT32 | 0x20000801
+  gCommonBoardTokenSpaceGuid.PcdGpioDebugPortBaudRate    |      19200 | UINT32 | 0x20000802
+  gCommonBoardTokenSpaceGuid.PcdGpioDebugPortPinPad      | 0x00000000 | UINT32 | 0x20000803
+  gCommonBoardTokenSpaceGuid.PcdMailboxDebugPortMmioBase | 0x00000000 | UINT32 | 0x20000810

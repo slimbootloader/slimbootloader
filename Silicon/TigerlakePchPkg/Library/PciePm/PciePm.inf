@@ -1,0 +1,38 @@
+## @file
+#
+# Copyright (c) 2022, Intel Corporation. All rights reserved.<BR>
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010017
+  BASE_NAME                      = PciePm
+  FILE_GUID                      = 868ba60c-b140-48e4-8029-687934c36117
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = PciePm
+
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[LibraryClasses]
+  SerialPortLib
+  BaseLib
+  DebugLib
+  PciExpressHelpersLib
+
+[Sources]
+  PciePm.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  IntelFsp2Pkg/IntelFsp2Pkg.dec
+  Silicon/TigerlakePchPkg/TigerlakePchPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+  Silicon/TigerlakePkg/TigerlakePkg.dec
+

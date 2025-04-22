@@ -1,19 +1,52 @@
 /** @file
   MP init library implementation.
 
-  Copyright (c) 2015 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2015 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 #include <MpInitLibInternal.h>
 
-STATIC MP_ASSEMBLY_ADDRESS_MAP            mAddressMap;
+STATIC UINT32                             mStubCodeSize;
 STATIC ALL_CPU_INFO                       mSysCpuInfo;
 STATIC volatile ALL_CPU_TASK              mSysCpuTask;
 STATIC volatile MP_DATA_EXCHANGE_STRUCT   mMpDataStruct;
 STATIC UINT8                             *mBackupBuffer;
 STATIC UINT32                             mMpInitPhase = EnumMpInitNull;
-STATIC SMMBASE_INFO                      *mSmmBaseInfo = NULL;
+STATIC SMMBASE_INFO                      *mSmmBaseInfo;
+STATIC MTRR_SETTINGS                      mMtrrTable;
+extern UINT8                             *mDefaultSmiHandlerStart;
+extern UINT8                             *mDefaultSmiHandlerRet;
+extern UINT8                             *mDefaultSmiHandlerEnd;
+
+extern VOID                               RendezvousFunnelProcStart(VOID);
+extern VOID                               RendezvousFunnelProcEnd(VOID);
+
+/**
+  The CPU task function to program MTRRs.
+
+  @param[in] Arg  Task parameter.
+
+  @retval  0           MTRRs were set successfully.
+           MAX_UINT64  Failed to set MTRRs
+**/
+UINT64
+EFIAPI
+SetCpuMtrrsTask (
+  IN  UINT64   Arg
+  )
+{
+  EFI_STATUS       Status;
+  MTRR_SETTINGS   *MtrrSettings;
+
+  MtrrSettings = (MTRR_SETTINGS *)(UINTN)Arg;
+  Status = SetCpuMtrrs (MtrrSettings);
+  if (!EFI_ERROR(Status)) {
+    return 0;
+  } else {
+    return MAX_UINT64;
+  }
+}
 
 /**
   The function is called by PerformQuickSort to sort CPU_INFO by ApicId.
@@ -41,10 +74,11 @@ CompareCpuApicId (
 }
 
 /**
-  Sort the CPU entry according to their thread distances
+  Sort the CPU entry
 
-  It is required to list CPU thread with further distance first so as to
-  fully utilize unshared CPU resources.
+  It sort the CPU by the PCD PcdCpuSortMethod. Sort CPU by APIC ID in ascending order could make the debug easy.
+  Sort CPU by the APIC ID in descending order might be required by some special case.
+  Sort CPU by their thread distances could help fully utilize unshared CPU resources.
 
   @param[in]  SysCpuInfo     Pointer to the ALL_CPU_INFO structure.
 
@@ -65,22 +99,35 @@ SortSysCpu (
     return;
   }
 
-  // Sort by APIC ID first
+  // Sort the CPU by APIC ID (ascending order)
   PerformQuickSort (SysCpuInfo->CpuInfo, SysCpuInfo->CpuCount, sizeof (CPU_INFO), CompareCpuApicId, &Temp);
 
-  // Keep a backup copy
-  CopyMem (&OldSysCpuInfo,  SysCpuInfo, sizeof (ALL_CPU_INFO));
+  if (FixedPcdGet32 (PcdCpuSortMethod) == 2) {
+    // Sort the CPU by CPU APIC ID in descending order
+    for (Idx1 = 0; Idx1 < SysCpuInfo->CpuCount / 2; Idx1++) {
+      CopyMem (&Temp, &SysCpuInfo->CpuInfo[Idx1], sizeof(CPU_INFO));
+      CopyMem (&SysCpuInfo->CpuInfo[Idx1], &SysCpuInfo->CpuInfo[SysCpuInfo->CpuCount - Idx1 - 1], sizeof(CPU_INFO));
+      CopyMem (&SysCpuInfo->CpuInfo[SysCpuInfo->CpuCount - Idx1 - 1], &Temp, sizeof(CPU_INFO));
+    }
+  }
 
-  // Rearrange order per thread distance
-  Idx2 = 0;
-  Step = GetPowerOfTwo32 (SysCpuInfo->CpuCount);
-  for (; Step > 0; Step >>= 1) {
-    for (Idx1 = 0; Idx1 < SysCpuInfo->CpuCount; Idx1 += Step) {
-      if ((OldSysCpuInfo.CpuInfo[Idx1].ApicId != 0xFFFFFFFF) && (Idx2 < SysCpuInfo->CpuCount)) {
-        // Fill the CPU_INFO and mark it as consumed
-        CopyMem (&SysCpuInfo->CpuInfo[Idx2], &OldSysCpuInfo.CpuInfo[Idx1], sizeof(CPU_INFO));
-        OldSysCpuInfo.CpuInfo[Idx1].ApicId = 0xFFFFFFFF;
-        Idx2++;
+  if (FixedPcdGet32 (PcdCpuSortMethod) == 0) {
+    // Sort the CPU according to their thread distances
+
+    // Keep a backup copy
+    CopyMem (&OldSysCpuInfo,  SysCpuInfo, sizeof (ALL_CPU_INFO));
+
+    // Rearrange order per thread distance
+    Idx2 = 0;
+    Step = GetPowerOfTwo32 (SysCpuInfo->CpuCount);
+    for (; Step > 0; Step >>= 1) {
+      for (Idx1 = 0; Idx1 < SysCpuInfo->CpuCount; Idx1 += Step) {
+        if ((OldSysCpuInfo.CpuInfo[Idx1].ApicId != 0xFFFFFFFF) && (Idx2 < SysCpuInfo->CpuCount)) {
+          // Fill the CPU_INFO and mark it as consumed
+          CopyMem (&SysCpuInfo->CpuInfo[Idx2], &OldSysCpuInfo.CpuInfo[Idx1], sizeof(CPU_INFO));
+          OldSysCpuInfo.CpuInfo[Idx1].ApicId = 0xFFFFFFFF;
+          Idx2++;
+        }
       }
     }
   }
@@ -101,10 +148,22 @@ SmmRebase (
   IN UINT32  SmmBase
 )
 {
+  MSR_IA32_MTRRCAP_REGISTER MtrrCap;
+  UINT8                    *SmmEntry;
+  UINT8                    *DefEntry;
+
   if (SmmBase == 0) {
-    SmmBase = PcdGet32 (PcdSmramTsegBase) + PcdGet32 (PcdSmramTsegSize) - (SMM_BASE_MIN_SIZE + Index * SMM_BASE_GAP);
-    // Write 'RSM' at new SMM handler entry
-    *(UINT32 *)(UINTN)(SmmBase + 0x8000) = RSM_SIG;
+    SmmBase  = PcdGet32 (PcdSmramTsegBase) + PcdGet32 (PcdSmramTsegSize) - (SMM_BASE_MIN_SIZE + Index * SMM_BASE_GAP);
+    SmmEntry = (UINT8 *)(UINTN)SmmBase + 0x8000;
+    // Write default handler at new SMM handler entry
+    MtrrCap.Uint64 = AsmReadMsr64 (MSR_IA32_MTRRCAP);
+    if ((MtrrCap.Bits.SMRR == 0) || (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE_NOSMRR)) {
+      // No SMRR support, fill "RSM" at the entry instead.
+      DefEntry = (UINT8 *)&mDefaultSmiHandlerRet;
+    } else {
+      DefEntry = (UINT8 *)&mDefaultSmiHandlerStart;
+    }
+    CopyMem (SmmEntry, DefEntry, (UINT8 *)&mDefaultSmiHandlerEnd - DefEntry);
   }
 
   AsmWriteCr2 (SmmBase);
@@ -132,28 +191,51 @@ CpuInit (
   IN UINT32               Index
   )
 {
-  SMMBASE_INFO            *SmmBaseInfo;
+  CPU_SMMBASE            *CpuSmmBase;
   UINT32                  ApicId;
   UINT32                  CpuIdx;
+  UINT32                  CpuCount;
   PLATFORM_CPU_INIT_HOOK  PlatformCpuInitHook;
+  PLD_TO_BL_SMM_INFO      *PldToBlSmmInfo;
+
+  if (FeaturePcdGet (PcdCpuX2ApicEnabled)) {
+    // Enable X2APIC if desired
+    SetApicMode (LOCAL_APIC_MODE_X2APIC);
+    if (Index == 0) {
+      DEBUG ((DEBUG_INFO, "APIC Mode: %d\n", GetApicMode ()));
+    }
+  }
 
   ApicId = GetApicId();
   if (Index < PcdGet32 (PcdCpuMaxLogicalProcessorNumber)) {
     mSysCpuInfo.CpuInfo[Index].ApicId = ApicId;
   }
 
-  if (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE_ON_S3_RESUME_ONLY) {
-    if ((GetBootMode() == BOOT_ON_S3_RESUME) && (mSmmBaseInfo != NULL)) {
-      SmmBaseInfo = mSmmBaseInfo;
-      for (CpuIdx = 0; CpuIdx < SmmBaseInfo->SmmBaseHdr.Count; CpuIdx++) {
-        if (ApicId == SmmBaseInfo->SmmBase[CpuIdx].ApicId) {
-          SmmRebase (Index, ApicId, SmmBaseInfo->SmmBase[CpuIdx].SmmBase);
-          break;
-        }
+  CpuCount = 0;
+  if ((GetBootMode() == BOOT_ON_S3_RESUME) && (mSmmBaseInfo != NULL)) {
+    // Perform SMM rebasing on S3 if payload provides SMM base info
+    if ((PcdGet8(PcdBuildSmmHobs) & BIT1) != 0) {
+      PldToBlSmmInfo = (PLD_TO_BL_SMM_INFO *) mSmmBaseInfo;
+      if (CompareGuid(&PldToBlSmmInfo->Header.Name, &gPldS3CommunicationGuid)) {
+        CpuSmmBase = PldToBlSmmInfo->S3Info.SmmBase;
+        CpuCount   = PldToBlSmmInfo->S3Info.CpuCount;
       }
-      ASSERT (CpuIdx < SmmBaseInfo->SmmBaseHdr.Count);
     }
-  } else if (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE) {
+
+    if ((PcdGet8(PcdBuildSmmHobs) & BIT0) != 0) {
+      if ((mSmmBaseInfo->SmmBaseHdr.Signature == BL_PLD_COMM_SIG) && (CpuCount == 0)) {
+        CpuSmmBase = mSmmBaseInfo->SmmBase;
+        CpuCount   = mSmmBaseInfo->SmmBaseHdr.Count;
+      }
+    }
+
+    for (CpuIdx = 0; CpuIdx < CpuCount; CpuIdx++) {
+      if (ApicId == CpuSmmBase[CpuIdx].ApicId) {
+        SmmRebase (Index, ApicId, CpuSmmBase[CpuIdx].SmmBase);
+        break;
+      }
+    }
+  } else if ((PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE) || (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE_NOSMRR)) {
     SmmRebase (Index, ApicId, 0);
   }
 
@@ -181,8 +263,8 @@ ApFunc (
   )
 {
   BOOLEAN            WaitTask;
-  CPU_TASK_PROC      ApRunTask;
-  volatile UINT32   *State;
+  CPU_TASK_FUNC      ApRunTask;
+  volatile UINT8     *State;
 
   // Enable more CPU featurs
   AsmEnableAvx ();
@@ -214,7 +296,7 @@ ApFunc (
 
     case EnumCpuStart:
       *State = EnumCpuBusy;
-      ApRunTask = (CPU_TASK_PROC)(UINTN)mSysCpuTask.CpuTask[Index].CProcedure;
+      ApRunTask = (CPU_TASK_FUNC)(UINTN)mSysCpuTask.CpuTask[Index].TaskFunc;
       if (ApRunTask != NULL) {
         mSysCpuTask.CpuTask[Index].Result = ApRunTask (mSysCpuTask.CpuTask[Index].Argument);
       }
@@ -252,7 +334,8 @@ BspInit (
   DEBUG ((DEBUG_INFO, " BSP APIC ID: %d\n", mSysCpuInfo.CpuInfo[0].ApicId));
 
 
-  if (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE) {
+  if ((PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE) || (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE_NOSMRR) ||
+    (mMpDataStruct.SmmRebaseDoneCounter > 0)) {
     // Check SMM rebase result
     if (mMpDataStruct.SmmRebaseDoneCounter != 1) {
       CpuHalt ("CPU SMM rebase failed!\n");
@@ -279,12 +362,15 @@ MpInit (
   UINT8                    *ApBuffer;
   EFI_STATUS                Status;
   UINT32                    TimeOutCounter;
-  UINT32                   *Ptr;
   AP_DATA_STRUCT           *ApDataPtr;
   volatile UINT32          *ApCounter;
   UINT32                    CpuCount;
   UINT32                    Index;
   EFI_PHYSICAL_ADDRESS      ApStackTop;
+  MSR_IA32_MTRRCAP_REGISTER MtrrCap;
+  UINT32                    SmrrBase;
+  UINT32                    SmrrSize;
+  MSR_IA32_MTRR_PHYSMASK_REGISTER SmrrMask;
 
   Status   = EFI_SUCCESS;
   ApBuffer = (UINT8 *)AP_BUFFER_ADDRESS;
@@ -293,6 +379,8 @@ MpInit (
     if (mMpInitPhase != EnumMpInitNull) {
       Status = EFI_UNSUPPORTED;
     } else {
+      DEBUG ((DEBUG_INIT, "MP Init%a\n", DebugCodeEnabled() ? " (Wakeup)" : ""));
+
       // Init structure for lock
       mMpDataStruct.SmmRebaseDoneCounter = 0;
       InitializeSpinLock (&mMpDataStruct.SpinLock);
@@ -302,8 +390,6 @@ MpInit (
       //
       ApStackTop = (EFI_PHYSICAL_ADDRESS) (UINTN)AllocatePages ( \
                    EFI_SIZE_TO_PAGES (PcdGet32 (PcdCpuMaxLogicalProcessorNumber) * AP_STACK_SIZE));
-      ZeroMem (&mAddressMap, sizeof (mAddressMap));
-      AsmGetAddressMap (&mAddressMap);
 
       //
       // Allocate backup Buffer for MP waking up
@@ -314,8 +400,11 @@ MpInit (
       //
       // Copy the Rendezvous routine to the memory buffer @ < 1 MB
       //
-      CopyMem (ApBuffer, mAddressMap.RendezvousFunnelAddress, mAddressMap.CodeSize);
-      ApDataPtr = (AP_DATA_STRUCT *) (ApBuffer + mAddressMap.CodeSize);
+      mStubCodeSize = (UINT32)((UINT8 *)(UINTN)RendezvousFunnelProcEnd - (UINT8 *)(UINTN)RendezvousFunnelProcStart);
+      CopyMem (ApBuffer, (UINT8 *)(UINTN)RendezvousFunnelProcStart, mStubCodeSize);
+      ApDataPtr = (AP_DATA_STRUCT *) (ApBuffer + mStubCodeSize);
+      ZeroMem (ApDataPtr, sizeof(AP_DATA_STRUCT));
+      ApDataPtr->CpuArch = IS_X64;
 
       //
       // Patch the GDTR, IDTR and the Segment Selector variables
@@ -325,11 +414,24 @@ MpInit (
       AsmReadIdtr ((IA32_DESCRIPTOR *)&ApDataPtr->Idtr);
       ApDataPtr->Cr3 = (UINT32)AsmReadCr3 ();
 
-      //
-      // Patch the Segment/Offset for the far Jump into PMODE code
-      //
-      Ptr  = (UINT32 *)(ApBuffer + mAddressMap.ProtModeJmpPatchOffset + 3);
-      *Ptr = (UINT32)(UINTN)ApBuffer + mAddressMap.ProtModeStartOffset;
+      // Fill SMRR base and size
+      SmrrBase = PcdGet32 (PcdSmramTsegBase);
+      SmrrSize = PcdGet32 (PcdSmramTsegSize);
+      if (SmrrSize > 0) {
+        if ((SmrrSize < SIZE_4KB) ||  (SmrrSize != GetPowerOfTwo32 (SmrrSize)) || ((SmrrBase & ~(SmrrSize - 1)) != SmrrBase)) {
+          DEBUG ((DEBUG_INFO, "Invalid SMRR base or size\n"));
+        } else {
+          MtrrCap.Uint64 = AsmReadMsr64 (MSR_IA32_MTRRCAP);
+          if (MtrrCap.Bits.SMRR == 1) {
+            // Don't enable SMRR valid yet, it will be done at end of stage2
+            SmrrMask.Uint64 = (UINT32)(~(SmrrSize - 1));
+            SmrrMask.Bits.V = 0;
+            ApDataPtr->SmrrBase = SmrrBase | MSR_IA32_VMX_BASIC_REGISTER_MEMORY_TYPE_WRITE_BACK;
+            ApDataPtr->SmrrMask = (UINT32)SmrrMask.Uint64;
+            DEBUG ((DEBUG_INFO, "SMRR Base: 0x%08x  Mask: 0x%08x\n", ApDataPtr->SmrrBase, ApDataPtr->SmrrMask));
+          }
+        }
+      }
 
       //
       // Patch the BufferStart variable with the address of the buffer
@@ -393,10 +495,22 @@ MpInit (
     if (mMpInitPhase != EnumMpInitWakeup) {
       Status = EFI_UNSUPPORTED;
     } else {
-      //
-      // Wait for task done
-      //
-      ApDataPtr = (AP_DATA_STRUCT *) (ApBuffer + mAddressMap.CodeSize);
+      DEBUG ((DEBUG_INFO, "MP Init (Run)\n"));
+
+      // The below loop waits until all APs which have started Wakeup
+      // (ApDataPtr->ApCounter) have completed wakeup
+      // (mMpDataStruct.ApDoneCounter), or the timeout is reached
+      // (AP_TASK_TIMEOUT_UNIT * AP_TASK_TIMEOUT_CNT). Whichever occurs
+      // first. This assumes that the number of running APs is never zero
+      // unless all APs have completed wakeup. This is not always the case
+      // with high core counts and tight timings, so a fixed delay here can
+      // help ensure all APs have started before this check.
+
+      if (FixedPcdGet32 (PcdCpuApInitWaitInMicroSeconds)) {
+        MicroSecondDelay (FixedPcdGet32 (PcdCpuApInitWaitInMicroSeconds));
+      }
+
+      ApDataPtr = (AP_DATA_STRUCT *) (ApBuffer + mStubCodeSize);
       ApCounter = (volatile UINT32 *)&ApDataPtr->ApCounter;
       TimeOutCounter = 0;
       while (TimeOutCounter < AP_TASK_TIMEOUT_CNT) {
@@ -419,45 +533,57 @@ MpInit (
       }
 
       mSysCpuInfo.CpuCount = CpuCount;
+      mSysCpuTask.CpuCount = CpuCount;
       SortSysCpu (&mSysCpuInfo);
 
       for (Index = 0; Index < CpuCount; Index++) {
         DEBUG ((DEBUG_INFO, " CPU %2d APIC ID: %d\n", Index, mSysCpuInfo.CpuInfo[Index].ApicId));
       }
 
-      if (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE) {
+      if ((PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE) || (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE_NOSMRR) ||
+        (mMpDataStruct.SmmRebaseDoneCounter > 0)) {
         // Check SMM rebase result
         if (mMpDataStruct.SmmRebaseDoneCounter != CpuCount) {
           CpuHalt ("CPU SMM rebase failed!\n");
+        } else {
+          DEBUG ((DEBUG_INFO, "SMM rebase done on %d CPUs\n", mMpDataStruct.SmmRebaseDoneCounter));
         }
       }
 
-      //
       // Restore AP buffer (needed for S3)
-      //
       CopyMem (ApBuffer, mBackupBuffer, AP_BUFFER_SIZE);
-
       mMpInitPhase = EnumMpInitRun;
     }
   }
 
   if (Phase == EnumMpInitDone) {
-    if (mMpInitPhase != EnumMpInitRun) {
+    if (mMpInitPhase == EnumMpInitDone) {
+      Status = EFI_UNSUPPORTED;
+    } else if (mMpInitPhase != EnumMpInitRun) {
       Status = EFI_UNSUPPORTED;
     } else {
-      //
+      DEBUG ((DEBUG_INFO, "MP Init (Done)\n"));
+
       // All APs should be in EnumCpuReady now
-      //
+      Status = GetCpuMtrrs (&mMtrrTable);
+      if (!EFI_ERROR(Status)) {
+        for (Index = 1; Index < mSysCpuTask.CpuCount; Index++) {
+          if (mSysCpuTask.CpuTask[Index].State == EnumCpuReady) {
+            MpRunTask (Index, SetCpuMtrrsTask, (UINT64)(UINTN)&mMtrrTable);
+          }
+        }
+        // Allow MTRR sync to complete
+        MicroSecondDelay (100);
+      }
+
       for (Index = 1; Index < mSysCpuTask.CpuCount; Index++) {
         if (mSysCpuTask.CpuTask[Index].State != EnumCpuReady) {
-          DEBUG ((DEBUG_ERROR, " CPU %2d is not ready yet! State = %d\n", Index,
+          DEBUG ((DEBUG_ERROR, " CPU %2d with APIC ID %d is not ready yet! State = %d\n", Index,
                   mSysCpuInfo.CpuInfo[Index].ApicId, mSysCpuTask.CpuTask[Index].State));
         }
       }
 
-      //
       // Send an Init IPI to all the APs to put them back in WFS state
-      //
       SendInitIpiAllExcludingSelf();
 
       mMpInitPhase = EnumMpInitDone;
@@ -465,7 +591,6 @@ MpInit (
   }
 
   return Status;
-
 }
 
 
@@ -505,7 +630,7 @@ MpGetTask (
   Run a task function for a specific processor.
 
   @param[in]  Index       CPU index
-  @param[in]  TaskProc    Task function pointer
+  @param[in]  TaskFunc    Task function pointer
   @param[in]  Argument    Argument for the task function
 
   @retval EFI_INVALID_PARAMETER   Invalid Index parameter.
@@ -517,8 +642,8 @@ EFI_STATUS
 EFIAPI
 MpRunTask (
   IN  UINT32         Index,
-  IN  CPU_TASK_PROC  TaskProc,
-  IN  UINT32         Argument
+  IN  CPU_TASK_FUNC  TaskFunc,
+  IN  UINT64         Argument
   )
 {
   if ((Index >= mSysCpuTask.CpuCount) || (Index == 0)) {
@@ -529,8 +654,8 @@ MpRunTask (
     return EFI_NOT_READY;
   }
 
-  mSysCpuTask.CpuTask[Index].CProcedure = (UINT32)(UINTN)TaskProc;
-  mSysCpuTask.CpuTask[Index].Argument   = (UINT32)Argument;
+  mSysCpuTask.CpuTask[Index].TaskFunc = (UINT64)(UINTN)TaskFunc;
+  mSysCpuTask.CpuTask[Index].Argument   = Argument;
   mSysCpuTask.CpuTask[Index].State      = EnumCpuStart;
 
   return EFI_SUCCESS;
@@ -554,10 +679,10 @@ MpDumpTask (
   UINT32 Index;
 
   for (Index = 0; Index < mSysCpuTask.CpuCount; Index++) {
-    DEBUG ((DEBUG_INFO, "CPU%02X: %08X %08X %08X %08X\n",
+    DEBUG ((DEBUG_INFO, "CPU%02X: %02X %010lX %010lX %010lX\n",
             Index,
             mSysCpuTask.CpuTask[Index].State,
-            mSysCpuTask.CpuTask[Index].CProcedure,
+            mSysCpuTask.CpuTask[Index].TaskFunc,
             mSysCpuTask.CpuTask[Index].Argument,
             mSysCpuTask.CpuTask[Index].Result));
   }

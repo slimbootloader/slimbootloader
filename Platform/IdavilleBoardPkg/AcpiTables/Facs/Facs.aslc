@@ -1,0 +1,66 @@
+/** @file
+
+  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+#include <Acpi/AcpiTablePlatform.h>
+
+EFI_ACPI_5_0_FIRMWARE_ACPI_CONTROL_STRUCTURE Facs = {
+  EFI_ACPI_5_0_FIRMWARE_ACPI_CONTROL_STRUCTURE_SIGNATURE,
+  sizeof (EFI_ACPI_5_0_FIRMWARE_ACPI_CONTROL_STRUCTURE),
+  //
+  // Hardware Signature will be updated at runtime
+  //
+  0x00000000,                   //HardwareSignature
+  0x00000000,                   //FirmwareWakingVector
+  0x00000000,                   //GlobalLock
+  0x00000000,                   //Flags
+  0x0000000000000000,           //XFirmwareWakingVector
+  EFI_ACPI_5_0_FIRMWARE_ACPI_CONTROL_STRUCTURE_VERSION,
+  {
+    EFI_ACPI_RESERVED_BYTE,     //Reserved0[3]
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE
+  },
+  0x00000000,                   //OspmFlags
+  {
+    EFI_ACPI_RESERVED_BYTE,     //Reserved1[24]
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE,
+    EFI_ACPI_RESERVED_BYTE
+  }
+};
+
+VOID *
+ReferenceAcpiTable (
+  VOID
+  )
+{
+  //
+  // Reference the table being generated to prevent the optimizer from
+  // removing the data structure from the executable
+  //
+  return (VOID *)&Facs;
+}

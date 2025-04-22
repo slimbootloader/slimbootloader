@@ -1,13 +1,15 @@
 /** @file
   The file for AHCI mode of ATA host controller.
 
-  Copyright (c) 2010 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2010 - 2024, Intel Corporation. All rights reserved.<BR>
   (C) Copyright 2015 Hewlett Packard Enterprise Development LP<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
 #include "AhciDevice.h"
+
+#define AHCI_COMMAND_RETRIES  5
 
 /**
   Read AHCI Operation register.
@@ -616,6 +618,302 @@ AhciBuildCommandFis (
 }
 
 /**
+  Wait until SATA device reports it is ready for operation.
+
+  @param[in] PciIo    Pointer to AHCI controller
+  @param[in] Port     SATA port index on which to reset.
+
+  @retval EFI_SUCCESS  Device ready for operation.
+  @retval EFI_TIMEOUT  Device failed to get ready within required period.
+**/
+EFI_STATUS
+AhciWaitDeviceReady (
+  IN EFI_AHCI_CONTROLLER *PciIo,
+  IN UINT8                Port
+  )
+{
+  UINT32  PhyDetectDelay;
+  UINT32  Data;
+  UINT32  Offset;
+
+  //
+  // According to SATA1.0a spec section 5.2, we need to wait for PxTFD.BSY and PxTFD.DRQ
+  // and PxTFD.ERR to be zero. The maximum wait time is 16s which is defined at ATA spec.
+  //
+  PhyDetectDelay = 16 * 1000;
+  do {
+    Offset = EFI_AHCI_PORT_START + Port * EFI_AHCI_PORT_REG_WIDTH + EFI_AHCI_PORT_SERR;
+    if (AhciReadReg (PciIo, Offset) != 0) {
+      AhciWriteReg (PciIo, Offset, AhciReadReg (PciIo, Offset));
+    }
+
+    Offset = EFI_AHCI_PORT_START + Port * EFI_AHCI_PORT_REG_WIDTH + EFI_AHCI_PORT_TFD;
+
+    Data = AhciReadReg (PciIo, Offset) & EFI_AHCI_PORT_TFD_MASK;
+    if (Data == 0) {
+      break;
+    }
+
+    MicroSecondDelay (1000);
+    PhyDetectDelay--;
+  } while (PhyDetectDelay > 0);
+
+  if (PhyDetectDelay == 0) {
+    DEBUG ((DEBUG_ERROR, "Port %d Device not ready (TFD=0x%X)\n", Port, Data));
+    return EFI_TIMEOUT;
+  } else {
+    return EFI_SUCCESS;
+  }
+}
+
+/**
+  Reset the SATA port. Algorithm follows AHCI spec 1.3.1 section 10.4.2
+
+  @param[in] PciIo    Pointer to AHCI controller.
+  @param[in] Port     SATA port index on which to reset.
+
+  @retval EFI_SUCCESS  Port reset.
+  @retval Others       Failed to reset the port.
+**/
+EFI_STATUS
+AhciResetPort (
+  IN EFI_AHCI_CONTROLLER *PciIo,
+  IN UINT8                Port
+  )
+{
+  UINT32      Offset;
+  EFI_STATUS  Status;
+
+  Offset = EFI_AHCI_PORT_START + Port * EFI_AHCI_PORT_REG_WIDTH + EFI_AHCI_PORT_SCTL;
+  AhciOrReg (PciIo, Offset, EFI_AHCI_PORT_SCTL_DET_INIT);
+  //
+  // SW is required to keep DET set to 0x1 at least for 1 milisecond to ensure that
+  // at least one COMRESET signal is sent.
+  //
+  MicroSecondDelay (1000);
+  AhciAndReg (PciIo, Offset, ~(UINT32)EFI_AHCI_PORT_SSTS_DET_MASK);
+
+  Offset = EFI_AHCI_PORT_START + Port * EFI_AHCI_PORT_REG_WIDTH + EFI_AHCI_PORT_SSTS;
+  Status = AhciWaitMmioSet (PciIo, Offset, EFI_AHCI_PORT_SSTS_DET_MASK, EFI_AHCI_PORT_SSTS_DET_PCE, ATA_ATAPI_TIMEOUT);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  return AhciWaitDeviceReady (PciIo, Port);
+}
+
+/**
+  Recovers the SATA port from error condition.
+  This function implements algorithm described in
+  AHCI spec 1.3.1 section 6.2.2
+
+  @param[in] PciIo    Pointer to AHCI controller
+  @param[in] Port     SATA port index on which to check.
+
+  @retval EFI_SUCCESS  Port recovered.
+  @retval Others       Failed to recover port.
+**/
+EFI_STATUS
+AhciRecoverPortError (
+  IN EFI_AHCI_CONTROLLER *PciIo,
+  IN UINT8                Port
+  )
+{
+  UINT32      Offset;
+  UINT32      PortInterrupt;
+  UINT32      PortTfd;
+  EFI_STATUS  Status;
+
+  Offset        = EFI_AHCI_PORT_START + Port * EFI_AHCI_PORT_REG_WIDTH + EFI_AHCI_PORT_IS;
+  PortInterrupt = AhciReadReg (PciIo, Offset);
+  if ((PortInterrupt & EFI_AHCI_PORT_IS_FATAL_ERROR_MASK) == 0) {
+    //
+    // No fatal error detected. Exit with success as port should still be operational.
+    // No need to clear IS as it will be cleared when the next command starts.
+    //
+    return EFI_SUCCESS;
+  }
+
+  Offset = EFI_AHCI_PORT_START + Port * EFI_AHCI_PORT_REG_WIDTH + EFI_AHCI_PORT_CMD;
+  AhciAndReg (PciIo, Offset, ~(UINT32)EFI_AHCI_PORT_CMD_ST);
+
+  Status = AhciWaitMmioSet (PciIo, Offset, EFI_AHCI_PORT_CMD_CR, 0, ATA_ATAPI_TIMEOUT);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Ahci port %d is in hung state, aborting recovery\n", Port));
+    return Status;
+  }
+
+  //
+  // If TFD.BSY or TFD.DRQ is still set it means that drive is hung and software has
+  // to reset it before sending any additional commands.
+  //
+  Offset  = EFI_AHCI_PORT_START + Port * EFI_AHCI_PORT_REG_WIDTH + EFI_AHCI_PORT_TFD;
+  PortTfd = AhciReadReg (PciIo, Offset);
+  if ((PortTfd & (EFI_AHCI_PORT_TFD_BSY | EFI_AHCI_PORT_TFD_DRQ)) != 0) {
+    Status = AhciResetPort (PciIo, Port);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to reset the port %d\n", Port));
+    }
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Checks if specified FIS has been received.
+
+  @param[in] PciIo    Pointer to AHCI controller
+  @param[in] Port     SATA port index on which to check.
+  @param[in] FisType  FIS type for which to check.
+
+  @retval EFI_SUCCESS       FIS received.
+  @retval EFI_NOT_READY     FIS not received yet.
+  @retval EFI_DEVICE_ERROR  AHCI controller reported an error on port.
+**/
+EFI_STATUS
+AhciCheckFisReceived (
+  IN EFI_AHCI_CONTROLLER *PciIo,
+  IN UINT8                Port,
+  IN SATA_FIS_TYPE        FisType
+  )
+{
+  UINT32  Offset;
+  UINT32  PortInterrupt;
+  UINT32  PortTfd;
+
+  Offset        = EFI_AHCI_PORT_START + Port * EFI_AHCI_PORT_REG_WIDTH + EFI_AHCI_PORT_IS;
+  PortInterrupt = AhciReadReg (PciIo, Offset);
+  if ((PortInterrupt & EFI_AHCI_PORT_IS_ERROR_MASK) != 0) {
+    DEBUG ((DEBUG_ERROR, "AHCI: Error interrupt reported PxIS: %X\n", PortInterrupt));
+    return EFI_DEVICE_ERROR;
+  }
+
+  //
+  // For PIO setup FIS - According to SATA 2.6 spec section 11.7, D2h FIS means an error encountered.
+  // But Qemu and Marvel 9230 sata controller may just receive a D2h FIS from device
+  // after the transaction is finished successfully.
+  // To get better device compatibilities, we further check if the PxTFD's ERR bit is set.
+  // By this way, we can know if there is a real error happened.
+  //
+  if (((FisType == SataFisD2H) && ((PortInterrupt & EFI_AHCI_PORT_IS_DHRS) != 0)) ||
+      ((FisType == SataFisPioSetup) && ((PortInterrupt & (EFI_AHCI_PORT_IS_PSS | EFI_AHCI_PORT_IS_DHRS)) != 0)) ||
+      ((FisType == SataFisDmaSetup) && ((PortInterrupt & (EFI_AHCI_PORT_IS_DSS | EFI_AHCI_PORT_IS_DHRS)) != 0)))
+  {
+    Offset  = EFI_AHCI_PORT_START + Port * EFI_AHCI_PORT_REG_WIDTH + EFI_AHCI_PORT_TFD;
+    PortTfd = AhciReadReg (PciIo, (UINT32)Offset);
+    if ((PortTfd & EFI_AHCI_PORT_TFD_ERR) != 0) {
+      return EFI_DEVICE_ERROR;
+    } else {
+      return EFI_SUCCESS;
+    }
+  }
+
+  return EFI_NOT_READY;
+}
+
+/**
+  Waits until specified FIS has been received.
+
+  @param[in] PciIo    Pointer to AHCI controller
+  @param[in] Port     SATA port index on which to check.
+  @param[in] Timeout  Time after which function should stop polling.
+  @param[in] FisType  FIS type for which to check.
+
+  @retval EFI_SUCCESS       FIS received.
+  @retval EFI_TIMEOUT       FIS failed to arrive within a specified time period.
+  @retval EFI_DEVICE_ERROR  AHCI controller reported an error on port.
+**/
+EFI_STATUS
+AhciWaitUntilFisReceived (
+  IN EFI_AHCI_CONTROLLER *PciIo,
+  IN UINT8                Port,
+  IN UINT64               Timeout,
+  IN SATA_FIS_TYPE        FisType
+  )
+{
+  EFI_STATUS  Status;
+  BOOLEAN     InfiniteWait;
+  UINT64      Delay;
+
+  Delay =  DivU64x32 (Timeout, 1000) + 1;
+  if (Timeout == 0) {
+    InfiniteWait = TRUE;
+  } else {
+    InfiniteWait = FALSE;
+  }
+
+  do {
+    Status = AhciCheckFisReceived (PciIo, Port, FisType);
+    if (Status != EFI_NOT_READY) {
+      return Status;
+    }
+
+    //
+    // Stall for 100 microseconds.
+    //
+    MicroSecondDelay (100);
+    Delay--;
+  } while (InfiniteWait || (Delay > 0));
+
+  return EFI_TIMEOUT;
+}
+
+/**
+  Prints contents of the ATA command block into the debug port.
+
+  @param[in] AtaCommandBlock  AtaCommandBlock to print.
+  @param[in] DebugLevel       Debug level on which to print.
+**/
+VOID
+AhciPrintCommandBlock (
+  IN EFI_ATA_COMMAND_BLOCK  *AtaCommandBlock,
+  IN UINT32                 DebugLevel
+  )
+{
+  DEBUG ((DebugLevel, "ATA COMMAND BLOCK:\n"));
+  DEBUG ((DebugLevel, "AtaCommand: %d\n", AtaCommandBlock->AtaCommand));
+  DEBUG ((DebugLevel, "AtaFeatures: %X\n", AtaCommandBlock->AtaFeatures));
+  DEBUG ((DebugLevel, "AtaSectorNumber: %d\n", AtaCommandBlock->AtaSectorNumber));
+  DEBUG ((DebugLevel, "AtaCylinderLow: %X\n", AtaCommandBlock->AtaCylinderHigh));
+  DEBUG ((DebugLevel, "AtaCylinderHigh: %X\n", AtaCommandBlock->AtaCylinderHigh));
+  DEBUG ((DebugLevel, "AtaDeviceHead: %d\n", AtaCommandBlock->AtaDeviceHead));
+  DEBUG ((DebugLevel, "AtaSectorNumberExp: %d\n", AtaCommandBlock->AtaSectorNumberExp));
+  DEBUG ((DebugLevel, "AtaCylinderLowExp: %X\n", AtaCommandBlock->AtaCylinderLowExp));
+  DEBUG ((DebugLevel, "AtaCylinderHighExp: %X\n", AtaCommandBlock->AtaCylinderHighExp));
+  DEBUG ((DebugLevel, "AtaFeaturesExp: %X\n", AtaCommandBlock->AtaFeaturesExp));
+  DEBUG ((DebugLevel, "AtaSectorCount: %d\n", AtaCommandBlock->AtaSectorCount));
+  DEBUG ((DebugLevel, "AtaSectorCountExp: %d\n", AtaCommandBlock->AtaSectorCountExp));
+}
+
+/**
+  Prints contents of the ATA status block into the debug port.
+
+  @param[in] AtaStatusBlock   AtaStatusBlock to print.
+  @param[in] DebugLevel       Debug level on which to print.
+**/
+VOID
+AhciPrintStatusBlock (
+  IN EFI_ATA_STATUS_BLOCK  *AtaStatusBlock,
+  IN UINT32                DebugLevel
+  )
+{
+  //
+  // Skip NULL pointer
+  //
+  if (AtaStatusBlock == NULL) {
+    return;
+  }
+
+  //
+  // Only print status and error since we have all of the rest printed as
+  // a part of command block print.
+  //
+  DEBUG ((DebugLevel, "ATA STATUS BLOCK:\n"));
+  DEBUG ((DebugLevel, "AtaStatus: %d\n", AtaStatusBlock->AtaStatus));
+  DEBUG ((DebugLevel, "AtaError: %d\n", AtaStatusBlock->AtaError));
+}
+
+/**
   Start a PIO data transfer on specific port.
 
   @param[in]       AhciController               The AHCI controller protocol instance.
@@ -872,14 +1170,12 @@ AhciDmaTransfer (
   )
 {
   EFI_STATUS                    Status;
-  UINTN                         Offset;
   EFI_PHYSICAL_ADDRESS          PhyAddr;
   EFI_AHCI_COMMAND_FIS          CFis;
   EFI_AHCI_COMMAND_LIST         CmdList;
-  UINTN                         FisBaseAddr;
-  UINT32                        PortTfd;
   UINTN                         MapLength;
   VOID                          *MapData;
+  UINT32                        Retry;
 
   if (AhciController == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -911,19 +1207,20 @@ AhciDmaTransfer (
   CmdList.AhciCmdCfl = EFI_AHCI_FIS_REGISTER_H2D_LENGTH / 4;
   CmdList.AhciCmdW   = Read ? 0 : 1;
 
-  AhciBuildCommand (
-    AhciController,
-    AhciRegisters,
-    Port,
-    PortMultiplier,
-    &CFis,
-    &CmdList,
-    AtapiCommand,
-    AtapiCommandLength,
-    0,
-    (VOID *) (UINTN)PhyAddr,
-    DataCount
-    );
+  for (Retry = 0; Retry < AHCI_COMMAND_RETRIES; Retry++) {
+    AhciBuildCommand (
+      AhciController,
+      AhciRegisters,
+      Port,
+      PortMultiplier,
+      &CFis,
+      &CmdList,
+      AtapiCommand,
+      AtapiCommandLength,
+      0,
+      (VOID *) (UINTN)PhyAddr,
+      DataCount
+      );
 
   Status = AhciStartCommand (
              AhciController,
@@ -931,31 +1228,23 @@ AhciDmaTransfer (
              0,
              Timeout
              );
-  if (EFI_ERROR (Status)) {
-    goto Exit;
-  }
+    if (EFI_ERROR (Status)) {
+      goto Exit;
+    }
 
-  //
-  // Wait for command compelte
-  //
-  FisBaseAddr = (UINTN)AhciRegisters->AhciRFis + Port * sizeof (EFI_AHCI_RECEIVED_FIS);
-  Offset      = FisBaseAddr + EFI_AHCI_D2H_FIS_OFFSET;
-
-  Status = AhciWaitMemSet (
-             Offset,
-             EFI_AHCI_FIS_TYPE_MASK,
-             EFI_AHCI_FIS_REGISTER_D2H,
-             Timeout
-             );
-
-  if (EFI_ERROR (Status)) {
-    goto Exit;
-  }
-
-  Offset = EFI_AHCI_PORT_START + Port * EFI_AHCI_PORT_REG_WIDTH + EFI_AHCI_PORT_TFD;
-  PortTfd = AhciReadReg (AhciController, (UINT32) Offset);
-  if ((PortTfd & EFI_AHCI_PORT_TFD_ERR) != 0) {
-    Status = EFI_DEVICE_ERROR;
+    //
+    // Check if command is received
+    //
+    Status = AhciWaitUntilFisReceived  (AhciController, Port, Timeout, SataFisD2H);
+    if (Status == EFI_DEVICE_ERROR) {
+      DEBUG ((DEBUG_ERROR, "DMA command failed at retry: %d\n", Retry));
+        Status = AhciRecoverPortError (AhciController, Port);
+        if (EFI_ERROR (Status)) {
+          goto Exit;
+        }
+      } else {
+        break;
+      }
   }
 
 Exit:
@@ -983,6 +1272,17 @@ Exit:
   }
 
   AhciDumpPortStatus (AhciController, AhciRegisters, Port, AtaStatusBlock);
+
+  if (Status == EFI_DEVICE_ERROR) {
+    DEBUG ((DEBUG_ERROR, "Failed to execute command for DMA transfer:\n"));
+    //
+    // Repeat command block here to make sure it is printed on
+    // device error debug level.
+    //
+    AhciPrintCommandBlock (AtaCommandBlock, DEBUG_ERROR);
+    AhciPrintStatusBlock (AtaStatusBlock, DEBUG_ERROR);
+  }
+
   return Status;
 }
 

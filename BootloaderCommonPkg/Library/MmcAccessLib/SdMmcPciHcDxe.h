@@ -70,7 +70,7 @@ typedef struct {
 
 typedef struct {
   UINTN                               Signature;
-
+  UINTN                               SdMmcHcPciBase;
   UINT32                              SdMmcHcBase;
 
   SD_MMC_HC_SLOT                      Slot;

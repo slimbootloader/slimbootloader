@@ -1,7 +1,7 @@
 /** @file
 Lite variable service library
 
-Copyright (c) 2006 - 2016, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2006 - 2023, Intel Corporation. All rights reserved.<BR>
 Portions copyright (c) 2008 - 2009, Apple Inc. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -57,7 +57,7 @@ GetVariableInstance (
 
 **/
 VOID *
-GetVaraibelStoreBase (
+GetVariableStoreBase (
   IN OUT  UINT32 *Size      OPTIONAL
   )
 {
@@ -194,7 +194,7 @@ GetActiveVaraibelStoreBase (
   VARIABLE_STORE_HEADER  *VarStoreHdrPtr2;
   VARIABLE_STORE_HEADER  *VarStoreHdrPtr;
 
-  VarStoreHdrPtr1 = (VARIABLE_STORE_HEADER *)GetVaraibelStoreBase (&VarStoreLen);
+  VarStoreHdrPtr1 = (VARIABLE_STORE_HEADER *)GetVariableStoreBase (&VarStoreLen);
   if (VarStoreHdrPtr1 == NULL) {
     return NULL;
   }
@@ -243,7 +243,7 @@ InitializeVariableStore (
   UINT8                   State;
   EFI_STATUS              Status;
 
-  VarStoreHdrPtr1 = (VARIABLE_STORE_HEADER *)GetVaraibelStoreBase (&FullVarStoreLen);
+  VarStoreHdrPtr1 = (VARIABLE_STORE_HEADER *)GetVariableStoreBase (&FullVarStoreLen);
   if (VarStoreHdrPtr1 == NULL) {
     return EFI_NOT_READY;
   }
@@ -329,6 +329,7 @@ InitializeVariableStore (
   This function will do basic validation, before parse the data.
 
   @param VariableName               Name of Variable to be found.
+  @param VariableGuid               Variable GUID. Zero GUID would be used if it is NULL.
   @param Attributes                 Attribute value of the variable found.
   @param DataSize                   Size of Data found. If size is less than the
                                     data, this value contains the required size.
@@ -346,8 +347,9 @@ InitializeVariableStore (
 EFI_STATUS
 EFIAPI
 InternalGetVariable (
-  IN      CHAR8             *VariableName,
-  OUT     UINT8             *Attributes OPTIONAL,
+  IN      CHAR16            *VariableName,
+  IN      EFI_GUID          *VariableGuid OPTIONAL,
+  OUT     UINT32            *Attributes OPTIONAL,
   IN OUT  UINTN             *DataSize,
   OUT     VOID              *Data OPTIONAL,
   IN OUT  VARIABLE_HEADER  **VariableHeader OPTIONAL
@@ -363,9 +365,15 @@ InternalGetVariable (
   UINT32                  VariableNameLen;
   UINT32                  VariableDataLen;
   UINTN                   DataSizeIn;
+  EFI_GUID                *VarGuid;
 
   if ((DataSize == NULL) || (VariableName == NULL)) {
     return EFI_INVALID_PARAMETER;
+  }
+
+  VarGuid = VariableGuid;
+  if (VarGuid == NULL) {
+    VarGuid = &gZeroGuid;
   }
 
   VarStoreHdrPtr = GetActiveVaraibelStoreBase (&VarStoreLen);
@@ -373,7 +381,7 @@ InternalGetVariable (
     return EFI_VOLUME_CORRUPTED;
   }
 
-  VariableNameLen = (UINT32)AsciiStrLen (VariableName) + 1;
+  VariableNameLen = (UINT32)StrSize (VariableName);
   VarHdrPtr = (VARIABLE_HEADER *)&VarStoreHdrPtr[1];
   VarEndPtr = (UINT8 *)VarStoreHdrPtr + VarStoreHdrPtr->Size;
 
@@ -390,7 +398,8 @@ InternalGetVariable (
     }
 
     if (IS_DATA_VALID (State) && !IS_DELETED (State)) {
-      if (AsciiStrCmp ((VOID *)&VarHdrPtr[1], VariableName) == 0) {
+      if ((StrCmp ((VOID *)&VarHdrPtr[1], VariableName) == 0) &&
+           CompareGuid (VarGuid, &VarHdrPtr->VariableGuid)) {
         FindVarHdrPtr = VarHdrPtr;
         if (!IS_IN_MIGRATION (State)) {
           break;
@@ -412,7 +421,7 @@ InternalGetVariable (
   DataSizeIn = *DataSize;
   VariableDataLen = FindVarHdrPtr->DataSize - VariableNameLen;
   *DataSize = VariableDataLen;
-  if (DataSizeIn <  VariableDataLen) {
+  if ((Data != NULL) && (DataSizeIn <  VariableDataLen)) {
     return EFI_BUFFER_TOO_SMALL;
   }
 
@@ -430,11 +439,10 @@ InternalGetVariable (
 
 /**
 
-  This code finds variable in storage blocks.
-
-  This function will just call internal function to find variable.
+  This code gets variable in storage blocks.
 
   @param VariableName               Name of Variable to be found.
+  @param VariableGuid               Variable GUID. Zero GUID would be used if it is NULL.
   @param Attributes                 Attribute value of the variable found.
   @param DataSize                   Size of Data found. If size is less than the
                                     data, this value contains the required size.
@@ -451,13 +459,14 @@ InternalGetVariable (
 EFI_STATUS
 EFIAPI
 GetVariable (
-  IN      CHAR8             *VariableName,
-  OUT     UINT8             *Attributes OPTIONAL,
+  IN      CHAR16            *VariableName,
+  IN      EFI_GUID          *VariableGuid OPTIONAL,
+  OUT     UINT32            *Attributes OPTIONAL,
   IN OUT  UINTN             *DataSize,
   OUT     VOID              *Data OPTIONAL
   )
 {
-  return InternalGetVariable (VariableName, Attributes, DataSize, Data, NULL);
+  return InternalGetVariable (VariableName, VariableGuid, Attributes, DataSize, Data, NULL);
 }
 
 /**
@@ -465,12 +474,11 @@ GetVariable (
   This code Finds the Next available variable.
 
   Caution: This function may receive untrusted input.
-  This function may be invoked in SMM mode. This function will do basic validation, before parse the data.
 
   @param VariableNameSize           The size of the VariableName buffer. The size must be large
                                     enough to fit input string supplied in VariableName buffer.
   @param VariableName               Pointer to variable name.
-  @param VariableKey                Pointer to variable key for searching next variable.
+  @param VariableGuid               Variable GUID.
 
   @retval EFI_SUCCESS               The function completed successfully.
   @retval EFI_NOT_FOUND             The next variable was not found.
@@ -490,21 +498,19 @@ EFI_STATUS
 EFIAPI
 GetNextVariableName (
   IN OUT  UINTN             *VariableNameSize,
-  IN OUT  CHAR8             *VariableName,
-  IN OUT  UINTN             *VariableKey
+  IN OUT  CHAR16            *VariableName,
+  IN OUT  EFI_GUID          *VariableGuid
   )
 {
-
   UINT32                  VarStoreLen;
   VARIABLE_STORE_HEADER  *VarStoreHdrPtr;
   VARIABLE_HEADER        *VarHdrPtr;
   VARIABLE_HEADER        *FindVarHdrPtr;
   UINT8                  *VarEndPtr;
   UINT8                   State;
-  UINTN                   Key;
   UINT32                  VariableNameLen;
 
-  if ((VariableNameSize == NULL) || (VariableName == NULL) || (VariableKey == NULL)) {
+  if ((VariableNameSize == NULL) || (VariableName == NULL) || (VariableGuid == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -516,42 +522,63 @@ GetNextVariableName (
   VarHdrPtr = (VARIABLE_HEADER *)&VarStoreHdrPtr[1];
   VarEndPtr = (UINT8 *)VarStoreHdrPtr + VarStoreHdrPtr->Size;
 
-  Key   = 0;
-  FindVarHdrPtr = NULL;
-  while ((UINT8 *)VarHdrPtr < VarEndPtr) {
-    State = VarHdrPtr->State;
-    if (!IS_HEADER_VALID (State)) {
-      VarHdrPtr = NULL;
-      break;
-    }
-
-    if (IS_DATA_VALID (State) && !IS_DELETED (State)) {
-      if (Key++ == *VariableKey) {
-        FindVarHdrPtr = VarHdrPtr;
+  if (VariableName[0] == 0) {
+    // Return the first valid variable if VariableName starts with L"\0"
+    FindVarHdrPtr = VarHdrPtr;
+  } else {
+    // Find current variable
+    FindVarHdrPtr = NULL;
+    while ((UINT8 *)VarHdrPtr < VarEndPtr) {
+      State = VarHdrPtr->State;
+      if (VarHdrPtr->StartId != VARIABLE_DATA) {
         break;
       }
+
+      if (IS_HEADER_VALID (State) && IS_DATA_VALID (State) && !IS_DELETED (State)) {
+        if ((StrCmp ((VOID *)&VarHdrPtr[1], VariableName) == 0) &&
+             CompareGuid (VariableGuid, &VarHdrPtr->VariableGuid)) {
+          FindVarHdrPtr = (VARIABLE_HEADER *) ((UINT8 *)&VarHdrPtr[1] + VarHdrPtr->DataSize);;
+          break;
+        }
+      }
+
+      VarHdrPtr = (VARIABLE_HEADER *) ((UINT8 *)&VarHdrPtr[1] + VarHdrPtr->DataSize);
     }
-
-    VarHdrPtr = (VARIABLE_HEADER *) ((UINT8 *)&VarHdrPtr[1] + VarHdrPtr->DataSize);
-  }
-
-  if (VarHdrPtr == NULL) {
-    return EFI_VOLUME_CORRUPTED;
   }
 
   if (FindVarHdrPtr == NULL) {
     return EFI_NOT_FOUND;
   }
 
-  VariableNameLen = (UINT32)AsciiStrLen ((CONST CHAR8 *)&FindVarHdrPtr[1]) + 1;
+  // Find the next valid variable
+  VarHdrPtr     = FindVarHdrPtr;
+  FindVarHdrPtr = NULL;
+  while ((UINT8 *)VarHdrPtr < VarEndPtr) {
+    State = VarHdrPtr->State;
+    if (VarHdrPtr->StartId != VARIABLE_DATA) {
+      break;
+    }
+
+    if (IS_HEADER_VALID (State) && IS_DATA_VALID (State) && !IS_DELETED (State)) {
+      FindVarHdrPtr = VarHdrPtr;
+      break;
+    }
+
+    VarHdrPtr = (VARIABLE_HEADER *) ((UINT8 *)&VarHdrPtr[1] + VarHdrPtr->DataSize);
+  }
+
+  if (FindVarHdrPtr == NULL) {
+    return EFI_NOT_FOUND;
+  }
+
+  VariableNameLen = (UINT32)StrSize ((CONST CHAR16 *)&FindVarHdrPtr[1]);
   if (*VariableNameSize < VariableNameLen) {
     *VariableNameSize = VariableNameLen;
     return EFI_BUFFER_TOO_SMALL;
   }
 
   CopyMem (VariableName, (UINT8 *)&FindVarHdrPtr[1], VariableNameLen);
-  *VariableKey = Key;
-
+  CopyGuid (VariableGuid, &FindVarHdrPtr->VariableGuid);
   return EFI_SUCCESS;
 
 }
@@ -563,7 +590,7 @@ GetNextVariableName (
   @param   ActiveVarStoreHdrPtr       The active variable store header pointer
 
   @retval  EFI_DEVICE_ERROR      Failed to erase device
-    @retval  EFI_SUCCESS           Variable store was reclaimed successfully
+  @retval  EFI_SUCCESS           Variable store was reclaimed successfully
 
 **/
 
@@ -578,20 +605,20 @@ Reclaim (
   VARIABLE_STORE_HEADER  *VarStoreHdrPtr1;
   VARIABLE_STORE_HEADER  *VarStoreHdrPtr2;
   VARIABLE_STORE_HEADER  *InactiveVarStoreHdrPtr;
-  CHAR8                   VarName[VARIABLE_NAME_MAX_LEN];
+  CHAR16                  VarName[VARIABLE_NAME_MAX_LEN];
   EFI_STATUS              Status;
   VARIABLE_HEADER        *VarHdrPtr;
   VARIABLE_HEADER         VarHdr;
   UINT8                  *CurPtr;
   UINTN                   DataLen;
   UINTN                   NameSize;
-  UINTN                   Key;
   UINT8                   ActiveState;
   UINT8                   InactiveState;
+  EFI_GUID                VarGuid;
 
   DEBUG ((DEBUG_INFO, "Reclaiming variable storage\n"));
 
-  VarStoreHdrPtr1 = (VARIABLE_STORE_HEADER *)GetVaraibelStoreBase (&FullVarStoreLen);
+  VarStoreHdrPtr1 = (VARIABLE_STORE_HEADER *)GetVariableStoreBase (&FullVarStoreLen);
   if (VarStoreHdrPtr1 == NULL) {
     return EFI_NOT_READY;
   }
@@ -617,12 +644,12 @@ Reclaim (
   //
   // Copy variable over one by one
   //
-  Key = 0;
+  VarName[0] = 0;
   while (TRUE) {
     NameSize = sizeof (VarName);
-    Status   = GetNextVariableName (&NameSize, VarName, &Key);
+    Status   = GetNextVariableName (&NameSize, VarName, &VarGuid);
     if (!EFI_ERROR (Status)) {
-      Status = InternalGetVariable (VarName, NULL, &DataLen, NULL, &VarHdrPtr);
+      Status = InternalGetVariable (VarName, &VarGuid, NULL, &DataLen, NULL, &VarHdrPtr);
       if (!EFI_ERROR (Status)) {
         CopyMem (&VarHdr, VarHdrPtr, sizeof (VarHdr));
         VarHdr.State |= VAR_IN_MIGRATION;
@@ -686,14 +713,8 @@ Reclaim (
 
   This code sets variable in storage blocks.
 
-  Caution: This function may receive untrusted input.
-  This function may be invoked in SMM mode, and datasize and data are external input.
-  This function will do basic validation, before parse the data.
-  This function will parse the authentication carefully to avoid security issues, like
-  buffer overflow, integer overflow.
-  This function will check attribute carefully to avoid authentication bypass.
-
   @param VariableName                     Name of Variable to be found.
+  @param VariableGuid                     Zero GUID would be used if it is NULL.
   @param Attributes                       Attribute value of the variable found
   @param DataSize                         Size of Data found. If size is less than the
                                           data, this value contains the required size.
@@ -710,9 +731,10 @@ Reclaim (
 EFI_STATUS
 EFIAPI
 SetVariable (
-  IN CHAR8                  *VariableName,
-  IN UINT8                   Attributes,
-  IN UINTN                   DataSize,
+  IN CHAR16                 *VariableName,
+  IN EFI_GUID               *VariableGuid OPTIONAL,
+  IN UINT32                 Attributes OPTIONAL,
+  IN UINTN                  DataSize,
   IN VOID                   *Data
   )
 {
@@ -735,13 +757,19 @@ SetVariable (
   BOOLEAN                 SkipVarWrite;
   BOOLEAN                 CheckVarDataValid;
   BOOLEAN                 NeedReclaim;
+  EFI_GUID                *VarGuid;
 
-  if (VariableName == NULL) {
+  if ((VariableName == NULL) || (VariableName[0] == 0)) {
     return EFI_INVALID_PARAMETER;
   }
 
   if ((Data == NULL) && (DataSize > 0)) {
     return EFI_INVALID_PARAMETER;
+  }
+
+  VarGuid = VariableGuid;
+  if (VarGuid == NULL) {
+    VarGuid = &gZeroGuid;
   }
 
   VarStoreHdrPtr = GetActiveVaraibelStoreBase (&VarStoreLen);
@@ -752,7 +780,7 @@ SetVariable (
   VarHdrPtr = (VARIABLE_HEADER *)&VarStoreHdrPtr[1];
   VarEndPtr = (UINT8 *)VarStoreHdrPtr + VarStoreHdrPtr->Size;
 
-  VariableNameLen = (UINT32)AsciiStrLen (VariableName) + 1;
+  VariableNameLen = (UINT32)StrSize (VariableName);
   if (DataSize == 0) {
     //
     // Need to delete a variable
@@ -845,9 +873,10 @@ SetVariable (
 
     if (IS_DATA_VALID (State) && !IS_DELETED (State)) {
       //
-      // Check if variable name match
+      // Check if variable match
       //
-      if (AsciiStrCmp ((VOID *)&VarHdrPtr[1], VariableName) == 0) {
+      if ((StrCmp ((VOID *)&VarHdrPtr[1], VariableName) == 0) &&
+           CompareGuid (VarGuid, &VarHdrPtr->VariableGuid)) {
         if (FindVarHdrPtr != NULL) {
           //
           // 2nd match found, need to mark the previous one as invalid
@@ -893,7 +922,7 @@ SetVariable (
       if (EFI_ERROR (Status)) {
         return EFI_DEVICE_ERROR;
       }
-      return SetVariable (VariableName, Attributes, DataSize, Data);
+      return SetVariable (VariableName, VariableGuid, Attributes, DataSize, Data);
     }
     return EFI_OUT_OF_RESOURCES;
   }
@@ -906,6 +935,7 @@ SetVariable (
     VarHdr.StartId  = VARIABLE_DATA;
     VarHdr.State    = 0xFF;
     VarHdr.DataSize = (UINT16)TotalLen - sizeof (VARIABLE_HEADER);
+    CopyGuid (&VarHdr.VariableGuid, VarGuid);
     Status = WriteVariableStore (VarHdrPtr, sizeof (VarHdr), &VarHdr);
     if (EFI_ERROR (Status)) {
       return Status;
@@ -972,6 +1002,69 @@ SetVariable (
       return EFI_NOT_FOUND;
     }
   }
+
+  return EFI_SUCCESS;
+}
+
+/**
+
+  This code returns information about the variables.
+
+  @param Attributes                     Variable store type. It is not used.
+  @param MaxVariableStorageSize         Pointer to the maximum size of the storage space available.
+  @param RemainingStorageSize           Pointer to the remaining size of the storage space available.
+  @param MaxVariableSize                Pointer to the maximum size of an individual EFI variables.
+
+
+  @return EFI_INVALID_PARAMETER         An invalid combination of attribute bits was supplied.
+  @return EFI_SUCCESS                   Query successfully.
+  @return EFI_UNSUPPORTED               The attribute is not supported on this platform.
+
+**/
+EFI_STATUS
+EFIAPI
+QueryVariableInfo (
+  IN  UINT32  Attributes OPTIONAL,
+  OUT UINT64  *MaxVariableStorageSize,
+  OUT UINT64  *RemainingStorageSize,
+  OUT UINT64  *MaxVariableSize
+  )
+{
+  VARIABLE_STORE_HEADER   *VarStoreHdrPtr;
+  VARIABLE_HEADER         *VarHdrPtr;
+  UINT8                   *VarEndPtr;
+  UINTN                   UsedSize;
+  UINT8                   State;
+
+  if (MaxVariableStorageSize == NULL || RemainingStorageSize == NULL || MaxVariableSize == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  VarStoreHdrPtr = GetActiveVaraibelStoreBase (NULL);
+  if (!IsVariableStoreValid (VarStoreHdrPtr)) {
+    return EFI_VOLUME_CORRUPTED;
+  }
+
+  // Loop through Variable entries looking for deleted vars and last entry
+  UsedSize  = 0;
+  VarHdrPtr = (VARIABLE_HEADER *)&VarStoreHdrPtr[1];
+  VarEndPtr = (UINT8 *)VarStoreHdrPtr + VarStoreHdrPtr->Size;
+  while ((UINT8 *)VarHdrPtr < VarEndPtr) {
+    if (VarHdrPtr->StartId != VARIABLE_DATA) {
+      break;
+    }
+
+    State = VarHdrPtr->State;
+    if (IS_HEADER_VALID (State) && IS_DATA_VALID (State) && !IS_DELETED (State)) {
+      UsedSize += VarHdrPtr->DataSize + sizeof(VARIABLE_HEADER);
+    }
+
+    VarHdrPtr = (VARIABLE_HEADER *) ((UINT8 *)&VarHdrPtr[1] + VarHdrPtr->DataSize);
+  }
+
+  *MaxVariableStorageSize = VarStoreHdrPtr->Size - sizeof(VARIABLE_STORE_HEADER);
+  *RemainingStorageSize   = *MaxVariableStorageSize - UsedSize;
+  *MaxVariableSize        = MAX_UINT16 - sizeof(VARIABLE_HEADER);
 
   return EFI_SUCCESS;
 }

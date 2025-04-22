@@ -6,7 +6,7 @@
 **/
 
 #include <Library/DebugDataLib.h>
-
+#include <BootloaderCoreGlobal.h>
 
 /**
   Allocate Memory for Debug Test Cases.

@@ -198,8 +198,8 @@ DefinitionBlock(
       If(And(\_PR.CFGD, PPM_TSTATE_FINE_GRAINED))
       {
         Return(Subtract(SizeOf(TSMF),1))
-      }  
-      Else 
+      }
+      Else
       {
         Return(Subtract(SizeOf(TSMC),1))
       }

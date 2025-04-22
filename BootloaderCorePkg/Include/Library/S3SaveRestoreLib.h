@@ -8,6 +8,7 @@
 #ifndef _S3_SAVE_RESTORE_LIB_H_
 #define _S3_SAVE_RESTORE_LIB_H_
 
+#include <Guid/SmmS3CommunicationInfoGuid.h>
 
 #define BL_PLD_COMM_SIG       SIGNATURE_32('B', 'P', 'C', 'O')
 
@@ -81,11 +82,6 @@ typedef struct {
 } S3_SAVE_REG;
 
 typedef struct {
-  UINT32  ApicId;
-  UINT32  SmmBase;
-} CPU_SMMBASE;
-
-typedef struct {
   BL_PLD_COMM_HDR SmmBaseHdr;
   CPU_SMMBASE     SmmBase[];
 } SMMBASE_INFO;
@@ -112,10 +108,22 @@ TriggerPayloadSwSmi (
 );
 
 /**
+  This function clears TSEG area designated for S3
+  save/restore purpose.
+
+**/
+VOID
+EFIAPI
+ClearS3SaveRegion (
+  VOID
+);
+
+/**
   This function appends information in TSEG area
   designated for S3 save/restore purpose.
 
   @param    DataPtr               Address of the structure to be copied to TSEG
+  @param    IsHdrOnly             Reserve TotalSize, but populate only Header info
 
   @retval   EFI_OUT_OF_RESOURCES  If SmmSize is exceeding 4KiB
   @retval   EFI_OUT_OF_RESOURCES  If appeding new struct exceeds SmmSize
@@ -125,7 +133,8 @@ TriggerPayloadSwSmi (
 EFI_STATUS
 EFIAPI
 AppendS3Info (
-  IN  VOID    *DataPtr
+  IN  VOID     *DataPtr,
+  IN  BOOLEAN   IsHdrOnly
   );
 
 

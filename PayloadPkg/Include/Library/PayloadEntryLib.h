@@ -8,6 +8,19 @@
 #ifndef __PAYLOAD_ENTRY_LIB_H__
 #define __PAYLOAD_ENTRY_LIB_H__
 
+typedef  struct {
+  UINT32   Signature;
+  UINT32   HeapBase;
+  UINT32   HeapSize;
+  UINT32   RsvdBase;
+  UINT32   RsvdSize;
+  UINT32   Argc;
+  UINT32   Argv[4];
+} PLD_EXTRA_MOD_ARGS;
+
+typedef  EFI_STATUS (EFIAPI *PLD_MODULE_ENTRY) \
+         (VOID *HobList, PLD_EXTRA_MOD_ARGS *Params);
+
 /**
   The payload common Entry Point for C code.
 

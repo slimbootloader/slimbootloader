@@ -18,6 +18,7 @@
 
 [Sources.IA32]
   Ia32/DispatchExecute.c
+  Ia32/Thunk32To64.nasm
 
 [Sources.X64]
   X64/DispatchExecute.c

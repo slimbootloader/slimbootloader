@@ -7,8 +7,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-#include "WinNtInclude.h"
-
 #ifndef __GNUC__
 #include <windows.h>
 #include <io.h>
@@ -222,6 +220,14 @@ ConvertElf (
   //
   VerboseMsg ("Write debug info.");
   ElfFunctions.WriteDebug ();
+
+  //
+  // For PRM Driver to Write export info.
+  //
+  if (mExportFlag) {
+    VerboseMsg ("Write export info.");
+    ElfFunctions.WriteExport ();
+  }
 
   //
   // Make sure image size is correct before returning the new image.

@@ -1,0 +1,27 @@
+## @file
+#  File to describe FSP repo information
+#
+#  Copyright (c) 2020 - 2024, Intel Corporation. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+
+[UserExtensions.SBL."CloneRepo"]
+  REPO    = https://github.com/intel/FSP.git
+  COMMIT  = 7207bafc8905489b70ca39b3e2e26821ba07efd2
+
+[UserExtensions.SBL."CopyList"]
+  ElkhartLakeFspBinPkg/FspBin/FSPRel.bin               : Silicon/ElkhartlakePkg/FspBin/FspDbg.bin
+  ElkhartLakeFspBinPkg/FspBin/FSPRel.bin               : Silicon/ElkhartlakePkg/FspBin/FspRel.bin
+  ElkhartLakeFspBinPkg/FspBin/FSP.bsf                  : Silicon/ElkhartlakePkg/FspBin/Fsp.bsf
+  ElkhartLakeFspBinPkg/Include/FspUpd.h                : Silicon/ElkhartlakePkg/Include/FspUpd.h
+  ElkhartLakeFspBinPkg/Include/FsptUpd.h               : Silicon/ElkhartlakePkg/Include/FsptUpd.h
+  ElkhartLakeFspBinPkg/Include/FspmUpd.h               : Silicon/ElkhartlakePkg/Include/FspmUpd.h
+  ElkhartLakeFspBinPkg/Include/FspsUpd.h               : Silicon/ElkhartlakePkg/Include/FspsUpd.h
+  ElkhartLakeFspBinPkg/Include/MemInfoHob.h            : Silicon/ElkhartlakePkg/Include/MemInfoHob.h
+  ElkhartLakeFspBinPkg/VbtBin/Vbt.bin                  : Platform/ElkhartlakeBoardPkg/VbtBin/Vbt.dat
+  ElkhartLakeFspBinPkg/VbtBin/Vbt.bsf                  : Platform/ElkhartlakeBoardPkg/VbtBin/Vbt.bsf
+  FSP_License.pdf                                      : Silicon/ElkhartlakePkg/FspBin/FSP_License.pdf

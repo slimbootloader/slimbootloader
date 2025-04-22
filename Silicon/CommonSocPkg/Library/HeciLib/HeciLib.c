@@ -15,6 +15,7 @@
 #include <Library/HeciLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Library/BootloaderCoreLib.h>
+#include <Library/MemoryAllocationLib.h>
 #include <IndustryStandard/Pci.h>
 #include "HeciRegs.h"
 
@@ -181,13 +182,13 @@ HeciGetFwCapsSkuMsg (
   EFI_STATUS                      Status;
   UINT32                          Length;
   GEN_GET_FW_CAPSKU               MsgGenGetFwCapsSku;
-  GEN_GET_FW_CAPS_SKU_ACK_DATA   *MsgGenGetFwCapsSkuAck;
+  GEN_GET_FW_CAPS_SKU_ACK         *MsgGenGetFwCapsSkuAck;
 
   if (MsgGetFwCapsAck == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
-  MsgGenGetFwCapsSkuAck = (GEN_GET_FW_CAPS_SKU_ACK_DATA *)MsgGetFwCapsAck;
+  MsgGenGetFwCapsSkuAck = (GEN_GET_FW_CAPS_SKU_ACK *)MsgGetFwCapsAck;
 
   //
   // Allocate MsgGenGetFwVersion data structure.
@@ -216,6 +217,77 @@ HeciGetFwCapsSkuMsg (
     DEBUG ((DEBUG_ERROR, "[HECI] HeciGetFwCapsSkuMsg failed on read - %r\n", Status));
     return Status;
   }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  This function gets CSME boot time data from CSME.
+
+  @param[out]  EarlyBootData         - Pointer to Array of TimeStamps in CSME Boot data structure
+  @param[out]  EarlyBootLength       - Pointer to Number of elements in CSME Boot data structure
+  @param[out]  EarlyBootDataVersion  - Pointer to Version of CSME Boot data structure
+
+  @retval EFI_SUCCESS             Event data read successfully
+  @retval EFI_INVALID_PARAMETER   Input parameters are not valid
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+  @retval EFI_NOT_READY           Device is not ready
+**/
+EFI_STATUS
+HeciGetEarlyBootPerfData (
+  OUT UINT32        **EarlyBootData,
+  OUT UINT32        *EarlyBootLength,
+  OUT UINT32        *EarlyBootDataVersion
+  )
+{
+  EFI_STATUS                        Status;
+  UINT32                            ReqLength;
+  UINT32                            RespLength;
+  GET_EARLY_BOOT_PERF_DATA_BUFFER   *PerfDataBuf;
+
+  if ((EarlyBootData == NULL) || (EarlyBootLength == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  ReqLength = sizeof (GET_EARLY_BOOT_PERF_DATA_CMD);
+  RespLength = sizeof (GET_EARLY_BOOT_PERF_DATA_RESPONSE) + (EARLY_BOOT_PERF_DATA_LENGTH_VERSION_1 * sizeof(UINT32));
+  PerfDataBuf = (GET_EARLY_BOOT_PERF_DATA_BUFFER*) AllocatePool (RespLength);
+  if (PerfDataBuf == NULL) {
+    DEBUG ((DEBUG_ERROR, "CSME PERF Data: Could not allocate Memory\n"));
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  ZeroMem (PerfDataBuf, RespLength);
+
+  PerfDataBuf->Request.Header.Fields.GroupId = BUP_COMMON_GROUP_ID;
+  PerfDataBuf->Request.Header.Fields.Command = GET_EARLY_BOOT_PERFORMANCE_DATA_CMD;
+
+  Status = HeciSendwAck (
+                   HECI1_DEVICE,
+                   (UINT32 *)PerfDataBuf,
+                   ReqLength,
+                   &RespLength,
+                   BIOS_FIXED_HOST_ADDR,
+                   HECI_MKHI_MESSAGE_ADDR
+                   );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Heci Get Csme Perf Data failed with status %r\n", Status));
+    return Status;
+  }
+
+  if ((PerfDataBuf->Response.Header.Fields.GroupId != BUP_COMMON_GROUP_ID) ||
+      (PerfDataBuf->Response.Header.Fields.Command != GET_EARLY_BOOT_PERFORMANCE_DATA_CMD) ||
+      (PerfDataBuf->Response.Header.Fields.IsResponse == 0) ||
+      (PerfDataBuf->Response.Header.Fields.Result != 0)) {
+    DEBUG ((DEBUG_ERROR, "Heci Get Csme Perf Data failed\n"));
+    return EFI_DEVICE_ERROR;
+  }
+
+  *EarlyBootData     = PerfDataBuf->Response.BootPerformanceData;
+  *EarlyBootLength   = PerfDataBuf->Response.BootDataLength;
+  *EarlyBootDataVersion = PerfDataBuf->Response.BootDataVersion;
+
+  DEBUG ((DEBUG_INFO, "Heci Get Csme Perf Data Msg successful.\n"));
 
   return EFI_SUCCESS;
 }

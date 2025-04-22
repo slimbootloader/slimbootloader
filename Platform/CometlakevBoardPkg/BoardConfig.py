@@ -1,7 +1,7 @@
 ## @file
 # This file is used to provide board specific image information.
 #
-#  Copyright (c) 2017-2019, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017-2022, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -26,7 +26,7 @@ class Board(BaseBoard):
 
         self.VERINFO_IMAGE_ID          = 'SB_CML'
         self.VERINFO_PROJ_MAJOR_VER    = 1
-        self.VERINFO_PROJ_MINOR_VER    = 0
+        self.VERINFO_PROJ_MINOR_VER    = 1
         self.VERINFO_SVN               = 1
         self.VERINFO_BUILD_DATE        = time.strftime("%m/%d/%Y")
         self.LOWEST_SUPPORTED_FW_VER   = ((self.VERINFO_PROJ_MAJOR_VER << 8) + self.VERINFO_PROJ_MINOR_VER)
@@ -53,6 +53,9 @@ class Board(BaseBoard):
         self.HAVE_PSD_TABLE       = 1
         self.ENABLE_GRUB_CONFIG       = 1
         self.ENABLE_CSME_UPDATE   = 0
+
+        # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
+        self.ENABLE_SMM_REBASE    = 2
 
         # CSME update library is required to enable this option and will be available as part of CSME kit
         self.BUILD_CSME_UPDATE_DRIVER   = 0
@@ -91,7 +94,7 @@ class Board(BaseBoard):
         self.STAGE1_DATA_SIZE     = 0x0000E000
 
         self.PAYLOAD_EXE_BASE     = 0x00B00000
-        self.PAYLOAD_SIZE         = 0x00028000
+        self.PAYLOAD_SIZE         = 0x00030000
         if len(self._PAYLOAD_NAME.split(';')) > 1:
             self.UEFI_VARIABLE_SIZE = 0x00040000
         else:
@@ -104,6 +107,8 @@ class Board(BaseBoard):
         self.VARIABLE_SIZE        = 0x00002000
         self.SBLRSVD_SIZE         = 0x00001000
         self.FWUPDATE_SIZE        = 0x00020000 if self.ENABLE_FWU else 0
+
+        self.MAX_MEMORY_MAP_ENTRY_NUM = 0x30
 
         self.TOP_SWAP_SIZE        = 0x040000
         self.REDUNDANT_SIZE  = self.UCODE_SIZE + self.STAGE2_SIZE + self.STAGE1B_SIZE + self.FWUPDATE_SIZE + self.CFGDATA_SIZE + self.KEYHASH_SIZE
@@ -128,8 +133,8 @@ class Board(BaseBoard):
             acm_btm = (acm_btm & 0xFFFE0000)
             self.ACM_SIZE     = acm_top - acm_btm
 
-        self.CFGDATA_REGION_TYPE  = FLASH_REGION_TYPE.BIOS
-        self.SPI_IAS_REGION_TYPE  = FLASH_REGION_TYPE.BIOS
+        self.CFGDATA_REGION_TYPE        = FLASH_REGION_TYPE.BIOS
+        self.SPI_CONTAINER_REGION_TYPE  = FLASH_REGION_TYPE.BIOS
 
         self.CFG_DATABASE_SIZE    = self.CFGDATA_SIZE + 0x4000
         self._CFGDATA_INT_FILE    = ['CfgData_Int_Cmlv.dlt']
@@ -143,18 +148,20 @@ class Board(BaseBoard):
             'PlatformHookLib|Silicon/$(SILICON_PKG_NAME)/Library/PlatformHookLib/PlatformHookLib.inf',
             'SpiFlashLib|Silicon/CommonSocPkg/Library/SpiFlashLib/SpiFlashLib.inf',
             'PchSpiLib|Silicon/CommonSocPkg/Library/PchSpiLib/PchSpiLib.inf',
-            'PchSbiAccessLib|Silicon/$(SILICON_PKG_NAME)/Library/PchSbiAccessLib/PchSbiAccessLib.inf',
+            'PchSbiAccessLib|Silicon/CommonSocPkg/Library/PchSbiAccessLib/PchSbiAccessLib.inf',
             'PchInfoLib|Silicon/$(SILICON_PKG_NAME)/Library/PchInfoLib/PchInfoLib.inf',
-            'PchP2sbLib|Silicon/$(SILICON_PKG_NAME)/Library/PchP2sbLib/PchP2sbLib.inf',
             'PchSerialIoLib|Silicon/$(SILICON_PKG_NAME)/Library/PchSerialIoLib/PchSerialIoLib.inf',
             'GpioLib|Silicon/$(SILICON_PKG_NAME)/Library/GpioLib/GpioLib.inf',
-            'IgdOpRegionLib|Silicon/$(SILICON_PKG_NAME)/Library/IgdOpRegionLib/IgdOpRegionLib.inf',
-            'BdatLib|Silicon/$(SILICON_PKG_NAME)/Library/BdatLib/BdatLib.inf',
+            'IgdOpRegionLib|Silicon/CommonSocPkg/Library/IgdOpRegionLib/IgdOpRegionLib.inf',
+            'BdatLib|Silicon/CommonSocPkg/Library/BdatLib/BdatLib.inf',
             'BootGuardLib|Silicon/CommonSocPkg/Library/BootGuardLibCBnT/BootGuardLibCBnT.inf',
             'SgxLib|Silicon/$(SILICON_PKG_NAME)/Library/SgxLib/SgxLib.inf',
             'PsdLib|Silicon/$(SILICON_PKG_NAME)/Library/PsdLib/PsdLib.inf',
             'HeciLib|Silicon/$(SILICON_PKG_NAME)/Library/HeciLib/HeciLib.inf',
             'ShellExtensionLib|Platform/$(BOARD_PKG_NAME)/Library/ShellExtensionLib/ShellExtensionLib.inf',
+            'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
+            'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf',
+            'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf'
         ]
         if self.BUILD_CSME_UPDATE_DRIVER:
             common_libs.append ('MeFwUpdateLib|Silicon/$(SILICON_PKG_NAME)/Library/MeFwUpdateLib/MeFwUpdateLib.inf')

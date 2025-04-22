@@ -2,7 +2,7 @@
   UfsPassThruDxe driver is used to produce EFI_EXT_SCSI_PASS_THRU protocol interface
   for upper layer application to execute UFS-supported SCSI cmds.
 
-  Copyright (c) 2014, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -411,6 +411,13 @@ typedef enum {
   UfsUicDmeHibernateExit  = 0x18,
   UfsUicDmeTestMode       = 0x1A
 } UFS_UIC_OPCODE;
+
+typedef enum {
+  UfsCardRefClkFreq19p2Mhz,
+  UfsCardRefClkFreq26Mhz,
+  UfsCardRefClkFreq38p4Mhz,
+  UfsCardRefClkFreqObsolete
+} UFS_CARD_REF_CLK_FREQ_ATTRIBUTE;
 
 //
 // UTP Transfer Request Descriptor
@@ -1334,6 +1341,84 @@ typedef enum {
   UfsDdReserved
 } UFS_DATA_DIRECTION;
 
+
+#define UFS_UIC_ARG_MIB_SEL(x,y)   ((((x) & 0xFFFF) << 16) | ((y) & 0xFFFF))
+#define UFS_PA_HS_MODE_A           0x1
+#define UFS_PA_HS_MODE_B           0x2
+
+typedef struct {
+  UINT32 UicOpcode;
+  UINT32 Arg1;
+  UINT32 Arg2;
+  UINT32 Arg3;
+} UFS_COMMAND;
+
+typedef enum {
+  UfsRxLane                = 0,
+  UfsTxLane                = 1,
+  UfsReservedLane
+} UFS_LANE_TYPE;
+
+typedef enum {
+  Fast_Mode     = 1,
+  Slow_Mode     = 2,
+  FastAuto_Mode = 4,
+  SlowAuto_Mode = 5,
+  UNCHANGED     = 7,
+  UfsReservedPowerMode
+} UFS_POWER_MODE;
+
+typedef enum {
+  PWM_G1 = 1,
+  PWM_G2 = 2,
+  PWM_G3 = 3,
+  PWM_G4 = 4,
+  PWM_G5 = 5,
+  PWM_G6 = 6,
+  PWM_G7 = 7,
+  UfsReservedPwmGear
+} UFS_PWM_GEARS;
+
+typedef enum {
+  NO_HS  = 0,
+  HS_G1  = 1,
+  HS_G2  = 2,
+  HS_G3  = 3,
+  HS_G4  = 4,
+  UfsReservedHsGear
+} UFS_HS_GEARS;
+
+typedef enum {
+  DL_FC0ProtectionTimeOutVal         = 0x15B0,
+  DL_TC0ReplayTimeOutVal             = 0x15B1,
+  DL_AFC0ReqTimeOutVal               = 0x15B2,
+  DL_Reserved                        = 0xFFFF
+} DL_ATTRIBUTES;
+
+typedef enum {
+  PA_ActiveRxDataLanes                = 0x1580,
+  PA_ConnectedRxDataLanes             = 0x1581,
+  PA_AvailRxDataLanes                 = 0x1540,
+  PA_RXGear                           = 0x1583,
+  PA_MaxRxPWMGear                     = 0x1586,
+  PA_MaxRxHSGear                      = 0x1587,
+  PA_RxPWRStatus                      = 0x1582,
+  PA_RxTermination                    = 0x1584,
+  PA_ActiveTxDataLanes                = 0x1560,
+  PA_ConnectedTxDataLanes             = 0x1561,
+  PA_AvailTxDataLanes                 = 0x1520,
+  PA_TXGear                           = 0x1568,
+  PA_TxPWRStatus                      = 0x1567,
+  PA_TxTermination                    = 0x1569,
+  PA_HSSeries                         = 0x156A,
+  PA_PWRMode                          = 0x1571,
+  PA_Scrambling                       = 0x1585,
+  PA_TxHsAdaptType                    = 0x15D4,
+  PA_AdaptTypeInPA_INIT               = 0x15D5,
+  PA_Local_TX_LCC_Enable              = 0x155E,
+  PA_Peer_TX_LCC_Enable               = 0x155F,
+  PA_Reserved                         = 0xFFFF
+} PA_ATTRIBUTES;
 
 #pragma pack()
 

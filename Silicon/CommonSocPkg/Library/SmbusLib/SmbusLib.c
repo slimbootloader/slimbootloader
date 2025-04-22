@@ -13,7 +13,7 @@
 #include <Library/PciLib.h>
 #include <Library/DebugLib.h>
 #include <Library/BootloaderCommonLib.h>
-#include "RegsSmbus.h"
+#include <Register/RegsSmbus.h>
 
 /**
   Gets Io port base address of Smbus Host Controller.
@@ -47,6 +47,21 @@ InternalGetSmbusIoPortBaseAddress (
   IoPortBaseAddress &= B_SMBUS_CFG_BASE_BAR;
 
   return IoPortBaseAddress;
+}
+
+/**
+  Clear SmBus in use status
+**/
+VOID
+EFIAPI
+SmBusClearInUseStatus (
+  VOID
+  )
+{
+  UINT16 IoPortBaseAddress;
+
+  IoPortBaseAddress = InternalGetSmbusIoPortBaseAddress ();
+  IoOr8 (IoPortBaseAddress + R_SMBUS_IO_HSTS, B_SMBUS_IO_IUS);
 }
 
 /**

@@ -1,6 +1,6 @@
 ## @ GenCapsuleFirmware.py
 #
-# Copyright (c) 2017-2020, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2017-2021, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -114,6 +114,7 @@ class FmpCapsuleImageHeaderClass(object):
     def DumpInfo(self, padding=''):
         if not self._Valid:
             raise ValueError
+
         print(
             padding +
             'EFI_FIRMWARE_MANAGEMENT_CAPSULE_IMAGE_HEADER.Version                = {Version:08X}'.format(
@@ -198,6 +199,15 @@ class FmpCapsuleHeaderClass(object):
             raise ValueError
         return self._EmbeddedDriverList[Index]
 
+    def GetEmbeddedDriverCount(self):
+        return len(self._EmbeddedDriverList)
+
+    def GetPayload(self, Index):
+        return self._PayloadList[Index]
+
+    def GetPayloadCount(self):
+        return len(self._PayloadList)
+
     def AddPayload(self,
                    UpdateImageTypeId,
                    Payload=b'',
@@ -237,6 +247,16 @@ class FmpCapsuleHeaderClass(object):
             FmpCapsuleImageHeader.VendorCodeBytes = VendorCodeBytes
             FmpCapsuleImageHeader.UpdateHardwareInstance = HardwareInstance
             FmpCapsuleImage = FmpCapsuleImageHeader.Encode()
+
+            # for BIOS payload, adjust the starting offset to be 8-byte aligned with 0xFF paddings
+            if str(UpdateImageTypeId) == UpdateGuidDict['BIOS'].lower():
+                if Offset & 0x7:
+                    Padding8Num = 8 - Offset & 0x7
+                    print('Adjusted the starting offset of BIOS payload with %s paddings' %Padding8Num)
+                    Padding = bytearray(b'\xFF') * Padding8Num
+                    FmpCapsuleData += Padding
+                    Offset += Padding8Num
+
             FmpCapsuleData = FmpCapsuleData + FmpCapsuleImage
 
             self._ItemOffsetList.append(Offset)
@@ -383,7 +403,10 @@ class FmpPayloadHeaderClass(object):
 FIRMWARE_UPDATE_IMAGE_FILE_GUID = uuid.UUID('{1A3EAE58-B580-4fef-ACA3-A16D9E00DF5F}')
 #0x1a3eae58, 0xb580, 0x4fef, 0xac, 0xa3, 0xa1, 0x6d, 0x9e, 0x0, 0xdf, 0x5f);
 
-class Firmware_Update_Header(Structure):
+class FirmwareUpdateHeader(Structure):
+
+  CAPSULE_FLAG_FORCE_BIOS_UPDATE = 0x80000000
+
   _fields_ = [
     ('FileGuid',           ARRAY(c_uint8, 16)),
     ('HeaderSize',         c_uint32),
@@ -399,14 +422,14 @@ class Firmware_Update_Header(Structure):
   ]
 
 
-def SignImage(RawData, OutFile, HashType, SignScheme, PrivKey):
+def SignImage(RawData, OutFile, HashType, SignScheme, PrivKey, ForceBiosUpdate):
 
     #
     # Generate the new image layout
     # 1. write firmware update header
     #
-    unsigned_image = bytearray(sizeof(Firmware_Update_Header))
-    header = Firmware_Update_Header.from_buffer(unsigned_image, 0)
+    unsigned_image = bytearray(sizeof(FirmwareUpdateHeader))
+    header = FirmwareUpdateHeader.from_buffer(unsigned_image, 0)
 
     file_size = len(RawData)
 
@@ -420,9 +443,11 @@ def SignImage(RawData, OutFile, HashType, SignScheme, PrivKey):
         HashType = adjust_hash_type(PrivKey)
 
     header.FileGuid         = (c_ubyte *16).from_buffer_copy(FIRMWARE_UPDATE_IMAGE_FILE_GUID.bytes_le)
-    header.HeaderSize       = sizeof(Firmware_Update_Header)
+    header.HeaderSize       = sizeof(FirmwareUpdateHeader)
     header.FirmwreVersion   = 1
     header.CapsuleFlags     = 0
+    if ForceBiosUpdate:
+        header.CapsuleFlags  |= FirmwareUpdateHeader.CAPSULE_FLAG_FORCE_BIOS_UPDATE
     header.ImageOffset      = header.HeaderSize
     header.ImageSize        = file_size
     header.SignatureOffset  = header.ImageOffset + header.ImageSize
@@ -445,29 +470,18 @@ def SignImage(RawData, OutFile, HashType, SignScheme, PrivKey):
 
 
 def main():
-    PredefinedUuidDict = {
-        'BIOS': '605C6813-C2C7-4242-9C27-50A4C363DBA4',  # SBL  BIOS Region
-        'MISC': '66030B7A-47D1-4958-B73D-00B44B9DD4B6',  # SBL  COMPONENT
-        'CSME': '43AEF186-0CA5-4230-B1BD-193FB4627201',  # IFWI ME/CSME
-        'CSMD': '4A467997-A909-4678-910C-E0FE1C9056EA',  # CSME Update driver
-        'CMDI': '9034cab1-4d19-4856-a3cd-f074263c4a4d',  # Command request
 
+    # The types of updates and their associated GUIDs
+    global UpdateGuidDict
+    UpdateGuidDict = {
+        'BIOS': '605C6813-C2C7-4242-9C27-50A4C363DBA4',  # SBL/BIOS Region
+        'MISC': '66030B7A-47D1-4958-B73D-00B44B9DD4B6',  # SBL Component
+        'CSME': '43AEF186-0CA5-4230-B1BD-193FB4627201',  # ME/CSME Region
+        'CSMD': '4A467997-A909-4678-910C-E0FE1C9056EA',  # CSME Update Driver
+        'CMDI': '9034cab1-4d19-4856-a3cd-f074263c4a4d',  # CSME Command Request
     }
 
-    def ValidateUnsignedInteger(Argument):
-        try:
-            Value = int(Argument, 0)
-        except:
-            Message = '{Argument} is not a valid integer value.'.format(
-                Argument=Argument)
-            raise argparse.ArgumentTypeError(Message)
-        if Value < 0:
-            Message = '{Argument} is a negative value.'.format(
-                Argument=Argument)
-            raise argparse.ArgumentTypeError(Message)
-        return Value
-
-    def ValidateRegistryFormatGuid(Argument):
+    def BuildGuid(Argument):
         try:
             Value = uuid.UUID(Argument)
         except:
@@ -488,14 +502,24 @@ def main():
     parser.add_argument('-s',  '--sign_scheme', dest='SignScheme', type=str, choices=['RSA_PKCS1', 'RSA_PSS'], default='RSA_PSS', help='Signing Scheme types')
     parser.add_argument('-o',  '--output', dest='NewImage', type=str, required=True, help='Output file for signed image')
     parser.add_argument("-v",  "--verbose", dest='Verbose', action="store_true", help= "Turn on verbose output with informational messages printed, including capsule headers and warning messages.")
+    parser.add_argument("-f",  "--force_bios_update", dest='ForceBiosUpdate', action="store_true", help= "Force update whole BIOS region in a single shot.")
 
     #
     # Parse command line arguments
     #
     args = parser.parse_args()
 
+    #
+    # Error out if components overlap
+    #
+    PldSigs = {Pld[0] for Pld in args.payload}
+    NonSblCompSigs = {Sig for Sig in UpdateGuidDict.keys()}
+    SblCompInPldSigs = PldSigs - NonSblCompSigs
+    if 'BIOS' in PldSigs and SblCompInPldSigs:
+        raise Exception ('SBL/BIOS region given with SBL/BIOS region component')
+
     FmpCapsuleHeader = FmpCapsuleHeaderClass()
-    for PldUuid, PldFile in args.payload:
+    for PldSig, PldFile in args.payload:
 
         FmpPayloadHeader = FmpPayloadHeaderClass()
         Buffer = open(PldFile, 'rb').read()
@@ -503,11 +527,11 @@ def main():
         FmpPayloadHeader.Payload = Result
         Result = FmpPayloadHeader.Encode()
 
-        if PldUuid in PredefinedUuidDict:
-            HardwareInstance = '00000000' + UnicodeStrToHexString(PldUuid[::-1])
-            PldUuid = PredefinedUuidDict[PldUuid]
+        if PldSig in UpdateGuidDict:
+            HardwareInstance = '00000000' + UnicodeStrToHexString(PldSig[::-1])
+            Guid = UpdateGuidDict[PldSig]
         else:
-            CompName = PldUuid.upper()
+            CompName = PldSig.upper()
 
             if ":" in CompName:
                 items = CompName.split(":")
@@ -526,10 +550,19 @@ def main():
                 ContainerCompName = '00000000'
                 SblComponentName = UnicodeStrToHexString(CompName[::-1])
             HardwareInstance = ContainerCompName + SblComponentName
-            PldUuid = PredefinedUuidDict['MISC']
+            Guid = UpdateGuidDict['MISC']
         HardwareInstance = int (HardwareInstance, 16)
-        Guid = ValidateRegistryFormatGuid(PldUuid)
+        Guid = BuildGuid(Guid)
         FmpCapsuleHeader.AddPayload(Guid, Result, '', HardwareInstance)
+
+    if args.ForceBiosUpdate:
+        if FmpCapsuleHeader.GetPayloadCount() != 1  or  FmpCapsuleHeader.GetEmbeddedDriverCount() != 0:
+            raise Exception ("When '-f' flag is enabled, only one component is supported in capsule !")
+        Payload = FmpCapsuleHeader.GetPayload(0)
+        if str(Payload[0]) != UpdateGuidDict['BIOS'].lower():
+            raise Exception ("When '-f' flag is enabled, only BIOS component is supported in capsule !")
+        if len(Payload[1]) & 0xFFF:
+            raise Exception ("BIOS component size is not 4KB aligned !")
 
     Result = FmpCapsuleHeader.Encode()
 
@@ -542,9 +575,19 @@ def main():
     #
     # Create final capsule
     #
-    SignImage(Result, args.NewImage, args.HashType, args.SignScheme, args.PrivKey)
-
+    SignImage(Result, args.NewImage, args.HashType, args.SignScheme, args.PrivKey, args.ForceBiosUpdate)
     print('Success')
+
+    #
+    # Warn the user for "-f" option
+    #
+    if args.ForceBiosUpdate:
+       print ("\nWAINING: ")
+       print (  "  It might be risky to force BIOS region update since any firmware update failure might\n"
+                "  not be recoverable and cause system in a non-bootable state. If it occurs, external \n"
+                "  flash programmer has to be used to reprogram the full IFWI image. This feature is only\n"
+                "  for development purpose, please use it with extreme caution !!!\n")
+
 
 
 if __name__ == '__main__':

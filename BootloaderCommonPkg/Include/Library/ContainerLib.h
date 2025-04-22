@@ -40,6 +40,17 @@ typedef UINT8 AUTH_TYPE;
 // Attributes for COMPONENT_ENTRY
 #define COMPONENT_ENTRY_ATTR_RESERVED       BIT7
 
+// Container Image types
+#define CONTAINER_TYPE_NORMAL               0x0     // Used for boot images in FV, regular ELF, PE32, etc. formats
+#define CONTAINER_TYPE_CLASSIC_LINUX        0x3     // Used for booting Linux with bzImage, cmdline, initrd, etc.
+#define CONTAINER_TYPE_MULTIBOOT            0x4     // Multiboot compliant ELF images
+#define CONTAINER_TYPE_MULTIBOOT_MODULE     0x5     // Multiboot Module Image
+
+// Max images per container
+#define MAX_CONTAINER_SUB_IMAGE             32
+
+// Max container image size
+#define MAX_CONTAINER_IMAGE_SIZE  0x19000000
 
 typedef struct {
   UINT32           ComponentType;
@@ -89,6 +100,19 @@ typedef struct {
   UINT8            HashData[0];
 } COMPONENT_ENTRY;
 
+typedef enum {
+  ImageAllocateTypePool = 0,      // Allocate memory in Pool
+  ImageAllocateTypePage,          // Allocate memory in Page
+  ImageAllocateTypePointer,       // No allocate memory, but pointer to the existing memory
+  ImageAllocateTypeMax
+} IMAGE_ALLOCATE_TYPE;
+
+typedef struct {        /* a file (sub-image) inside a boot image */
+  VOID                 *Addr;
+  UINT32                Size;
+  IMAGE_ALLOCATE_TYPE   AllocType;
+  UINT32                Name;   // Name specified for the component when building the container
+} IMAGE_DATA;
 
 /**
   Load a component from a container or flahs map to memory and call callback
@@ -253,4 +277,20 @@ EFI_STATUS
 UnregisterContainer (
   IN  UINT32   Signature
   );
+
+/**
+  Free the allocated memory in an image data
+
+  This function free a memory allocated in IMAGE_DATA according to Allocation Type.
+
+  @param[in]  ImageData       An image data pointer which has allocated memory address,
+                              its size, and allocation type.
+
+**/
+VOID
+EFIAPI
+FreeImageData (
+  IN  IMAGE_DATA    *ImageData
+  );
+
 #endif

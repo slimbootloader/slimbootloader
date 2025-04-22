@@ -1,0 +1,31 @@
+## @file
+#
+#  TCC feature Configuration Delta File.
+#
+#  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+#
+
+FEATURES_CFG_DATA.Features.S0ix   | 0
+
+# Enable TCC config data
+TCC_CFG_DATA.TccEnable   | 1
+TCC_CFG_DATA.TccTuning   | 1
+TCC_CFG_DATA.TccSoftSram | 1
+TCC_CFG_DATA.TccErrorLog | 1
+
+# Enable Timed GPIO
+SILICON_CFG_DATA.EnableTimedGpio0 | 1
+SILICON_CFG_DATA.EnableTimedGpio1 | 1
+
+# Enable RTCM from the boot option
+BOOT_OPTION_CFG_DATA_0.BootFlags_0 | 24
+BOOT_OPTION_CFG_DATA_1.ImageType_1 | 0x1E
+
+BOOT_OPTION_CFG_DATA_2.BootFlags_2 | 24
+BOOT_OPTION_CFG_DATA_3.ImageType_3 | 0x1E
+
+BOOT_OPTION_CFG_DATA_4.BootFlags_4 | 24
+BOOT_OPTION_CFG_DATA_5.ImageType_5 | 0x1E

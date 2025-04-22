@@ -1,7 +1,7 @@
 /** @file
   BMP Image Decoding
 
-  Copyright (c) 2004 - 2014, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2004 - 2024, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -136,19 +136,19 @@ GetBmpDisplayPos (
 }
 
 /**
-  Display a *.BMP graphics image to the frame buffer. If a NULL GopBlt buffer
-  is passed in a GopBlt buffer will be allocated by this routine. If a GopBlt
-  buffer is passed in it will be used if it is big enough.
+  Display a *.BMP graphics image to the frame buffer or BLT buffer. If a NULL
+  GopBlt buffer is passed in, the BMP image will be displayed into BLT memory
+  buffer. Otherwise, it will be dispalyed into the actual frame buffer.
 
   @param  BmpImage      Pointer to BMP file
-  @param  GopBlt        Buffer for transferring BmpImage to the frame buffer.
+  @param  BmpImageSize  Size of BMP file
+  @param  GopBlt        Buffer for transferring BmpImage to the BLT memory buffer.
   @param  GopBltSize    Size of GopBlt in bytes.
   @param  GfxInfoHob    Pointer to graphics info HOB.
 
   @retval EFI_SUCCESS           GopBlt and GopBltSize are returned.
   @retval EFI_UNSUPPORTED       BmpImage is not a valid *.BMP image
   @retval EFI_BUFFER_TOO_SMALL  The passed in GopBlt buffer is not big enough.
-                                GopBltSize will contain the required size.
   @retval EFI_OUT_OF_RESOURCES  No enough buffer to allocate.
 
 **/
@@ -156,14 +156,15 @@ EFI_STATUS
 EFIAPI
 DisplayBmpToFrameBuffer (
   IN     VOID      *BmpImage,
-  IN OUT VOID      **GopBlt,
-  IN OUT UINTN     *GopBltSize,
+  IN     UINT32    BmpImageSize,
+  IN     VOID      *GopBlt,
+  IN     UINTN     GopBltSize,
   IN     EFI_PEI_GRAPHICS_INFO_HOB *GfxInfoHob
   )
 {
   BMP_IMAGE_HEADER              *BmpHeader;
   BMP_COLOR_MAP                 *BmpColorMap;
-  EFI_GRAPHICS_OUTPUT_BLT_PIXEL *BltBuffer;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL *BltLineBuf;
   EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Blt;
   BOOLEAN                       IsAllocated;
   UINTN                         Index;
@@ -174,6 +175,9 @@ DisplayBmpToFrameBuffer (
   UINTN                         PixelWidth;
   UINT32                        OffX;
   UINT32                        OffY;
+  UINT64                        DataSize;
+  UINT64                        DataSizePerLine;
+  UINT64                        LineBufferSize;
   UINT64                        BltBufferSize;
   UINT32                        FrameBufferOffset;
   UINT32                        *FrameBufferPtr;
@@ -181,56 +185,88 @@ DisplayBmpToFrameBuffer (
   UINT8                         *ImageHeader;
   EFI_STATUS                    Status;
 
+  if (BmpImage == NULL || BmpImageSize == MAX_UINT32) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (BmpImageSize < sizeof (BMP_IMAGE_HEADER)) {
+    DEBUG ((DEBUG_ERROR, "DisplayBmpToFrameBuffer: BmpImageSize too small\n"));
+    return EFI_UNSUPPORTED;
+  }
+
+  BmpHeader    = (BMP_IMAGE_HEADER *) BmpImage;
+  PixelWidth   = BmpHeader->PixelWidth;
+  PixelHeight  = BmpHeader->PixelHeight;
+  // DataSizePerLine in bits
+  DataSizePerLine = MultU64x32(PixelWidth, BmpHeader->BitPerPixel);
+  // Convert to bytes and round to 4byte alignment
+  DataSizePerLine = ((DataSizePerLine+31) >> 3) &(~0x3);
+  // Calculate total Data Size we expect
+  DataSize = MultU64x32(DataSizePerLine, (UINT32)PixelHeight);
+
+  if ((PixelHeight == 0) || (PixelWidth == 0)) {
+    DEBUG ((DEBUG_ERROR, "DisplayBmpToFrameBuffer: BmpHeader->PixelHeight or BmpHeader->PixelWidth is 0.\n"));
+    return EFI_UNSUPPORTED;
+  }
+
+  // Make sure BMP header doesn't describe any pixels which would fall
+  // outside BMP pixel data buffer.
+  if ((BmpHeader->Size != BmpImageSize) ||
+      (BmpHeader->Size < BmpHeader->ImageOffset) ||
+      (BmpHeader->Size - BmpHeader->ImageOffset != DataSize))
+  {
+    DEBUG ((DEBUG_ERROR, "DisplayBmpToFrameBuffer: invalid BmpImage... \n"));
+    DEBUG ((DEBUG_ERROR, "   BmpHeader->Size: 0x%x\n", BmpHeader->Size));
+    DEBUG ((DEBUG_ERROR, "   BmpHeader->ImageOffset: 0x%x\n", BmpHeader->ImageOffset));
+    DEBUG ((DEBUG_ERROR, "   BmpImageSize: 0x%x\n", BmpImageSize));
+    DEBUG ((DEBUG_ERROR, "   DataSize: 0x%lx\n", DataSize));
+
+    return EFI_UNSUPPORTED;
+  }
+
   Status = GetBmpDisplayPos (BmpImage, &OffX, &OffY, GfxInfoHob);
   if (EFI_ERROR(Status)) {
     return EFI_UNSUPPORTED;
   }
 
-  BmpHeader    = (BMP_IMAGE_HEADER *) BmpImage;
   BmpColorMap  = (BMP_COLOR_MAP *) &BmpHeader[1];
-  PixelWidth   = BmpHeader->PixelWidth;
-  PixelHeight  = BmpHeader->PixelHeight;
   Image        = ((UINT8 *) BmpImage) + BmpHeader->ImageOffset;
   ImageHeader  = Image;
 
   //
   // Calculate the BltBuffer size needed for one line of splashing at a time.
   //
-  BltBufferSize = MultU64x32 ((UINT64)PixelWidth, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+  LineBufferSize = MultU64x32 ((UINT64)PixelWidth, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
 
   IsAllocated   = FALSE;
-  if (*GopBlt == NULL) {
+  if (GopBlt == NULL) {
     //
     // GopBlt is not allocated by caller.
     //
-    *GopBltSize = (UINTN) BltBufferSize;
-    *GopBlt     = AllocateTemporaryMemory (*GopBltSize);
-    IsAllocated = TRUE;
-    if (*GopBlt == NULL) {
+    BltLineBuf  = (EFI_GRAPHICS_OUTPUT_BLT_PIXEL *) AllocateTemporaryMemory ((UINTN)LineBufferSize);
+    if (BltLineBuf == NULL) {
       return EFI_OUT_OF_RESOURCES;
     }
+    IsAllocated = TRUE;
+    FrameBufferPtr    = (UINT32 *) (((UINTN) GfxInfoHob->FrameBufferBase));
+    FrameBufferOffset = (UINT32)((OffY + PixelHeight) * GfxInfoHob->GraphicsMode.HorizontalResolution + OffX);
   } else {
     //
     // GopBlt has been allocated by caller.
     //
-    if (*GopBltSize < (UINTN) BltBufferSize) {
-      *GopBltSize = (UINTN) BltBufferSize;
+    BltBufferSize = MultU64x32 (LineBufferSize, (UINT32)PixelHeight);
+    if (GopBltSize < (UINTN) BltBufferSize) {
       return EFI_BUFFER_TOO_SMALL;
     }
+    BltLineBuf = (EFI_GRAPHICS_OUTPUT_BLT_PIXEL *)GopBlt;
   }
 
   //
   // Convert image from BMP to Blt buffer format
   //
-  BltBuffer = *GopBlt;
-
-  FrameBufferPtr = (UINT32 *) (((UINTN) GfxInfoHob->FrameBufferBase));
-  FrameBufferOffset = (UINT32)((OffY + PixelHeight) * GfxInfoHob->GraphicsMode.HorizontalResolution + OffX);
-
   Status = EFI_SUCCESS;
-
   for (Height = 0; Height < BmpHeader->PixelHeight; Height++) {
-    Blt = &BltBuffer[PixelWidth - 1];
+    Blt = BltLineBuf;
     for (Width = 0; Width < BmpHeader->PixelWidth; Width++, Image++, Blt++) {
       switch (BmpHeader->BitPerPixel) {
       case 1:
@@ -301,15 +337,17 @@ DisplayBmpToFrameBuffer (
       //
       Image = Image + (4 - (ImageIndex % 4));
     }
-
-    CopyMem (&FrameBufferPtr[FrameBufferOffset], &BltBuffer[PixelWidth - 1], Width * 4);
-    FrameBufferOffset -= GfxInfoHob->GraphicsMode.HorizontalResolution;
+    if (GopBlt == NULL) {
+      CopyMem (&FrameBufferPtr[FrameBufferOffset], BltLineBuf, Width * 4);
+      FrameBufferOffset -= GfxInfoHob->GraphicsMode.HorizontalResolution;
+    } else {
+      BltLineBuf += PixelWidth;
+    }
   }
 
 End:
   if (IsAllocated) {
-    FreePool (*GopBlt);
-    *GopBlt = NULL;
+    FreePool (BltLineBuf);
   }
 
   return Status;

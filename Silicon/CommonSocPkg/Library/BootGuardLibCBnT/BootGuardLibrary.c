@@ -64,7 +64,7 @@ GetBootGuardInfo (
   UINT32                  MsrValue;
   UINT32                  MeFwSts4;
   UINT32                  BootGuardAcmStatus;
-  UINT32                  BootGuardBootStatus;
+  UINT64                  BootGuardBootStatus;
 
   ///
   /// Check if System Supports Boot Guard
@@ -75,14 +75,20 @@ GetBootGuardInfo (
     BootGuardAcmStatus  = *(UINT32 *) (UINTN) (TXT_PUBLIC_BASE + R_CPU_BOOT_GUARD_ACM_STATUS);
     DEBUG ((DEBUG_INFO, "Boot Guard ACM Status = %x\n", BootGuardAcmStatus));
 
-    BootGuardBootStatus  = *(UINT32 *) (UINTN) (TXT_PUBLIC_BASE + R_CPU_BOOT_GUARD_BOOTSTATUS);
-    DEBUG ((DEBUG_INFO, "Boot Guard Boot Status = %x\n", BootGuardBootStatus));
+    BootGuardBootStatus  = *(UINT64 *) (UINTN) (TXT_PUBLIC_BASE + R_CPU_BOOT_GUARD_BOOTSTATUS);
+    DEBUG ((DEBUG_INFO, "Boot Guard Boot Status = %llx\n", BootGuardBootStatus));
 
+    DEBUG ((DEBUG_INFO, "HeciBaseAddress = %llx\n", HeciBaseAddress));
     ///
-    /// Read ME FWS Registers
+    /// In case the platform does not have ME HeciBaseAddress will be 0.
+    /// If HeciBaseAddress is 0 then set ME FWS Register to 0 else,
+    /// Read the ME FWS Register
     ///
-    MeFwSts4 = MmioRead32 (HeciBaseAddress + R_ME_HFS_4);
-    DEBUG ((DEBUG_INFO, "ME FW STS 4 = %x\n", MeFwSts4));
+    if (HeciBaseAddress != 0) {
+      MeFwSts4 = MmioRead32 (HeciBaseAddress + R_ME_HFS_4);
+      DEBUG ((DEBUG_INFO, "ME FW STS 4 = %x\n", MeFwSts4));
+    } else
+      MeFwSts4 = 0x0;
 
     ///
     /// Check Bit 12 in ME FWSTS4 to check if TPM_DISCONNECT_ALL bit is set
@@ -98,6 +104,13 @@ GetBootGuardInfo (
     BootGuardInfo->MeasuredBoot = FALSE;
     BootGuardInfo->VerifiedBoot = FALSE;
 
+    ///
+    /// Check Bit 46 in BootGuardBootStatus to handle Tpm2Startup(Restore) errors.
+    ///
+    if ((BootGuardBootStatus & B_CPU_BOOT_GUARD_BOOTSTATUS_S3_TPM_STARTUP_FAILED) != 0) {
+      BootGuardInfo->TpmStartupFailureOnS3 = TRUE;
+      DEBUG ((DEBUG_INFO, "ACM Tpm2Startup (State) failure detected during S3 flow.\n"));
+    }
     if ((MeFwSts4 & BIT10) != 0) {
       DEBUG ((DEBUG_INFO, "Sx Resume Type Identified - TPM Event Log not required for ACM Measurements\n"));
       BootGuardInfo->ByPassTpmEventLog = TRUE;

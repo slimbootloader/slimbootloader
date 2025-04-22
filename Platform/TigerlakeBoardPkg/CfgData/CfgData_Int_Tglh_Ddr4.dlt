@@ -1,0 +1,568 @@
+## @file
+#
+#  Platform Configuration Delta File.
+#
+#  Copyright (c) 2020 - 2022, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+#
+
+PLATFORMID_CFG_DATA.PlatformId                              | 0x000F
+PLAT_NAME_CFG_DATA.PlatformName                             | 'TGLH_DDR'
+
+MEMORY_CFG_DATA.DqsMapCpu2DramMc0Ch1                        | {0, 1}
+MEMORY_CFG_DATA.DqsMapCpu2DramMc0Ch3                        | {0, 1}
+MEMORY_CFG_DATA.DqsMapCpu2DramMc1Ch0                        | {0, 1}
+MEMORY_CFG_DATA.DqsMapCpu2DramMc1Ch3                        | {0, 1}
+
+MEMORY_CFG_DATA.DqMapCpu2DramMc0Ch0                         | {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+MEMORY_CFG_DATA.DqMapCpu2DramMc0Ch1                         | {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+MEMORY_CFG_DATA.DqMapCpu2DramMc0Ch2                         | {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+MEMORY_CFG_DATA.DqMapCpu2DramMc0Ch3                         | {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+MEMORY_CFG_DATA.DqMapCpu2DramMc1Ch0                         | {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+MEMORY_CFG_DATA.DqMapCpu2DramMc1Ch1                         | {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+MEMORY_CFG_DATA.DqMapCpu2DramMc1Ch2                         | {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+MEMORY_CFG_DATA.DqMapCpu2DramMc1Ch3                         | {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15}
+
+MEMORY_CFG_DATA.DqPinsInterleaved                           | 1
+
+MEMORY_CFG_DATA.UserBd                                      | 1
+
+MEMORY_CFG_DATA.RMT                                         | 0
+
+MEMORY_CFG_DATA.PcieClkSrcUsage                             | {0x14, 0x0, 0x42, 0x7, 0x43, 0x10, 0x8, 0x40, 0x70, 0x41, 0x5, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+
+MEMORY_CFG_DATA.VtdDisable                                  | 1
+
+SILICON_CFG_DATA.PchDmiAspmCtrl                             | 2
+SILICON_CFG_DATA.PchLegacyIoLowLatency                      | 1
+
+BOOT_OPTION_CFG_DATA_5.HwPart_5                             | 255
+
+# GPIO Group GPP_A: TGL-H has 15. 15-23 should be skipped.
+GPIO_CFG_DATA.GpioPinConfig0_GPP_A00                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A00                        | 0x80002019
+GPIO_CFG_DATA.GpioPinConfig0_GPP_A01                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A01                        | 0x80012019
+GPIO_CFG_DATA.GpioPinConfig0_GPP_A02                        | 0x0350A283
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A02                        | 0x00022019
+GPIO_CFG_DATA.GpioPinConfig0_GPP_A03                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A03                        | 0x80032019
+GPIO_CFG_DATA.GpioPinConfig0_GPP_A04                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A04                        | 0x80042019
+GPIO_CFG_DATA.GpioPinConfig0_GPP_A05                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A05                        | 0x80052009
+GPIO_CFG_DATA.GpioPinConfig0_GPP_A06                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A06                        | 0x80062001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_A07                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A07                        | 0x00072019
+GPIO_CFG_DATA.GpioPinConfig0_GPP_A08                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A08                        | 0x00082019
+GPIO_CFG_DATA.GpioPinConfig0_GPP_A09                        | 0x0550E281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A09                        | 0x00092001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_A10                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A10                        | 0x000A2019
+GPIO_CFG_DATA.GpioPinConfig0_GPP_A11                        | 0x0550A281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A11                        | 0x000B2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_A12                        | 0x0550E281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A12                        | 0x000C2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_A13                        | 0x0550A281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A13                        | 0x000D2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_A14                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A14                        | 0x000E2001
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A15.GPIOSkip_GPP_A15       | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A16.GPIOSkip_GPP_A16       | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A17.GPIOSkip_GPP_A17       | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A18.GPIOSkip_GPP_A18       | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A19.GPIOSkip_GPP_A19       | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A20.GPIOSkip_GPP_A20       | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A21.GPIOSkip_GPP_A21       | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A22.GPIOSkip_GPP_A22       | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A23.GPIOSkip_GPP_A23       | 1           # TGL-U Only. Skip for TGL-H.
+
+# GPIO Group GPP_B: Both TGL-U and TLGL-H PCHs have 24.
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B00                        | 0x031885E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B00                        | 0x01000619
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B01                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B01                        | 0x81012001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B02                        | 0x0534AD81
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B02                        | 0x81022601
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B03                        | 0x0300E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B03                        | 0x01030001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B04                        | 0x050085E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B04                        | 0x01040001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B05                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B05                        | 0x81052001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B06                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B06                        | 0x81062001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B07                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B07                        | 0x81072001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B08                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B08                        | 0x81082001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B09                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B09                        | 0x81092001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B10                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B10                        | 0x810A2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B11                        | 0x0150A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B11                        | 0x810B2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B12                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B12                        | 0x810C2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B13                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B13                        | 0x810D2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B14                        | 0x0500A2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B14                        | 0x010E0001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B15                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B15                        | 0x010F0001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B16                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B16                        | 0x01100001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B17                        | 0x0150A281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B17                        | 0x81112001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B18                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B18                        | 0x01120001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B19                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B19                        | 0x81132001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B20                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B20                        | 0x81142001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B21                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B21                        | 0x81152001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B22                        | 0x0350A283
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B22                        | 0x81162001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B23                        | 0x0300E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B23                        | 0x01170001
+
+# GPIO Group GPP_C: Both TGL-U and TLGL-H PCHs have 24.
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C00                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C00                        | 0x82002001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C01                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C01                        | 0x82012001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C02                        | 0x033885E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C02                        | 0x02020601
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C03                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C03                        | 0x82032001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C04                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C04                        | 0x82042001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C05                        | 0x0550E281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C05                        | 0x82052001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C06                        | 0x0150A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C06                        | 0x82062001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C07                        | 0x0150A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C07                        | 0x82072001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C08                        | 0x0538AD81
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C08                        | 0x82082001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C09                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C09                        | 0x82092001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C10                        | 0x0150A281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C10                        | 0x820A2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C11                        | 0x0150A281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C11                        | 0x820B2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C12                        | 0x05188DA1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C12                        | 0x020C0619
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C13                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C13                        | 0x020D0001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C14                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C14                        | 0x020E0001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C15                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C15                        | 0x020F0001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C16                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C16                        | 0x82102001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C17                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C17                        | 0x82112001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C18                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C18                        | 0x82122001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C19                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C19                        | 0x82132001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C20                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C20                        | 0x82142001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C21                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C21                        | 0x82152001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C22                        | 0x0350E281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C22                        | 0x82162001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C23                        | 0x0314AD81
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C23                        | 0x82172601
+
+# GPIO Group GPP_D: TGL-U PCH has 20, TGL-H PCH has 24.
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D00                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D00                        | 0x83002001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D01                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D01                        | 0x83012001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D02                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D02                        | 0x83022001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D03                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D03                        | 0x83032001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D04                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D04                        | 0x83042001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D05                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D05                        | 0x83052001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D06                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D06                        | 0x83062001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D07                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D07                        | 0x83072001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D08                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D08                        | 0x83082001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D09                        | 0x0350A38B
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D09                        | 0x8309201F
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D10                        | 0x0350A28B
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D10                        | 0x830A201F
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D11                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D11                        | 0x030B0001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D12                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D12                        | 0x030C0001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D13                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D13                        | 0x830D2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D14                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D14                        | 0x830E2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D15                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D15                        | 0x830F2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D16                        | 0x0550E281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D16                        | 0x83102001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D17                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D17                        | 0x83112001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D18                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D18                        | 0x83122001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D19                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D19                        | 0x83132001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D20                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D20                        | 0x83142001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D21                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D21                        | 0x83152001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D22                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D22                        | 0x83162001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_D23                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D23                        | 0x83172001
+
+# GPIO Group GPP_E: TGL-U PCH has 24, TGL-H PCH has 13. Skip 13-23 fot TGL-H.
+GPIO_CFG_DATA.GpioPinConfig0_GPP_E00                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E00                        | 0x84002001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_E01                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E01                        | 0x84012001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_E02                        | 0x03148DA1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E02                        | 0x04020601
+GPIO_CFG_DATA.GpioPinConfig0_GPP_E03                        | 0x053285A1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E03                        | 0x04030601
+GPIO_CFG_DATA.GpioPinConfig0_GPP_E04                        | 0x03148DA1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E04                        | 0x04040601
+GPIO_CFG_DATA.GpioPinConfig0_GPP_E05                        | 0x0150A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E05                        | 0x84052001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_E06                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E06                        | 0x04060001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_E07                        | 0x0512AD81
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E07                        | 0x84072001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_E08                        | 0x0550E281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E08                        | 0x84082001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_E09                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E09                        | 0x84092001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_E10                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E10                        | 0x840A2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_E11                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E11                        | 0x840B2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_E12                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E12                        | 0x840C2001
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E13.GPIOSkip_GPP_E13       | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E14.GPIOSkip_GPP_E14       | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E15.GPIOSkip_GPP_E15       | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E16.GPIOSkip_GPP_E16       | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E17.GPIOSkip_GPP_E17       | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E18.GPIOSkip_GPP_E18       | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E19.GPIOSkip_GPP_E19       | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E20.GPIOSkip_GPP_E20       | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E21.GPIOSkip_GPP_E21       | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E22.GPIOSkip_GPP_E22       | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E23.GPIOSkip_GPP_E23       | 1           # TGL-U Only. Skip for TGL-H.
+
+# GPIO Group GPP_F: Both TGL-U and TLGL-H PCHs have 24.
+GPIO_CFG_DATA.GpioPinConfig0_GPP_F00                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F00                        | 0x85002001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_F01                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F01                        | 0x85012019
+GPIO_CFG_DATA.GpioPinConfig0_GPP_F02                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F02                        | 0x85022001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_F03                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F03                        | 0x85032019
+GPIO_CFG_DATA.GpioPinConfig0_GPP_F04                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F04                        | 0x05040001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_F05                        | 0x051485E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F05                        | 0x05050601
+GPIO_CFG_DATA.GpioPinConfig0_GPP_F06                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F06                        | 0x85062001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_F07                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F07                        | 0x05070001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_F08                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F08                        | 0x85082001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_F09                        | 0x01148DA1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F09                        | 0x05090619
+GPIO_CFG_DATA.GpioPinConfig0_GPP_F10                        | 0x050085E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F10                        | 0x050A0001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_F11                        | 0x03188DE1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F11                        | 0x050B0601
+GPIO_CFG_DATA.GpioPinConfig0_GPP_F12                        | 0x0300E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F12                        | 0x050C0001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_F13                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F13                        | 0x050D0001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_F14                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F14                        | 0x850E2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_F15                        | 0x030085E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F15                        | 0x050F0001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_F16                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F16                        | 0x05100001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_F17                        | 0x0550E283
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F17                        | 0x85112001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_F18                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F18                        | 0x05120001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_F19                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F19                        | 0x85132001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_F20                        | 0x0550A281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F20                        | 0x85142001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_F21                        | 0x0550A581
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F21                        | 0x85152001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_F22                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F22                        | 0x85162001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_F23                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F23                        | 0x05170001
+
+# GPIO Group GPP_G: Only in TGL-H PCH, and has 16.
+GPIO_CFG_DATA.GpioPinConfig0_GPP_G00                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_G00                        | 0x86002019
+GPIO_CFG_DATA.GpioPinConfig0_GPP_G01                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_G01                        | 0x86012019
+GPIO_CFG_DATA.GpioPinConfig0_GPP_G02                        | 0x0500A2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_G02                        | 0x06020001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_G03                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_G03                        | 0x06030001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_G04                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_G04                        | 0x06040001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_G05                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_G05                        | 0x86052009
+GPIO_CFG_DATA.GpioPinConfig0_GPP_G06                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_G06                        | 0x06060001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_G07                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_G07                        | 0x06070001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_G08                        | 0x0350A385
+GPIO_CFG_DATA.GpioPinConfig1_GPP_G08                        | 0x86082001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_G09                        | 0x0350A385
+GPIO_CFG_DATA.GpioPinConfig1_GPP_G09                        | 0x86092001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_G10                        | 0x0550A581
+GPIO_CFG_DATA.GpioPinConfig1_GPP_G10                        | 0x860A2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_G11                        | 0x0550E281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_G11                        | 0x860B2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_G12                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_G12                        | 0x860C2019
+GPIO_CFG_DATA.GpioPinConfig0_GPP_G13                        | 0x0350E281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_G13                        | 0x860D2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_G14                        | 0x0550A281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_G14                        | 0x860E2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_G15                        | 0x0550A281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_G15                        | 0x860F2001
+
+# GPIO Group GPP_H: Both TGL-U and TLGL-H PCHs have 24.
+GPIO_CFG_DATA.GpioPinConfig0_GPP_H00                        | 0x0550E281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H00                        | 0x87002001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_H01                        | 0x0550E281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H01                        | 0x87012001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_H02                        | 0x0350A281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H02                        | 0x87022001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_H03                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H03                        | 0x87032001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_H04                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H04                        | 0x87042001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_H05                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H05                        | 0x87052001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_H06                        | 0x050085E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H06                        | 0x07060001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_H07                        | 0x050085E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H07                        | 0x07070001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_H08                        | 0x050085E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H08                        | 0x07080001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_H09                        | 0x050085E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H09                        | 0x07090001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_H10                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H10                        | 0x070A0001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_H11                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H11                        | 0x870B2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_H12                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H12                        | 0x070C0001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_H13                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H13                        | 0x070D0001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_H14                        | 0x0500A2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H14                        | 0x070E0001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_H15                        | 0x050085E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H15                        | 0x070F0001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_H16                        | 0x051005E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H16                        | 0x07100001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_H17                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H17                        | 0x07110001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_H18                        | 0x0500A2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H18                        | 0x07120001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_H19                        | 0x0314AD83
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H19                        | 0x87132601
+GPIO_CFG_DATA.GpioPinConfig0_GPP_H20                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H20                        | 0x87142001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_H21                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H21                        | 0x87152001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_H22                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H22                        | 0x87162001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_H23                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H23                        | 0x07170001
+
+# GPIO Group GPP_I: Only in TGL-H PCH (15).
+GPIO_CFG_DATA.GpioPinConfig0_GPP_I00                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I00                        | 0x88002019
+GPIO_CFG_DATA.GpioPinConfig0_GPP_I01                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I01                        | 0x88012019
+GPIO_CFG_DATA.GpioPinConfig0_GPP_I02                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I02                        | 0x88022019
+GPIO_CFG_DATA.GpioPinConfig0_GPP_I03                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I03                        | 0x88032019
+GPIO_CFG_DATA.GpioPinConfig0_GPP_I04                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I04                        | 0x88042019
+GPIO_CFG_DATA.GpioPinConfig0_GPP_I05                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I05                        | 0x88052009
+GPIO_CFG_DATA.GpioPinConfig0_GPP_I06                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I06                        | 0x88062001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_I07                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I07                        | 0x88072001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_I08                        | 0x051885E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I08                        | 0x08080601
+GPIO_CFG_DATA.GpioPinConfig0_GPP_I09                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I09                        | 0x08090001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_I10                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I10                        | 0x080A0001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_I11                        | 0x0550E281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I11                        | 0x880B2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_I12                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I12                        | 0x880C2019
+GPIO_CFG_DATA.GpioPinConfig0_GPP_I13                        | 0x0350E281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I13                        | 0x880D2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_I14                        | 0x0550A281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I14                        | 0x880E2001
+
+# GPIO Group GPP_J: Only in TGL-H PCH (10).
+GPIO_CFG_DATA.GpioPinConfig0_GPP_J00                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_J00                        | 0x09000001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_J01                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_J01                        | 0x89012001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_J02                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_J02                        | 0x89022001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_J03                        | 0x0518A581
+GPIO_CFG_DATA.GpioPinConfig1_GPP_J03                        | 0x89032001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_J04                        | 0x0150A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_J04                        | 0x89042001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_J05                        | 0x0150A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_J05                        | 0x89052001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_J06                        | 0x0550E281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_J06                        | 0x89062001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_J07                        | 0x0512AD81
+GPIO_CFG_DATA.GpioPinConfig1_GPP_J07                        | 0x89072001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_J08                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_J08                        | 0x09080601
+GPIO_CFG_DATA.GpioPinConfig0_GPP_J09                        | 0x053005E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_J09                        | 0x09090601
+
+# GPIO Group GPP_K: Only in TGL-H PCH (12).
+GPIO_CFG_DATA.GpioPinConfig0_GPP_K00                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_K00                        | 0x0A000001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_K01                        | 0x050085E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_K01                        | 0x0A010001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_K02                        | 0x050085E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_K02                        | 0x0A020001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_K03                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_K03                        | 0x0A030001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_K04                        | 0x0500E2E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_K04                        | 0x0A040001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_K05                        | 0x050085E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_K05                        | 0x0A050001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_K06                        | 0x0550E281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_K06                        | 0x8A062001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_K07                        | 0x0512AD81
+GPIO_CFG_DATA.GpioPinConfig1_GPP_K07                        | 0x8A072001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_K08                        | 0x0550E281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_K08                        | 0x8A082001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_K09                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_K09                        | 0x8A092001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_K10                        | 0x050085E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_K10                        | 0x0A0A0001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_K11                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_K11                        | 0x8A0B2001
+
+# GPIO Group GPP_R: TGL-U PCH has 8, TGL-H PCH has 20.
+GPIO_CFG_DATA.GpioPinConfig0_GPP_R00                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R00                        | 0x91002001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_R01                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R01                        | 0x9101201F
+GPIO_CFG_DATA.GpioPinConfig0_GPP_R02                        | 0x0350A283
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R02                        | 0x9102201F
+GPIO_CFG_DATA.GpioPinConfig0_GPP_R03                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R03                        | 0x9103201F
+GPIO_CFG_DATA.GpioPinConfig0_GPP_R04                        | 0x0350A383
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R04                        | 0x91042001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_R05                        | 0x0550A281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R05                        | 0x91052001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_R06                        | 0x0550E281
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R06                        | 0x91062001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_R07                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R07                        | 0x91072001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_R08                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R08                        | 0x91082001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_R09                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R09                        | 0x91092001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_R10                        | 0x053005E1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R10                        | 0x110A0001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_R11                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R11                        | 0x910B2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_R12                        | 0x03188DE1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R12                        | 0x110C0601
+GPIO_CFG_DATA.GpioPinConfig0_GPP_R13                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R13                        | 0x910D2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_R14                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R14                        | 0x910E2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_R15                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R15                        | 0x910F2001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_R16                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R16                        | 0x91102001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_R17                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R17                        | 0x91112001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_R18                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R18                        | 0x91122001
+GPIO_CFG_DATA.GpioPinConfig0_GPP_R19                        | 0x0350A381
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R19                        | 0x91132001
+
+# GPIO Group GPP_S: Only in TGL-U PCH (8). Skip all for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPP_S00.GPIOSkip_GPP_S00       | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPP_S01.GPIOSkip_GPP_S01       | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPP_S02.GPIOSkip_GPP_S02       | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPP_S03.GPIOSkip_GPP_S03       | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPP_S04.GPIOSkip_GPP_S04       | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPP_S05.GPIOSkip_GPP_S05       | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPP_S06.GPIOSkip_GPP_S06       | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPP_S07.GPIOSkip_GPP_S07       | 1           # TGL-U Only. Skip for TGL-H.
+
+# GPIO Group GPD: Only in TGL-U PCH (12). Skip all for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPD00.GPIOSkip_GPD00           | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPD01.GPIOSkip_GPD01           | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPD02.GPIOSkip_GPD02           | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPD03.GPIOSkip_GPD03           | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPD04.GPIOSkip_GPD04           | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPD05.GPIOSkip_GPD05           | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPD06.GPIOSkip_GPD06           | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPD07.GPIOSkip_GPD07           | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPD08.GPIOSkip_GPD08           | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPD09.GPIOSkip_GPD09           | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPD10.GPIOSkip_GPD10           | 1           # TGL-U Only. Skip for TGL-H.
+GPIO_CFG_DATA.GpioPinConfig1_GPD11.GPIOSkip_GPD11           | 1           # TGL-U Only. Skip for TGL-H.
+
+#
+# To enable payload selection the below options need to be uncommented.
+#
+# This GPIO maps to the SW7G1 4-block DIP switch's 4th switch.
+# If the switch is OFF then OS Loader will be used, if ON UEFI PLD
+# will be used (default is OFF). Need to set the GPIO as Input.
+#
+GEN_CFG_DATA.PayloadId                                      | 'AUTO'
+GPIO_CFG_DATA.GpioPinConfig0_GPP_F10.GPIODirection_GPP_F10  | 11
+# PCH H :  GPIO_VER2_H_GPP_F10
+PLDSEL_CFG_DATA.PldSelGpio.Enable                           | 1
+PLDSEL_CFG_DATA.PldSelGpio.PadGroup                         | 5
+PLDSEL_CFG_DATA.PldSelGpio.PinNumber                        | 10
+PLDSEL_CFG_DATA.PldSelGpio.PinPolarity                      | 1
+
+SILICON_CFG_DATA.PchHdaEnable                               | 0x00

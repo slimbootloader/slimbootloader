@@ -1,0 +1,188 @@
+/** @file
+
+  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+  External (TYPE, FieldUnitObj)
+  External (SCKN, FieldUnitObj)
+  External (OSCP, FieldUnitObj)
+
+    Name(NCPU, 0x80000000)
+    Name(DOMN, 0x80000000)
+
+    //
+    // _PDC Flag Bit definitions:
+    //     [00] = If set, OSPM is capable of direct access to Performance State MSR's
+    //     [01] = If set, OSPM supports the C1 "I/O then Halt" FFh sequence for
+    //            multi-processor configuation
+    //     [02] = If set, OSPM is capable of direct access to On Demand throttling MSR's
+    //     [03] = If set, OSPM is capable of independent C1, P state and T state support
+    //            for each processor for multi-processor configuations. This bit does not
+    //            indicate support for asymmetrical _CST, _PSS, or _TSS objects for
+    //            individual processors in the system.
+    //     [04] = If set, OSPM is capable of independent C2 and C3 state support for each
+    //            processor for multi-processor configuations. This bit does not
+    //            indicate support for asymmetrical _CST objects for individual
+    //            processors in the system.
+    //     [05] = If set, OSPM is capable of native P state software coordination using
+    //            BIOS supplied _PSD information for multi-processor configuations.
+    //     [06] = If set, OSPM is capable of native C state software coordination using
+    //            BIOS supplied _CSD information for multi-processor configuations.
+    //     [07] = If set, OSPM is capable of native ACPI throttling software coordination
+    //            using BIOS supplied _TSD information for multi-processor configuations.
+    //     [08] = If set, OSPM is capable of performing native C state instructions (beyond
+    //            halt) for the C1 handler in multi-processor configuations.
+    //     [09] = If set, OSPM is capable of performing native C state instructions for
+    //            the C2/C3 handlers in multi-processor configuations.
+    //     [10] = Reserved
+    //     [11] = OSPM is capable of hardware coordination of P states.
+    //  [31:12] = Reserved
+    //
+    //
+
+    Method(_PPC, 0)
+    {
+#if ME_SPS_SUPPORT
+      Or(PETE, 0x80, PETE) // Confirm P-states support on this system
+      Return(DeRefOf(Index(PSLM, SCKN))) // P-state limit for this socket
+#else
+      Return(0)
+#endif
+    }
+
+    //
+    //    00:  Generic Regiser Descriptor
+    // 01-02:  Length
+    //    03:  Address space ID, _ASI, System IO
+    //    04:  Regiser Bit width
+    //    05:  Regiser Bit offset
+    //    06:  Reseveed
+    // 06-14:  _ADR  64bit
+    // 15-16:  End Tag
+    //
+
+    //
+    // Native - Processor Performance Control
+    //
+    Name(NPCT, Package ()
+    {
+        ResourceTemplate(){Register(FFixedHW, 0, 0, 0)}, // control
+        ResourceTemplate(){Register(FFixedHW, 0, 0, 0)}  // status
+    })
+
+    Name(SPCT, Package () {
+      //
+      // ResourceTemplate for Emulated IO control port 0880h
+      //
+      Buffer() {0x82, 0x0c, 0x00, 0x01, 0x10, 0x00, 0x00, 0x80, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79, 0x00 },
+      //
+      // ResourceTemplate for Emulated IO control port 0882h
+      //
+      Buffer() {0x82, 0x0c, 0x00, 0x01, 0x10, 0x00, 0x00, 0x82, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79, 0x00 }
+    })  // End of NPCT (Native PPC)
+
+    //
+    // Processor Performance Control
+    //
+    Method(_PCT,0) {
+       Return(NPCT)
+    }
+
+    Name(ZPSS, Package() {
+      Package(){0, 0, 0, 0, 0, 0}
+    })
+
+    //
+    // Native - Performance States Supported
+    // Put package NPSS first and then SPSS, and then _PSS method, do not change the order
+    // Platform will update the package by searching the first NPSS/SPSS
+    //
+    Name(NPSS,Package() {
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},  // P0
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},  // P1
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},  // P2
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},  // P3
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},  // P4
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},  // P5
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},  // P6
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},  // P7
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},  // P8
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},  // P9
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},  // P10
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},  // P11
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},  // P12
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},  // P13
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},  // P14
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},  // P15
+    })
+
+    //
+    // GPSS is for ACPI 6.0 and beyond which supports 255 states. No longer limited to 16 P-states.
+    //
+    Name(GPSS,Package()
+    {
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000},
+      Package(){0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000, 0x80000000}
+    })
+
+    //
+    // Performance States Supported
+    //
+    // OSCP[10] = OS capable for greater than 16 P-states
+    //
+    Method(_PSS,0)
+    {
+      If (LAnd(PSEN, LLess(HWEN,2)))
+      {
+        If (And(OSCP, 0x0400))
+        {
+          Return(GPSS);
+        }
+        Else
+        {
+          Return(NPSS)    // Return native P-states table
+        }
+      }
+      Return(ZPSS)
+    }
+

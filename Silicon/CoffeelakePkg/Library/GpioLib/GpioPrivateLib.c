@@ -10,8 +10,129 @@
 #include <Library/DebugLib.h>
 #include <GpioPinsCnlLp.h>
 #include <GpioPinsCnlH.h>
-#include "GpioLibrary.h"
 #include "GpioInitLib.h"
+#include <Library/GpioSiLib.h>
+#include <Library/PchInfoLib.h>
+#include <Library/GpioLib.h>
+#include <GpioPinsCnlLp.h>
+#include <GpioPinsCnlH.h>
+#include <GpioConfig.h>
+#include <RegAccess.h>
+
+GLOBAL_REMOVE_IF_UNREFERENCED GPIO_GROUP_TO_GPE_MAPPING mPchLpGpioGroupToGpeMapping[] = {
+  {GPIO_CNL_LP_GROUP_GPP_A,  0, V_CNL_PCH_LP_PMC_PWRM_GPIO_CFG_GPP_A, V_CNL_PCH_LP_GPIO_PCR_MISCCFG_GPE0_GPP_A},
+  {GPIO_CNL_LP_GROUP_GPP_B,  0, V_CNL_PCH_LP_PMC_PWRM_GPIO_CFG_GPP_B, V_CNL_PCH_LP_GPIO_PCR_MISCCFG_GPE0_GPP_B},
+  {GPIO_CNL_LP_GROUP_GPP_C,  0, V_CNL_PCH_LP_PMC_PWRM_GPIO_CFG_GPP_C, V_CNL_PCH_LP_GPIO_PCR_MISCCFG_GPE0_GPP_C},
+  {GPIO_CNL_LP_GROUP_GPP_D,  0, V_CNL_PCH_LP_PMC_PWRM_GPIO_CFG_GPP_D, V_CNL_PCH_LP_GPIO_PCR_MISCCFG_GPE0_GPP_D},
+  {GPIO_CNL_LP_GROUP_GPP_E,  0, V_CNL_PCH_LP_PMC_PWRM_GPIO_CFG_GPP_E, V_CNL_PCH_LP_GPIO_PCR_MISCCFG_GPE0_GPP_E},
+  {GPIO_CNL_LP_GROUP_GPP_F,  0, V_CNL_PCH_LP_PMC_PWRM_GPIO_CFG_GPP_F, V_CNL_PCH_LP_GPIO_PCR_MISCCFG_GPE0_GPP_F},
+  {GPIO_CNL_LP_GROUP_GPP_G,  0, V_CNL_PCH_LP_PMC_PWRM_GPIO_CFG_GPP_G, V_CNL_PCH_LP_GPIO_PCR_MISCCFG_GPE0_GPP_G},
+  {GPIO_CNL_LP_GROUP_GPP_H,  0, V_CNL_PCH_LP_PMC_PWRM_GPIO_CFG_GPP_H, V_CNL_PCH_LP_GPIO_PCR_MISCCFG_GPE0_GPP_H},
+  {GPIO_CNL_LP_GROUP_GPD,    0, V_CNL_PCH_LP_PMC_PWRM_GPIO_CFG_GPD,   V_CNL_PCH_LP_GPIO_PCR_MISCCFG_GPE0_GPD},
+  {GPIO_CNL_LP_GROUP_VGPIO , 0, V_CNL_PCH_LP_PMC_PWRM_GPIO_CFG_VGPIO, V_CNL_PCH_LP_GPIO_PCR_MISCCFG_GPE0_VGPIO},
+  {GPIO_CNL_LP_GROUP_SPI,    0, V_CNL_PCH_LP_PMC_PWRM_GPIO_CFG_SPI,   V_CNL_PCH_LP_GPIO_PCR_MISCCFG_GPE0_SPI},
+  {GPIO_CNL_LP_GROUP_AZA,    0, V_CNL_PCH_LP_PMC_PWRM_GPIO_CFG_AZA,   V_CNL_PCH_LP_GPIO_PCR_MISCCFG_GPE0_AZA},
+  {GPIO_CNL_LP_GROUP_JTAG,   0, V_CNL_PCH_LP_PMC_PWRM_GPIO_CFG_JTAG,  V_CNL_PCH_LP_GPIO_PCR_MISCCFG_GPE0_JTAG}
+};
+
+GLOBAL_REMOVE_IF_UNREFERENCED GPIO_GROUP_TO_GPE_MAPPING mPchHGpioGroupToGpeMapping[] = {
+  {GPIO_CNL_H_GROUP_GPP_A,  0, V_CNL_PCH_H_PMC_PWRM_GPIO_CFG_GPP_A, V_CNL_PCH_H_GPIO_PCR_MISCCFG_GPE0_GPP_A},
+  {GPIO_CNL_H_GROUP_GPP_B,  0, V_CNL_PCH_H_PMC_PWRM_GPIO_CFG_GPP_B, V_CNL_PCH_H_GPIO_PCR_MISCCFG_GPE0_GPP_B},
+  {GPIO_CNL_H_GROUP_GPP_C,  0, V_CNL_PCH_H_PMC_PWRM_GPIO_CFG_GPP_C, V_CNL_PCH_H_GPIO_PCR_MISCCFG_GPE0_GPP_C},
+  {GPIO_CNL_H_GROUP_GPP_D,  0, V_CNL_PCH_H_PMC_PWRM_GPIO_CFG_GPP_D, V_CNL_PCH_H_GPIO_PCR_MISCCFG_GPE0_GPP_D},
+  {GPIO_CNL_H_GROUP_GPP_E,  0, V_CNL_PCH_H_PMC_PWRM_GPIO_CFG_GPP_E, V_CNL_PCH_H_GPIO_PCR_MISCCFG_GPE0_GPP_E},
+  {GPIO_CNL_H_GROUP_GPP_F,  0, V_CNL_PCH_H_PMC_PWRM_GPIO_CFG_GPP_F, V_CNL_PCH_H_GPIO_PCR_MISCCFG_GPE0_GPP_F},
+  {GPIO_CNL_H_GROUP_GPP_G,  0, V_CNL_PCH_H_PMC_PWRM_GPIO_CFG_GPP_G, V_CNL_PCH_H_GPIO_PCR_MISCCFG_GPE0_GPP_G},
+  {GPIO_CNL_H_GROUP_GPP_H,  0, V_CNL_PCH_H_PMC_PWRM_GPIO_CFG_GPP_H, V_CNL_PCH_H_GPIO_PCR_MISCCFG_GPE0_GPP_H},
+  {GPIO_CNL_H_GROUP_GPP_I,  0, V_CNL_PCH_H_PMC_PWRM_GPIO_CFG_GPP_I, V_CNL_PCH_H_GPIO_PCR_MISCCFG_GPE0_GPP_I},
+  {GPIO_CNL_H_GROUP_GPP_J,  0, V_CNL_PCH_H_PMC_PWRM_GPIO_CFG_GPP_J, V_CNL_PCH_H_GPIO_PCR_MISCCFG_GPE0_GPP_J},
+  {GPIO_CNL_H_GROUP_GPP_K,  0, V_CNL_PCH_H_PMC_PWRM_GPIO_CFG_GPP_K, V_CNL_PCH_H_GPIO_PCR_MISCCFG_GPE0_GPP_K},
+  {GPIO_CNL_H_GROUP_GPD,    0, V_CNL_PCH_H_PMC_PWRM_GPIO_CFG_GPD,   V_CNL_PCH_H_GPIO_PCR_MISCCFG_GPE0_GPD},
+  {GPIO_CNL_H_GROUP_VGPIO,  0, V_CNL_PCH_H_PMC_PWRM_GPIO_CFG_VGPIO, V_CNL_PCH_H_GPIO_PCR_MISCCFG_GPE0_VGPIO}
+};
+
+/**
+  This procedure will get group index (0 based) from group
+
+  @param[in] GpioGroup        Gpio Group
+
+  @retval Value               Group Index
+**/
+UINT32
+EFIAPI
+GpioGetGroupIndexFromGroup (
+  IN GPIO_GROUP        GpioGroup
+  )
+{
+  return (UINT32) GPIO_GET_GROUP_INDEX (GpioGroup);
+}
+
+/**
+  This procedure will get group index (0 based)
+
+  @param[in] GpioPad          Gpio Pad
+
+  @retval Value               Group Index
+**/
+UINT32
+EFIAPI
+GpioGetGroupIndexFromGpioPad (
+  IN GPIO_PAD        GpioPad
+  )
+{
+  return (UINT32) GPIO_GET_GROUP_INDEX_FROM_PAD (GpioPad);
+}
+
+/**
+  This procedure will get pad number (0 based) from Gpio Pad
+
+  @param[in] GpioPad          Gpio Pad
+
+  @retval Value               Pad Number
+**/
+UINT32
+EFIAPI
+GpioGetPadNumberFromGpioPad (
+  IN GPIO_PAD        GpioPad
+  )
+{
+  return (UINT32) GPIO_GET_PAD_NUMBER (GpioPad);
+}
+
+/**
+  This procedure will get number of groups
+
+  @param[in] none
+
+  @retval Value               Group number
+**/
+UINT32
+EFIAPI
+GpioGetNumberOfGroups (
+  VOID
+  )
+{
+  UINT32                 GpioGroupInfoLength;
+
+  GpioGetGroupInfoTable (&GpioGroupInfoLength);
+  return GpioGroupInfoLength;
+}
+
+/**
+  This procedure will get group number
+
+  @param[in] GpioPad          Gpio Pad
+
+  @retval Value               Group number
+**/
+GPIO_GROUP
+EFIAPI
+GpioGetGroupFromGpioPad (
+  IN GPIO_PAD         GpioPad
+  )
+{
+  return GPIO_GET_GROUP_FROM_PAD (GpioPad);
+}
 
 /**
   This procedure will return Port ID of GPIO Community from GpioPad
@@ -76,6 +197,7 @@ GpioGetGpioPadCfgAddressFromGpioPad (
           FALSE                   Incorrect pin
 **/
 BOOLEAN
+EFIAPI
 GpioIsCorrectPadForThisChipset (
   IN  GPIO_PAD        GpioPad
   )
@@ -164,6 +286,7 @@ GpioIsPadHostOwned (
   @retval PadCfgRegValue      PADCFG_DWx value
 **/
 UINT32
+EFIAPI
 GpioReadPadCfgReg (
   IN GPIO_PAD             GpioPad,
   IN UINT8                DwReg
@@ -188,4 +311,40 @@ GpioReadPadCfgReg (
   return MmioRead32 (PCH_PCR_ADDRESS (GpioGroupInfo[GroupIndex].Community, PadCfgReg));
 }
 
+/**
+  Get information for GPIO Group required to program GPIO and PMC for desired 1-Tier GPE mapping
 
+  @param[out] GpioGroupToGpeMapping        Table with GPIO Group to GPE mapping
+  @param[out] GpioGroupToGpeMappingLength  GPIO Group to GPE mapping table length
+**/
+VOID
+EFIAPI
+GpioGetGroupToGpeMapping (
+  OUT GPIO_GROUP_TO_GPE_MAPPING  **GpioGroupToGpeMapping,
+  OUT UINT32                     *GpioGroupToGpeMappingLength
+  )
+{
+  if (IsPchLp ()) {
+    *GpioGroupToGpeMapping = mPchLpGpioGroupToGpeMapping;
+    *GpioGroupToGpeMappingLength = ARRAY_SIZE (mPchLpGpioGroupToGpeMapping);
+  } else {
+    *GpioGroupToGpeMapping = mPchHGpioGroupToGpeMapping;
+    *GpioGroupToGpeMappingLength = ARRAY_SIZE (mPchHGpioGroupToGpeMapping);
+  }
+}
+
+/**
+  Get GPIO Chipset ID specific to PCH generation and series
+**/
+UINT32
+EFIAPI
+GpioGetThisChipsetId (
+  VOID
+  )
+{
+  if (IsPchLp ()) {
+    return GPIO_CNL_LP_CHIPSET_ID;
+  } else {
+    return GPIO_CNL_H_CHIPSET_ID;
+  }
+}

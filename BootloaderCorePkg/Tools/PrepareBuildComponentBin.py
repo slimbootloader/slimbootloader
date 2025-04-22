@@ -1,6 +1,6 @@
 ## @ PrepareFspBin.py
 #
-# Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2018 - 2023, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -10,7 +10,7 @@ import sys
 import re
 import shutil
 import subprocess
-from   datetime import date
+import glob
 
 def Fatal (msg):
     sys.stdout.flush()
@@ -21,6 +21,13 @@ def CloneRepo (clone_dir, driver_inf):
     if repo == '' or commit == '':
         Fatal ('Failed to find repo and commit information!')
 
+    base_dir = os.path.basename(clone_dir)
+    if base_dir == '$AUTO':
+        repo_dir = os.path.basename(repo)
+        if repo_dir.lower().endswith('.git'):
+            repo_dir = repo_dir[:-4]
+        clone_dir = os.path.join (os.path.dirname(clone_dir), repo_dir)
+
     if not os.path.exists(clone_dir + '/.git'):
         print ('Cloning the repo ... %s' % repo)
         cmd = 'git clone %s %s' % (repo, clone_dir)
@@ -29,7 +36,16 @@ def CloneRepo (clone_dir, driver_inf):
             Fatal ('Failed to clone repo to directory %s !' % clone_dir)
         print ('Done\n')
     else:
-        print ('Update the repo ...')
+        # If the repository already exists, then try to check out the correct
+        # revision without going to the network
+        print ('Attempting to check out specified version ... %s' % commit)
+        cmd = 'git checkout %s' % commit
+        ret = subprocess.call(cmd.split(' '), cwd=clone_dir)
+        if ret == 0:
+            print ('Done\n')
+            return clone_dir
+
+        print ('Specified version not available. Update the repo ...')
         cmd = 'git fetch origin'
         ret = subprocess.call(cmd.split(' '), cwd=clone_dir)
         if ret:
@@ -43,6 +59,7 @@ def CloneRepo (clone_dir, driver_inf):
     if ret:
         Fatal ('Failed to check out specified version !')
     print ('Done\n')
+    return clone_dir
 
 
 def CheckFileListExist (copy_list, sbl_dir):
@@ -85,7 +102,7 @@ def GetCopyList (driver_inf):
                 have_copylist_section = False
 
         if have_copylist_section:
-            match = re.match("^(.+)\s*:\s*(.+)", line)
+            match = re.match("^(.+)\\s*:\\s*(.+)", line)
             if match:
                 copy_list.append((match.group(1).strip(), match.group(2).strip()))
 
@@ -108,20 +125,20 @@ def GetRepoAndCommit (driver_inf):
                 have_repo_section = False
 
         if have_repo_section:
-            match = re.match("^REPO\s*=\s*(.*)", line)
+            match = re.match("^REPO\\s*=\\s*(.*)", line)
             if match:
                 repo = match.group(1)
 
-            match = re.match("^TAG\s*=\s*(.*)", line)
+            match = re.match("^TAG\\s*=\\s*(.*)", line)
             if match:
                 commit = match.group(1)
-            match = re.match("^COMMIT\s*=\s*(.*)", line)
+            match = re.match("^COMMIT\\s*=\\s*(.*)", line)
             if match:
                 commit = match.group(1)
 
     return repo, commit
 
-def CopyBins (driver_dir, sbl_dir, driver_inf):
+def CopyBins (repo_dir, sbl_dir, driver_inf):
     if not os.path.exists(driver_inf):
         return
 
@@ -133,11 +150,11 @@ def CopyBins (driver_dir, sbl_dir, driver_inf):
     if CheckFileListExist(copy_list, sbl_dir):
         return
 
-    CloneRepo (driver_dir, driver_inf)
+    repo_dir = CloneRepo (repo_dir, driver_inf)
 
-    CopyFileList (copy_list, driver_dir, sbl_dir)
+    CopyFileList (copy_list, repo_dir, sbl_dir)
 
-def BuildFspBins (fsp_dir, sbl_dir, silicon_pkg_name, flag):
+def BuildFspBins (fsp_dir, sbl_dir, fsp_inf, silicon_pkg_name, flag):
     sys.stdout.flush()
 
     copy_list = []
@@ -157,40 +174,19 @@ def BuildFspBins (fsp_dir, sbl_dir, silicon_pkg_name, flag):
     if CheckFileListExist(copy_list, sbl_dir):
         return
 
-    edk2_base_tag = 'edk2-stable201911'
-    print ('Building QEMU FSP binaries from EDKII repo (Base Tag: %s)' % edk2_base_tag)
-    if not os.path.exists(fsp_dir + '/.git'):
-        print ('Cloning EDKII repo ...')
-        cmd = 'git clone https://github.com/tianocore/edk2.git %s' % fsp_dir
-        ret = subprocess.call(cmd.split(' '))
-        if ret:
-            Fatal ('Failed to clone FSP repo to directory %s !' % fsp_dir)
-        print ('Done\n')
-    else:
-        output = subprocess.check_output(['git', 'tag', '-l'], cwd=fsp_dir).decode()
-        if edk2_base_tag not in output:
-            ret = subprocess.call(['git', 'fetch', '--all'], cwd=fsp_dir)
-            if ret:
-                Fatal ('Failed to fetch all tags !')
-
-    print ('Checking out EDKII stable tag (%s)...' % edk2_base_tag)
-
     if os.path.exists(fsp_dir + '/BuildFsp.py'):
         os.remove (fsp_dir + '/BuildFsp.py')
 
     if os.path.exists(fsp_dir + '/QemuFspPkg'):
         shutil.rmtree(fsp_dir + '/QemuFspPkg')
 
-    cmd = 'git clean -xfd'
-    ret = subprocess.call(cmd.split(' '), cwd=fsp_dir)
-    if ret:
-        Fatal ('Failed to clean repo in directory %s !' % fsp_dir)
+    print ('Cloning QEMU FSP from EDKII repo')
+    sys.stdout.flush()
+    CloneRepo (fsp_dir, fsp_inf)
 
-    cmd = 'git checkout -f ' + edk2_base_tag
-    ret = subprocess.call(cmd.split(' '), cwd=fsp_dir)
-    if ret:
-        Fatal ('Failed to check out branch !')
-    print ('Done\n')
+    dep_dir = os.path.join(fsp_dir, 'MdeModulePkg/Library/BrotliCustomDecompressLib/brotli/c/include/')
+    if not os.path.exists(dep_dir):
+        os.makedirs(dep_dir)
 
     print ('Applying QEMU FSP patch ...')
     patch_dir = os.path.join(sbl_dir, 'Silicon/QemuSocPkg/FspBin/Patches')
@@ -201,6 +197,10 @@ def BuildFspBins (fsp_dir, sbl_dir, silicon_pkg_name, flag):
     ret = subprocess.call(cmd.split(' '), cwd=fsp_dir)
     if ret:
         Fatal ('Failed to apply QEMU FSP patch !')
+    cmd = 'git am --keep-cr --whitespace=nowarn %s/0002-BaseTools-GCC-newer-versions-fix-Synced-with-EDK2.patch' % patch_dir
+    ret = subprocess.call(cmd.split(' '), cwd=fsp_dir)
+    if ret:
+        Fatal ('Failed to apply QEMU FSP BuildTools patch !')
     print ('Done\n')
 
     print ('Compiling QEMU FSP source ...')
@@ -226,29 +226,30 @@ def BuildFspBins (fsp_dir, sbl_dir, silicon_pkg_name, flag):
 
 def Main():
 
-    if len(sys.argv) < 3:
-        print ('Silicon directory and silicon package name are required!')
+    if len(sys.argv) < 6:
+        print ('Silicon directory, silicon package name, and target are required!')
         return -1
-    target = ''
-    if len(sys.argv) > 3:
-        target = sys.argv[3]
 
     sbl_dir          = sys.argv[1]
     silicon_pkg_name = sys.argv[2]
+    fsp_inf          = sys.argv[3]
+    microcode_inf    = sys.argv[4]
+    target           = sys.argv[5]
 
-    workspace_dir  = os.path.join(sbl_dir, '../Download')
+    workspace_dir  = os.path.join(sbl_dir, '../Download', silicon_pkg_name)
     fsp_repo_dir   = os.path.abspath (os.path.join(workspace_dir, 'IntelFsp'))
     qemu_repo_dir  = os.path.abspath (os.path.join(workspace_dir, 'QemuFsp'))
-    ucode_repo_dir = os.path.abspath (os.path.join(workspace_dir, 'IntelUcode'))
+
+    # Leave the final path node as '$AUTO' to allow to determine the repo dir automatically.
+    ucode_repo_dir = os.path.abspath (os.path.join(workspace_dir, '$AUTO'))
 
     if silicon_pkg_name == 'QemuSocPkg':
-        BuildFspBins (qemu_repo_dir, sbl_dir, silicon_pkg_name, target)
+        BuildFspBins (qemu_repo_dir, sbl_dir, fsp_inf, silicon_pkg_name, target)
     else:
-        fsp_inf = os.path.join(sbl_dir, 'Silicon', silicon_pkg_name, 'FspBin', 'FspBin.inf')
-        CopyBins (fsp_repo_dir, sbl_dir, fsp_inf,)
+        CopyBins (fsp_repo_dir, sbl_dir, fsp_inf)
 
-    microcode_inf = os.path.join(sbl_dir, 'Silicon', silicon_pkg_name, 'Microcode', 'Microcode.inf')
     CopyBins (ucode_repo_dir, sbl_dir, microcode_inf)
+
     return 0
 
 if __name__ == '__main__':

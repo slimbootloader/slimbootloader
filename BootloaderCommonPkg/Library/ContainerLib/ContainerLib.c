@@ -1,7 +1,7 @@
 /** @file
   Container library implementation.
 
-  Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -76,10 +76,13 @@ GetContainerHeaderSize (
   Offset = 0;
   if (ContainerHdr != NULL) {
     CompEntry   = (COMPONENT_ENTRY *)&ContainerHdr[1];
+    if(ContainerHdr->Count > MAX_CONTAINER_SUB_IMAGE) {
+      return 0;
+    }
     for (Index = 0; Index < ContainerHdr->Count; Index++) {
       CompEntry = (COMPONENT_ENTRY *)((UINT8 *)(CompEntry + 1) + CompEntry->HashSize);
       Offset = (UINT8 *)CompEntry - (UINT8 *)ContainerHdr;
-      if ((Offset < 0) || (Offset >= ContainerHdr->DataOffset)) {
+      if ((Offset < 0) || (Offset > ContainerHdr->DataOffset)) {
         Offset = 0;
         break;
       }
@@ -379,6 +382,7 @@ AutheticateContainerInternal (
   LOADER_COMPRESSED_HEADER *CompressHdr;
   EFI_STATUS                Status;
   COMPONENT_CALLBACK_INFO   CbInfo;
+  UINT64                    SignatureBuf;
 
   // Find authentication data offset and authenticate the container header
   Status = EFI_UNSUPPORTED;
@@ -390,6 +394,7 @@ AutheticateContainerInternal (
       AuthType = ContainerHdr->AuthType;
       AuthData = (UINT8 *)ContainerHdr + ALIGN_UP(ContainerHdrSize, AUTH_DATA_ALIGN);
       if ((AuthType == AUTH_TYPE_NONE) && FeaturePcdGet (PcdVerifiedBootEnabled)) {
+        // Enforce header authentication if verified boot is enabled.
         Status = EFI_SECURITY_VIOLATION;
       } else {
         Status = AuthenticateComponent ((UINT8 *)ContainerHdr, ContainerHdrSize,
@@ -409,37 +414,56 @@ AutheticateContainerInternal (
     }
   }
 
-  if (!EFI_ERROR (Status) && \
-      ((ContainerHdr->Flags & CONTAINER_HDR_FLAG_MONO_SIGNING) != 0)) {
-    // Additional verification if the container is signed monolithically.
-    // It is required for the container to be loaded in memory before registeration.
-    Status = EFI_UNSUPPORTED;
-    if ((ContainerHdr->Count > 1) && !IS_FLASH_ADDRESS (ContainerHeader)) {
-      // Use the last entry to verify all other combined components
-      CompEntry = (COMPONENT_ENTRY *)&ContainerHdr[1];
-      for (Index = 0; Index < (UINT32)(ContainerHdr->Count - 1); Index++) {
-        CompEntry = (COMPONENT_ENTRY *)((UINT8 *)(CompEntry + 1) + CompEntry->HashSize);
-      }
-      CompData    = (UINT8 *)(UINTN)(ContainerEntry->Base + ContainerHdr->DataOffset + CompEntry->Offset);
-      CompressHdr = (LOADER_COMPRESSED_HEADER *)CompData;
-      if (CompressHdr->Signature == LZDM_SIGNATURE) {
-        SignedDataLen = sizeof (LOADER_COMPRESSED_HEADER) + CompressHdr->CompressedSize;
-        AuthData = CompData + ALIGN_UP(SignedDataLen, AUTH_DATA_ALIGN);
-        DataBuf  = (UINT8 *)(UINTN)(ContainerEntry->Base + ContainerHdr->DataOffset);
-        DataLen  = CompEntry->Offset;
-        Status   = AuthenticateComponent (DataBuf, DataLen, CompEntry->AuthType,
-                                          AuthData, CompEntry->HashData, 0);
-
-        if ((!EFI_ERROR(Status)) && (ContainerCallback != NULL)) {
-          // Update component Call back info after authenticaton is done
-          // This info will used by firmware stage to extend to TPM
-          CbInfo.ComponentType    = ContainerHeader->Signature;
-          CbInfo.CompBuf          = DataBuf;
-          CbInfo.CompLen          = DataLen;
-          CbInfo.HashAlg          = GetHashAlg(CompEntry->AuthType);
-          CbInfo.HashData         = CompEntry->HashData;
-          ContainerCallback (PROGESS_ID_AUTHENTICATE, &CbInfo);
+  if (!EFI_ERROR (Status)) {
+    if ((ContainerHdr->Flags & CONTAINER_HDR_FLAG_MONO_SIGNING) != 0) {
+      // Additional verification if the container is signed monolithically.
+      // It is required for the container to be loaded in memory before registeration.
+      Status = EFI_UNSUPPORTED;
+      if ((ContainerHdr->Count > 1) && !IS_FLASH_ADDRESS (ContainerHeader)) {
+        // Use the last entry to verify all other combined components
+        CompEntry = (COMPONENT_ENTRY *)&ContainerHdr[1];
+        for (Index = 0; Index < (UINT32)(ContainerHdr->Count - 1); Index++) {
+          CompEntry = (COMPONENT_ENTRY *)((UINT8 *)(CompEntry + 1) + CompEntry->HashSize);
         }
+        CompData    = (UINT8 *)(UINTN)(ContainerEntry->Base + ContainerHdr->DataOffset + CompEntry->Offset);
+        CompressHdr = (LOADER_COMPRESSED_HEADER *)CompData;
+        if (CompressHdr->Signature == LZDM_SIGNATURE) {
+          if ((CompEntry->AuthType == AUTH_TYPE_NONE) && FeaturePcdGet (PcdVerifiedBootEnabled)) {
+            // Enforce component authentication if verified boot is enabled.
+            Status =  EFI_SECURITY_VIOLATION;
+          } else {
+            SignedDataLen = sizeof (LOADER_COMPRESSED_HEADER) + CompressHdr->CompressedSize;
+            AuthData = CompData + ALIGN_UP(SignedDataLen, AUTH_DATA_ALIGN);
+            DataBuf  = (UINT8 *)(UINTN)(ContainerEntry->Base + ContainerHdr->DataOffset);
+            DataLen  = CompEntry->Offset;
+            Status   = AuthenticateComponent (DataBuf, DataLen, CompEntry->AuthType,
+                                              AuthData, CompEntry->HashData, 0);
+
+            if ((!EFI_ERROR(Status)) && (ContainerCallback != NULL)) {
+              // Update component Call back info after authenticaton is done
+              // This info will used by firmware stage to extend to TPM
+              CbInfo.ComponentType    = ContainerHeader->Signature;
+              CbInfo.CompBuf          = DataBuf;
+              CbInfo.CompLen          = DataLen;
+              CbInfo.HashAlg          = GetHashAlg(CompEntry->AuthType);
+              CbInfo.HashData         = CompEntry->HashData;
+              ContainerCallback (PROGESS_ID_AUTHENTICATE, &CbInfo);
+            }
+          }
+        }
+      }
+    } else if (FeaturePcdGet (PcdVerifiedBootEnabled)) {
+      // For non-Mono signing all components must have auth data when verified boot is enabled
+      DEBUG((DEBUG_INFO, "Verify Container %4a AuthTypes\n", (CHAR8 *)&ContainerHdr->Signature));
+      for (Index = 0 , CompEntry = (COMPONENT_ENTRY *)(ContainerHdr+1); Index < ContainerHdr->Count; Index++) {
+        SignatureBuf = CompEntry->Name;
+        DEBUG((DEBUG_INFO, "Component %4a AuthType %X\n", (CHAR8 *)&SignatureBuf, CompEntry->AuthType));
+        if (CompEntry->AuthType == AUTH_TYPE_NONE) {
+          DEBUG((DEBUG_INFO, "All container content must be authenticated in verified boot flow.\n"));
+          Status =  EFI_SECURITY_VIOLATION;
+          break;
+        }
+        CompEntry = (COMPONENT_ENTRY *)((UINT8 *)(CompEntry + 1) + CompEntry->HashSize);
       }
     }
   }
@@ -736,9 +760,19 @@ LoadComponentWithCallback (
   BOOLEAN                   IsInFlash;
   COMPONENT_CALLBACK_INFO   CbInfo;
   UINT32                    ComponentId;
+  UINT64                    ContainerIdBuf;
+  UINT64                    ComponentIdBuf;
 
   ComponentId = ContainerSig;
   CompLoc = 0;
+
+  ComponentIdBuf = ComponentName;
+  if (ContainerSig < COMP_TYPE_INVALID) {
+    ContainerIdBuf = FLASH_MAP_SIG_HEADER;
+  } else {
+    ContainerIdBuf = ContainerSig;
+  }
+  DEBUG ((DEBUG_INFO, "Loading Component %4a:%4a\n", (CHAR8 *)&ContainerIdBuf, (CHAR8 *)&ComponentIdBuf));
 
   if (ContainerSig < COMP_TYPE_INVALID) {
     // Check if it is component type
@@ -855,7 +889,7 @@ LoadComponentWithCallback (
       // Update component Call back info after authenticaton is done
       // This info will used by firmware stage to extend to TPM
       CbInfo.ComponentType    = ComponentId;
-      CbInfo.CompBuf          = CompBuf;
+      CbInfo.CompBuf          = CompData;
       CbInfo.CompLen          = SignedDataLen;
       CbInfo.HashAlg          = GetHashAlg(AuthType);
       CbInfo.HashData         = HashData;

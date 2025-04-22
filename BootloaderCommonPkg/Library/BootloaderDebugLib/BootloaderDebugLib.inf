@@ -30,6 +30,7 @@
 
 [LibraryClasses]
   SerialPortLib
+  DebugPortLib
   DebugLogBufferLib
   ConsoleOutLib
   BaseMemoryLib
@@ -37,6 +38,7 @@
   PrintLib
   BaseLib
   DebugPrintErrorLevelLib
+  BootloaderCommonLib
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdDebugClearMemoryValue          ## CONSUMES

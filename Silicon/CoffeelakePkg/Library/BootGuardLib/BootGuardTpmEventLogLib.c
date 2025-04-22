@@ -845,3 +845,50 @@ CreateTpmEventLog (
     CreateAuthorityPcrEvent (TpmType);
   }
 }
+
+/**
+  Get SVN from an ACM.
+
+  @param[in] Hdr          Acm Header.
+  @param[out] Svn         Svn of Acm.
+
+  @retval EFI_SUCCESS     The Svn was found for the given Acm
+  @retval Others          An error occured in finding the given Acm Svn
+**/
+EFI_STATUS
+EFIAPI
+GetAcmSvnFromAcmHdr (
+  IN  UINTN  Hdr,
+  OUT UINT16 *Svn
+  )
+{
+  ACM_FORMAT  *AcmHdr;
+
+  *Svn = 0;
+  AcmHdr = (ACM_FORMAT*) Hdr;
+
+  if (AcmHdr == NULL) {
+    return EFI_NOT_FOUND;
+  }
+
+  *Svn = AcmHdr->AcmSvn;
+  return EFI_SUCCESS;
+}
+
+/**
+  Get SVN from existing ACM.
+
+  @retval EFI_SUCCESS     The Svn was found for the existing Acm
+  @retval Others          An error occured in finding the existing Acm Svn
+**/
+EFI_STATUS
+EFIAPI
+GetExistingAcmSvn (
+  OUT UINT16  *Svn
+  )
+{
+  ACM_FORMAT  *AcmHdr;
+
+  AcmHdr = FindAcm ();
+  return GetAcmSvnFromAcmHdr ((UINTN) AcmHdr, Svn);
+}

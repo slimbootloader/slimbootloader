@@ -1,0 +1,329 @@
+/** @file
+
+  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+  External (TYPE, FieldUnitObj)
+  External (CSEN, FieldUnitObj)
+  External (C3EN, FieldUnitObj)
+  External (C6EN, FieldUnitObj)
+  External (C7EN, FieldUnitObj)
+  External (OSCX, FieldUnitObj)
+  External (MWOS, FieldUnitObj)
+
+  //
+  //  MWAIT C State Support packages
+  //
+
+/*++
+  Refer to ACPI Spec. Rev. 005 Section 8.4.2.1 and Intel Processor Vendor-Spec. ACPI Rev. 005 Section 3.3 (Document No. : 302223-005)
+
+  Structure of a Package (MCS1 as a sample)
+
+  Register           : Address_Space ID   = FFixedHW (Intel PPM driver Register parameter)
+  Register_Bit_Width : Vendor Code        = 1 (Intel, C1 I/O then Halt or Native C-State)
+  Register_Bit_Offset: Class Code         = 2 (Native C-State)
+  Address            : Arg0(64-bits)      = 0x00
+  Access Size        : Arg1(8-bits)       = 1 ([0] set=HW-coordinated, and [1] clear=don't use Bus Master avoidance)
+  Type                                    = 1 (C-State type, 1=C1, 2=C2, 3=C3, etc)
+  Latency                                 = 3 (Unit: microseconds, worst-case latency to enter/exit C-State)
+  Power                                   = 0x3E8 (Unit: milliwatts, average power cosumption when in C-State)
+--*/
+
+  Name (MCS1, Package() {     // C1
+    1,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x00, 1)}, 1, 1, 0x3E8 },     // C1, MWAIT
+  })
+
+  Name (MCS2, Package() {     // C1/C3/C6/C7
+    4,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x00, 1)}, 1, 1, 0x3E8 },     // C1, MWAIT
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x10, 3)}, 2, 15, 0x1f4 },    // C3, MWAIT Extension
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x20, 3)}, 2, 41, 0x15e },    // C6, MWAIT Extension
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x30, 3)}, 3, 41, 0xc8 },     // C7, MWAIT Extension
+    })
+
+  Name (MCX2, Package() {     // C1/C3/C6/C7
+    4,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x00, 1)}, 1, 1, 0x3E8 },     // C1, MWAIT
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x10, 3)}, 2, 15, 0x1f4 },    // C3, MWAIT Extension
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x20, 3)}, 3, 41, 0x15e },    // C6, MWAIT Extension
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x30, 3)}, 3, 41, 0xc8 },     // C7, MWAIT Extension
+    })
+
+  Name (MCS3, Package() {     // C1/C3/C6
+    3,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x00, 1)}, 1, 1, 0x3E8 },     // C1, MWAIT
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x10, 3)}, 2, 15, 0x1f4 },    // C3, MWAIT Extension
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x20, 3)}, 2, 41, 0x15e },    // C6, MWAIT Extension
+    })
+
+  Name (MCX3, Package() {     // C1/C3/C6
+    3,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x00, 1)}, 1, 1, 0x3E8 },     // C1, MWAIT
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x10, 3)}, 2, 15, 0x1f4 },    // C3, MWAIT Extension
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x20, 3)}, 3, 41, 0x15e },    // C6, MWAIT Extension
+    })
+
+
+  Name (MCS4, Package() {     // C1/C3/C7
+    3,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x00, 1)}, 1, 1, 0x3E8 },     // C1, MWAIT
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x10, 3)}, 2, 15, 0x1f4 },    // C3, MWAIT Extension
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x30, 3)}, 3, 41, 0xc8 },     // C7, MWAIT Extension
+    })
+
+  Name (MCX4, Package() {     // C1/C3/C7
+    3,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x00, 1)}, 1, 1, 0x3E8 },     // C1, MWAIT
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x10, 3)}, 2, 15, 0x1f4 },    // C3, MWAIT Extension
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x30, 3)}, 3, 41, 0xc8 },     // C7, MWAIT Extension
+    })
+
+  Name (MCS5, Package() {     // C1/C3
+    2,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x00, 1)}, 1, 1, 0x3E8 },     // C1, MWAIT
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x10, 3)}, 2, 15, 0x1f4 },    // C3, MWAIT Extension
+    })
+
+  Name (MCX5, Package() {     // C1/C3
+    2,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x00, 1)}, 1, 1, 0x3E8 },     // C1, MWAIT
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x10, 3)}, 2, 15, 0x1f4 },    // C3, MWAIT Extension
+    })
+
+
+  Name (MCS6, Package() {     // C1/C6/C7
+    3,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x00, 1)}, 1, 1, 0x3E8 },     // C1, MWAIT
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x20, 3)}, 2, 41, 0x15e },    // C6, MWAIT Extension
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x30, 3)}, 3, 41, 0xc8 },     // C7, MWAIT Extension
+    })
+
+  Name (MCX6, Package() {     // C1/C6/C7
+    3,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x00, 1)}, 1, 1, 0x3E8 },     // C1, MWAIT
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x20, 3)}, 3, 41, 0x15e },    // C6, MWAIT Extension
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x30, 3)}, 3, 41, 0xc8 },     // C7, MWAIT Extension
+    })
+
+  Name (MCS7, Package() {     // C1/C6
+    2,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x00, 1)}, 1, 1, 0x3E8 },     // C1, MWAIT
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x20, 3)}, 2, 41, 0x15e },    // C6, MWAIT Extension
+    })
+
+  Name (MCX7, Package() {     // C1/C6
+    2,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x00, 1)}, 1, 1, 0x3E8 },     // C1, MWAIT
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x20, 3)}, 3, 41, 0x15e },    // C6, MWAIT Extension
+    })
+
+  Name (MCS8, Package() {     // C1/C7
+    2,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x00, 1)}, 1, 1, 0x3E8 },     // C1, MWAIT
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x30, 3)}, 3, 41, 0xc8 },     // C7, MWAIT Extension
+    })
+
+  Name (CST1, Package() {     // C1
+    1,
+    Package() {ResourceTemplate() {Register(FFixedHW, 0, 0, 0)}, 1, 1, 0x3E8},
+    })
+
+  Name (CST2, Package() {     // C1/C3/C6/C7  CC6 -> ACPI C3
+    4,
+    Package() {ResourceTemplate() {Register(FFixedHW, 0, 0, 0)}, 1, 1, 0x3E8},
+    Package() {ResourceTemplate() {Register(SystemIO, 8, 0, PCH_ACPI_PORT_C3_ADDR)}, 2, 15, 0x1f4},   // C3
+    Package() {ResourceTemplate() {Register(SystemIO, 8, 0, PCH_ACPI_PORT_C6_ADDR)}, 2, 41, 0x15e},   // C6
+    Package() {ResourceTemplate() {Register(SystemIO, 8, 0, PCH_ACPI_PORT_C7_ADDR)}, 3, 41, 0xc8},    // C7
+    })
+
+  Name (CSX2, Package() {     // C1/C3/C6/C7  CC6 -> ACPI C2
+    4,
+    Package() {ResourceTemplate() {Register(FFixedHW, 0, 0, 0)}, 1, 1, 0x3E8},
+    Package() {ResourceTemplate() {Register(SystemIO, 8, 0, PCH_ACPI_PORT_C3_ADDR)}, 2, 15, 0x1f4},   // C3
+    Package() {ResourceTemplate() {Register(SystemIO, 8, 0, PCH_ACPI_PORT_C6_ADDR)}, 3, 41, 0x15e},   // C6
+    Package() {ResourceTemplate() {Register(SystemIO, 8, 0, PCH_ACPI_PORT_C7_ADDR)}, 3, 41, 0xc8},    // C7
+    })
+
+  Name (CST3, Package() {     // C1/C3/C6     CC6 -> ACPI C2
+    3,
+    Package() {ResourceTemplate() {Register(FFixedHW, 0, 0, 0)}, 1, 1, 0x3E8},
+    Package() {ResourceTemplate() {Register(SystemIO, 8, 0, PCH_ACPI_PORT_C3_ADDR)}, 2, 15, 0x1f4},   // C3
+    Package() {ResourceTemplate() {Register(SystemIO, 8, 0, PCH_ACPI_PORT_C6_ADDR)}, 2, 41, 0x15e},   // C6
+    })
+
+  Name (CSX3, Package() {     // C1/C3/C6   CC6 -> ACPI C3
+    3,
+    Package() {ResourceTemplate() {Register(FFixedHW, 0, 0, 0)}, 1, 1, 0x3E8},
+    Package() {ResourceTemplate() {Register(SystemIO, 8, 0, PCH_ACPI_PORT_C3_ADDR)}, 2, 15, 0x1f4},   // C3
+    Package() {ResourceTemplate() {Register(SystemIO, 8, 0, PCH_ACPI_PORT_C6_ADDR)}, 3, 41, 0x15e},   // C6
+    })
+
+  Name (CST4, Package() {     // C1/C3/C7   CC3 -> ACPI C2
+    3,
+    Package() {ResourceTemplate() {Register(FFixedHW, 0, 0, 0)}, 1, 1, 0x3E8},
+    Package() {ResourceTemplate() {Register(SystemIO, 8, 0, PCH_ACPI_PORT_C3_ADDR)}, 2, 15, 0x1f4},   // C3
+    Package() {ResourceTemplate() {Register(SystemIO, 8, 0, PCH_ACPI_PORT_C7_ADDR)}, 3, 41, 0xc8},    // C7
+    })
+
+  Name (CSX4, Package() {     // C1/C3/C7   CC3 -> ACPI C3
+    3,
+    Package() {ResourceTemplate() {Register(FFixedHW, 0, 0, 0)}, 1, 1, 0x3E8},
+    Package() {ResourceTemplate() {Register(SystemIO, 8, 0, PCH_ACPI_PORT_C3_ADDR)}, 2, 15, 0x1f4},   // C3
+    Package() {ResourceTemplate() {Register(SystemIO, 8, 0, PCH_ACPI_PORT_C7_ADDR)}, 3, 41, 0xc8},    // C7
+    })
+
+  Name (CST5, Package() {     // C1/C3    CC3 -> ACPI C3
+    2,
+    Package() {ResourceTemplate() {Register(FFixedHW, 0, 0, 0)}, 1, 1, 0x3E8},
+    Package() {ResourceTemplate() {Register(SystemIO, 8, 0, PCH_ACPI_PORT_C3_ADDR)}, 2, 15, 0x1f4},   // C3
+    })
+
+  Name (CSX5, Package() {     // C1/C3    CC3 -> ACPI C2
+    2,
+    Package() {ResourceTemplate() {Register(FFixedHW, 0, 0, 0)}, 1, 1, 0x3E8},
+    Package() {ResourceTemplate() {Register(SystemIO, 8, 0, PCH_ACPI_PORT_C3_ADDR)}, 2, 15, 0x1f4},   // C3
+    })
+
+  Name (CST6, Package() {     // C1/C6/C7   CC6 -> ACPI C3
+    3,
+    Package() {ResourceTemplate() {Register(FFixedHW, 0, 0, 0)}, 1, 1, 0x3E8},
+    Package() {ResourceTemplate() {Register(SystemIO, 8, 0, PCH_ACPI_PORT_C6_ADDR)}, 2, 41, 0x15e},   // C6
+    Package() {ResourceTemplate() {Register(SystemIO, 8, 0, PCH_ACPI_PORT_C7_ADDR)}, 3, 41, 0xc8},    // C7
+    })
+
+  Name (CSX6, Package() {     // C1/C6/C7   CC6 -> ACPI C2
+    3,
+    Package() {ResourceTemplate() {Register(FFixedHW, 0, 0, 0)}, 1, 1, 0x3E8},
+    Package() {ResourceTemplate() {Register(SystemIO, 8, 0, PCH_ACPI_PORT_C6_ADDR)}, 3, 41, 0x15e},   // C6
+    Package() {ResourceTemplate() {Register(SystemIO, 8, 0, PCH_ACPI_PORT_C7_ADDR)}, 3, 41, 0xc8},    // C7
+    })
+
+  Name (CST7, Package() {     // C1/C6      CC6 -> ACPI C3
+    2,
+    Package() {ResourceTemplate() {Register(FFixedHW, 0, 0, 0)}, 1, 1, 0x3E8},
+    Package() {ResourceTemplate() {Register(SystemIO, 8, 0, PCH_ACPI_PORT_C6_ADDR)}, 2, 41, 0x15e},   // C6
+    })
+
+  Name (CSX7, Package() {     // C1/C6      CC6 -> ACPI C2
+    2,
+    Package() {ResourceTemplate() {Register(FFixedHW, 0, 0, 0)}, 1, 1, 0x3E8},
+    Package() {ResourceTemplate() {Register(SystemIO, 8, 0, PCH_ACPI_PORT_C6_ADDR)}, 3, 41, 0x15e},   // C6
+    })
+
+  Name (CST8, Package() {     // C1/C7
+    2,
+    Package() {ResourceTemplate() {Register(FFixedHW, 0, 0, 0)}, 1, 1, 0x3E8},
+    Package() {ResourceTemplate() {Register(SystemIO, 8, 0, PCH_ACPI_PORT_C7_ADDR)}, 3, 41, 0xc8},    // C7
+    })
+
+Method(_CST, 0)
+{
+/*++
+  CSEN is a DWORD constant defined within scope by BIOS and represents
+  a BIOS flag indicating whether C-states should be enabled.
+    0 = C-state support disabled
+    1 = C-state support enabled
+  MWOS is a DWORD constant defined within scope by BIOS and represents
+  a BIOS flag indicating whether Native MWAIT should be enabled.
+    0 = Native MWAIT support disabled
+    1 = Native MWAIT support enabled
+  TYPE is a DWORD constant defined within scope by BIOS and is updated
+  with the Capabilities DWORD captured by the _PDC method. TYPE
+  represents the capabilities of the OSPM processor driver.
+--*/
+    If(LAnd (MWOS , And(TYPE, 0x200))) {
+      If(CSEN) {
+        If(C3EN) {
+          If(LAnd (C6EN ,C7EN)) { // C1 + C3 + C6 + C7
+            If(OSCX) {
+              Return (MCX2)
+            }
+            Return (MCS2)
+          }
+          If(C6EN) {              // C1 + C3 + C6
+            If(OSCX) {
+              Return (MCX3)
+            }
+            Return (MCS3)
+          }
+          If(C7EN) {
+            If(OSCX) {            // C1 + C3 + C7
+              Return (MCX4)
+            }
+            Return (MCS4)
+          }
+
+          //C1 + C3
+          If(OSCX) {
+            Return (MCX5)
+          }
+          Return(MCS5)
+        }  //end if C3EN
+        If(LAnd (C6EN ,C7EN)) {   // C1, C6, C7
+          If(OSCX) {
+            Return (MCX6)
+          }
+          Return (MCS6)
+        }
+        If(C6EN) {                // C1, C6
+          If(OSCX) {
+            Return (MCX7)
+          }
+          Return (MCS7)
+        }
+        If(C7EN) {                //C1, C7
+          Return (MCS8)
+        }
+      }
+      return(MCS1)                //C1
+    } //end of mwait
+
+    If(CSEN) {                    // IO redirect
+      If(C3EN) {
+        If(LAnd (C6EN ,C7EN)) {   //C1 + C3 + C6 + C7
+          If(OSCX) {
+            Return (CSX2)
+          }
+          Return (CST2)
+        }
+        If(C6EN) {                // C1 + C3 + C6
+          If(OSCX) {
+            Return (CSX3)
+          }
+          Return (CST3)
+        }
+        If(C7EN) {                // C1 + C3 + C7
+          If(OSCX) {
+            Return (CSX4)
+          }
+          Return (CST4)
+        }
+        //C1 + C3
+        If(OSCX) {
+          Return (CSX5)
+        }
+        Return(CST5)
+      }  //end of C3EN
+
+      If(LAnd (C6EN ,C7EN)) {     // C1 + C6 + C7
+        If(OSCX) {
+          Return (CSX6)
+        }
+        Return (CST6)
+      }
+      If(C6EN) {                  // C1 + C6
+        If(OSCX) {
+          Return (CSX7)
+        }
+        Return (CST7)
+      }
+      If(C7EN) {                 // C1 + C7
+        Return (CST8)
+      }
+    }
+   return(CST1)                  // C1
+} // End of _CST

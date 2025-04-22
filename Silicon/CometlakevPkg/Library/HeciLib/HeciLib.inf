@@ -20,9 +20,7 @@
   HeciCore.h
   HeciInitLib.h
   CseMsg.h
-  PciSegmentLib.h
   HeciHpet.h
-  PciSegmentLib.c
   HeciCore.c
   HeciHpet.c
   HeciHelper.c
@@ -53,6 +51,7 @@
   DebugLib
   PchInfoLib
   GpioLib
+  PciSegmentLib
 
 [Guids]
   gLoaderPlatformDeviceInfoGuid

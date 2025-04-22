@@ -1,7 +1,7 @@
 /** @file
   This file provides payload common library interfaces.
 
-  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -193,11 +193,6 @@ SecStartup (
   UINT32                    StackBase;
   UINT32                    StackSize;
   LOADER_PLATFORM_INFO      *LoaderPlatformInfo;
-  PCI_ROOT_BRIDGE_INFO_HOB  *RootBridgeInfoHob;
-  UINT64                    MaxResLimit;
-  UINT64                    ResLimit;
-  UINT8                     Count;
-  UINT8                     Index;
 
   TimeStamp = ReadTimeStamp ();
 
@@ -206,25 +201,6 @@ SecStartup (
 
   // DEBUG will be available after PayloadInit ()
   DEBUG ((DEBUG_INIT, "\nPayload startup\n"));
-
-  RootBridgeInfoHob = (PCI_ROOT_BRIDGE_INFO_HOB *)GetGuidHobData (NULL, NULL, &gLoaderPciRootBridgeInfoGuid);
-  if (RootBridgeInfoHob != NULL) {
-    MaxResLimit = BASE_4GB;
-    for (Count = 0; Count < RootBridgeInfoHob->Count; Count++) {
-      for (Index = 0; Index < PCI_MAX_BAR; Index++) {
-        if (((Index + 1) == PciBarTypeMem64) || ((Index + 1) == PciBarTypePMem64)) {
-          ResLimit = RootBridgeInfoHob->Entry[Count].Resource[Index].ResBase
-                   + RootBridgeInfoHob->Entry[Count].Resource[Index].ResLength;
-          MaxResLimit = MAX (MaxResLimit, ResLimit);
-        }
-      }
-    }
-
-    if (MaxResLimit > BASE_4GB) {
-      Index = (UINT8)HighBitSet64 (MaxResLimit);
-      CreateIdentityMappingPageTables (Index + 1);
-    }
-  }
 
   // Copy libraries data
   GuidHob = GetNextGuidHob (&gLoaderLibraryDataGuid, (VOID *)(UINTN)PcdGet32 (PcdPayloadHobList));
@@ -296,7 +272,7 @@ SecStartup (
 
   // ACPI table
   SystemTableInfo = GetSystemTableInfo ();
-  if (SystemTableInfo != NULL) {
+  if ((SystemTableInfo != NULL) && (SystemTableInfo->AcpiTableBase != 0)) {
     ParseAcpiTableInfo ((UINT32)SystemTableInfo->AcpiTableBase);
   }
 

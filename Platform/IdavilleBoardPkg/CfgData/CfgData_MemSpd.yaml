@@ -1,0 +1,43 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page       : MEM_SPD:MEM:"Memory SPD"
+
+- MEM_SPD_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ MEM_SPD_CFG_DATA, 0x8F0, 0, 0 ] }
+
+  - $ACTION    :
+      page     : MEM_SPDDAT:MEM_SPD:"SPD Bin Data Page"
+  - SpdDataPtr1 :
+      name         : SPD1 - RDimm
+      type         : Table
+      option       : >
+                     0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX,
+                     8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX
+      help         : >
+                     Pointer to SPD data in Memory
+      length       : 0x200
+      value        : {FILE: SpdData_Rdimm.bin }
+
+  - $ACTION    :
+      page     : MEM_SPDSEL:MEM_SPD:"SPD Bin Selection Page"
+  - !expand { SPD_SEL_TMPL : [0, 0, 0, 1, ($(COND_SPD_1x3) or $(COND_SPD_2x2))] }
+  - !expand { SPD_SEL_TMPL : [0, 0, 1, 0, ($(COND_SPD_1x3) or $(COND_SPD_2x2))] }
+  - !expand { SPD_SEL_TMPL : [0, 1, 0, 0, ($(COND_SPD_1x3) or $(COND_SPD_2x2))] }
+  - !expand { SPD_SEL_TMPL : [0, 1, 1, 0, ($(COND_SPD_1x3) or $(COND_SPD_2x2))] }
+  - !expand { SPD_SEL_TMPL : [0, 2, 0, 0, ($(COND_SPD_1x3))                   ] }
+  - !expand { SPD_SEL_TMPL : [0, 2, 1, 0, ($(COND_SPD_1x3))                   ] }
+  - !expand { SPD_SEL_TMPL : [1, 0, 0, 0, ($(COND_SPD_2x2))                   ] }
+  - !expand { SPD_SEL_TMPL : [1, 0, 1, 0, ($(COND_SPD_2x2))                   ] }
+  - !expand { SPD_SEL_TMPL : [1, 1, 0, 0, ($(COND_SPD_2x2))                   ] }
+  - !expand { SPD_SEL_TMPL : [1, 1, 1, 0, ($(COND_SPD_2x2))                   ] }
+  - !expand { SPD_SEL_TMPL : [1, 2, 0, 0, (0)                                 ] }
+  - !expand { SPD_SEL_TMPL : [1, 2, 1, 0, (0)                                 ] }

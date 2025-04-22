@@ -1,7 +1,7 @@
 /** @file
   Basic graphics rendering support
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2024, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -96,19 +96,19 @@ GetBmpDisplayPos (
 
 
 /**
-  Display a *.BMP graphics image to the frame buffer. If a NULL GopBlt buffer
-  is passed in a GopBlt buffer will be allocated by this routine. If a GopBlt
-  buffer is passed in it will be used if it is big enough.
+  Display a *.BMP graphics image to the frame buffer or BLT buffer. If a NULL
+  GopBlt buffer is passed in, the BMP image will be displayed into BLT memory
+  buffer. Otherwise, it will be dispalyed into the actual frame buffer.
 
   @param  BmpImage      Pointer to BMP file
-  @param  GopBlt        Buffer for transferring BmpImage to the frame buffer.
+  @param  BmpImageSize  Size of BMP file
+  @param  GopBlt        Buffer for transferring BmpImage to the BLT memory buffer.
   @param  GopBltSize    Size of GopBlt in bytes.
   @param  GfxInfoHob    Pointer to graphics info HOB.
 
   @retval EFI_SUCCESS           GopBlt and GopBltSize are returned.
   @retval EFI_UNSUPPORTED       BmpImage is not a valid *.BMP image
   @retval EFI_BUFFER_TOO_SMALL  The passed in GopBlt buffer is not big enough.
-                                GopBltSize will contain the required size.
   @retval EFI_OUT_OF_RESOURCES  No enough buffer to allocate.
 
 **/
@@ -116,8 +116,9 @@ EFI_STATUS
 EFIAPI
 DisplayBmpToFrameBuffer (
   IN     VOID      *BmpImage,
-  IN OUT VOID      **GopBlt,
-  IN OUT UINTN     *GopBltSize,
+  IN     UINT32    BmpImageSize,
+  IN     VOID      *GopBlt,
+  IN     UINTN     GopBltSize,
   IN     EFI_PEI_GRAPHICS_INFO_HOB *GfxInfoHob
   );
 

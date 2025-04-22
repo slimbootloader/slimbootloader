@@ -1,4 +1,7 @@
 /** @file
+  Copyright (c) 2018 - 2023, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Paten
+
   Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
   All rights reserved.
 
@@ -33,7 +36,7 @@
 #ifndef __MULTIBOOT_LIB_H__
 #define __MULTIBOOT_LIB_H__
 
-#include <Library/IasImageLib.h>
+#include <Library/ContainerLib.h>
 
 #define KB_(n)  ((UINT32) (n) * 1024)
 #define MB_(n)  ((UINT32) (n) * 1024 * 1024)
@@ -61,7 +64,7 @@ typedef struct {
 #define MULTIBOOT_HEADER_HAS_VBE        0x00000004
 #define MULTIBOOT_HEADER_HAS_ADDR       0x00010000
 
-/* Indicator for ACPI binary blob inside IAS image */
+/* Indicator for ACPI binary blob inside Container image */
 #define MULTIBOOT_SPECIAL_MODULE_MAGIC  0xacb10086
 
 typedef struct {
@@ -229,22 +232,23 @@ typedef struct {
   IMAGE_DATA              PlatformInfo;
 } BOOTPARAMS_IMAGE_DATA;
 
+typedef struct multiboot2_start_tag MULTIBOOT2_START_TAG;  /* opaque type */
+
 typedef struct {
-  VMM_IMAGE_DATA          VmmImageData;
-  BOOTPARAMS_IMAGE_DATA   BootParamsData;
-} TRUSTY_IMAGE_DATA;
+  MULTIBOOT2_START_TAG   *StartTag;
+} MULTIBOOT2_INFO;
 
 #define MAX_MULTIBOOT_MODULE_NUMBER  16
 typedef struct {
   IMAGE_DATA              BootFile;
   IMAGE_DATA              CmdFile;
   MULTIBOOT_INFO          MbInfo;
+  MULTIBOOT2_INFO         Mb2Info;
   IA32_BOOT_STATE         BootState;
   UINT16                  CmdBufferSize;
   UINT16                  MbModuleNumber;
   MULTIBOOT_MODULE        MbModule[MAX_MULTIBOOT_MODULE_NUMBER];
   MULTIBOOT_MODULE_DATA   MbModuleData[MAX_MULTIBOOT_MODULE_NUMBER];
-  TRUSTY_IMAGE_DATA       TrustyImageData;
 } MULTIBOOT_IMAGE;
 
 /**
@@ -287,6 +291,20 @@ SetupMultibootInfo (
   );
 
 /**
+  Align multiboot modules if requested by header.
+
+  @param[in,out] MultiBoot    Point to loaded Multiboot image structure
+
+  @retval  RETURN_SUCCESS     Align modules successfully
+  @retval  Others             There is error when align image
+**/
+EFI_STATUS
+EFIAPI
+CheckAndAlignMultibootModules (
+  IN OUT MULTIBOOT_IMAGE     *MultiBoot
+  );
+
+/**
   ASM inline function that goes from payload to a Multiboot enabled OS.
   @param[in]  State  Boot state structure
  **/
@@ -294,6 +312,95 @@ VOID
 EFIAPI
 JumpToMultibootOs (
   IN IA32_BOOT_STATE *State  // esp + 4
+  );
+
+/* ======================================================================== */
+/**
+  Check if it is Multiboot-2 image
+
+  @param[in]  ImageAddr    Memory address of an image
+
+  @retval TRUE             Image is Multiboot 2.0 compliant image
+  @retval FALSE            Not multiboot image
+**/
+BOOLEAN
+EFIAPI
+IsMultiboot2 (
+  IN  VOID                   *ImageAddr
+  );
+
+/**
+  Setup Multiboot-2 image and its boot info.
+
+  @param[in,out] MultiBoot   Point to loaded Multiboot-2 image structure
+
+  @retval  RETURN_SUCCESS    Setup Multiboot-2 image successfully
+  @retval  Others            There is error when setup image
+**/
+EFI_STATUS
+EFIAPI
+SetupMultiboot2Image (
+  IN OUT MULTIBOOT_IMAGE     *MultiBoot
+  );
+
+/**
+  Setup the Multiboot-2 info for boot usage.
+
+  @param[in,out]   MultiBoot  Point to loaded Multiboot-2 image structure
+**/
+VOID
+EFIAPI
+SetupMultiboot2Info (
+  IN OUT MULTIBOOT_IMAGE     *MultiBoot
+  );
+
+/**
+  Align multiboot modules if requested by module alignment tag.
+
+  @param[in,out] MultiBoot    Point to loaded Multiboot image structure
+
+  @retval  RETURN_SUCCESS     Align modules successfully
+  @retval  Others             There is error when align image
+**/
+EFI_STATUS
+EFIAPI
+CheckAndAlignMultiboot2Modules (
+  IN OUT MULTIBOOT_IMAGE     *MultiBoot
+  );
+
+/**
+  Update the memory info inside the Multiboot-2 info.
+
+  @param[in,out]   MultiBoot     Point to loaded Multiboot-2 image structure
+  @param[in]       RsvdMemBase   Reserved memory base address
+  @param[in]       RsvdMemSize   Reserved memory size
+  @param[in]       RsvdMemExtra  Extra space to add to the reserved memory region.
+**/
+VOID
+EFIAPI
+UpdateMultiboot2MemInfo (
+  IN OUT MULTIBOOT_IMAGE     *MultiBoot,
+  IN UINT64                   RsvdMemBase,
+  IN UINT64                   RsvdMemSize,
+  IN UINT32                   RsvdMemExtra
+  );
+
+/**
+  Load Multiboot module string
+
+  @param[in,out] MultiBoot   Point to loaded Multiboot image structure
+  @param[in] ModuleIndex     Module index to load
+  @param[in] File            Source image file
+
+  @retval  EFI_SUCCESS       Load Multiboot module image successfully
+  @retval  Others            There is error when setup image
+**/
+EFI_STATUS
+EFIAPI
+LoadMultibootModString (
+  IN OUT MULTIBOOT_IMAGE     *MultiBoot,
+  IN     UINT16              ModuleIndex,
+  IN     IMAGE_DATA          *File
   );
 
 #endif

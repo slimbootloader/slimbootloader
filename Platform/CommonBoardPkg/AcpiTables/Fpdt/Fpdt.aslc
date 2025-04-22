@@ -1,7 +1,7 @@
 /**@file
   This file contains a structure definition for the ACPI FPDT Table.
 
-  Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -56,6 +56,18 @@ FIRMWARE_PERFORMANCE_TABLE  FPDT = {
       },
       0,  // Reserved
       0   // S3PerformanceTablePointer will be updated at runtime.
+    },
+    //
+    // SBL Performance Table Pointer Record.
+    //
+    {
+      {
+        SBL_PERFORMACE_TABLE_TYPE,     // Type
+        sizeof (SBL_PERFORMANCE_RECORD), // Length
+        SBL_PERFORMACE_TABLE_REVISION  // Revision
+      },
+      0,  // Reserved
+      0   // SblPerfTablePointer will be updated at runtime.
     }
 };
 

@@ -1,0 +1,24 @@
+## @file
+#
+#  Copyright (c) 2024, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+[Defines]
+  INF_VERSION          = 0x00010005
+  BASE_NAME            = Microcode
+  FILE_GUID            = 197DB236-F856-4924-90F8-CDF12FB875F3
+  MODULE_TYPE          = USER_DEFINED
+  VERSION_STRING       = 1.0
+
+[Sources]
+  m_e6_a06a4_0000001f.mcb
+
+[UserExtensions.SBL."CloneRepo"]
+  REPO   = https://github.com/slimbootloader/firmwareblob.git
+  COMMIT = 45c2a9225fc2e9b45ecb3a521fd0ad45428ad4ce
+
+[UserExtensions.SBL."CopyList"]
+  Microcode/MeteorLake/m_e6_a06a4_0000001f.pdb  : Silicon/MeteorlakePkg/Microcode/m_e6_a06a4_0000001f.mcb

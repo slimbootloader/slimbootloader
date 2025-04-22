@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -27,10 +27,19 @@
 #define  ALIGN_UP(address, align)     (((address) + ((align) - 1)) & ~((align)-1))
 #define  ALIGN_DOWN(address, align)   ((address) & ~((align)-1))
 
+//
+// These MACRO definations should be used only after feature config data is set in stage1b.
+//
+#define ACPI_FEATURE_ENABLED()   (GetFeatureCfg() & FEATURE_ACPI)
+#define ACPI_ENABLED()           (FeaturePcdGet (PcdAcpiEnabled) && ACPI_FEATURE_ENABLED())
+#define MEASURED_BOOT_ENABLED()  (FeaturePcdGet (PcdMeasuredBootEnabled) && (GetFeatureCfg() & FEATURE_MEASURED_BOOT) && ACPI_FEATURE_ENABLED())
+
+#define PCD_GET32_WITH_ADJUST(x)  GetAdjustedPcdBase (PcdGet32 (x))
+
 #pragma pack(1)
 
 // Data that are handed off between stages
-#define  MAX_TS_NUM                   64
+#define  MAX_TS_NUM                   74
 typedef struct {
   UINT32        PerfIndex;
   UINT32        FreqKhz;
@@ -93,8 +102,18 @@ typedef enum {
 typedef enum {
   SMM_REBASE_DISABLE,
   SMM_REBASE_ENABLE,
-  SMM_REBASE_ENABLE_ON_S3_RESUME_ONLY
+  SMM_REBASE_AUTO,
+  SMM_REBASE_ENABLE_NOSMRR,
+  SMM_REBASE_AUTO_NOSMRR
 } SMM_REBASE_MODE;
+
+//
+// Enum for boot partitions
+//
+typedef enum {
+  PrimaryPartition,
+  BackupPartition
+} BOOT_PARTITION;
 
 /**
   Returns the current stage of Bootloader execution.

@@ -162,7 +162,7 @@ ShellCommandHobFunc (
 
   ShellPrint (L"\nFSP HOBs\n");
   ShellPrint (L"========================================\n");
-  ListHobs (FspInfo->FspHobList);
+  ListHobs ((VOID*)(UINTN)FspInfo->FspHobList);
 
   return EFI_SUCCESS;
 }

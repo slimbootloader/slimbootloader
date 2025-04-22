@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017 - 2024, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -43,6 +43,7 @@
   DebugDataLib
   MpInitLib
   TimeStampLib
+  MemoryAllocationLib
 
 [Guids]
   gEsrtSystemFirmwareGuid
@@ -60,4 +61,8 @@
   gPlatformCommonLibTokenSpaceGuid.PcdLowestSupportedFwVer
   gPlatformModuleTokenSpaceGuid.PcdLegacyEfSegmentEnabled
   gPlatformModuleTokenSpaceGuid.PcdSplashLogoAddress
+  gPlatformModuleTokenSpaceGuid.PcdSplashLogoSize
   gPlatformModuleTokenSpaceGuid.PcdSplashEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdCpuX2ApicEnabled
+  gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr
+  gPlatformModuleTokenSpaceGuid.PcdAcpiProcessorIdBase

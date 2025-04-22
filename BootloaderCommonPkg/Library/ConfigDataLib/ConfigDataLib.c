@@ -363,46 +363,49 @@ BuildConfigData (
       CdataCurr = ((UINT8 *)CdataHdrCurr + sizeof (CDATA_HEADER) + sizeof (CDATA_COND) * CdataHdrCurr->ConditionNum);
       HdrLen = sizeof (CDATA_HEADER) + sizeof (CDATA_COND) * CdataHdr->ConditionNum;
       Cdata  = (UINT8 *)CdataHdr + HdrLen;
-      if ((CdataHdr->Flags & CDATA_FLAG_TYPE_ARRAY) != 0) {
-        // Handle array item specially
-        ArrayHdr     = (ARRAY_CFG_HDR *)Cdata;
-        ArrayHdrCurr = (ARRAY_CFG_HDR *)CdataCurr;
-        BitMaskLen   = (CdataHdr->Length << 2) - HdrLen - OFFSET_OF(ARRAY_CFG_HDR, BaseTableBitMask) \
-                       - (ArrayHdr->ItemSize * ArrayHdr->ItemCount);
+      // Don't copy reference data
+      if ((CdataHdr->Flags & CDATA_FLAG_TYPE_REFER) == 0) {
+        if ((CdataHdr->Flags & CDATA_FLAG_TYPE_ARRAY) != 0) {
+          // Handle array item specially
+          ArrayHdr     = (ARRAY_CFG_HDR *)Cdata;
+          ArrayHdrCurr = (ARRAY_CFG_HDR *)CdataCurr;
+          BitMaskLen   = (CdataHdr->Length << 2) - HdrLen - (UINT32)OFFSET_OF(ARRAY_CFG_HDR, BaseTableBitMask) \
+                        - (ArrayHdr->ItemSize * ArrayHdr->ItemCount);
 
-        // Update BaseTableBitMask
-        CopyMem (ArrayHdr->BaseTableBitMask, ArrayHdrCurr->BaseTableBitMask, BitMaskLen);
-        ArrayHdr->BaseTableId = 0x80;
+          // Update BaseTableBitMask
+          CopyMem (ArrayHdr->BaseTableBitMask, ArrayHdrCurr->BaseTableBitMask, BitMaskLen);
+          ArrayHdr->BaseTableId = 0x80;
 
-        // Update skip bit accordingly in the entry based on BaseTableBitMask
-        GpioTableDataOffset = OFFSET_OF(ARRAY_CFG_HDR, BaseTableBitMask) + BitMaskLen;
-        for (Index2 = 0; Index2 < ArrayHdr->ItemCount; Index2++) {
-          if ((ArrayHdr->BaseTableBitMask[Index2 >> 3] & (1 << (Index2 & 7))) == 0) {
-            // Skip one entry
-            Offset2 = Index2 * ArrayHdr->ItemSize;
-            Ptr   = Cdata + GpioTableDataOffset + Offset2;
-            Index = ArrayHdr->ItemValidBitOff;
-            Ptr[Index >> 3] |= (1 << (Index & 7));
-          }
-        }
-
-        // Update extra entries
-        for (Index = 0; Index  < ArrayHdrCurr->ItemCount; Index++) {
-          Offset1 = Index * ArrayHdrCurr->ItemSize;
-          ItemId  = GetArrayItemId (ArrayHdrCurr, CdataCurr + GpioTableDataOffset + Offset1);
+          // Update skip bit accordingly in the entry based on BaseTableBitMask
+          GpioTableDataOffset = (UINT32)OFFSET_OF(ARRAY_CFG_HDR, BaseTableBitMask) + BitMaskLen;
           for (Index2 = 0; Index2 < ArrayHdr->ItemCount; Index2++) {
-            Offset2 = Index2 * ArrayHdr->ItemSize;
-            if (GetArrayItemId (ArrayHdr, Cdata + GpioTableDataOffset + Offset2) == ItemId) {
-              // Set item as valid in BaseTableBitMask
-              ArrayHdr->BaseTableBitMask[Index >> 3] |= (1 << (Index & 7));
-              CopyMem (Cdata + GpioTableDataOffset + Offset2, CdataCurr + GpioTableDataOffset + Offset1,  ArrayHdr->ItemSize);
-              break;
+            if ((ArrayHdr->BaseTableBitMask[Index2 >> 3] & (1 << (Index2 & 7))) == 0) {
+              // Skip one entry
+              Offset2 = Index2 * ArrayHdr->ItemSize;
+              Ptr   = Cdata + GpioTableDataOffset + Offset2;
+              Index = ArrayHdr->ItemValidBitOff;
+              Ptr[Index >> 3] |= (1 << (Index & 7));
             }
           }
+
+          // Update extra entries
+          for (Index = 0; Index  < ArrayHdrCurr->ItemCount; Index++) {
+            Offset1 = Index * ArrayHdrCurr->ItemSize;
+            ItemId  = GetArrayItemId (ArrayHdrCurr, CdataCurr + GpioTableDataOffset + Offset1);
+            for (Index2 = 0; Index2 < ArrayHdr->ItemCount; Index2++) {
+              Offset2 = Index2 * ArrayHdr->ItemSize;
+              if (GetArrayItemId (ArrayHdr, Cdata + GpioTableDataOffset + Offset2) == ItemId) {
+                // Set item as valid in BaseTableBitMask
+                ArrayHdr->BaseTableBitMask[Index >> 3] |= (1 << (Index & 7));
+                CopyMem (Cdata + GpioTableDataOffset + Offset2, CdataCurr + GpioTableDataOffset + Offset1,  ArrayHdr->ItemSize);
+                break;
+              }
+            }
+          }
+        } else {
+          // Copy full CFGDATA tag data
+          CopyMem (Cdata, CdataCurr, (CdataHdr->Length << 2) - HdrLen);
         }
-      } else {
-        // Copy full CFGDATA tag data
-        CopyMem (Cdata, CdataCurr, (CdataHdr->Length << 2) - HdrLen);
       }
     } else {
       // Set platform mask

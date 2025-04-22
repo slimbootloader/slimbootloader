@@ -233,7 +233,7 @@ LoadBzImage (
   }
 
   KernelBuf  = (VOID *) (UINTN)LINUX_KERNEL_BASE;
-  KernelSize = Bp->Hdr.SysSize * 16;
+  KernelSize = (UINTN)Bp->Hdr.SysSize * 16;
   CopyMem (KernelBuf, (UINT8 *)ImageBase + BootParamSize, KernelSize);
 
   //
@@ -332,12 +332,16 @@ UpdateLinuxBootParams (
   GuidHob = GetFirstGuidHob (&gLoaderSystemTableInfoGuid);
   if (GuidHob != NULL) {
     SystemTableInfo = (SYSTEM_TABLE_INFO *)GET_GUID_HOB_DATA (GuidHob);
-    if (AsciiStrStr ((CHAR8 *)(UINTN)Bp->Hdr.CmdLinePtr, (CHAR8 *)ACPI_RSDP_CMDLINE_STR) == NULL) {
-      AsciiSPrint (ParamValue, sizeof (ParamValue), " %a0x%lx", ACPI_RSDP_CMDLINE_STR, SystemTableInfo->AcpiTableBase);
-      AsciiStrCatS ((CHAR8 *)(UINTN)Bp->Hdr.CmdLinePtr, CMDLINE_LENGTH_MAX, ParamValue);
-      Bp->Hdr.CmdlineSize = (UINT32)AsciiStrLen ((CHAR8 *)(UINTN)Bp->Hdr.CmdLinePtr);
-    }
     Bp->AcpiRsdpAddr = SystemTableInfo->AcpiTableBase;
+    if (Bp->Hdr.Version < 0x020E) {
+      // Bp.AcpiRsdpAddr was only added in Linux boot protocol 2.14
+      // For old version, just append "acpi_rsdp=" instead.
+      if (AsciiStrStr ((CHAR8 *)(UINTN)Bp->Hdr.CmdLinePtr, (CHAR8 *)ACPI_RSDP_CMDLINE_STR) == NULL) {
+        AsciiSPrint (ParamValue, sizeof (ParamValue), " %a0x%lx", ACPI_RSDP_CMDLINE_STR, SystemTableInfo->AcpiTableBase);
+        AsciiStrCatS ((CHAR8 *)(UINTN)Bp->Hdr.CmdLinePtr, CMDLINE_LENGTH_MAX, ParamValue);
+        Bp->Hdr.CmdlineSize = (UINT32)AsciiStrLen ((CHAR8 *)(UINTN)Bp->Hdr.CmdLinePtr);
+      }
+    }
   }
 }
 

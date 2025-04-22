@@ -2,7 +2,7 @@
   TPM library routines to provide TPM support.
   For more details, consult TCG TPM specifications.
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -18,6 +18,8 @@
 #include <Pi/PiBootMode.h>
 #include <IndustryStandard/Tpm2Acpi.h>
 #include <Library/SecureBootLib.h>
+#include <Library/ResetSystemLib.h>
+#include <Guid/BootLoaderVersionGuid.h>
 #include "Tpm2CommandLib.h"
 #include "Tpm2DeviceLib.h"
 #include "TpmLibInternal.h"
@@ -49,6 +51,7 @@ CountPcrBankActive (
   @retval CryptoHashAlg Crypo Hash Alg.
 **/
 UINT8
+EFIAPI
 GetCryptoHashAlg (
   UINT32 TcgAlgMask
   )
@@ -75,6 +78,7 @@ GetCryptoHashAlg (
   @retval PcdHashType    TPM Algorithm Id.
 **/
 UINT32
+EFIAPI
 GetTpmHashAlg (
    UINT32 TcgAlgHash
   )
@@ -225,6 +229,7 @@ TpmLibSetActivePcrBanks (
   @retval EFI_NOT_FOUND        TPM Lib data not found.
 **/
 RETURN_STATUS
+EFIAPI
 TpmLibGetActivePcrBanks (
   IN UINT32 *ActivePcrBanks
   )
@@ -303,6 +308,7 @@ TpmPcrBankCheck (
 
 **/
 RETURN_STATUS
+EFIAPI
 DisableTpm (
   VOID
   )
@@ -379,6 +385,47 @@ IsTpmEnabled (
 }
 
 /**
+  Get the TPM event log buffer info.
+
+
+  @param Lasa  TPM event log buffer.
+  @param Laml  TPM event log size.
+
+  @retval RETURN_SUCCESS             Operation completed successfully.
+  @retval RETURN_INVALID_PARAMETER   Invalid parameter.
+  @retval RETURN_DEVICE_ERROR        Tpm Device not found or in bad state.
+  @retval Others                     The request could not be executed successfully.
+
+**/
+RETURN_STATUS
+EFIAPI
+GetTpmEventLog (
+  OUT UINT64 *Lasa,
+  OUT UINT32 *Laml
+  )
+{
+  TPM_LIB_PRIVATE_DATA        *PrivateData;
+
+  if ((Lasa == NULL) || (Laml == NULL)) {
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  if (!IsTpmEnabled()) {
+    return RETURN_DEVICE_ERROR;
+  }
+
+  PrivateData = TpmLibGetPrivateData ();
+  if (PrivateData != NULL) {
+    *Lasa = PrivateData->LogAreaStartAddress;
+    *Laml = PrivateData->LogAreaMinLength;
+  } else {
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  return RETURN_SUCCESS;
+}
+
+/**
   Update TPM ACPI table with interface and device information.
 
   @note If this method returns failure, TPM table should not be published.
@@ -392,6 +439,7 @@ IsTpmEnabled (
 
 **/
 RETURN_STATUS
+EFIAPI
 UpdateTpm2AcpiTable (
   IN EFI_ACPI_DESCRIPTION_HEADER *Table
   )
@@ -431,6 +479,39 @@ UpdateTpm2AcpiTable (
 }
 
 /**
+  Extend SBL version in PCR [0].
+
+  @param BlVersion            The current SBL version.
+
+  @retval RETURN_SUCCESS      Operation completed successfully.
+  @retval Others              Unable to extend PCR.
+**/
+RETURN_STATUS
+EFIAPI
+TpmLogCrtmVersionEvent(
+  BOOT_LOADER_VERSION *BlVersion
+  )
+{
+
+  if (BlVersion == NULL) {
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  //
+  // Use FirmwareVersion string to represent CRTM version.
+  // OEMs should get real CRTM version string and measure it.
+  //
+  return TpmHashAndExtendPcrEventLog (
+           0,
+           (UINT8 *)BlVersion,
+           sizeof(BOOT_LOADER_VERSION),
+           EV_S_CRTM_VERSION,
+           sizeof(BOOT_LOADER_VERSION),
+           (UINT8 *)BlVersion
+           );
+}
+
+/**
   Initialize the TPM. Initiate TPM_Startup if not yet done by BootGuard component.
 
   @param BypassTpmInit    If TRUE, skip TPM_Startup as it is done by ACM.
@@ -441,6 +522,7 @@ UpdateTpm2AcpiTable (
   @retval Others                     The request could not be executed successfully.
 **/
 RETURN_STATUS
+EFIAPI
 TpmInit(
   IN BOOLEAN BypassTpmInit,
   IN UINT8  BootMode
@@ -461,8 +543,9 @@ TpmInit(
       DEBUG ((DEBUG_INFO, "Attempting TPM_Startup with TPM_SU_STATE. \n"));
       Status = Tpm2Startup (TPM_SU_STATE);
       if (EFI_ERROR (Status)) {
-        DEBUG ((DEBUG_WARN, "TPM_Startup(TPM_SU_STATE) failed !!. Attempting TPM_Startup(TPM_SU_CLEAR).\n"));
-        Status = Tpm2Startup (TPM_SU_CLEAR);
+        //  As per PC Client spec, SRTM should perform a host platform reset.
+        ResetSystem(EfiResetCold);
+        CpuDeadLoop ();
       }
     } else {
       Status = Tpm2Startup (TPM_SU_CLEAR);
@@ -479,8 +562,6 @@ TpmInit(
     goto TpmError;
   }
 
-  // @todo TPM_SelfTest (for dTPM)
-
   // Set TPM Ready Status
   TpmLibSetReadyStatus (1);
 
@@ -489,11 +570,8 @@ TpmInit(
     DEBUG ((DEBUG_INFO, "TCG Event Log initialization skipped.\n"));
   } else {
     Status = TpmTcgLogInit();
-    if (Status == EFI_SUCCESS) {
-      if (!BypassTpmInit) {
-        // TPM_Start was done by SBL via Locality 0
-        TpmLogLocalityEvent (0, ActivePcrBank);
-      }
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_INFO, "TCG Event Log initialization failed.\n"));
     }
   }
 
@@ -519,6 +597,7 @@ TpmError:
 
 **/
 RETURN_STATUS
+EFIAPI
 MeasureSeparatorEvent (
   IN   UINT32  WithError
   )
@@ -603,6 +682,7 @@ Hash and Extend a PCR and log it into TCG event log.
 @retval Others              Unable to extend PCR.
 **/
 RETURN_STATUS
+EFIAPI
 TpmHashAndExtendPcrEventLog (
 IN         TPMI_DH_PCR               PcrHandle,
 IN         UINT8                     *Data,
@@ -685,6 +765,7 @@ IN  CONST  UINT8                     *Event
   @retval Others              Unable to extend PCR.
 **/
 RETURN_STATUS
+EFIAPI
 TpmExtendPcrAndLogEvent (
   IN         TPMI_DH_PCR               PcrHandle,
   IN         TPMI_ALG_HASH             HashAlg,
@@ -780,7 +861,7 @@ TpmExtendSecureBootPolicy (
 
   Data = FeaturePcdGet (PcdVerifiedBootEnabled);
 
-  Status = TpmHashAndExtendPcrEventLog (7, &Data, sizeof (Data), EV_EFI_VARIABLE_DRIVER_CONFIG, sizeof ("SecureBootPolicy"), (UINT8*)"SecureBootPolicy");
+  Status = TpmHashAndExtendPcrEventLog (7, &Data, sizeof (Data), EV_PLATFORM_CONFIG_FLAGS, sizeof ("SecureBootPolicy"), (UINT8*)"SecureBootPolicy");
 
   return Status;
 }
@@ -844,6 +925,7 @@ TpmChangePlatformAuth (
   @retval Others           Unable to finish handling ReadyToBoot events.
 **/
 RETURN_STATUS
+EFIAPI
 TpmIndicateReadyToBoot (
   IN UINT8 FwDebugEnabled
   )
@@ -881,15 +963,17 @@ TpmIndicateReadyToBoot (
 
 **/
 VOID
+EFIAPI
 ExtendStageHash (
   IN  COMPONENT_CALLBACK_INFO   *CbInfo
   )
 {
-  UINT8                DigestHash[HASH_DIGEST_MAX];
-  HASH_ALG_TYPE        MbHashType;
-  TPMI_ALG_HASH        MbTmpAlgHash;
-  UINT8               *HashPtr;
-  RETURN_STATUS        Status;
+  UINT8                       DigestHash[HASH_DIGEST_MAX];
+  HASH_ALG_TYPE               MbHashType;
+  TPMI_ALG_HASH               MbTmpAlgHash;
+  UINT8                       *HashPtr;
+  RETURN_STATUS               Status;
+  EFI_PLATFORM_FIRMWARE_BLOB  Blob;
 
   //Convert Measured boot Hash Mask to HASH_ALG_TYPE (CryptoLib)
   MbHashType   = GetCryptoHashAlg(PcdGet32(PcdMeasuredBootHashMask));
@@ -922,9 +1006,13 @@ ExtendStageHash (
         TpmExtendPcrAndLogEvent (8, MbTmpAlgHash, HashPtr,
                               EV_COMPACT_HASH, sizeof("LinuxLoaderPkg: OS Image"), (UINT8 *)"LinuxLoaderPkg: OS Image");
       } else {
+        // Record base and length in event log
+        Blob.BlobBase = (UINT64)(UINTN)CbInfo->CompBuf;
+        Blob.BlobLength = CbInfo->CompLen;
+
         // TPM Extend for Stage components and payloads
         TpmExtendPcrAndLogEvent (0, MbTmpAlgHash, HashPtr,
-                              EV_POST_CODE, POST_CODE_STR_LEN, (UINT8 *)EV_POSTCODE_INFO_POST_CODE);
+                              EV_EFI_PLATFORM_FIRMWARE_BLOB, sizeof(Blob), (UINT8 *)&Blob);
       }
     } else {
       DEBUG((DEBUG_INFO, "Stage2 TPM PCR(0) extend failed!! \n"));

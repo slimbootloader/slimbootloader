@@ -63,9 +63,9 @@
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdGraphicsVbtAddress
   gPlatformCommonLibTokenSpaceGuid.PcdCpuInitIpiDelayInMicroSeconds
-  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImageRegionType
-  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImage1RegionSize
-  gPlatformCommonLibTokenSpaceGuid.PcdSpiIasImage2RegionSize
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiContainerImageRegionType
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiContainerImage1RegionSize
+  gPlatformCommonLibTokenSpaceGuid.PcdSpiContainerImage2RegionSize
   gPlatformModuleTokenSpaceGuid.PcdIntelGfxEnabled
   gPlatformModuleTokenSpaceGuid.PcdAcpiGnvsAddress
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
@@ -76,6 +76,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase
+  gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize
   gPlatformModuleTokenSpaceGuid.PcdSmmRebaseMode
   gPlatformModuleTokenSpaceGuid.PcdFramebufferInitEnabled
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled
@@ -83,3 +84,4 @@
   gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt
   gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesBase
   gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled
+  gPlatformModuleTokenSpaceGuid.PcdIgdOpRegionAddress

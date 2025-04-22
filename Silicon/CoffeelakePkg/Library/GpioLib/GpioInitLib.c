@@ -11,7 +11,6 @@
 #include <GpioPinsCnlLp.h>
 #include <GpioPinsCnlH.h>
 #include <RegAccess.h>
-#include "GpioLibrary.h"
 #include "GpioInitLib.h"
 
 GLOBAL_REMOVE_IF_UNREFERENCED GPIO_GROUP_INFO mPchLpGpioGroupInfo[] = {
@@ -62,6 +61,7 @@ GLOBAL_REMOVE_IF_UNREFERENCED GPIO_GROUP_INFO mPchHGpioGroupInfo[] = {
 
 **/
 CONST GPIO_GROUP_INFO*
+EFIAPI
 GpioGetGroupInfoTable (
   OUT UINT32              *GpioGroupInfoTableLength
   )
@@ -84,6 +84,7 @@ GpioGetGroupInfoTable (
                                   FALSE: This is not DSW Group
 **/
 BOOLEAN
+EFIAPI
 GpioIsDswGroup (
   IN  GPIO_GROUP         Group
   )
@@ -107,6 +108,7 @@ GpioIsDswGroup (
   @retval EFI_INVALID_PARAMETER         Invalid configuration
 **/
 EFI_STATUS
+EFIAPI
 GpioPadRstCfgFromResetConfig (
   IN  GPIO_PAD           GpioPad,
   IN  GPIO_RESET_CONFIG  GpioResetConfig,
@@ -160,7 +162,8 @@ Error:
   @param[out] PadCfgDwReg               PADCFG DWx register value
   @param[out] PadCfgDwRegMask           Mask with PADCFG DWx register bits to be modified
 **/
-VOID
+EFI_STATUS
+EFIAPI
 GpioPadCfgRegValueFromGpioConfig (
   IN  GPIO_PAD           GpioPad,
   IN  CONST GPIO_CONFIG  *GpioConfig,
@@ -182,7 +185,7 @@ GpioPadCfgRegValueFromGpioConfig (
              &PadRstCfg
              );
   if (EFI_ERROR (Status)) {
-    return;
+    return Status;
   }
 
   PadCfgDwRegMask[0] |= ((((GpioConfig->PowerConfig & B_GPIO_RESET_CONFIG_RESET_MASK) >> N_GPIO_RESET_CONFIG_RESET_BIT_POS) == GpioHardwareDefault) ? 0x0 : B_GPIO_PCR_RST_CONF);
@@ -235,6 +238,8 @@ GpioPadCfgRegValueFromGpioConfig (
   //
   PadCfgDwRegMask[1] |= ((((GpioConfig->ElectricalConfig & B_GPIO_ELECTRICAL_CONFIG_TERMINATION_MASK) >> N_GPIO_ELECTRICAL_CONFIG_TERMINATION_BIT_POS) == GpioHardwareDefault) ? 0x0 : B_GPIO_PCR_TERM);
   PadCfgDwReg[1] |= (((GpioConfig->ElectricalConfig & B_GPIO_ELECTRICAL_CONFIG_TERMINATION_MASK) >> (N_GPIO_ELECTRICAL_CONFIG_TERMINATION_BIT_POS + 1)) << N_GPIO_PCR_TERM);
+
+  return EFI_SUCCESS;
 }
 
 /**
@@ -338,6 +343,7 @@ GpioReadReg (
   @retval EFI_INVALID_PARAMETER   Invalid group or DwNum parameter number
 **/
 EFI_STATUS
+EFIAPI
 GpioGetPadCfgLockForGroupDw (
   IN  GPIO_GROUP                  Group,
   IN  UINT32                      DwNum,
@@ -368,6 +374,7 @@ GpioGetPadCfgLockForGroupDw (
   @retval EFI_INVALID_PARAMETER   Invalid group or DwNum parameter number
 **/
 EFI_STATUS
+EFIAPI
 GpioGetPadCfgLockTxForGroupDw (
   IN  GPIO_GROUP                  Group,
   IN  UINT32                      DwNum,
@@ -489,6 +496,7 @@ GpioWriteLockReg (
   @retval EFI_INVALID_PARAMETER   Invalid group or pad number
 **/
 EFI_STATUS
+EFIAPI
 GpioUnlockPadCfgForGroupDw (
   IN GPIO_GROUP                Group,
   IN UINT32                    DwNum,
@@ -520,6 +528,7 @@ GpioUnlockPadCfgForGroupDw (
   @retval EFI_INVALID_PARAMETER   Invalid group or pad number
 **/
 EFI_STATUS
+EFIAPI
 GpioUnlockPadCfgTxForGroupDw (
   IN GPIO_GROUP                Group,
   IN UINT32                    DwNum,

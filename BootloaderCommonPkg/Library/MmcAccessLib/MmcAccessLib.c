@@ -1,7 +1,7 @@
 /** @file
   This file provides some helper functions which are specific for EMMC device.
 
-  Copyright (c) 2015 - 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2015 - 2022, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -258,6 +258,7 @@ EarlyMmcInitialize (
   EMMC_CARD_DATA  *CardData;
   UINT8            HostCtrl1;
   UINT8            BusWidth;
+  UINTN            Retry;
 
   Status = RETURN_SUCCESS;
   CardData = NULL;
@@ -303,9 +304,17 @@ EarlyMmcInitialize (
   }
 
   if (Private->Slot.CardType == SdCardType) {
-    Status = SdCardVoltageCheck (Private);
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "SdCardVoltageCheck Fail Status = 0x%x\n", Status));
+    for (Retry = 0; Retry < SD_VOLTAGE_CHECK_MAX_RETRY; Retry++) {
+      Status = SdCardVoltageCheck (Private);
+      if (!EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_INFO, "SdCardVoltageCheck the %d time Success\n", Retry));
+        break;
+      }
+      MicroSecondDelay (10000);
+    }
+
+    if (Retry == SD_VOLTAGE_CHECK_MAX_RETRY) {
+      DEBUG ((DEBUG_ERROR, "SdCardVoltageCheck Fail Status = %r\n", Status));
       goto Done;
     }
 
@@ -366,7 +375,12 @@ SdMmcInitialize (
   }
 
   SdMmcHcBase = MmioRead32 (SdMmcHcPciBase + PCI_BASE_ADDRESSREG_OFFSET) & 0xFFFFF000;
-  Private->SdMmcHcBase = SdMmcHcBase;
+  if (SdMmcHcBase != 0) {
+    // Ensure PCI decoding is on
+    MmioOr8 (SdMmcHcPciBase + PCI_COMMAND_OFFSET, EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER);
+  }
+  Private->SdMmcHcPciBase = SdMmcHcPciBase;
+  Private->SdMmcHcBase    = SdMmcHcBase;
   if (Private->Signature == SD_MMC_HC_PRIVATE_SIGNATURE) {
     if (Private->Slot.CardType != CardType) {
       ZeroMem (Private, sizeof(SD_MMC_HC_PRIVATE_DATA));
@@ -465,6 +479,8 @@ MmcInitialize (
     // Handle Deinit if required.
     Private = MmcGetHcPrivateData ();
     if (Private != NULL) {
+      // Disable controller
+      MmioAnd8 (Private->SdMmcHcPciBase + PCI_COMMAND_OFFSET,  (UINT8)(~(EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER)));
       ZeroMem (Private, sizeof(SD_MMC_HC_PRIVATE_DATA));
     }
     return EFI_SUCCESS;

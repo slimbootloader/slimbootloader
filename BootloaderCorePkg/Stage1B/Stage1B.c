@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2016 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2016 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -130,6 +130,23 @@ AppendHashStore (
   UINT8               *OemKeyHashBlob;
   UINT32               OemKeyHashLen;
   HASH_ALG_TYPE        MbHashType;
+  UINT32               OemKeyHashBase;
+
+  // Get the Hash store base address
+  Status = LocateComponent ( CONTAINER_KEY_HASH_STORE_SIGNATURE,
+                              HASH_STORE_SIGNATURE,
+                                (VOID **)&OemKeyHashBase, NULL);
+  DEBUG((DEBUG_INFO, "%a KeyHash Component Base = 0x%x\n", __func__,
+                        OemKeyHashBase));
+  // Component must have LOADER_COMPRESSED_HEADER
+  // Update the OEM Key Hash data address
+  OemKeyHashBase = (UINT32)(UINTN)(((LOADER_COMPRESSED_HEADER *)(UINTN)OemKeyHashBase)->Data);
+  DEBUG((DEBUG_INFO, "%a KeyHash Component Data Base = 0x%x\n", __func__,
+                        OemKeyHashBase));
+
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
 
   // Request to load at the end of current hash store in memory
   LdrKeyHashBlob = (HASH_STORE_TABLE *)(UINTN)LdrGlobal->HashStorePtr;
@@ -143,9 +160,13 @@ AppendHashStore (
   if (EFI_ERROR(Status)) {
     // Not really necessary, but keep buffer clean
     ZeroMem (OemKeyHashBlob, OemKeyHashLen);
+    Stage1bParam->HashKeyDataBlobBase = 0;
+    Stage1bParam->HashKeyDataBlobLength = 0;
     return Status;
   }
 
+  Stage1bParam->HashKeyDataBlobBase = (UINT64)OemKeyHashBase;
+  Stage1bParam->HashKeyDataBlobLength = (UINT64)OemKeyHashLen;
 
   if (MEASURED_BOOT_ENABLED()) {
     //Convert Measured boot Hash Mask to HASH_ALG_TYPE (CryptoLib)
@@ -241,6 +262,8 @@ CreateConfigDatabase (
              ((CDATA_BLOB *)ExtCfgAddPtr)->UsedLength,
              Status
              ));
+    Stage1bParam->ExtCfgDataBlobBase = (UINT64)CfgDataBase;
+    Stage1bParam->ExtCfgDataBlobLength = (UINT64)((CDATA_BLOB *)ExtCfgAddPtr)->UsedLength;
     if (!EFI_ERROR (Status)) {
       if (FeaturePcdGet (PcdVerifiedBootEnabled)) {
         // Verify CFG public key
@@ -278,6 +301,8 @@ CreateConfigDatabase (
         if (EFI_ERROR (Status)) {
           DEBUG ((DEBUG_INFO, "Append EXT CFG Data ... %r\n", Status));
           Stage1bParam->ConfigDataHashValid = 0;
+          Stage1bParam->ExtCfgDataBlobBase = 0;
+          Stage1bParam->ExtCfgDataBlobLength = 0;
         }
       }
     }
@@ -354,6 +379,8 @@ SecStartup2 (
   CONTAINER_LIST           *ContainerList;
   CONTAINER_ENTRY          *ContainerEntry;
   VOID                    **FieldPtr;
+  UINT32                    Tolum;
+  UINT64                    Touum;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
   ASSERT (LdrGlobal != NULL);
@@ -382,6 +409,12 @@ SecStartup2 (
   // Perform pre-config board init
   BoardInit (PreConfigInit);
 
+  if (PcdGetBool (PcdSblResiliencyEnabled)) {
+    // React to ACM failures here as the correct partition should be
+    // swapped to during pre-config init
+    CheckForAcmFailures ();
+  }
+
   Status = AppendHashStore (LdrGlobal, &Stage1bParam);
   DEBUG ((DEBUG_INFO,  "Append public key hash into store: %r\n", Status));
 
@@ -407,14 +440,41 @@ SecStartup2 (
   // Perform pre-memory board init
   BoardInit (PreMemoryInit);
 
+#if FixedPcdGetBool (PcdEnableCryptoPerfTest)
+  CryptoPerfTest();
+#endif
+
   // Initialize memory
   HobList = NULL;
   DEBUG ((DEBUG_INIT, "Memory Init\n"));
   AddMeasurePoint (0x2020);
   Status = CallFspMemoryInit (PCD_GET32_WITH_ADJUST (PcdFSPMBase), &HobList);
-  AddMeasurePoint (0x2030);
+
   FspResetHandler (Status);
   ASSERT_EFI_ERROR (Status);
+
+  Status = FspVariableHandler(Status, CallFspMultiPhaseMemoryInit);
+  ASSERT_EFI_ERROR(Status);
+
+  Status = FspMultiPhaseMemInitHandler();
+
+  if (Status == EFI_UNSUPPORTED) {
+    DEBUG((DEBUG_INFO, "FspMultiPhaseMemInit() returned EFI_UNSUPPORTED. This is expected for FSP 2.3 and older.\n"));
+  } else {
+    ASSERT_EFI_ERROR(Status);
+  }
+  AddMeasurePoint (0x2030);
+
+  FspResetHandler (Status);
+
+  if (PcdGetBool (PcdSblResiliencyEnabled)) {
+    // React to TCO timer failures here as not to conflict with ACM active timer
+    // which is stopped at end of FSP-M
+    CheckForTcoTimerFailures (PcdGet8 (PcdBootFailureThreshold));
+
+    // Start TCO timer here as ACM active timer is stopped at end of FSP-M
+    StartTcoTimer (PcdGet16 (PcdTcoTimeout));
+  }
 
   FspReservedMemBase = (UINT32)GetFspReservedMemoryFromGuid (
                          HobList,
@@ -446,7 +506,7 @@ SecStartup2 (
   LdrGlobal->MemPoolStart      = MemPoolStart;
   LdrGlobal->MemPoolCurrTop    = MemPoolCurrTop;
   LdrGlobal->MemPoolCurrBottom = MemPoolStart;
-  LdrGlobal->MemUsableTop      = (UINT32)(FspReservedMemBase + FspReservedMemSize);
+  LdrGlobal->MemPoolMaxUsed    = 0;
 
   if (FeaturePcdGet (PcdDmaProtectionEnabled)) {
     DmaBuffer = MemPoolStart - (PcdGet32 (PcdLoaderAcpiNvsSize) + PcdGet32 (PcdLoaderAcpiReclaimSize)
@@ -479,6 +539,18 @@ SecStartup2 (
   OldStatus = SaveAndSetDebugTimerInterrupt (FALSE);
   InitializeDebugAgent (DEBUG_AGENT_INIT_POSTMEM_SEC, NULL, NULL);
   SaveAndSetDebugTimerInterrupt (OldStatus);
+
+  // Initialize various memory info using the FSP HOB
+  // Platform might update it via SOC specific info during PostMemoryInit phase
+  Tolum = GetSystemTopOfMemeory (HobList, &Touum);
+  // Update system low usable memory top from FSP memory resource hob
+  SetMemoryInfo (EnumMemInfoTolum,  Tolum);
+  // Update system upper usable memory top from FSP memory resource hob
+  SetMemoryInfo (EnumMemInfoTouum,  Touum);
+  // Update DMA portected low memory top.
+  SetMemoryInfo (EnumMemInfoTodplm, FspReservedMemBase + FspReservedMemSize);
+  // Update total memory size
+  SetMemoryInfo (EnumMemInfoTom,    Tolum + (Touum - SIZE_4GB));
 
   // Restore S3_DATA in new LoaderGlobal
   LdrGlobal->S3DataPtr = AllocatePool (sizeof (S3_DATA));
@@ -573,6 +645,11 @@ SecStartup2 (
   BoardInit (PostMemoryInit);
   AddMeasurePoint (0x2040);
 
+  // Print memory top info
+  DEBUG ((DEBUG_INFO, "Memory Tolum @ 0x%llx\n", GetMemoryInfo (EnumMemInfoTolum)));
+  DEBUG ((DEBUG_INFO, "Memory Touum @ 0x%llx\n", GetMemoryInfo (EnumMemInfoTouum)));
+  DEBUG ((DEBUG_INFO, "Memory Tom   @ 0x%llx\n", GetMemoryInfo (EnumMemInfoTom)));
+
   // Switch to memory-based stack and continue execution at ContinueFunc
   StackTop  = LdrGlobal->StackTop - (sizeof (STAGE2_PARAM) + sizeof (STAGE1B_PARAM) + 0x40);
   StackTop  = ALIGN_DOWN (StackTop, 0x100);
@@ -617,15 +694,17 @@ ContinueFunc (
   IN VOID                      *Context2
   )
 {
-  STAGE1B_PARAM            *Stage1bParam;
-  STAGE2_PARAM             *Stage2Param;
-  UINT32                    StackBot;
-  UINT32                    Dst;
-  UINT32                    StackTop;
-  EFI_STATUS                Status;
-  LOADER_GLOBAL_DATA       *LdrGlobal;
-  LOADER_GLOBAL_DATA       *OldLdrGlobal;
-  TPMI_ALG_HASH             MbTmpAlgHash;
+  STAGE1B_PARAM               *Stage1bParam;
+  STAGE2_PARAM                *Stage2Param;
+  UINT32                      StackBot;
+  UINT32                      Dst;
+  UINT32                      StackTop;
+  EFI_STATUS                  Status;
+  LOADER_GLOBAL_DATA          *LdrGlobal;
+  LOADER_GLOBAL_DATA          *OldLdrGlobal;
+  TPMI_ALG_HASH               MbTmpAlgHash;
+  EFI_PLATFORM_FIRMWARE_BLOB  KeyHashFwBlob;
+  EFI_PLATFORM_FIRMWARE_BLOB  CfgDataFwBlob;
 
   Stage1bParam   = (STAGE1B_PARAM *)Context1;
   OldLdrGlobal = (LOADER_GLOBAL_DATA *)Context2;
@@ -644,9 +723,11 @@ ContinueFunc (
            ));
   DEBUG ((
            DEBUG_INFO,
-           "Stage1 heap: 0x%X (0x%X used)\n",
+           "Stage1 heap: 0x%X (0x%X used, 0x%x max used)\n",
            PcdGet32 (PcdStage1DataSize),
-           OldLdrGlobal->MemPoolEnd - OldLdrGlobal->MemPoolCurrTop
+           (OldLdrGlobal->MemPoolEnd - OldLdrGlobal->MemPoolCurrTop) +
+           (OldLdrGlobal->MemPoolCurrBottom - OldLdrGlobal->MemPoolStart),
+           OldLdrGlobal->MemPoolMaxUsed
            ));
   DEBUG_CODE_END ();
 
@@ -654,6 +735,11 @@ ContinueFunc (
   Status = CallFspTempRamExit (PCD_GET32_WITH_ADJUST (PcdFSPMBase), NULL);
   AddMeasurePoint (0x2060);
   ASSERT_EFI_ERROR (Status);
+
+  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
+  ASSERT (LdrGlobal != NULL);
+  LdrGlobal->CarBase = 0;
+  LdrGlobal->CarSize = 0;
 
   BoardInit (PostTempRamExit);
   AddMeasurePoint (0x2070);
@@ -665,27 +751,34 @@ ContinueFunc (
 
         // Extend External Config Data hash
         if (Stage1bParam->ConfigDataHashValid == 1) {
-          TpmExtendPcrAndLogEvent ( 1,
+          CfgDataFwBlob.BlobBase = Stage1bParam->ExtCfgDataBlobBase;
+          CfgDataFwBlob.BlobLength = Stage1bParam->ExtCfgDataBlobLength;
+          DEBUG ((DEBUG_INFO, "%a :cfg data : 0x%x length : 0x%x\n", __FUNCTION__,
+                CfgDataFwBlob.BlobBase, CfgDataFwBlob.BlobLength));
+          TpmExtendPcrAndLogEvent (1,
                     MbTmpAlgHash,
                     Stage1bParam->ConfigDataHash,
-                    EV_EFI_VARIABLE_DRIVER_CONFIG,
-                    sizeof("Ext Config Data"),
-                     (UINT8 *)"Ext Config Data");
+                    EV_PLATFORM_CONFIG_FLAGS,
+                    sizeof(CfgDataFwBlob),
+                    (UINT8 *)&CfgDataFwBlob);
         }
 
         // Extend Key hash manifest digest
         if (Stage1bParam->KeyHashManifestHashValid == 1) {
-          TpmExtendPcrAndLogEvent (1,
+          KeyHashFwBlob.BlobBase = Stage1bParam->HashKeyDataBlobBase;
+          KeyHashFwBlob.BlobLength = Stage1bParam->HashKeyDataBlobLength;
+          DEBUG ((DEBUG_INFO, "%a :Hash : 0x%x length : 0x%x\n", __FUNCTION__,
+          KeyHashFwBlob.BlobBase, KeyHashFwBlob.BlobLength));
+          TpmExtendPcrAndLogEvent (0,
                     MbTmpAlgHash,
                     Stage1bParam->KeyHashManifestHash,
-                    EV_EFI_VARIABLE_DRIVER_CONFIG,
-                    sizeof("Key Manifest"),
-                     (UINT8 *)"Key Manifest");
+                    EV_EFI_PLATFORM_FIRMWARE_BLOB,
+                    sizeof(KeyHashFwBlob),
+                    (UINT8 *)&KeyHashFwBlob);
         }
     }
   }
 
-  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
   DEBUG ((DEBUG_INFO, "Memory FSP @ 0x%08X\n", LdrGlobal->StackTop));
   DEBUG ((DEBUG_INFO, "Memory TOP @ 0x%08X\n", LdrGlobal->MemPoolStart));
 

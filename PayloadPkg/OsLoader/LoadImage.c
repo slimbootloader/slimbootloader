@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -21,6 +21,57 @@ STATIC CONST CHAR16  *mConfigFileName[3] = {
 };
 
 /**
+  Get boot image from a IFWI container component
+
+  This function will load component from a container inside the IFWI
+  using the container signature and the component name from boot option.
+  After Boot image is loaded into memory, its information will be saved
+  to LoadedImage.
+
+  @param[in]      BootOption      Current boot option
+  @param[in, out] LoadedImage     Loaded Image information.
+
+  @retval  RETURN_SUCCESS     If a boot image was loaded successfully
+  @retval  Others             If a boot image was not loaded.
+**/
+EFI_STATUS
+GetBootImageFromIfwiContainer (
+  IN     OS_BOOT_OPTION      *BootOption,
+  IN OUT LOADED_IMAGE        *LoadedImage
+  )
+{
+  RETURN_STATUS              Status;
+  VOID                       *Buffer;
+  UINT32                     ImageSize;
+  CONTAINER_IMAGE           *Image;
+
+  Image = &BootOption->Image[LoadedImage->LoadImageType].ContainerImage;
+  if ((Image->Indicate != '!') || (Image->BackSlash != '/')) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  Buffer    = NULL;
+  ImageSize = 0;
+  Status = LoadComponent (Image->ContainerSig, Image->ComponentName, (VOID **)&Buffer, &ImageSize);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Load component (%x/%x) error - %r\n", Image->ContainerSig, Image->ComponentName, Status));
+    return Status;
+  }
+
+  LoadedImage->Flags |= LOADED_IMAGE_COMPONENT;
+  LoadedImage->ImageData.Addr = Buffer;
+  LoadedImage->ImageData.Size = ImageSize;
+  LoadedImage->ImageData.AllocType = ImageAllocateTypePage;
+
+  if ( *((UINT32 *) Buffer) == CONTAINER_BOOT_SIGNATURE ) {
+    LoadedImage->Flags      |= LOADED_IMAGE_CONTAINER;
+  }
+
+  DEBUG ((DEBUG_ERROR, "Loaded component (%x/%x) success.\n", Image->ContainerSig, Image->ComponentName));
+  return EFI_SUCCESS;
+}
+
+/**
   Get Boot image from raw partition
 
   Using boot option info, this function will read Boot image from raw
@@ -31,8 +82,8 @@ STATIC CONST CHAR16  *mConfigFileName[3] = {
   @param[in]      BootOption      Current boot option
   @param[in, out] LoadedImage     Loaded Image information.
 
-  @retval  RETURN_SUCCESS     If IAS image was loaded successfully
-  @retval  Others             If IAS image was not loaded.
+  @retval  RETURN_SUCCESS     If Container image was loaded successfully
+  @retval  Others             If Container image was not loaded.
 **/
 STATIC
 EFI_STATUS
@@ -55,149 +106,131 @@ GetBootImageFromRawPartition (
   UINT8                      SwPart;
   UINT64                     Address;
   CONTAINER_HDR             *ContainerHdr;
-  CHAR8                     *FileName;
+
+  if(BootOption->DevType == OsBootDeviceMemory)
+  {
+    DEBUG ((DEBUG_INFO, "Updating SwPart to 0xFF for Memory boot\n"));
+    BootOption->Image[LoadedImage->LoadImageType].LbaImage.SwPart = 0xFF;
+  }
 
   SwPart   = BootOption->Image[LoadedImage->LoadImageType].LbaImage.SwPart;
   LbaAddr  = BootOption->Image[LoadedImage->LoadImageType].LbaImage.LbaAddr;
-  FileName = (CHAR8 *)BootOption->Image[LoadedImage->LoadImageType].FileName;
 
-  if ((FileName[0] == '!') && (LbaAddr == 0)) {
-    // Load file from internal container path instead
-    Status = EFI_NOT_FOUND;
-    if ((AsciiStrLen(FileName) > 9) && (FileName[0] == '!') && (FileName[5] == '/')) {
-      Buffer    = NULL;
-      ImageSize = 0;
-      Status = LoadComponent (
-                 *(UINT32 *)(FileName + 1),
-                 *(UINT32 *)(FileName + 6),
-                 (VOID **)&Buffer,
-                 (UINT32 *)&ImageSize
-               );
+  //
+  // The image_B partition number, is image_A partition number + 1
+  // They share same LBA offset address.
+  //
+  if ((BootOption->BootFlags & LOAD_IMAGE_FROM_BACKUP) != 0) {
+    if ((LoadedImage->LoadImageType == BOOT_FLAGS_PREOS)
+      || (LoadedImage->LoadImageType == LoadImageTypeNormal)) {
+      SwPart++;
     }
+  }
+
+  DEBUG ((DEBUG_INFO, "Load image from SwPart (0x%x), LbaAddr(0x%llx)\n", SwPart, LbaAddr));
+  if (SwPart != 0xFF) {
+    Status = GetLogicalPartitionInfo (SwPart, LoadedImage->HwPartHandle, &LogicBlkDev);
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_INFO, "Load component '%a' error - %r\n", FileName, Status));
+      DEBUG ((DEBUG_INFO, "Get logical partition error - %r\n", Status));
       return Status;
     }
-    LoadedImage->Flags |= LOADED_IMAGE_COMPONENT;
   } else {
-    //
-    // The image_B partition number, is image_A partition number + 1
-    // They share same LBA offset address.
-    //
-    if ((BootOption->BootFlags & LOAD_IMAGE_FROM_BACKUP) != 0) {
-      if ((LoadedImage->LoadImageType == LoadImageTypeTrusty)
-        || (LoadedImage->LoadImageType == LoadImageTypeNormal)) {
-        SwPart++;
-      }
-    }
+    DEBUG ((DEBUG_INFO, "SwPart is 0xFF, LbaAddr will be treated as an absolute LBA\n"));
+    LogicBlkDev.StartBlock = 0;
+  }
 
-    DEBUG ((DEBUG_INFO, "Load image from SwPart (0x%x), LbaAddr(0x%llx)\n", SwPart, LbaAddr));
-    if (SwPart != 0xFF) {
-      Status = GetLogicalPartitionInfo (SwPart, LoadedImage->HwPartHandle, &LogicBlkDev);
-      if (EFI_ERROR (Status)) {
-        DEBUG ((DEBUG_INFO, "Get logical partition error - %r\n", Status));
-        return Status;
-      }
-    } else {
-      DEBUG ((DEBUG_INFO, "SwPart is 255, LbaAddr will be treated as an absolute LBA\n"));
-      LogicBlkDev.StartBlock = 0;
-    }
+  Status = MediaGetMediaInfo (BootOption->HwPart, &BlockInfo);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "Get media info error - %r\n", Status));
+    return Status;
+  }
 
-    Status = MediaGetMediaInfo (BootOption->HwPart, &BlockInfo);
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_INFO, "Get media info error - %r\n", Status));
-      return Status;
-    }
+  //
+  // Read the Container Header first to get total size of the Container image.
+  // Make sure to round the Header size to be block aligned in bytes.
+  //
+  BlockSize = BlockInfo.BlockSize;
+  AlignedHeaderBlkCnt = (sizeof (CONTAINER_HDR) + (BlockSize - 1)) / BlockSize;
+  AlignedHeaderSize = AlignedHeaderBlkCnt * BlockSize;
 
-    //
-    // Read the IAS Header first to get total size of the IAS image.
-    // Make sure to round the Header size to be block aligned in bytes.
-    //
-    BlockSize = BlockInfo.BlockSize;
-    AlignedHeaderBlkCnt = (sizeof (IAS_HEADER) + (BlockSize - 1)) / BlockSize;
-    AlignedHeaderSize = AlignedHeaderBlkCnt * BlockSize;
+  BlockData = AllocatePages (EFI_SIZE_TO_PAGES (AlignedHeaderSize));
+  if (BlockData == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
 
-    BlockData = AllocatePages (EFI_SIZE_TO_PAGES (AlignedHeaderSize));
-    if (BlockData == NULL) {
-      return EFI_OUT_OF_RESOURCES;
-    }
+  Address =  LogicBlkDev.StartBlock + LbaAddr;
 
-    Address =  LogicBlkDev.StartBlock + LbaAddr;
+  Status = MediaReadBlocks (
+             BootOption->HwPart,
+             Address,
+             AlignedHeaderSize,
+             BlockData
+             );
 
-    Status = MediaReadBlocks (
-               BootOption->HwPart,
-               Address,
-               AlignedHeaderSize,
-               BlockData
-               );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "Read image error - %r\n", Status));
+    return Status;
+  }
 
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_INFO, "Read image error - %r\n", Status));
-      return Status;
-    }
+  //
+  // Make sure to round the image size to be block aligned in bytes.
+  //
+  ContainerHdr = (CONTAINER_HDR *)BlockData;
+  if (ContainerHdr->Signature == CONTAINER_BOOT_SIGNATURE) {
+    ImageSize = ContainerHdr->DataOffset + ContainerHdr->DataSize;
+  } else {
+    DEBUG ((DEBUG_INFO, "No valid image header found !\n"));
+    return EFI_LOAD_ERROR;
+  }
 
-    //
-    // Make sure to round the image size to be block aligned in bytes.
-    //
-    ContainerHdr = (CONTAINER_HDR *)BlockData;
-    if (ContainerHdr->Signature == CONTAINER_BOOT_SIGNATURE) {
-      ImageSize = ContainerHdr->DataOffset + ContainerHdr->DataSize;
-    } else if (ContainerHdr->Signature == IAS_MAGIC_PATTERN) {
-      ImageSize = IAS_IMAGE_SIZE ((IAS_HEADER *) BlockData);
-    } else {
-      DEBUG ((DEBUG_INFO, "No valid image header found !\n"));
-      return EFI_LOAD_ERROR;
-    }
+  //
+  // Check image size from the image header
+  //
+  if (ImageSize == 0) {
+    return EFI_LOAD_ERROR;
+  }
 
-    //
-    // Check image size from the image header
-    //
-    if (ImageSize == 0) {
-      return EFI_LOAD_ERROR;
-    }
-
-    AlignedImageSize = ((ImageSize % BlockSize) == 0) ? \
-                       ImageSize : \
-                       ((ImageSize / BlockSize) + 1) * BlockSize;
-    if (AlignedImageSize > MAX_IAS_IMAGE_SIZE) {
-      DEBUG ((DEBUG_INFO, "Image is bigger than limitation (0x%x). ImageSize=0x%x\n",
-              MAX_IAS_IMAGE_SIZE, AlignedImageSize));
-      //
-      // Free temporary pages used for image header
-      //
-      FreePages (BlockData, EFI_SIZE_TO_PAGES (AlignedHeaderSize));
-      return EFI_LOAD_ERROR;
-    }
-
-    Buffer = (UINT8 *) AllocatePages (EFI_SIZE_TO_PAGES (AlignedImageSize));
-    if (Buffer == NULL) {
-      DEBUG ((DEBUG_INFO, "Allocate memory (size:0x%x) fail.\n", AlignedImageSize));
-      return EFI_OUT_OF_RESOURCES;
-    }
-    CopyMem (Buffer, BlockData, AlignedHeaderSize);
-
+  AlignedImageSize = ((ImageSize % BlockSize) == 0) ? \
+                     ImageSize : \
+                     ((ImageSize / BlockSize) + 1) * BlockSize;
+  if (AlignedImageSize > MAX_CONTAINER_IMAGE_SIZE) {
+    DEBUG ((DEBUG_INFO, "Image is bigger than limitation (0x%x). ImageSize=0x%x\n",
+            MAX_CONTAINER_IMAGE_SIZE, AlignedImageSize));
     //
     // Free temporary pages used for image header
     //
     FreePages (BlockData, EFI_SIZE_TO_PAGES (AlignedHeaderSize));
+    return EFI_LOAD_ERROR;
+  }
 
-    //
-    // Read the rest of the IAS image into the buffer
-    //
-    Address =  LogicBlkDev.StartBlock + LbaAddr + AlignedHeaderBlkCnt;
+  Buffer = (UINT8 *) AllocatePages (EFI_SIZE_TO_PAGES (AlignedImageSize));
+  if (Buffer == NULL) {
+    DEBUG ((DEBUG_INFO, "Allocate memory (size:0x%x) fail.\n", AlignedImageSize));
+    return EFI_OUT_OF_RESOURCES;
+  }
+  CopyMem (Buffer, BlockData, AlignedHeaderSize);
 
-    Status = MediaReadBlocks (
-               BootOption->HwPart,
-               Address,
-               (AlignedImageSize - AlignedHeaderSize),
-               (VOID *)((UINTN)Buffer + AlignedHeaderSize)
-               );
+  //
+  // Free temporary pages used for image header
+  //
+  FreePages (BlockData, EFI_SIZE_TO_PAGES (AlignedHeaderSize));
 
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_INFO, "Read rest of image error - %r\n", Status));
-      FreePages (Buffer, EFI_SIZE_TO_PAGES (AlignedImageSize));
-      return Status;
-    }
+  //
+  // Read the rest of the Container image into the buffer
+  //
+  Address =  LogicBlkDev.StartBlock + LbaAddr + AlignedHeaderBlkCnt;
+
+  Status = MediaReadBlocks (
+             BootOption->HwPart,
+             Address,
+             (AlignedImageSize - AlignedHeaderSize),
+             (VOID *)((UINTN)Buffer + AlignedHeaderSize)
+             );
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "Read rest of image error - %r\n", Status));
+    FreePages (Buffer, EFI_SIZE_TO_PAGES (AlignedImageSize));
+    return Status;
   }
 
   LoadedImage->ImageData.Addr = Buffer;
@@ -205,8 +238,6 @@ GetBootImageFromRawPartition (
   LoadedImage->ImageData.AllocType = ImageAllocateTypePage;
   if ( *((UINT32 *) Buffer) == CONTAINER_BOOT_SIGNATURE ) {
     LoadedImage->Flags      |= LOADED_IMAGE_CONTAINER;
-  } else if ( *((UINT32 *) Buffer) == IAS_MAGIC_PATTERN ) {
-    LoadedImage->Flags      |= LOADED_IMAGE_IAS;
   }
   return EFI_SUCCESS;
 }
@@ -214,11 +245,11 @@ GetBootImageFromRawPartition (
 /**
   Get Boot image from File System
 
-  This function will read Boot image from file based on FsHandle.
-  After Boot image is loaded into memory, its information will be saved
-  to LoadedImage.
+  This function will initialize file system and read Boot image from file
+  based on BootOption. After Boot image is loaded into memory, its
+  information will be saved to LoadedImage.
 
-  @param[in]  FsHandle        File system handle used to read file
+  @param[in]  HwPartHandle    Hardware partition handle
   @param[in]  BootOption      Current boot option
   @param[out] LoadedImage     Loaded Image information.
 
@@ -228,7 +259,7 @@ GetBootImageFromRawPartition (
 STATIC
 EFI_STATUS
 GetBootImageFromFs (
-  IN  EFI_HANDLE             FsHandle,
+  IN  EFI_HANDLE             HwPartHandle,
   IN  OS_BOOT_OPTION         *BootOption,
   OUT LOADED_IMAGE           *LoadedImage
   )
@@ -237,19 +268,40 @@ GetBootImageFromFs (
   CHAR16                     FilePath[MAX_FILE_PATH_LEN];
   VOID                       *Image;
   UINTN                      ImageSize;
+  UINT8                      SwPart;
+  UINT8                      FsType;
   CONST CHAR8                *FileName;
+  EFI_HANDLE                 FsHandle;
   EFI_HANDLE                 FileHandle;
 
-  if (FsHandle == NULL) {
+  if (HwPartHandle == NULL) {
     return RETURN_INVALID_PARAMETER;
   }
 
-  FileName = (CONST CHAR8 *)&BootOption->Image[LoadedImage->LoadImageType].FileName[0];
+  FsHandle = NULL;
+  FileHandle = NULL;
+  SwPart = BootOption->Image[LoadedImage->LoadImageType].FileImage.SwPart;
+  FsType = BootOption->Image[LoadedImage->LoadImageType].FileImage.FsType;
+
+  //
+  // The image_B partition number, is image_A partition number + 1
+  // They use the same container file name and FsType.
+  //
+  if ((BootOption->BootFlags & LOAD_IMAGE_FROM_BACKUP) != 0) {
+    SwPart++;
+  }
+
+  Status = InitFileSystem (SwPart, FsType, HwPartHandle, &FsHandle);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "Init file system failed on SwPart %u, Status = %r\n", SwPart, Status));
+    goto Done;
+  }
+
+  FileName = (CONST CHAR8 *)&BootOption->Image[LoadedImage->LoadImageType].FileImage.FileName[0];
 
   // Load Boot Image from file system
   AsciiStrToUnicodeStrS (FileName, FilePath, sizeof (FilePath) / sizeof (CHAR16));
 
-  FileHandle = NULL;
   Status = OpenFile (FsHandle, FilePath, &FileHandle);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "Open file '%a' failed, Status = %r\n", FileName, Status));
@@ -268,13 +320,23 @@ GetBootImageFromFs (
     goto Done;
   }
 
-  Image = AllocatePages (EFI_SIZE_TO_PAGES (ImageSize));
+  if ((LoadedImage->LoadImageType == LoadImageTypeExtra0) &&
+      !AsciiStrCmp(FileName, "/boot/sbl_rtcm")) {
+     //
+     // Currently extra image is used only by RTCM which need allocate reserved memory.
+     // Need revise this logic if there is other use case late.
+     //
+     Image = AllocateReservedPages (EFI_SIZE_TO_PAGES(ImageSize));
+     LoadedImage->Flags |= LOADED_IMAGE_RUN_EXTRA;
+  } else {
+    Image = AllocatePages (EFI_SIZE_TO_PAGES (ImageSize));
+  }
   if (Image == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
     goto Done;
   }
 
-  Status = ReadFile (FileHandle, &Image, &ImageSize);
+  Status = ReadFile (FileHandle, Image, &ImageSize);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "Read file '%a' failed, Status = %r\n", FileName, Status));
     if (Image != NULL) {
@@ -289,13 +351,14 @@ GetBootImageFromFs (
   LoadedImage->ImageData.AllocType = ImageAllocateTypePage;
   if ( *((UINT32 *) Image) == CONTAINER_BOOT_SIGNATURE ) {
     LoadedImage->Flags      |= LOADED_IMAGE_CONTAINER;
-  } else if ( *((UINT32 *) Image) == IAS_MAGIC_PATTERN ) {
-    LoadedImage->Flags      |= LOADED_IMAGE_IAS;
   }
 
 Done:
   if (FileHandle != NULL) {
     CloseFile (FileHandle);
+  }
+  if (FsHandle != NULL) {
+    CloseFileSystem (FsHandle);
   }
 
   return Status;
@@ -358,11 +421,13 @@ LoadLinuxFile (
 
   FileBuffer = AllocatePages (EFI_SIZE_TO_PAGES(FileSize));
   if (FileBuffer == NULL) {
+    DEBUG ((DEBUG_INFO, "Unable to allocate memory to load file '%s' (size: %d) \n", FileName, FileSize));
+    DEBUG ((DEBUG_INFO, "Please increase PLD_HEAP_SIZE\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto Done;
   }
 
-  Status = ReadFile (FileHandle, &FileBuffer, &FileSize);
+  Status = ReadFile (FileHandle, FileBuffer, &FileSize);
   DEBUG ((DEBUG_INFO, "Load file %a [size %d bytes]: %r\n", Ptr, FileSize, Status));
   if (!EFI_ERROR (Status)) {
     // Free pre-allocated memory
@@ -394,8 +459,8 @@ Done:
   @param[in]  FsHandle        File system handle used to read file
   @param[out] LinuxImage      Used to save loaded Image information.
 
-  @retval  RETURN_SUCCESS     If IAS image was loaded successfully
-  @retval  Others             If IAS image was not loaded.
+  @retval  RETURN_SUCCESS     If Container image was loaded successfully
+  @retval  Others             If Container image was not loaded.
 **/
 STATIC
 EFI_STATUS
@@ -417,6 +482,7 @@ GetTraditionalLinux (
   UINT32                     Size;
 
   ConfigFile     = NULL;
+  FileHandle     = NULL;
   ConfigFileSize = 0;
   DefBootOption  = FALSE;
   Status = RETURN_NOT_FOUND;
@@ -448,7 +514,7 @@ GetTraditionalLinux (
       return EFI_OUT_OF_RESOURCES;
     }
 
-    Status = ReadFile (FileHandle, &ConfigFile, &ConfigFileSize);
+    Status = ReadFile (FileHandle, ConfigFile, &ConfigFileSize);
     CloseFile (FileHandle);
     if (!EFI_ERROR (Status)) {
       DEBUG ((DEBUG_INFO, "Load file %s [size 0x%x]: %r\n", (CHAR16 *)mConfigFileName[Index], ConfigFileSize, Status));
@@ -461,11 +527,6 @@ GetTraditionalLinux (
 
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "Could not find configuration file!\n"));
-    // No any config was found, try to load vmlinuz/initrd directly.
-    if (ConfigFile != NULL) {
-      FreePool (ConfigFile);
-      ConfigFile = NULL;
-    }
     ConfigFileSize = 0;
   }
 
@@ -595,6 +656,7 @@ GetLoadedImageByType (
 
 **/
 VOID
+EFIAPI
 FreeImageData (
   IN  IMAGE_DATA    *ImageData
   )
@@ -630,8 +692,8 @@ UnloadLoadedImage (
   LINUX_IMAGE                *LinuxImage;
   MULTIBOOT_IMAGE            *MultiBootImage;
   MULTIBOOT_MODULE_DATA      *MbModuleData;
-  TRUSTY_IMAGE_DATA          *TrustyImageData;
   MULTIBOOT_INFO             *MbInfo;
+  MULTIBOOT2_INFO            *Mb2Info;
   UINT32                      Index;
   UINT32                      Count;
 
@@ -677,20 +739,25 @@ UnloadLoadedImage (
       FreeImageData (&MbModuleData[Index].ImgFile);
     }
 
-    // Free Trusty Image Data
-    TrustyImageData = &MultiBootImage->TrustyImageData;
-    FreeImageData (&TrustyImageData->VmmImageData.VmmRuntimeAddr);
-    FreeImageData (&TrustyImageData->VmmImageData.VmmHeapAddr);
-    FreeImageData (&TrustyImageData->VmmImageData.VmmBootParams);
-    FreeImageData (&TrustyImageData->BootParamsData.PlatformInfo);
-    FreeImageData (&TrustyImageData->BootParamsData.SeedList);
-    FreeImageData (&TrustyImageData->BootParamsData.Base);
-
     // Free MmapAddr which is allocated in SetupMultibootInfo ()
     MbInfo = &MultiBootImage->MbInfo;
     if ((MbInfo->MmapAddr != NULL) && (MbInfo->Flags & MULTIBOOT_INFO_HAS_MMAP)) {
       FreePool (MbInfo->MmapAddr);
       MbInfo->MmapAddr = NULL;
+    }
+  }
+
+  //
+  // Free MultiBoot-2 Image Data
+  //
+  if (LoadedImage->Flags & LOADED_IMAGE_MULTIBOOT2) {
+    MultiBootImage = &LoadedImage->Image.MultiBoot;
+
+    // Free info tags which are allocated in SetupMultiboot2Info ()
+    Mb2Info = &MultiBootImage->Mb2Info;
+    if (Mb2Info->StartTag != NULL) {
+      FreePool (Mb2Info->StartTag);
+      Mb2Info->StartTag = NULL;
     }
   }
 
@@ -742,7 +809,6 @@ UnloadBootImages (
 
   @param[in]  BootOption        Current boot option
   @param[in]  HwPartHandle      Hardware partition handle
-  @param[in]  FsHandle          FileSystem handle
   @param[out] LoadedImageHandle Loaded Image handle
 
   @retval     RETURN_SUCCESS    If image was loaded successfully
@@ -753,7 +819,6 @@ EFIAPI
 LoadBootImages (
   IN  OS_BOOT_OPTION  *OsBootOption,
   IN  EFI_HANDLE       HwPartHandle,
-  IN  EFI_HANDLE       FsHandle,
   OUT EFI_HANDLE      *LoadedImageHandle
   )
 {
@@ -763,6 +828,8 @@ LoadBootImages (
   UINT8                      BootFlags;
   EFI_STATUS                 Status;
   UINT8                      Index;
+  CONTAINER_IMAGE           *ContainerImage;
+  EFI_HANDLE                 FsHandle;
 
   ASSERT (OsBootOption != NULL);
 
@@ -776,14 +843,15 @@ LoadBootImages (
   LoadedImagesInfo->Signature = LOADED_IMAGES_INFO_SIGNATURE;
 
   for (Index = 0; Index < LoadImageTypeMax; Index++) {
-    if ((Index == LoadImageTypeTrusty) && !(BootFlags & BOOT_FLAGS_TRUSTY)) {
+    if ((Index == LoadImageTypePreOs) && ((BootFlags & BOOT_FLAGS_PREOS) == 0)) {
       continue;
     }
     if (Index == LoadImageTypeMisc) {
       continue;
     }
-    if ((Index >= LoadImageTypeExtra0) && !(BootFlags & BOOT_FLAGS_EXTRA)) {
-      if (!BootImage[Index].LbaImage.Valid) {
+
+    if (Index >= LoadImageTypeExtra0) {
+      if (((BootFlags & BOOT_FLAGS_EXTRA) == 0) || (BootImage[Index].LbaImage.Valid == 0)) {
         continue;
       }
     }
@@ -798,16 +866,26 @@ LoadBootImages (
     //
     // Load Boot Image from FS or RAW partition
     //
-    if (FsHandle != NULL) {
-      Status = GetBootImageFromFs (FsHandle, OsBootOption, LoadedImage);
-    } else {
+    ContainerImage = &BootImage[Index].ContainerImage;
+    if ((ContainerImage->Indicate == '!') && (ContainerImage->BackSlash == '/')) {
+      Status = GetBootImageFromIfwiContainer (OsBootOption, LoadedImage);
+    } else if (BootImage[Index].LbaImage.Valid == 1) {
       Status = GetBootImageFromRawPartition (OsBootOption, LoadedImage);
+    } else {
+      Status = GetBootImageFromFs (HwPartHandle, OsBootOption, LoadedImage);
     }
 
-    DEBUG ((DEBUG_INFO, "LoadBootImage ImageType-%d Image\n", Index));
+    DEBUG ((DEBUG_INFO, "LoadBootImage ImageType-%d %r\n", Index, Status));
     LoadedImagesInfo->LoadedImageList[Index] = LoadedImage;
 
     if (EFI_ERROR (Status)) {
+      if (Index >= LoadImageTypeExtra0) {
+        // Continue boot if load extra image failed.
+        Status = EFI_SUCCESS;
+        LoadedImagesInfo->LoadedImageList[Index] = NULL;
+        continue;
+      }
+
       // UnloadBootImages () will free all unnecessary Memory
       break;
     }
@@ -817,7 +895,7 @@ LoadBootImages (
   // Launch Traditional Linux for debugging purpose only
   //
   if (DebugCodeEnabled () || !FeaturePcdGet (PcdVerifiedBootEnabled)) {
-    if (EFI_ERROR (Status) && (FsHandle != NULL)) {
+    if (EFI_ERROR (Status) && (HwPartHandle != NULL)) {
       // Free loaded images previously, but keep LoadedImagesInfo structure
       UnloadBootImages ((EFI_HANDLE)(UINTN)LoadedImagesInfo, TRUE);
       LoadedImage = LoadedImagesInfo->LoadedImageList[LoadImageTypeNormal];
@@ -830,10 +908,20 @@ LoadBootImages (
       LoadedImage->HwPartHandle   = HwPartHandle;
       LoadedImage->LoadImageType  = LoadImageTypeNormal;
       LoadedImagesInfo->LoadedImageList[LoadImageTypeNormal] = LoadedImage;
-      Status = GetTraditionalLinux (FsHandle, &LoadedImage->Image.Linux);
-      if (!EFI_ERROR (Status)) {
-        LoadedImage->Flags |= LOADED_IMAGE_LINUX;
-        DEBUG ((DEBUG_INFO, "LoadBootImage TraditionalLinux ImageType-%d Image\n", Index));
+
+      FsHandle = NULL;
+      Status = InitFileSystem (OsBootOption->SwPart, OsBootOption->FsType, HwPartHandle, &FsHandle);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_INFO, "Init file system failed, Status = %r\n", Status));
+      }
+
+      if (FsHandle != NULL) {
+        Status = GetTraditionalLinux (FsHandle, &LoadedImage->Image.Linux);
+        if (!EFI_ERROR (Status)) {
+          LoadedImage->Flags |= LOADED_IMAGE_LINUX;
+          DEBUG ((DEBUG_INFO, "LoadBootImage TraditionalLinux ImageType-%d Image\n", Index));
+        }
+        CloseFileSystem(FsHandle);
       }
     }
   }

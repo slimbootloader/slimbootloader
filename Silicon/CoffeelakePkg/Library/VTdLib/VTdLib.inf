@@ -1,0 +1,49 @@
+#/*++
+#
+#  Copyright (c) 2023, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+#  Module Name:
+#
+#    VTdLib.inf
+#
+#  Abstract:
+#
+#    Component description file for VTd Library
+#
+#--*/
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = VtdLib
+  FILE_GUID                      = 846a0248-df29-4d79-a590-65699d08dde4
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = VtdLib
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC ARM
+#
+
+[Sources]
+  VTdLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  IntelFsp2Pkg/IntelFsp2Pkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/CoffeelakePkg/CoffeelakePkg.dec
+
+[LibraryClasses]
+  BaseLib
+  IoLib
+  PcdLib
+  DebugLib
+  HobLib
+  MemoryAllocationLib
+
+[Pcd]
+  gPlatformModuleTokenSpaceGuid.PcdAcpiGnvsAddress
+  gPlatformModuleTokenSpaceGuid.PcdVtdEnabled

@@ -27,15 +27,18 @@
 
 [Sources.IA32]
   Ia32/SecEntry.nasm
+  Ia32/UpdateSelectors.nasm
 
 [Sources.X64]
   X64/SecEntry.nasm
+  X64/UpdateSelectors.nasm
 
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
   IntelFsp2Pkg/IntelFsp2Pkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
 
 [LibraryClasses]
   IoLib
@@ -54,6 +57,8 @@
   DebugAgentLib
   ExtraBaseLib
   StageLib
+  TopSwapLib
+  CryptoLib
 
 [Guids]
   gPlatformModuleTokenSpaceGuid
@@ -86,6 +91,10 @@
   gPlatformModuleTokenSpaceGuid.PcdHashStoreSize
   gPlatformCommonLibTokenSpaceGuid.PcdPcdLibId
   gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg
+  gPlatformModuleTokenSpaceGuid.PcdIdenticalTopSwapsBuilt
+
+[FixedPcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdFipsSupport
 
 [Depex]
   TRUE

@@ -1,7 +1,7 @@
 /** @file
   Secure boot library routines to provide hash verification.
 
-  Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -62,7 +62,7 @@ GetHashToExtend (
   // Incase component hash is not avilable calculate hash from src buf and HashType provided.
 
   // Get componenet hash from hash store based on Componen Id
-  if ((ComponentType >= COMP_TYPE_STAGE_1B) && (ComponentType < COMP_TYPE_INVALID)) {
+  if (ComponentType < COMP_TYPE_INVALID) {
     Status = GetComponentHash (ComponentType, &Digest, &CompHashAlg);
     if((Status == EFI_SUCCESS) && (CompHashAlg == HashType)) {
       CopyMem (HashData, Digest, DigestSize);
@@ -108,27 +108,26 @@ CalculateHash  (
   UINT8 DigestSize;
   UINT8 *HashRetVal;
 
-  if(Digest != NULL){
-    if (HashAlg == HASH_TYPE_SHA256) {
-      HashRetVal = Sha256 (Data, Length, Digest);
-      DigestSize = SHA256_DIGEST_SIZE;
-    } else if (HashAlg == HASH_TYPE_SHA384) {
-      HashRetVal = Sha384 (Data, Length, Digest);
-      DigestSize = SHA384_DIGEST_SIZE;
-    } else if (HashAlg == HASH_TYPE_SM3) {
-      HashRetVal = Sm3 (Data, Length, Digest);
-      DigestSize = SM3_DIGEST_SIZE;
-    } else {
-      return RETURN_UNSUPPORTED;
-    }
-
-    if (HashRetVal == NULL){
-      DEBUG((DEBUG_INFO, "Hash Calculation is invalid!!\n"));
-      return RETURN_UNSUPPORTED;
-    } else{
-      CopyMem (OutHash, Digest, DigestSize);
-    }
+  if (HashAlg == HASH_TYPE_SHA256) {
+    HashRetVal = Sha256 (Data, Length, Digest);
+    DigestSize = SHA256_DIGEST_SIZE;
+  } else if (HashAlg == HASH_TYPE_SHA384) {
+    HashRetVal = Sha384 (Data, Length, Digest);
+    DigestSize = SHA384_DIGEST_SIZE;
+  } else if (HashAlg == HASH_TYPE_SM3) {
+    HashRetVal = Sm3 (Data, Length, Digest);
+    DigestSize = SM3_DIGEST_SIZE;
+  } else {
+    return RETURN_UNSUPPORTED;
   }
+
+  if (HashRetVal == NULL){
+    DEBUG((DEBUG_INFO, "Hash Calculation is invalid!!\n"));
+    return RETURN_UNSUPPORTED;
+  } else{
+    CopyMem (OutHash, Digest, DigestSize);
+  }
+
   return RETURN_SUCCESS;
 }
 
@@ -138,15 +137,15 @@ CalculateHash  (
 
   @param[in]  Data           Data buffer pointer.
   @param[in]  Length         Data buffer size.
-  @param[in]  Usage          Hash usage.
-  @param[in]  ComponentType  Component type.
-  @param[in,out]  Hash       On input,  expected hash value when ComponentType is not used.
+  @param[in]  Usage          Hash component usage.
+  @param[in]  HashAlg        Specify hash algorithm.
+  @param[in,out]  Hash       On input,  expected hash value when hash component usage is 0.
                              On output, calculated hash value when verification succeeds.
 
   @retval RETURN_SUCCESS             Hash verification succeeded.
   @retval RETURN_INVALID_PARAMETER   Hash parameter is not valid.
-  @retval RETURN_NOT_FOUND           Hash data for ComponentType is not found.
-  @retval RETURN_UNSUPPORTED         Hash component type is not supported.
+  @retval RETURN_NOT_FOUND           Hash data for hash component usage is not found.
+  @retval RETURN_UNSUPPORTED         HashAlg not supported.
   @retval RETURN_SECURITY_VIOLATION  Hash verification failed.
 
 **/
@@ -179,8 +178,6 @@ DoHashVerify (
     DigestSize = SHA256_DIGEST_SIZE;
   } else if (HashAlg == HASH_TYPE_SHA384) {
     DigestSize = SHA384_DIGEST_SIZE;
-  } else {
-    return RETURN_INVALID_PARAMETER;
   }
 
   Status = CalculateHash (Data, Length, HashAlg, Digest);

@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017-2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -45,14 +45,16 @@
 #include <Library/PchSerialIoLib.h>
 #include <Library/SgxLib.h>
 #include <PlatformBase.h>
-#include <Library/SiGpioLib.h>
-#include <Library/GpioNativeLib.h>
+#include <Library/GpioLib.h>
+#include <Library/GpioSiLib.h>
 #include <RegAccess.h>
 #include <CpuPowerMgmt.h>
 #include <PowerMgmtNvsStruct.h>
 #include <CpuInitDataHob.h>
 #include <Library/HobLib.h>
 #include <Library/FirmwareUpdateLib.h>
+#include <Library/DmaRemappingTable.h>
+#include <Library/VTdLib.h>
 #include <Library/MpInitLib.h>
 #include <Guid/GraphicsInfoHob.h>
 #include <Library/PciCf8Lib.h>
@@ -68,6 +70,7 @@
 #include <Library/PchSpiLib.h>
 #include <Register/RegsSpi.h>
 #include <Library/HeciLib.h>
+#include <Library/PlatformHookLib.h>
 
 #define DEFAULT_GPIO_IRQ_ROUTE                      14
 
@@ -249,16 +252,6 @@ STATIC S3_SAVE_REG mS3SaveReg = {
   { BL_PLD_COMM_SIG, S3_SAVE_REG_COMM_ID, 1, 0 },
   { { REG_TYPE_IO, WIDE32, { 0, 0}, (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN), 0x00000000 } }
 };
-
-UINT8
-GetSerialPortStrideSize (
-  VOID
-);
-
-UINT32
-GetSerialPortBase (
-  VOID
-  );
 
 VOID
 EnableLegacyRegions (
@@ -522,30 +515,6 @@ UpdateBlRsvdRegion ()
 }
 
 /**
-  Clear FSP HOB data
-
-**/
-VOID
-ClearFspHob (
-  VOID
-  )
-{
-  LOADER_GLOBAL_DATA          *LdrGlobal;
-  EFI_HOB_HANDOFF_INFO_TABLE  *HandOffHob;
-  UINT32                      Length;
-
-  LdrGlobal  = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-  if (LdrGlobal->FspHobList == NULL) {
-    return;
-  }
-
-  HandOffHob = (EFI_HOB_HANDOFF_INFO_TABLE  *) LdrGlobal->FspHobList;
-  Length     = (UINT32)((UINTN)HandOffHob->EfiEndOfHobList - (UINTN)HandOffHob);
-  ZeroMem (HandOffHob, Length);
-  LdrGlobal->FspHobList = NULL;
-}
-
-/**
   Add a Smbios type string into a buffer
 
 **/
@@ -598,7 +567,10 @@ InitializeSmbiosInfo (
   Index         = 0;
   PlatformId    = GetPlatformId ();
   TempSmbiosStrTbl  = (SMBIOS_TYPE_STRINGS *) AllocateTemporaryMemory (0);
-  VerInfoTbl    = GetLoaderGlobalDataPointer()->VerInfoPtr;
+  if (TempSmbiosStrTbl == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+  VerInfoTbl    = GetVerInfoPtr ();
 
   //
   // SMBIOS_TYPE_BIOS_INFORMATION
@@ -714,7 +686,7 @@ PrintGpioConfigTable (
   GpioInitConf = (GPIO_INIT_CONFIG *)GpioConfData;
   for (Index  = 0; Index < GpioPinNum; Index++) {
     PadDataPtr = (UINT32 *)&GpioInitConf->GpioConfig;
-    DEBUG ((DEBUG_INFO, "GPIO PAD: 0x%08X   DATA: 0x%08X 0x%08X\n", GpioInitConf->GpioPad, PadDataPtr[0], PadDataPtr[1]));
+    DEBUG ((DEBUG_VERBOSE, "GPIO PAD: 0x%08X   DATA: 0x%08X 0x%08X\n", GpioInitConf->GpioPad, PadDataPtr[0], PadDataPtr[1]));
     GpioInitConf++;
   }
 }
@@ -894,7 +866,7 @@ UpdatePayloadId (
     Status = GpioGetInputValue (PayloadSelGpioPad, &PayloadSelGpioData);
     if (!EFI_ERROR (Status)) {
       if (PayloadSelGpioData == 1) {
-        PayloadId = UEFI_PAYLOAD_ID_SIGNATURE;
+        PayloadId = 0;
       } else {
         if ((GenericCfgData != NULL) && (GenericCfgData->PayloadId == AUTO_PAYLOAD_ID_SIGNATURE)) {
           PayloadId = UEFI_PAYLOAD_ID_SIGNATURE;
@@ -943,6 +915,29 @@ BuildVtdInfo (
   VtdInfo->VTdEngineCount = VtdIdx;
 }
 
+//Initialize Platform Igd OpRegion
+VOID
+EFIAPI
+IgdOpRegionPlatformInit (
+  VOID
+  )
+{
+  GLOBAL_NVS_AREA           *Gnvs;
+  IGD_OP_PLATFORM_INFO      IgdPlatformInfo;
+  EFI_STATUS                Status;
+
+  Gnvs = (GLOBAL_NVS_AREA *)(UINTN)PcdGet32 (PcdAcpiGnvsAddress);
+
+  IgdPlatformInfo.TurboIMON = Gnvs->SaNvs.GfxTurboIMON;
+
+  Status = IgdOpRegionInit (&IgdPlatformInfo);
+  Gnvs->SaNvs.IgdOpRegionAddress = (UINT32)(UINTN)PcdGet32 (PcdIgdOpRegionAddress);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_WARN, "VBT not found %r\n", Status));
+  }
+}
+
+
 /**
   Initialize Board specific things in Stage2 Phase
 
@@ -966,10 +961,12 @@ BoardInit (
   UINT32          AddressPort;
   UINTN           SpiBar0;
   UINT32          Length;
+  UINT32          TsegBase;
+  UINT32          TsegSize;
   BL_SW_SMI_INFO            *BlSwSmiInfo;
   VTD_INFO                  *VtdInfo;
   EFI_PEI_GRAPHICS_INFO_HOB *FspGfxHob;
-  LOADER_GLOBAL_DATA        *LdrGlobal;
+  VOID                      *FspHobList;
 
   switch (InitPhase) {
   case PreSiliconInit:
@@ -987,19 +984,24 @@ BoardInit (
     }
     break;
   case PostSiliconInit:
-    if (GetBootMode () == BOOT_ON_S3_RESUME) {
-      Status = PcdSet8S (PcdSmmRebaseMode, SMM_REBASE_ENABLE_ON_S3_RESUME_ONLY);
-    }
-    Status = PcdSet32S (PcdSmramTsegBase, MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + TSEG) & ~0xF);
+    // Set TSEG base/size PCD
+    TsegBase = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + TSEG) & ~0xF;
+    TsegSize = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + BGSM) & ~0xF;
+    TsegSize -= TsegBase;
+    (VOID) PcdSet32S (PcdSmramTsegBase, TsegBase);
+    (VOID) PcdSet32S (PcdSmramTsegSize, (UINT32)TsegSize);
 
     //
     // Reinitialize PCI bus master and memory space for Graphics device
     // Reinitialize the BAR for Graphics device
     //
     if (PcdGetBool (PcdFramebufferInitEnabled)) {
-      LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
-      FspGfxHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (LdrGlobal->FspHobList, &Length,
-                    &gEfiGraphicsInfoHobGuid);
+      FspGfxHob = NULL;
+      FspHobList = GetFspHobListPtr ();
+      if (FspHobList != NULL) {
+        FspGfxHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GetGuidHobData (FspHobList, &Length,
+                      &gEfiGraphicsInfoHobGuid);
+      }
       if (FspGfxHob != NULL) {
         PciAnd8 (PCI_LIB_ADDRESS(SA_IGD_BUS, SA_IGD_DEV, SA_IGD_FUN_0, PCI_COMMAND_OFFSET), \
                    (UINT8)(~EFI_PCI_COMMAND_BUS_MASTER));
@@ -1063,22 +1065,20 @@ BoardInit (
     }
     break;
   case PrePayloadLoading:
-    Status = IgdOpRegionInit ();
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_WARN, "VBT not found %r\n", Status));
-    }
+    IgdOpRegionPlatformInit();
     if (GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE && GetBootMode() != BOOT_ON_S3_RESUME) {
+      ClearS3SaveRegion ();
       //
       // Set SMMBASE_INFO dummy strucutre in TSEG before others
       //
       mSmmBaseInfo.SmmBaseHdr.Count     = (UINT8) MpGetInfo()->CpuCount;
       mSmmBaseInfo.SmmBaseHdr.TotalSize = sizeof(BL_PLD_COMM_HDR) + mSmmBaseInfo.SmmBaseHdr.Count * sizeof(CPU_SMMBASE);
-      Status = AppendS3Info ((VOID *)&mSmmBaseInfo);
+      Status = AppendS3Info ((VOID *)&mSmmBaseInfo, TRUE);
       //
       // Set REG_INFO struct in TSEG region except 'Val' for regs
       //
       mS3SaveReg.S3SaveHdr.TotalSize = sizeof(BL_PLD_COMM_HDR) + mS3SaveReg.S3SaveHdr.Count * sizeof(REG_INFO);
-      AppendS3Info ((VOID *)&mS3SaveReg);
+      AppendS3Info ((VOID *)&mS3SaveReg, FALSE);
     }
     break;
   case EndOfStages:
@@ -1335,7 +1335,7 @@ UpdateFspConfig (
   if (PlatformId == PLATFORM_ID_UPXTREME) {
     // Workaround for USB issue on port 8, it does not respond to USB enumeration.
     // Disable this port for now
-    FspsUpd->FspsConfig.PortUsb20Enable[7] = 0;
+    FspsUpd->FspsConfig.PortUsb20Enable[7] = FALSE;
   }
 
   Length = GetPchXhciMaxUsb3PortNum ();
@@ -1797,7 +1797,8 @@ UpdateSerialPortInfo (
   IN  SERIAL_PORT_INFO  *SerialPortInfo
 )
 {
-  SerialPortInfo->BaseAddr = GetSerialPortBase();
+  SerialPortInfo->BaseAddr64 = GetSerialPortBase ();
+  SerialPortInfo->BaseAddr   = (UINT32) SerialPortInfo->BaseAddr64;
   SerialPortInfo->RegWidth = GetSerialPortStrideSize();
   if (SerialPortInfo->BaseAddr < 0x10000) {
     // IO Type
@@ -1838,7 +1839,8 @@ UpdateFrameBufferInfo (
 )
 {
   if (PcdGetBool (PcdIntelGfxEnabled)) {
-    GfxInfo->FrameBufferBase = PciRead32 (PCI_LIB_ADDRESS(0, 2, 0, 0x18)) & 0xFFFFFF00;
+    GfxInfo->FrameBufferBase  = LShiftU64 (PciRead32 (PCI_LIB_ADDRESS(0, 2, 0, 0x1C)), 32);
+    GfxInfo->FrameBufferBase += (PciRead32 (PCI_LIB_ADDRESS(0, 2, 0, 0x18)) & 0xFFFFFF00);
   }
 }
 
@@ -1874,11 +1876,10 @@ UpdateSmmInfo (
   if (LdrSmmInfo == NULL) {
     return;
   }
-  LdrSmmInfo->SmmBase = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + TSEG) & ~0xF;
-  LdrSmmInfo->SmmSize = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + BGSM) & ~0xF;
-  LdrSmmInfo->SmmSize -= LdrSmmInfo->SmmBase;
+  LdrSmmInfo->SmmBase = PcdGet32 (PcdSmramTsegBase);
+  LdrSmmInfo->SmmSize = PcdGet32 (PcdSmramTsegSize);
   LdrSmmInfo->Flags = SMM_FLAGS_4KB_COMMUNICATION;
-  DEBUG ((DEBUG_ERROR, "Stage2: SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", LdrSmmInfo->SmmBase, LdrSmmInfo->SmmSize));
+  DEBUG ((DEBUG_INFO, "SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", LdrSmmInfo->SmmBase, LdrSmmInfo->SmmSize));
 
   //
   // Update smi ctrl register data
@@ -1992,11 +1993,12 @@ PlatformUpdateAcpiTable (
   GLOBAL_NVS_AREA             *GlobalNvs;
   UINT32                       Base;
   UINT16                       Size;
-  LOADER_GLOBAL_DATA          *LdrGlobal;
   EFI_STATUS                   Status;
+  PLATFORM_DATA               *PlatformData;
   SILICON_CFG_DATA            *SiliconCfgData;
-
-  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
+  MEMORY_CFG_DATA             *MemCfgData;
+  UINTN                        DmarTableFlags;
+  VOID                        *FspHobList;
 
   GlobalNvs  = (GLOBAL_NVS_AREA *)(UINTN) PcdGet32 (PcdAcpiGnvsAddress);
 
@@ -2061,15 +2063,41 @@ PlatformUpdateAcpiTable (
   }
 
   if (Table->Signature == EFI_BDAT_TABLE_SIGNATURE) {
-    UpdateBdatAcpiTable (Table, LdrGlobal->FspHobList);
-    DEBUG ( (DEBUG_INFO, "Updated BDAT Table in AcpiTable Entries\n") );
+    FspHobList = GetFspHobListPtr ();
+    if (FspHobList != NULL) {
+      UpdateBdatAcpiTable (Table, FspHobList);
+      DEBUG ( (DEBUG_INFO, "Updated BDAT Table in AcpiTable Entries\n") );
+    }
+  }
+
+  if (FeaturePcdGet (PcdVtdEnabled)) {
+    PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
+    if (PlatformData != NULL) {
+      if (PlatformData->PlatformFeatures.VtdEnable == 1) {
+        if (Table->Signature == EFI_ACPI_VTD_DMAR_TABLE_SIGNATURE) {
+          DEBUG ((DEBUG_INFO, "Updated DMAR Table in AcpiTable Entries\n"));
+          SiliconCfgData  = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
+          MemCfgData = (MEMORY_CFG_DATA *)FindConfigDataByTag (CDATA_MEMORY_TAG);
+          DmarTableFlags = 0;
+          if (MemCfgData != NULL) {
+            if (MemCfgData->X2ApicOptOut == 1) {
+              DmarTableFlags  |= DMAR_TABLE_FLAGS_X2APIC_OPT_OUT;
+            }
+          }
+          if ((SiliconCfgData != NULL) && SiliconCfgData->InterruptRemappingSupport != 0) {
+            DmarTableFlags  |= DMAR_TABLE_FLAGS_INT_REMAPPING_SUPPORT;
+          }
+          UpdateDmarAcpi(Table, DmarTableFlags);
+        }
+      }
+    }
   }
 
   if (FeaturePcdGet (PcdMeasuredBootEnabled)){
     if ((Table->Signature == EFI_ACPI_5_0_TRUSTED_COMPUTING_PLATFORM_2_TABLE_SIGNATURE) ||
           (Table->OemTableId == ACPI_SSDT_TPM2_DEVICE_OEM_TABLE_ID)) {
 
-      if (LdrGlobal->LdrFeatures & FEATURE_MEASURED_BOOT) {
+      if ((GetFeatureCfg () & FEATURE_MEASURED_BOOT) != 0) {
         Status = UpdateTpm2AcpiTable(Table);
         if (EFI_ERROR (Status)) {
           DEBUG ((DEBUG_ERROR, "UpdateTpm2AcpiTable fails! - %r\n", Status));
@@ -2112,9 +2140,7 @@ UpdateCpuNvs (
 {
   EFI_HOB_GUID_TYPE                     *GuidHob;
   CPU_INIT_DATA_HOB                     *CpuInitDataHob;
-  LOADER_GLOBAL_DATA                    *LdrGlobal;
-
-  LdrGlobal   = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
+  VOID                                  *FspHobList;
 
   if (CpuNvs == NULL) {
     DEBUG ((DEBUG_ERROR, "Invalid Cpu Nvs pointer!!!\n"));
@@ -2124,7 +2150,11 @@ UpdateCpuNvs (
   ///
   /// Get CPU Init Data Hob
   ///
-  GuidHob = GetNextGuidHob (&gCpuInitDataHobGuid, LdrGlobal->FspHobList);
+  GuidHob = NULL;
+  FspHobList = GetFspHobListPtr ();
+  if (FspHobList != NULL) {
+    GuidHob = GetNextGuidHob (&gCpuInitDataHobGuid, FspHobList);
+  }
   if (GuidHob == NULL) {
     DEBUG ((DEBUG_ERROR, "CPU Data HOB not available\n"));
     return;
@@ -2326,6 +2356,8 @@ PlatformUpdateAcpiGnvs (
 
   SaNvs->Mmio32Base   = PcdGet32(PcdPciResourceMem32Base);
   SaNvs->Mmio32Length = ACPI_MMIO_BASE_ADDRESS - SaNvs->Mmio32Base;
+  SaNvs->Mmio64Base   = PcdGet64(PcdPciResourceMem64Base);
+  SaNvs->Mmio64Length = SaNvs->Mmio64Base;
 
   SaNvs->AlsEnable                    = 0;
   SaNvs->IgdState                     = 1;

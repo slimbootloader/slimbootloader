@@ -79,7 +79,7 @@ EFI_ACPI_EMBEDDED_CONTROLLER_BOOT_RESOURCES_ENTIRE_TABLE Ecdt = {
     },
 
     1, // UID
-    0 // GPE_BIT
+    0x6E // GPE_BIT
   },
   "\\_SB.PCI0.LPCB.H_EC" //EC_ID
 };

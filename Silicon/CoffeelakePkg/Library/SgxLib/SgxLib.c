@@ -72,7 +72,6 @@ IsSgxCapSupported (
   if ((CpuidRegs.RegEbx & BIT2) && (AsmReadMsr64 (MSR_IA32_MTRRCAP) & BIT12)) {
     return TRUE;
   } else {
-    DEBUG ((DEBUG_WARN, "\nIsSgxCapSupported(): Intel(R) SGX is not supported on this processor.\n"));
     return FALSE;
   }
 }
@@ -148,6 +147,7 @@ UpdateFspmSgxConfig (
     return UpdateFspmSgxConfigStatus;
   }
   if (IsSgxCapSupported() == FALSE) {
+    DEBUG ((DEBUG_INFO, "SGX is not supported by this CPU.\n"));
     return UpdateFspmSgxConfigStatus;
   }
 
@@ -159,13 +159,13 @@ UpdateFspmSgxConfig (
         FspmUpd->FspmConfig.PrmrrSize = SgxCfgData->PrmrrSize;
         UpdateFspmSgxConfigStatus = TRUE;
       } else {
-        DEBUG ((DEBUG_ERROR, "Invalid PrmrrSize value set in SGX config.\n"));
+        DEBUG ((DEBUG_VERBOSE, "Invalid PRMRR size set in config.\n"));
       }
     } else {
-      DEBUG ((DEBUG_WARN, "Intel(R) SGX set to disabled in config.\n"));
+      DEBUG ((DEBUG_VERBOSE, "SGX set to disabled in config.\n"));
     }
   } else {
-    DEBUG ((DEBUG_ERROR, "Failed to find Intel(R) SGX CFG!\n"));
+    DEBUG ((DEBUG_VERBOSE, "Failed to find SGX CFG!\n"));
   }
   return UpdateFspmSgxConfigStatus;
 }
@@ -181,34 +181,35 @@ UpdateFspsSgxConfig (
   IN FSPS_UPD *FspsUpd
 )
 {
-  BOOLEAN UpdateFspsSgxConfigStatus = FALSE;
-  SGX_CFG_DATA *SgxCfgData = NULL;
+  BOOLEAN UpdateFspsSgxConfigStatus;
+  SGX_CFG_DATA *SgxCfgData;
+
+  SgxCfgData = NULL;
+  UpdateFspsSgxConfigStatus = FALSE;
 
   if (FspsUpd == NULL) {
-    DEBUG ((DEBUG_WARN, "NULL pointer passed.\n"));
     return UpdateFspsSgxConfigStatus;
   }
   if (IsSgxCapSupported() == FALSE) {
-    DEBUG ((DEBUG_WARN, "Intel(R) SGX is not supported by this CPU.\n"));
     return UpdateFspsSgxConfigStatus;
   }
 
   SgxCfgData = (SGX_CFG_DATA *) FindConfigDataByTag (CDATA_SGX_TAG);
   if (SgxCfgData != NULL) {
     if (SgxCfgData->EnableSgx != CONFIG_SGX_ENABLED) {
-      DEBUG ((DEBUG_WARN, "Intel(R) SGX set to disabled in config.\n"));
+      DEBUG ((DEBUG_VERBOSE, "SGX set to disabled in config.\n"));
     } else if (IsPrmrrSizeSupported(SgxCfgData->PrmrrSize) == FALSE) {
-      DEBUG ((DEBUG_WARN, "Invalid PRMRR size set in config.\n"));
+      DEBUG ((DEBUG_VERBOSE, "Invalid PRMRR size set in config.\n"));
     } else {
       if (SgxCfgData->EpochUpdate == CONFIG_SGX_MANUAL_EPOCH_UPDATE) {
         FspsUpd->FspsConfig.SgxEpoch0           = SgxCfgData->SgxEpoch0;
         FspsUpd->FspsConfig.SgxEpoch1           = SgxCfgData->SgxEpoch1;
-        DEBUG ((DEBUG_INFO, "Owner Epoch for Intel(R) SGX was updated.\n"));
+        DEBUG ((DEBUG_INFO, "Owner Epoch for SGX was updated.\n"));
       }
       UpdateFspsSgxConfigStatus = TRUE;
     }
   } else {
-    DEBUG ((DEBUG_ERROR, "Failed to find Intel(R) SGX CFG!\n"));
+    DEBUG ((DEBUG_VERBOSE, "Failed to find SGX CFG!\n"));
   }
   return UpdateFspsSgxConfigStatus;
 }
@@ -231,7 +232,6 @@ IsSgxFeatureCtrlSet (
   if (BIT18 == (Msr & BIT18)) {
     return TRUE;
   } else {
-    DEBUG ((DEBUG_WARN, "\nIsSgxFeatureCtrlSet(): Intel(R) SGX bit in feature control MSR was NOT set!\n"));
     return FALSE;
   }
 }
@@ -250,7 +250,6 @@ IsPrmrrAlreadySet (
       ((AsmReadMsr64 (MSR_PRMRR_PHYS_MASK) & BIT10) != 0)) {
     return TRUE;
   } else {
-    DEBUG ((DEBUG_WARN, "\nIsPrmrrAlreadySet(): PRMRR base was NOT set!\n"));
     return FALSE;
   }
 }
@@ -271,7 +270,7 @@ UpdateSgxNvs (
   EFI_CPUID_REGISTER CpuidSgxLeaf;
   EFI_CPUID_REGISTER Cpuid;
 
-  DEBUG ((DEBUG_INFO, "\nUpdateSgxNvs started...\n"));
+  DEBUG ((DEBUG_VERBOSE, "UpdateSgxNvs started...\n"));
 
   CpuNvs->SgxStatus      = 0;
   CpuNvs->EpcBaseAddress = 0;
@@ -295,18 +294,18 @@ UpdateSgxNvs (
     // Check if the first sub-leaf is a valid EPC section
     //
     if ((Cpuid.RegEax & 0xF) != 0x1) {
-      DEBUG ((DEBUG_WARN, "\nUpdateSgxNvs(): Invalid EPC section!\n"));
+      DEBUG ((DEBUG_INFO, "Invalid EPC section!\n"));
       return;
     }
-    DEBUG ((DEBUG_INFO, "\nUpdateSgxNvs(): Intel(R) SGX is ENABLED.\n"));
+    DEBUG ((DEBUG_INFO, "SGX is ENABLED.\n"));
     CpuNvs->EpcBaseAddress = LShiftU64 ((UINT64) (Cpuid.RegEbx & 0xFFFFF), 32) + (UINT64) (Cpuid.RegEax & 0xFFFFF000);
     CpuNvs->EpcLength      = LShiftU64 ((UINT64) (Cpuid.RegEdx & 0xFFFFF), 32) + (UINT64) (Cpuid.RegEcx & 0xFFFFF000);
     CpuNvs->SgxStatus      = TRUE;
   } else {
-    DEBUG ((DEBUG_WARN, "\nUpdateSgxNvs(): Intel(R) SGX is not supported!\n"));
+    DEBUG ((DEBUG_INFO, "SGX is not supported!\n"));
   }
-  DEBUG ((DEBUG_INFO, "CpuNvs->SgxStatus      = 0x%X\n",      CpuNvs->SgxStatus));
-  DEBUG ((DEBUG_INFO, "CpuNvs->EpcBaseAddress = 0x%016llX\n", CpuNvs->EpcBaseAddress));
-  DEBUG ((DEBUG_INFO, "CpuNvs->EpcLength      = 0x%016llX\n", CpuNvs->EpcLength));
+  DEBUG ((DEBUG_VERBOSE, "CpuNvs->SgxStatus      = 0x%X\n",      CpuNvs->SgxStatus));
+  DEBUG ((DEBUG_VERBOSE, "CpuNvs->EpcBaseAddress = 0x%016llX\n", CpuNvs->EpcBaseAddress));
+  DEBUG ((DEBUG_VERBOSE, "CpuNvs->EpcLength      = 0x%016llX\n", CpuNvs->EpcLength));
   return;
 }

@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -110,6 +110,8 @@ UnmapMemoryRange (
   @param[in] RequestedAddressBits   If RequestedAddressBits is in valid range
                                     (MIN_ADDR_BITS < RequestedAddressBits < PhysicalAddressBits),
                                     paging table will cover the requested physical address range only.
+                                    When RequestedAddressBits is 0, it will build the address range
+                                    that the CPU can support.
 
   @retval    EFI_SUCCESS            Page table was created successfully.
   @retval    EFI_OUT_OF_RESOURCES   Failed to allocate page buffer
@@ -182,6 +184,16 @@ JumpToLongMode (
   );
 
 /**
+  Load page table for long mode.
+
+**/
+VOID
+EFIAPI
+LoadPageTableForLongMode (
+  VOID
+  );
+
+/**
   Whether 64-bit long mode is enabled or not.
 
   @return   TRUE if long mode has already been enabled, otherwise FALSE
@@ -202,6 +214,18 @@ IsLongModeEnabled (
 BOOLEAN
 EFIAPI
 IsLongModeSupported (
+  VOID
+  );
+
+/**
+  Get physical address bits.
+
+  @return Physical address bits.
+
+**/
+UINT8
+EFIAPI
+GetPhysicalAddressBits (
   VOID
   );
 

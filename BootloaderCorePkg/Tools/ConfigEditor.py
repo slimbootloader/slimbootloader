@@ -1,6 +1,6 @@
 ## @ ConfigEditor.py
 #
-# Copyright (c) 2018 - 2020, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2018 - 2023, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -44,6 +44,13 @@ class create_tool_tip(object):
         else:
             x, y, cx, cy = self.widget.bbox("insert")
 
+        # limit the tooltip window width
+        tool_tip_width = self.widget.winfo_width()
+        if tool_tip_width < 200:
+            tool_tip_width = 200
+        if tool_tip_width > 500:
+            tool_tip_width = 500
+
         cursor = self.widget.winfo_pointerxy()
         x = self.widget.winfo_rootx() + 35
         y = self.widget.winfo_rooty() + 20
@@ -57,6 +64,7 @@ class create_tool_tip(object):
         self.top_win.wm_geometry("+%d+%d" % (x, y))
         label = tkinter.Message(self.top_win,
                       text=self.text,
+                      width=tool_tip_width,
                       justify='left',
                       background='bisque',
                       relief='solid',
@@ -346,6 +354,8 @@ class application(tkinter.Frame):
         self.org_cfg_data_bin = None
         self.in_left  = state()
         self.in_right = state()
+        self.search_text = ''
+        self.search_key  = 0
 
         # Check if current directory contains a file with a .yaml extension
         # if not default self.last_dir to a Platform directory where it is easier to locate *BoardPkg\CfgData\*Def.yaml files
@@ -365,6 +375,24 @@ class application(tkinter.Frame):
         ]
 
         root.geometry("1200x800")
+
+        # Search string
+        fram = tkinter.Frame(root)
+        # adding label to search box
+        tkinter.Label(fram, text='Text to find:').pack(side=tkinter.LEFT)
+        # adding of single line text box
+        self.edit = tkinter.Entry(fram, width=30)
+        # positioning of text box
+        self.edit.pack(
+            side=tkinter.LEFT, fill=tkinter.BOTH, expand=1, pady=2, padx=(4, 4))
+        self.edit.bind("<Return>", (lambda event: self.search_bar()))
+        # setting focus
+        self.edit.focus_set()
+        # adding of search button
+        butt = tkinter.Button(fram, text='Search', relief=tkinter.GROOVE,
+                              command=self.search_bar)
+        butt.pack(side=tkinter.RIGHT, padx=(4, 4))
+        fram.pack(side=tkinter.TOP, anchor=tkinter.SE)
 
         paned = ttk.Panedwindow(root, orient=tkinter.HORIZONTAL)
         paned.pack(fill=tkinter.BOTH, expand=True, padx=(4, 4))
@@ -464,6 +492,71 @@ class application(tkinter.Frame):
                 messagebox.showerror('LOADING ERROR', "Unsupported file '%s' !" % path)
                 return
 
+    def get_widget_from_config (self, cfg_item):
+        for widget in self.right_grid.winfo_children():
+            item = self.get_config_data_item_from_widget (widget)
+            if item is None:
+                continue
+            if item is not cfg_item:
+                continue
+            return widget
+        return None
+
+    def ensure_config_visible (self, widget, focus = False):
+        min, max = self.conf_canvas.yview()
+        if max < 0.999:
+            fra = (widget.winfo_rooty() - self.right_grid.winfo_rooty() - 32) / self.right_grid.winfo_height()
+            self.conf_canvas.yview_moveto (fra)
+        if focus:
+            widget.focus_set ()
+
+    def ensure_page_visible (self, page_id):
+        page_path = self.cfg_data_obj.find_page_path (page_id)
+
+        # expand page from top level to leaf level
+        tree      = self.left
+        children  = tree.get_children()
+        for page_id in page_path:
+            for child_id in children:
+                if child_id == page_id:
+                    tree.selection_set(child_id)
+                    tree.focus(child_id)
+                    tree.item(child_id, open=True)
+                    children = tree.get_children(child_id)
+                    break
+        self.refresh_config_data_page ()
+
+
+    def search_bar(self):
+        # get data from text box
+        new_text = self.edit.get()
+        if (not new_text) or (not self.search_text) or (new_text != self.search_text):
+            self.search_text = new_text
+            self.search_key  = 0
+
+        if not new_text:
+            return
+
+        # find the text
+        while True:
+            cfg_item  = self.cfg_data_obj.find_item_by_name(self.search_text, self.search_key)
+            if cfg_item is None:
+                self.search_key  = 0
+                messagebox.showerror('SEARCHING INFO', "Could not find more matching !")
+                break
+
+            # use key to identify each match
+            self.search_key = self.search_key + 1
+
+            # expand the page tree to ensure the required page is visiable
+            self.ensure_page_visible (cfg_item['page'])
+
+            widget = self.get_widget_from_config (cfg_item)
+            if widget and widget.winfo_ismapped():
+                # scroll to item so that the config item is visible
+                self.ensure_config_visible (widget, True)
+                break
+
     def set_object_name(self, widget, name):
         self.conf_list[id(widget)] = name
 
@@ -509,7 +602,8 @@ class application(tkinter.Frame):
             result = self.evaluate_condition(item)
             if result == 2:
                 # Gray
-                widget.configure(state='disabled')
+                if not isinstance(widget, custom_table):
+                    widget.configure(state='disabled')
             elif result == 0:
                 # Hide
                 visible = False
@@ -517,7 +611,9 @@ class application(tkinter.Frame):
             else:
                 # Show
                 widget.grid()
-                widget.configure(state='normal')
+                if not isinstance(widget, custom_table):
+                    widget.configure(state='normal')
+
 
         return visible
 
@@ -528,6 +624,7 @@ class application(tkinter.Frame):
     def combo_select_changed(self, event):
         self.update_config_data_from_widget(event.widget, None)
         self.update_widgets_visibility_on_page()
+        self.update_page_scroll_bar(False)
 
     def edit_num_finished(self, event):
         widget = event.widget
@@ -557,11 +654,12 @@ class application(tkinter.Frame):
 
         self.update_widgets_visibility_on_page()
 
-    def update_page_scroll_bar(self):
+    def update_page_scroll_bar(self, toTop=True):
         # Update scrollbar
         self.frame_right.update()
         self.conf_canvas.config(scrollregion=self.conf_canvas.bbox("all"))
-
+        if toTop:
+            self.conf_canvas.yview_moveto (0)
 
     def on_config_page_select_change(self, event):
         self.update_config_data_on_page()
@@ -671,7 +769,7 @@ class application(tkinter.Frame):
 
         if ftype == 'yaml':
             file_type = 'YAML or PKL'
-            file_ext  = 'pkl *Def.yaml'
+            file_ext  = 'pkl CfgDataDef*.yaml'
         else:
             file_type = ftype.upper()
             file_ext  = ftype
@@ -917,11 +1015,12 @@ class application(tkinter.Frame):
             widget = custom_table(parent, col_hdr, bins)
 
         else:
-            if itype and itype not in ["Reserved"]:
+            if itype and itype not in ["Reserved", "Constant"]:
                 print ("WARNING: Type '%s' is invalid for '%s' !" % (itype, item['path']))
 
         if widget:
-            ttp = create_tool_tip(widget, item['help'])
+            help_txt = '%s:\n%s' % (item['cname'], item['help'])
+            ttp = create_tool_tip(widget, help_txt)
             self.set_object_name(name,   'LABEL_' + item['path'])
             self.set_object_name(widget, item['path'])
             name.grid(row=row, column=0, padx=10, pady=5, sticky="nsew")

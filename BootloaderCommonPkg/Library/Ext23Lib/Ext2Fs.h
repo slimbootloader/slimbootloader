@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2019 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2024, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
   Copyright (c) 1982, 1986, 1989, 1993
@@ -93,12 +93,16 @@
 #define BBLOCK      ((DADDRESS)(0))
 #define SBLOCK      ((DADDRESS)(BBLOCK + BBSIZE / DEV_BSIZE))
 
+#define MAXSYMLINKS 1
+
+#define MAXPATHLEN 260
+
 #undef  EXT2FS_DEBUG
 
 #undef  LIBSA_FS_SINGLECOMPONENT
 #define LIBSA_FS_SINGLE_DEVICE
 #define LIBSA_FS_SINGLE_FILESYSTEM
-#define LIBSA_NO_FS_SYMLINK
+#undef  LIBSA_NO_FS_SYMLINK
 #define LIBSA_NO_TWIDDLE
 #undef  LIBSA_ENABLE_LS_OP
 #define LIBSA_NO_FS_WRITE
@@ -264,7 +268,7 @@ typedef struct {
 #define EXT2F_INCOMPAT_64BIT        0x0080
 #define EXT2F_INCOMPAT_EXTENTS      0x0040
 #define EXT2F_INCOMPAT_FLEX_BG      0x0200
-
+#define EXT2F_INCOMPAT_CSUM_SEED    0x2000
 /**
   Features supported in this implementation
 
@@ -285,7 +289,8 @@ typedef struct {
                                  | EXT2F_INCOMPAT_RECOVER \
                                  | EXT2F_INCOMPAT_64BIT   \
                                  | EXT2F_INCOMPAT_EXTENTS \
-                                 | EXT2F_INCOMPAT_FLEX_BG)
+                                 | EXT2F_INCOMPAT_FLEX_BG \
+                                 | EXT2F_INCOMPAT_CSUM_SEED)
 
 //
 //  Definitions of behavior on errors
@@ -446,6 +451,24 @@ BDevStrategy (
   OUT UINT32     *RSize
   );
 #define    DEV_STRATEGY(d)    BDevStrategy
+
+/**
+  Validate EXT2 Superblock
+
+  @param[in]      FsHandle      EXT file system handle.
+  @param[in]      File          File for which super block needs to be read.
+  @param[out]     RExt2Fs       EXT2FS meta data to retreive.
+
+  @retval 0 if superblock validation is success
+  @retval other if error.
+**/
+RETURN_STATUS
+EFIAPI
+Ext2SbValidate (
+  IN CONST EFI_HANDLE  FsHandle,
+  IN CONST OPEN_FILE   *File     OPTIONAL,
+  OUT      EXT2FS      *RExt2Fs  OPTIONAL
+  );
 
 /**
   Open struct file.

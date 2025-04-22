@@ -45,12 +45,28 @@ CallFspTempRamExit (
   TempRamExit = (FSP_TEMP_RAM_EXIT)(UINTN)(FspHeader->ImageBase + FspHeader->TempRamExitEntryOffset);
 
   DEBUG ((DEBUG_INFO, "Call FspTempRamExit ... "));
+
+  // Four Build combination possibilities:
+  // x64 SBL/x64 FSP
+  // ia32 SBL/x64 FSP - NOT SUPPORTED
+  // x64 SBL/ia32 FSP
+  // ia32 SBL/ia32 FSP
+
+#if FixedPcdGetBool(PcdFSPM64Bit)
+  if (IS_X64) {
+    Status  = TempRamExit (NULL);
+  } else {
+    // This should not be reachable because CallFspMemoryInit() will halt.
+    CpuHalt("64-bit FSP not supported in 32-bit Slimbootloader build.\n");
+  }
+#else //FixedPcdGetBool(PcdFSPM64Bit)
   if (IS_X64) {
     Status = Execute32BitCode ((UINTN)TempRamExit, (UINTN)0, (UINTN)0, TRUE);
     Status = (UINTN)LShiftU64 (Status & ((UINTN)MAX_INT32 + 1), 32) | (Status & MAX_INT32);
   } else {
     Status  = TempRamExit (NULL);
   }
+#endif //FixedPcdGetBool(PcdFSPM64Bit)
   DEBUG ((DEBUG_INFO, "%r\n", Status));
 
   return Status;

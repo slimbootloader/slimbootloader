@@ -464,7 +464,7 @@ PeCoffLoaderGetPdbPointer (
 **/
 VOID
 PeCoffFindAndReportImageInfo (
-  IN UINT32   ImageBase
+  IN UINTN   ImageBase
   )
 {
   UINTN                           Pe32Data;

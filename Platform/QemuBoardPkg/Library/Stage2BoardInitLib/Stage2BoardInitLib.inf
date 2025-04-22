@@ -41,8 +41,9 @@
   ConfigDataLib
   SpiFlashLib
   VariableLib
-  GpioLib
   BoardSupportLib
+  GraphicsInitLib
+  SmbiosInitLib
 
 [Guids]
   gReservedMemoryResourceHobTsegGuid
@@ -64,3 +65,7 @@
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize
   gPlatformModuleTokenSpaceGuid.PcdStage1BXip
   gPlatformModuleTokenSpaceGuid.PcdEnableSetup
+  gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsPtr
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled

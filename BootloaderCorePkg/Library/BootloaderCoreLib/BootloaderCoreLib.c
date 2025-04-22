@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2016 - 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2016 - 2021, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -10,8 +10,8 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/HobLib.h>
-#include <Library/BootloaderCoreLib.h>
 #include <Guid/FlashMapInfoGuid.h>
+#include <BootloaderCoreGlobal.h>
 
 /**
   This function retrieves current boot mode.
@@ -115,13 +115,13 @@ GetComponentPcdInfo (
     PcdBase = PCD_GET32_WITH_ADJUST (PcdPayloadBase);
     PcdSize = PcdGet32 (PcdPayloadSize);
     break;
-  case FLASH_MAP_SIG_SPI_IAS1:
-    PcdBase = PCD_GET32_WITH_ADJUST (PcdSpiIasImage1RegionBase);
-    PcdSize = PcdGet32 (PcdSpiIasImage1RegionSize);
+  case FLASH_MAP_SIG_SPI_CONTAINER1:
+    PcdBase = PCD_GET32_WITH_ADJUST (PcdSpiContainerImage1RegionBase);
+    PcdSize = PcdGet32 (PcdSpiContainerImage1RegionSize);
     break;
-  case FLASH_MAP_SIG_SPI_IAS2:
-    PcdBase = PCD_GET32_WITH_ADJUST (PcdSpiIasImage2RegionBase);
-    PcdSize = PcdGet32 (PcdSpiIasImage2RegionSize);
+  case FLASH_MAP_SIG_SPI_CONTAINER2:
+    PcdBase = PCD_GET32_WITH_ADJUST (PcdSpiContainerImage2RegionBase);
+    PcdSize = PcdGet32 (PcdSpiContainerImage2RegionSize);
     break;
   case FLASH_MAP_SIG_FWUPDATE:
     PcdBase = PCD_GET32_WITH_ADJUST (PcdFwuPayloadBase);
@@ -283,6 +283,35 @@ GetPlatformBomId (
   return GetLoaderGlobalDataPointer()->PlatformBomId;
 }
 
+/**
+  This function sets current SOC SKU info.
+
+  @param Sku    The value of current SOC SKU.
+
+**/
+VOID
+EFIAPI
+SetSocSku (
+  IN UINT32 Sku
+  )
+{
+  GetLoaderGlobalDataPointer()->SocSku = Sku;
+}
+
+/**
+  This function retrieves current SOC SKU info.
+
+  @retval    The current SOC SKU.
+
+**/
+UINT32
+EFIAPI
+GetSocSku (
+  VOID
+  )
+{
+  return GetLoaderGlobalDataPointer()->SocSku;
+}
 
 /**
   This function sets current debug port index.
@@ -315,6 +344,37 @@ GetDebugPort (
   return GetLoaderGlobalDataPointer()->DebugPortIdx;
 }
 
+
+/**
+  Returns the debug print error level mask for the current module.
+
+  @return  Debug print error level mask for the current module.
+
+**/
+UINT32
+EFIAPI
+GetDebugErrorLevel (
+  VOID
+  )
+{
+  return ((LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer())->DebugPrintErrorLevel;
+}
+
+
+/**
+  Sets the global debug print error level mask fpr the entire platform.
+
+  @param   ErrorLevel     Global debug print error level.
+
+**/
+VOID
+EFIAPI
+SetDebugErrorLevel (
+  UINT32  ErrorLevel
+  )
+{
+  ((LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer())->DebugPrintErrorLevel = ErrorLevel;
+}
 
 /**
   This function sets current platform BOM id.
@@ -394,16 +454,154 @@ GetDmaBufferPtr (
 }
 
 /**
-  This function retrieves usable memory top.
+  This function retrieves system memory info the given type.
 
-  @retval    Usable memory top.
+  @param[in] MemInfoType   Memory info type to retrieve.
+
+  @retval    Value of the required memory info type.
+             It returns 0 if the required type is invalid.
 
 **/
-UINT32
+UINT64
 EFIAPI
-GetUsableMemoryTop (
+GetMemoryInfo (
+  IN  MEM_INFO_TYPE   MemInfoType
+  )
+{
+  LOADER_GLOBAL_DATA  *LdrGlobal;
+
+  LdrGlobal = GetLoaderGlobalDataPointer();
+  if ((LdrGlobal != NULL) && (MemInfoType < EnumMemInfoMax)) {
+    return LdrGlobal->MemoryInfo[MemInfoType];
+  } else {
+    return 0;
+  }
+}
+
+/**
+  This function sets system memory info for the given type.
+
+  @param[in] MemInfoType   Memory info type to retrieve.
+  @param[in] Value         The value to set.
+
+**/
+VOID
+EFIAPI
+SetMemoryInfo (
+  IN  MEM_INFO_TYPE   MemInfoType,
+  IN  UINT64          Value
+  )
+{
+  LOADER_GLOBAL_DATA  *LdrGlobal;
+
+  LdrGlobal = GetLoaderGlobalDataPointer();
+  if ((LdrGlobal != NULL) && (MemInfoType < EnumMemInfoMax)) {
+    LdrGlobal->MemoryInfo[MemInfoType] = Value;
+  }
+}
+
+/**
+ This function retrieves TempRam Base and Size reported from FSP-T.
+
+  @param[out] Base          Base address of TempRam
+  @param[out] Size          Size of TempRam
+
+  @retval EFI_SUCCESS       Retrieved TempRam Base and Size
+  @retval EFI_UNSUPPORTED   No valid info exists
+
+**/
+EFI_STATUS
+EFIAPI
+GetTempRamInfo (
+  OUT UINT32  *Base,
+  OUT UINT32  *Size
+  )
+{
+  UINT32  CarBase;
+  UINT32  CarSize;
+
+  CarBase = GetLoaderGlobalDataPointer()->CarBase;
+  CarSize = GetLoaderGlobalDataPointer()->CarSize;
+
+  if ((CarBase == 0) || (CarSize == 0)) {
+    return EFI_UNSUPPORTED;
+  }
+
+  if (Base != NULL) {
+    *Base = CarBase;
+  }
+  if (Size != NULL) {
+    *Size = CarSize;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  This function retrieves the address of S3Data.
+
+  @retval    S3Data pointer address.
+
+**/
+VOID *
+EFIAPI
+GetS3DataPtr (
   VOID
   )
 {
-  return GetLoaderGlobalDataPointer()->MemUsableTop;
+  return GetLoaderGlobalDataPointer()->S3DataPtr;
+}
+
+/**
+  This function sets features configuration.
+
+  @param Features   The features the platform supports.
+
+**/
+VOID
+EFIAPI
+SetFeatureCfg (
+  IN  UINT32  Features
+  )
+{
+  GetLoaderGlobalDataPointer()->LdrFeatures = Features;
+}
+
+/**
+  This function clears FSP Hob Data and pointer.
+
+**/
+VOID
+EFIAPI
+ClearFspHob (
+  VOID
+  )
+{
+  VOID                        *FspHobList;
+  EFI_HOB_HANDOFF_INFO_TABLE  *HandOffHob;
+  UINT32                       Length;
+
+  FspHobList = GetLoaderGlobalDataPointer()->FspHobList;
+  if (FspHobList != NULL) {
+    HandOffHob = (EFI_HOB_HANDOFF_INFO_TABLE *) FspHobList;
+    Length     = (UINT32)((UINTN)HandOffHob->EfiEndOfHobList - (UINTN)HandOffHob);
+    ZeroMem (HandOffHob, Length);
+
+    GetLoaderGlobalDataPointer()->FspHobList = NULL;
+  }
+}
+
+/**
+  This function retrieves the Version Information pointer.
+
+  @retval    Version Information pointer address.
+
+**/
+VOID *
+EFIAPI
+GetVerInfoPtr (
+  VOID
+  )
+{
+  return GetLoaderGlobalDataPointer()->VerInfoPtr;
 }

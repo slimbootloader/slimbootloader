@@ -10,6 +10,7 @@
 
 #include <IndustryStandard/SmBios.h>
 
+
 #pragma pack(1)
 
 typedef struct {
@@ -21,36 +22,54 @@ typedef struct {
 #pragma pack()
 
 /**
-  Return the pointer to the Smbios table spcified by 'Type'
+  After adding and appending all Smbios Types, we need to do the following
+    1. Check for the table overflow
+    2. Add Type 127
+    3. Adjust the TotalLength in entry point struct
+    4. Update entry point & intermediate checksum
 
-  @param[in]  Type    Smbios type requested
+  @param[in]  NewMaxStructSize    Maximum type size of all the types added    , if called from SmbiosInit
+                                  Type Length of the current table appended   , if called from AppendSmbiosType
 
-  @retval             Pointer to the starting of the requested Smbios type
-                      NULL, otherwise
+  @retval                         EFI_DEVICE_ERROR, if Smbios Entry is NULL
+                                  Overflow status , otherwise
 
 **/
-VOID *
-EFIAPI
-FindSmbiosType (
-  IN  UINT8   Type
+EFI_STATUS
+FinalizeSmbios (
+  VOID
   );
 
 /**
-  Append an Smbios Type to an existing set of types
-  Different from AddSmbiosType, which gets called during initial Smbios setup
+  Append a string to an Smbios type header
 
-  @param[in]  TypeData    pointer to the Type Data including strings
-  @param[in]  TypeLength  Size of type data including strings and end terminator (0000)
+  @param[in]  Type      Type to which a string is appended
+  @param[in]  String    String literal to be appended
 
-  @retval                         EFI_DEVICE_ERROR, if Smbios Entry is NULL
-                                  Overflow status for adding this type or Type 127, otherwise
+  @retval               EFI_SUCCESS, if string is appended successfully
+                        EFI_ERROR,    otherwise
 
 **/
 EFI_STATUS
 EFIAPI
-AppendSmbiosType (
-  IN  VOID      *TypeData,
-  IN  UINT16    TypeLength
+AddSmbiosString (
+  IN  UINT8     Type,
+  IN  CHAR8    *String
+  );
+
+/**
+  Add a particular Smbios type to the Smbios allocated region.
+
+  @param[in]  HdrInfo     Address of the type being added
+
+  @retval                 EFI_SUCCESS, if Type added successfully,
+                          EFI_ERROR,   otherwise
+
+**/
+EFI_STATUS
+EFIAPI
+AddSmbiosType (
+  IN  VOID   *HdrInfo
   );
 
 /**

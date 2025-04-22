@@ -1,0 +1,130 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2022, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : MEM_SPD:MEM:"MEM SPD"
+- $ACTION      :
+    page         : MEM_SPD
+- MEM_SPD0_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ MEM_SPD0_CFG_DATA, 0x8F0, 0, 0 ] }
+  - MemorySpdPtr0 :
+      name         : Memory SPD Data 0
+      type         : Table
+      option       : >
+                     0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX,
+                     8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX
+      help         : >
+                     Pointer to SPD data in Memory
+      length       : 0x200
+      value        : {FILE: Spd_Data0.bin}
+
+- MEM_SPD1_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ MEM_SPD1_CFG_DATA, 0x8F1, 0, 0 ] }
+  - MemorySpdPtr1 :
+      name         : Memory SPD Data 1
+      type         : Table
+      option       : >
+                     0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX,
+                     8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX
+      help         : >
+                     Pointer to SPD data in Memory
+      length       : 0x200
+      value        : {FILE: Spd_Data1.bin}
+
+- MEM_SPD2_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ MEM_SPD2_CFG_DATA, 0x8F2, 0, 0 ] }
+  - MemorySpdPtr2 :
+      name         : Memory SPD Data 2
+      type         : Table
+      option       : >
+                     0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX,
+                     8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX
+      help         : >
+                     Pointer to SPD data in Memory
+      length       : 0x200
+      value        : {FILE: Spd_Data_AdlP_Ddr5.bin}
+
+- MEM_SPD3_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ MEM_SPD3_CFG_DATA, 0x8F3, 0, 0 ] }
+  - MemorySpdPtr3 :
+      name         : Memory SPD Data 3
+      type         : Table
+      option       : >
+                     0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX,
+                     8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX
+      help         : >
+                     Pointer to SPD data in Memory
+      length       : 0x200
+      value        : {FILE: Spd_Data_AdlP_LPDdr5.bin}
+
+- MEM_SPD4_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ MEM_SPD4_CFG_DATA, 0x8F4, 0, 0 ] }
+  - MemorySpdPtr4 :
+      name         : Memory SPD Data 4
+      type         : Table
+      option       : >
+                     0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX,
+                     8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX
+      help         : >
+                     Pointer to SPD data in Memory
+      length       : 0x200
+      value        : {FILE: Spd_Data_AdlP_LPDDR4.bin}
+
+- MEM_SPD5_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ MEM_SPD5_CFG_DATA, 0x8F5, 0, 0 ] }
+  - MemorySpdPtr5 :
+      name         : Memory SPD Data 5
+      type         : Table
+      option       : >
+                     0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX,
+                     8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX
+      help         : >
+                     Pointer to SPD data in Memory
+      length       : 0x200
+      value        : {FILE: Spd_Data_AdlPs_DDR5.bin}
+
+- MEM_SPD6_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ MEM_SPD6_CFG_DATA, 0x8F6, 0, 0 ] }
+  - MemorySpdPtr6 :
+      name         : Memory SPD Data 6
+      type         : Table
+      option       : >
+                     0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX,
+                     8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX
+      help         : >
+                     Pointer to SPD data in Memory
+      length       : 0x200
+      value        : {FILE: Spd_Data_AdlN_Ddr5.bin}
+
+- MEM_SPD7_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ MEM_SPD7_CFG_DATA, 0x8F7, 0, 0 ] }
+  - MemorySpdPtr7 :
+      name         : Memory SPD Data 7
+      type         : Table
+      option       : >
+                     0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX,
+                     8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX
+      help         : >
+                     Pointer to SPD data in Memory
+      length       : 0x200
+      value        : {FILE: Spd_Data_AdlN_Lpddr5.bin}
+
+- MEM_SPD8_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ MEM_SPD8_CFG_DATA, 0x8F8, 0, 0 ] }
+  - MemorySpdPtr8 :
+      name         : Memory SPD Data 8
+      type         : Table
+      option       : >
+                     0:1:HEX, 1:1:HEX, 2:1:HEX, 3:1:HEX, 4:1:HEX, 5:1:HEX, 6:1:HEX, 7:1:HEX,
+                     8:1:HEX, 9:1:HEX, A:1:HEX, B:1:HEX, C:1:HEX, D:1:HEX, E:1:HEX, F:1:HEX
+      help         : >
+                     Pointer to SPD data in Memory
+      length       : 0x200
+      value        : {FILE: Spd_Data_AdlN_Up7000.bin}

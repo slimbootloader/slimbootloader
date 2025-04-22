@@ -128,7 +128,8 @@ class CCfgData:
             if Flag & CCfgData.DUMP_FLAG_VERBOSE:
                 if PrintData:
                     if not IsArray:
-                        print_bytes (CfgData[2], 5)
+                        if (len(CfgData[2]) > 1):
+                            print_bytes (CfgData[2], 5)
                     else:
                         Offset    = 0
                         DataOffset = sizeof(CCfgData.CDATA_ITEM_ARRAY)
@@ -172,6 +173,10 @@ class CCfgData:
         ArrayInfo = CCfgData.CDATA_ITEM_ARRAY.from_buffer(Data)
         ActualLen = ArrayInfo.ItemCount * ArrayInfo.ItemSize + ArrayInfo.HeaderSize + \
                     sizeof(Header) + sizeof(CCfgData.CDATA_COND) * Header.ConditionNum
+
+        if ActualLen % 4 > 0:
+            raise Exception(
+                "The full array config size must be DWORD aligned in TAG '%03X'!" % Header.Tag)
 
         if ArrayInfo.ItemSize % 4 > 0:
             raise Exception(
@@ -240,6 +245,7 @@ class CCfgData:
             RemovedItem = 0
             Index = 0
             DataLen = len(Data)
+
             while DataOff < DataLen:
                 Remove = False
                 if ArrayInfo.BasePlatformId == 0x80:
@@ -315,12 +321,27 @@ class CCfgData:
             while Offset < Length:
                 CfgTagHdr = CCfgData.CDATA_HEADER.from_buffer(FileData, Offset)
                 CfgDlen   = CfgTagHdr.Length * 4
+                CfgHdrLen = sizeof(CCfgData.CDATA_HEADER) + CfgTagHdr.ConditionNum * sizeof(CCfgData.CDATA_COND)
                 if CfgTagHdr.Tag == CCfgData.CDATA_PLATFORM_ID.TAG:
-                    NextOff   = Offset + sizeof(CCfgData.CDATA_HEADER) + CfgTagHdr.ConditionNum * sizeof(CCfgData.CDATA_COND)
+                    NextOff   = Offset + CfgHdrLen
                     DataBin   = FileData[NextOff:Offset + CfgDlen]
                     Pid       = CCfgData.CDATA_PLATFORM_ID.from_buffer(DataBin)
                     self.CfgDataPid[CfgBinFile] = self.NormalizePid(Pid.PlatformId)
                     break
+
+                if (CfgTagHdr.Flags & CCfgData.CDATA_HEADER.FLAG_ITEM_TYPE_MASK) == \
+                    CCfgData.CDATA_HEADER.FLAG_ITEM_TYPE_ARRAY:
+                    NextOff   = Offset + CfgHdrLen
+                    ArrayInfo = CCfgData.CDATA_ITEM_ARRAY.from_buffer(FileData[NextOff:])
+                    ActualLen = ArrayInfo.ItemCount * ArrayInfo.ItemSize + ArrayInfo.HeaderSize + \
+                                sizeof(CfgTagHdr) + sizeof(CCfgData.CDATA_COND) * CfgTagHdr.ConditionNum
+                    if ActualLen % 4 > 0:
+                        raise Exception(
+                            "The full array config size must be DWORD aligned in TAG '%03X'!" % CfgTagHdr.Tag)
+                    if ActualLen != CfgDlen:
+                        raise Exception(
+                            "Actual config data length does not match the length indicated "
+                            "by the config header in TAG '%03X'!" % CfgTagHdr.Tag)
                 Offset   += CfgDlen
             if CfgBinFile not in self.CfgDataPid:
                 raise Exception("TAG PlatformId cannot be found in file '%s'!" % CfgBinFile)
@@ -713,6 +734,7 @@ def CmdMerge(Args):
     CfgData = CCfgData()
     for CfgBinFile in Args.cfg_in_file:
         CfgData.Parse(CfgBinFile)
+
     if Args.dbg_lvl > 0:
         Flag = CCfgData.DUMP_FLAG_INPUT
         if Args.dbg_lvl > 2:

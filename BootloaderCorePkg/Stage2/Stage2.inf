@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2016 - 2020, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2016 - 2024, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -23,6 +23,7 @@
 [Sources]
   Stage2.h
   Stage2.c
+  Stage2Hob.c
   Stage2Support.c
 
 [Packages]
@@ -30,6 +31,7 @@
   BootloaderCorePkg/BootloaderCorePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
   IntelFsp2Pkg/IntelFsp2Pkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
 
 [LibraryClasses]
   FspSupportLib
@@ -67,6 +69,13 @@
   SortLib
   StageLib
   ThunkLib
+  LocalApicLib
+  UniversalPayloadLib
+  TcoTimerLib
+  WatchDogTimerLib
+  FitLib
+  IppCryptoPerfLib
+  BuildFdtLib
 
 [Guids]
   gFspReservedMemoryResourceHobGuid
@@ -89,6 +98,21 @@
   gLoaderPlatformDataGuid
   gDeviceTableHobGuid
   gSmmInformationGuid
+  gLoaderMpCpuTaskInfoGuid
+  gUniversalPayloadPciRootBridgeInfoGuid
+  gUniversalPayloadAcpiTableGuid
+  gUniversalPayloadSmbiosTableGuid
+  gUniversalPayloadSerialPortInfoGuid
+  gUniversalPayloadExtraDataGuid
+  gPldSmmRegisterInfoGuid
+  gEfiSmmSmramMemoryGuid
+  gSpiFlashInfoGuid
+  gNvVariableInfoGuid
+  gPldS3CommunicationGuid
+  gTpmEventLogInfoGuid
+  gSecureBootInfoGuid
+  gUniversalPayloadBaseGuid
+  gSmmBaseHobGuid
 
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdMaxLibraryDataEntry
@@ -115,6 +139,7 @@
   gPlatformModuleTokenSpaceGuid.PcdFlashSize
   gPlatformModuleTokenSpaceGuid.PcdSplashEnabled
   gPlatformModuleTokenSpaceGuid.PcdSplashLogoAddress
+  gPlatformModuleTokenSpaceGuid.PcdSplashLogoSize
   gPlatformModuleTokenSpaceGuid.PcdOsBootOptionNumber
   gPlatformModuleTokenSpaceGuid.PcdServiceNumber
   gPlatformModuleTokenSpaceGuid.PcdFlashBaseAddress
@@ -128,6 +153,15 @@
   gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled
   gPlatformModuleTokenSpaceGuid.PcdLinuxPayloadEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashMask
-
+  gPlatformModuleTokenSpaceGuid.PcdSmmRebaseMode
+  gPlatformModuleTokenSpaceGuid.PcdAcpiTablesRsdp
+  gPlatformCommonLibTokenSpaceGuid.PcdBuildSmmHobs
+  gPlatformCommonLibTokenSpaceGuid.PcdBootPerformanceMask
+  gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled
+  gPlatformModuleTokenSpaceGuid.PcdEnableFwuNotify
+  gPlatformCommonLibTokenSpaceGuid.PcdEnableCryptoPerfTest
+  gPlatformCommonLibTokenSpaceGuid.PcdHandOffFdtEnable
+  gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase
+  gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize
 [Depex]
   TRUE

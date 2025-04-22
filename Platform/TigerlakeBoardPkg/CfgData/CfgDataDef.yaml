@@ -1,0 +1,408 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Default File.
+#
+#  Copyright (c) 2020 - 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+variable:
+  COND_S0IX_DIS  : ($FEATURES_CFG_DATA.Features.S0ix == 0)
+  COND_PLD_SEL_EN: ($PLDSEL_CFG_DATA.PldSelGpio.Enable == 1)
+
+template:
+  CFGHDR_TMPL: >
+    - CfgHeader    :
+        length       : 0x04
+        value        : {0x01:2b, ((_LENGTH_$(1)_)/4):10b, $(3):4b, $(4):4b, $(2):12b}
+    - CondValue    :
+        length       : 0x04
+        value        : 0x00000000
+
+  MEM_TMPL: >
+    - $ACTION      :
+        page         : MEM_$(1):MEM:"MEM $(1)"
+    - $ACTION      :
+        page         : MEM_$(1)
+
+  USB_PORT_TMPL: >
+    - Usb$(1)Port$(2) :
+        name : Enable USB$(1) port $(2)
+        type : Combo
+        option : $EN_DIS
+        help : >
+               Enable/disable USB$(1) port $(2).
+        length : 1b
+        value : 1
+
+  - !include Template_Gpio.yaml
+
+  - !include Platform/CommonBoardPkg/CfgData/Template_BootOption.yaml
+
+  - !include Template_Spd.yaml
+
+
+
+configs:
+  - $ACTION      :
+      page         : PLT::"Platform Settings", MEM::"Memory Settings", SIL::"Silicon Settings", GEN::"General Settings", SEC::"Security Settings", GIO::"GPIO Settings", GFX::"Graphics Settings", DYN::"Dynamic Settings", OS::"OS Boot Options"
+  - Signature    :
+      length       : 0x04
+      value        : {'CFGD'}
+  - HeaderLength :
+      length       : 0x01
+      value        : 0x10
+  - Reserved     :
+      length       : 0x03
+      value        : {0,0,0}
+  - UsedLength   :
+      length       : 0x04
+      value        : _LENGTH_
+  - TotalLength  :
+      length       : 0x04
+      value        : 0x1000
+  - $ACTION      :
+      page         : GEN
+
+  - !include Platform/CommonBoardPkg/CfgData/CfgData_Common.yaml
+
+
+  - !include CfgData_Gpio.yaml
+
+
+  - !include Platform/CommonBoardPkg/CfgData/CfgData_Platform.yaml
+  - !include Platform/CommonBoardPkg/CfgData/CfgData_Tcc.yaml
+
+
+  - !include CfgData_Memory.yaml
+
+
+  - !include CfgData_MemSpd.yaml
+
+
+  - !include CfgData_Silicon.yaml
+
+  - $ACTION      :
+      page         : GFX
+  - GRAPHICS_CFG_DATA :
+    - !expand { CFGHDR_TMPL : [ GRAPHICS_CFG_DATA, 0x300, 0, 0 ] }
+    - IgdDvmt50PreAlloc :
+        name         : Internal Graphics Pre-allocated Memory
+        type         : Combo
+        option       : >
+                       0x00:0MB, 0x01:32MB, 0x02:64MB, 0x03:96MB, 0x04:128MB, 0x05:160MB, 0xF0:4MB, 0xF1:8MB, 0xF2:12MB, 0xF3:16MB, 0xF4:20MB,
+                       0xF5:24MB, 0xF6:28MB, 0xF7:32MB, 0xF8:36MB, 0xF9:40MB, 0xFA:44MB, 0xFB:48MB, 0xFC:52MB, 0xFD:56MB, 0xFE:60MB
+        help         : >
+                       Size of memory preallocated for internal graphics.
+        length       : 0x01
+        value        : 0xFE
+    - ApertureSize :
+        name         : Aperture Size
+        type         : Combo
+        option       : 0:128 MB, 1:256 MB, 2:512 MB
+        help         : >
+                       Select the Aperture Size.
+        length       : 0x01
+        value        : 0x01
+    - InternalGfx  :
+        name         : Internal Graphics
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/disable internal graphics.
+        length       : 0x01
+        value        : 0x01
+    - PrimaryDisplay :
+        name         : Selection of the primary display device
+        type         : Combo
+        option       : 0:iGFX, 1:PEG, 2:PCIe Graphics on PCH, 3:AUTO, 4:Switchable Graphics
+        help         : >
+                       0=iGFX, 1=PEG, 2=PCIe Graphics on PCH, 3(Default)=AUTO, 4=Switchable Graphics
+        length       : 0x01
+        value        : 0x3
+    - GttSize      :
+        name         : Selection of iGFX GTT Memory size
+        type         : Combo
+        option       : 1:2MB, 2:4MB, 3:8MB
+        help         : >
+                       1=2MB, 2=4MB, 3=8MB
+        length       : 0x02
+        value        : 0x3
+    - Dummy        :
+        length       : 0x02
+        value        : 0x0
+
+  - $ACTION      :
+      page         : PEP::"Power Engine Plugin (PEP) Options"
+  - PEP_CFG_DATA :
+    - !expand { CFGHDR_TMPL : [ PEP_CFG_DATA, 0x900, 0, 0 ] }
+    - PepSataContraints :
+        name         : Low Power constraints Configuration for sata
+        type         : Combo
+        option       : 0:None, 1:Adapter D0/F1, 2:Raid, 3:Adapter D3
+        help         : >
+                       0:None, 1:Adapter D0/F1, 2:Raid, 3:Adapter D3
+        length       : 0x01
+        value        : 0x3
+    - PepUart      :
+        name         : Enable/disable Low Power constraints Uart
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable(Default)- Enable UART, Disable- Disable UART
+        length       : 0x01
+        value        : 0x1
+    - PepPcieStorage :
+        name         : Enable/disable Low Power constraints PcieStorage
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable(Default)- Enable PcieStorage, Disable- Disable PcieStorage
+        length       : 0x01
+        value        : 0x1
+    - PepI2c0      :
+        name         : Enable/disable Low Power constraints I2C0
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable(Default)- Enable I2c0, Disable- Disable I2c0
+        length       : 0x01
+        value        : 0x1
+    - PepI2c1      :
+        name         : Enable/disable Low Power constraints I2C1
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable(Default)- Enable I2c1, Disable- Disable I2c1
+        length       : 0x01
+        value        : 0x1
+    - PepXhci      :
+        name         : Enable/disable Low Power constraints Xhci
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable(Default)- Enable Xhci, Disable- Disable Xhci
+        length       : 0x01
+        value        : 0x1
+    - PepAudio     :
+        name         : Enable/disable Low Power constraints Audio
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable(Default)- Enable Audio, Disable- Disable Audio
+        length       : 0x01
+        value        : 0x1
+    - PepGfx       :
+        name         : Enable/disable Low Power constraints Gfx
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable(Default)- Enable Gfx , Disable- Disable Gfx
+        length       : 0x01
+        value        : 0x1
+    - PepCpu       :
+        name         : Enable/disable Low Power constraints Cpu
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable(Default)- Enable Cpu , Disable- Disable Cpu
+        length       : 0x01
+        value        : 0x1
+    - PepI2c2      :
+        name         : Enable/disable Low Power constraints I2C2
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable(Default)- Enable I2c2, Disable- Disable I2c2
+        length       : 0x01
+        value        : 0x1
+    - PepI2c3      :
+        name         : Enable/disable Low Power constraints I2C3
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable(Default)- Enable I2c3, Disable- Disable I2c3
+        length       : 0x01
+        value        : 0x1
+    - PepI2c4      :
+        name         : Enable/disable Low Power constraints I2C4
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable(Default)- Enable I2c4, Disable- Disable I2c4
+        length       : 0x01
+        value        : 0x1
+    - PepI2c5      :
+        name         : Enable/disable Low Power constraints I2C5
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable I2c5, Disable(Default)- Disable I2c5
+        length       : 0x01
+        value        : 0x1
+    - PepI2c6      :
+        name         : Enable/disable Low Power constraints I2C6
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable I2c6, Disable(Default)- Disable I2c6
+        length       : 0x01
+        value        : 0x1
+    - PepSpi       :
+        name         : Enable/disable Low Power constraints SPI
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable(Default)- Enable SPI, Disable- Disable SPI
+        length       : 0x01
+        value        : 0x1
+     - PepIpu       :
+        name         : Enable/disable Low Power constraints Ipu
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable(Default)- Enable Ipu, Disable- Disable Ipu
+        length       : 0x01
+        value        : 0x1
+    - PepCsme      :
+        name         : Enable/disable Low Power constraints Csme
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable(Default)- Enable Csme, Disable- Disable Csme
+        length       : 0x01
+        value        : 0x1
+    - PepGbe       :
+        name         : Enable/disable Low Power constraints Gbe
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable(Default)- Enable Gbe, Disable- Disable Gbe
+        length       : 0x01
+        value        : 0x1
+    - PepPeg0Storage :
+        name         : Enable/disable Low Power constraints Peg0Storage
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable Peg0Storage, Disable- Disable Peg0Storage
+        length       : 0x01
+        value        : 0x1
+    - PepThc0      :
+        name         : Enable/disable Low Power constraints Thc0
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable Thc0, Disable(Default)- Disable Thc0
+        length       : 0x01
+        value        : 0x0
+    - PepThc1      :
+        name         : Enable/disable Low Power constraints Thc1
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable Thc1, Disable(Default)- Disable Thc1
+        length       : 0x01
+        value        : 0x0
+    - PepTcss      :
+        name         : Enable/disable Low Power constraints Tcss
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable(Default)- Enable Tcss , Disable- Disable Tcss
+        length       : 0x01
+        value        : 0x1
+    - PepGna       :
+        name         : Enable/disable Low Power constraints Gna
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable(Default)- Enable Gna , Disable- Disable Gna
+        length       : 0x01
+        value        : 0x1
+    - PepVmd       :
+        name         : Enable/disable Low Power constraints Vmd
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable Vmd , Disable(Default)- Disable Vmd
+        length       : 0x01
+        value        : 0x0
+    - PepPcieDg    :
+        name         : Enable/disable Low Power constraints PcieDg
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable PcieDg , Disable(Default)- Disable PcieDg
+        length       : 0x01
+        value        : 0x0
+    - PepOverride  :
+        name         : Enable/disable Low Power constraints PepOverride
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable PepOverride  , Disable(Default)- Disable PepOverride
+        length       : 0x01
+        value        : 0x0
+    - PepPcieRp3   :
+        name         : Enable/disable Low Power constraints PcieRp3
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable PcieRp3  , Disable(Default)- Disable PcieRp3
+        length       : 0x01
+        value        : 0x0
+    - PepPcieRp5   :
+        name         : Enable/disable Low Power constraints PcieRp5
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable PcieRp5  , Disable(Default)- Disable PcieRp5
+        length       : 0x01
+        value        : 0x0
+    - PepPcieRp9   :
+        name         : Enable/disable Low Power constraints PcieRp9
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable(- Enable PcieRp9  , Disable(Default)- Disable PcieRp9
+        length       : 0x01
+        value        : 0x0
+    - PepPeg0      :
+        name         : Enable/disable Low Power constraints Peg0
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable Peg0  , Disable(Default)- Disable Peg0
+        length       : 0x01
+        value        : 0x0
+    - PepEmmc      :
+        name         : Enable/disable Low Power constraints Emmc
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable- Enable Emmc  , Disable(Default)- Disable Emmc
+        length       : 0x01
+        value        : 0x0
+    - Dummy        :
+        length       : 0x01
+        value        : 0x0
+
+
+  - !include Platform/CommonBoardPkg/CfgData/CfgData_PayloadSelection.yaml
+
+  - !include CfgData_Features.yaml
+
+
+  - !include CfgData_Dynamic.yaml
+
+
+  - !include CfgData_BootOption.yaml
+
+
+  - !include CfgData_CapsuleInformation.yaml
+
+
+  - !include CfgData_Security.yaml
+

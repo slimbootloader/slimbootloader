@@ -1,0 +1,33 @@
+## @file
+# PCIe RP MTL PCH library
+#
+# All function in this library is available for PEI, DXE, and SMM,
+# But do not support UEFI RUNTIME environment call.
+#
+#
+# Copyright (c) 2024, Intel Corporation. All rights reserved.<BR>
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+INF_VERSION = 0x00010017
+BASE_NAME = MtlPchPcieRpLib
+FILE_GUID = C45BEF2A-AAA4-48F4-8FB1-564BE2793995
+VERSION_STRING = 1.0
+MODULE_TYPE = BASE
+LIBRARY_CLASS = MtlPchPcieRpLib
+
+
+[Sources]
+MtlPchPcieRpLib.c
+
+[Packages]
+MdePkg/MdePkg.dec
+BootloaderCorePkg/BootloaderCorePkg.dec
+BootloaderCommonPkg/BootloaderCommonPkg.dec
+Silicon/CommonSocPkg/CommonSocPkg.dec
+Silicon/ArrowlakePkg/ArrowlakePkg.dec
+
+[FixedPcd]
+  gPlatformArrowLakeTokenSpaceGuid.PcdMtlSSupport

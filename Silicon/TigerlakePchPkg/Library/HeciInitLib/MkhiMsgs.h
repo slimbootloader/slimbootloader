@@ -31,9 +31,15 @@ typedef union {
 /// Defines for GroupID
 ///
 #define MKHI_CBM_GROUP_ID     0x00
+#define MKHI_FWCAPS_GROUP_ID  0x03
 #define MKHI_HMRFPO_GROUP_ID  0x05
 #define MKHI_MCA_GROUP_ID     0x0A
 #define MKHI_GEN_GROUP_ID     0xFF
+
+///
+/// Defines for FWCAPS_GROUP Command
+///
+#define FWCAPS_GET_RULE_CMD   0x02
 
 #define IAFW_DNX_REQ_CLEAR    0x02
 
@@ -51,6 +57,8 @@ typedef union {
 #define MCA_READ_FILE_EX_CMD              0x0A
 #define MCA_ARB_SVN_COMMIT_CMD            0x1B
 #define MCA_ARB_SVN_GET_INFO_CMD          0x1C
+#define MCA_REVOKE_OEM_KEY_HASH_CMD       0x2F
+#define MCA_GET_OEM_KEY_STATUS_CMD        0x0D
 ///
 /// Defines for GEN_GROUP Command
 ///
@@ -201,9 +209,12 @@ typedef struct {
   UINT32        RuleID;
   UINT8         RuleDataLen;
   MEFWCAPS_SKU  FWCap;
-  UINT8         Reseved[3];
 } GET_FW_CAPS_SKU_ACK_DATA;
 
+typedef struct {
+  MKHI_MESSAGE_HEADER       MKHIHeader;
+  GET_FW_CAPS_SKU_ACK_DATA  Data;
+} GET_FW_CAPS_SKU_ACK;
 
 ///
 /// Get/Set Local FW Update
@@ -448,6 +459,50 @@ typedef union {
   ARB_SVN_GET_INFO_ACK   Response;
 } ARB_SVN_GET_INFO_BUFFER;
 
+///
+/// OEM Key Revocation
+///
+typedef struct {
+  MKHI_MESSAGE_HEADER MkhiHeader;
+} OEM_KEY_REVOKE;
+
+typedef struct {
+  MKHI_MESSAGE_HEADER MkhiHeader;
+} OEM_KEY_REVOKE_ACK;
+
+typedef union {
+  OEM_KEY_REVOKE       Request;
+  OEM_KEY_REVOKE_ACK   Response;
+} OEM_KEY_REVOKE_BUFFER;
+
+
+typedef struct {
+  MKHI_MESSAGE_HEADER MkhiHeader;
+} OEM_KEY_STATUS_REQ;
+
+typedef struct {
+  UINT8               Valid;
+  UINT8               InUse;
+  UINT8               Revoked;
+  UINT8               KeyHash[64];
+} KEY_INFO;
+
+typedef struct {
+  UINT8               RevocationEnabled;
+  UINT8               NumKeySupported;
+  UINT32              KeyHashType;
+  KEY_INFO            Keys[2];
+} OEM_KEY_STATUS;
+
+typedef struct {
+  MKHI_MESSAGE_HEADER MkhiHeader;
+  OEM_KEY_STATUS      OemKeyStatus;
+} OEM_KEY_STATUS_ACK;
+
+typedef union {
+  OEM_KEY_STATUS_REQ   Request;
+  OEM_KEY_STATUS_ACK   Response;
+} OEM_KEY_STATUS_BUFFER;
 
 typedef union {
   UINT32 Data;

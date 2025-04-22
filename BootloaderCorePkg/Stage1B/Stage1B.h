@@ -37,9 +37,15 @@
 #include <Library/TpmLib.h>
 #include <Library/StageLib.h>
 #include <Library/ContainerLib.h>
+#include <Library/TcoTimerLib.h>
+#include <Library/WatchDogTimerLib.h>
 #include <Guid/PcdDataBaseSignatureGuid.h>
 #include <Guid/LoaderPlatformDataGuid.h>
+#include <Library/TopSwapLib.h>
+#include <Library/FirmwareResiliencyLib.h>
+#include <FirmwareUpdateStatus.h>
 #include <VerInfo.h>
+#include <Library/IppCryptoPerfLib.h>
 
 /**
   Continue Stage1B execution.

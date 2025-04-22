@@ -222,11 +222,6 @@ CONST HDAUDIO_VERB_TABLE CflSHdaVerbTableAlc700 = HDAUDIO_VERB_TABLE_INIT (
   0x0204A80F,
   0x02050008,
   0x0204A80F,
-  //Widget node 0x20 - 1 : LINE2-VREFO( MIC2-vrefo-R) base on verb_707h of NID 1Bh ,  HP-JD gating MIC2-vrefo-L, bypass DAC02 DRE(NID5B bit14)
-  0x0205006B,
-  0x02044260,
-  0x0205006B,
-  0x02044260,
   //Widget node 0x20 - 2 : //remove NID 58 realted setting for ALC700
   0x05B50010,
   0x05B45C1D,

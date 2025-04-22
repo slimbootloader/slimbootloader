@@ -1,0 +1,49 @@
+## @file
+#
+#  Platform Configuration Delta File.
+#
+#  Copyright (c) 2019 - 2022, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+#
+
+# DDRLP4 board
+PLATFORMID_CFG_DATA.PlatformId                              | 0x0003
+PLAT_NAME_CFG_DATA.PlatformName                             | 'TGLU_LP4'
+
+# Disable S0ix by default
+FEATURES_CFG_DATA.Features.S0ix                             | 0x0
+
+MEMORY_CFG_DATA.SpdAddressTable                             | {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+MEMORY_CFG_DATA.SpdDataSel000                               | 1
+MEMORY_CFG_DATA.SpdDataSel010                               | 1
+MEMORY_CFG_DATA.SpdDataSel020                               | 1
+MEMORY_CFG_DATA.SpdDataSel030                               | 1
+MEMORY_CFG_DATA.SpdDataSel100                               | 1
+MEMORY_CFG_DATA.SpdDataSel110                               | 1
+MEMORY_CFG_DATA.SpdDataSel120                               | 1
+MEMORY_CFG_DATA.SpdDataSel130                               | 1
+
+SILICON_CFG_DATA.PortUsb20Enable.Usb2Port1                  | 0
+
+
+#
+# By default use Osloader Payload, set to "UEFI" to select UEFI payload.
+#
+# Here set to 'AUTO' to enable payload selection using GPIO.
+# This GPIO maps to pins 3/4 on 4-pin jumper J9J5 which is closest to the coin
+# cell battery on the UP3 RVP board.
+#
+# When 3/4 is stuffed the value will read 0 for UEFI Payload.
+# When 3/4 is un-stuffed the value will read 1 for OS Loader.
+#
+GEN_CFG_DATA.PayloadId                                      | 'AUTO'
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B15.GPIODirection_GPP_B15  | 0xB
+# PCH LP :  GPIO_VER2_LP_GPP_B15
+PLDSEL_CFG_DATA.PldSelGpio.Enable                           | 1
+PLDSEL_CFG_DATA.PldSelGpio.PadGroup                         | 1
+PLDSEL_CFG_DATA.PldSelGpio.PinNumber                        | 15
+PLDSEL_CFG_DATA.PldSelGpio.PinPolarity                      | 1
+
+SILICON_CFG_DATA.PchHdaEnable                               | 0x00

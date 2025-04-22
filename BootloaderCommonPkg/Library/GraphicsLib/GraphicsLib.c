@@ -336,7 +336,7 @@ FrameBufferWrite (
     SetMem (Console->TextDisplayBuf, Console->Rows * Console->Cols, 0);
     // Zero framebuffer
     GfxInfoHob = Console->GfxInfoHob;
-    Length = (GfxInfoHob->GraphicsMode.HorizontalResolution * GfxInfoHob->GraphicsMode.PixelsPerScanLine) * 4;
+    Length = ((UINTN)GfxInfoHob->GraphicsMode.HorizontalResolution * GfxInfoHob->GraphicsMode.PixelsPerScanLine) * 4;
     SetMem64 ((UINT32 *) (UINTN)(GfxInfoHob->FrameBufferBase), Length, 0);
     Console->CursorX = 0;
     Console->CursorY = 0;

@@ -60,6 +60,7 @@ def get_bpmgen2_params_change_list ():
       ('BpmSigPrivKey',         r'Bpmgen2\keys\bpm_privkey_2048.pem'),
       ('BpmKeySizeBits',        '2048'),
       ('BpmSigHashAlgID',       '0x0B:SHA256'),
+      ('VTD_BAR',               '0x00000000FED91000'),
       ])
     return params_change_list
 

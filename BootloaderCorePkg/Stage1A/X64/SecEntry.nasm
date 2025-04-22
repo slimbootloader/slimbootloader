@@ -29,14 +29,8 @@ ASM_PFX(_ModuleEntryPoint):
         movd    mm0, eax
 
         ;
-        ; Read time stamp in esi
+        ; RDI: time stamp
         ;
-        mov     rbx, rdx
-        rdtsc
-        mov     rsi, rdx
-        shl     rsi, 32
-        add     rsi, rax
-        mov     rdx, rbx
 
         ;
         ; Add a dummy reference to TempRamInitParams to prevent
@@ -88,9 +82,12 @@ CheckStackRangeDone:
         bts     rbx, 0               ; Set BIT0 in Status
 
 CheckStatusDone:
+        ;
         ; Setup HOB
+        ; This structure has to match the layout of STAGE1A_ASM_PARAM
+        ;
         push    rbx                  ; Status
-        push    rsi                  ; TimeStamp[0] [63:0]
+        push    rdi                  ; TimeStamp[0] [63:0]
         shl     rdx, 32              ; Move CarTop to high 32bit
         add     rdx, rcx             ; Add back CarBase
         push    rdx

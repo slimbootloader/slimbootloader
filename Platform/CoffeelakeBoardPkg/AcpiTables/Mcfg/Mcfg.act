@@ -63,7 +63,7 @@ EFI_ACPI_MEMORY_MAPPED_CONFIGURATION_SPACE_ACCESS_DESCRIPTION_TABLE Madt = {
       0x0000000000000000,    // BaseAddress, will be updated by AcpiPlatform
       0x0000,                // PciSegmentGroupNumber
       0x00,                  // StartBusNumber
-      0xFF,                  // EndBusNumber, will be updated by AcpiPlatform
+      0xFF,                  // EndBusNumber
       0x00000000             // Reserved
     }
   }

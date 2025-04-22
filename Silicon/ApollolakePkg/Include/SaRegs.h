@@ -296,4 +296,12 @@
 #define  TSEG                   0xb8    // TSEG base
 #define  BGSM                   0xb4    // Base GTT Stolen Memory
 
+//  This 64 bit register defines the Top of Upper Usable DRAM.
+#define R_SA_TOUUD              (0xa8)
+#define B_SA_TOUUD_MASK         (0x7ffff00000ULL)
+
+//  This register contains the Top of low memory address.
+#define R_SA_TOLUD              (0xbc)
+#define B_SA_TOLUD_MASK         (0xfff00000)
+
 #endif

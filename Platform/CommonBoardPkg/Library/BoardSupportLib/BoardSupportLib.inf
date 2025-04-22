@@ -15,6 +15,7 @@
 
 [Sources]
   BoardSupportLib.c
+  BoardGraphicsCache.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -23,10 +24,15 @@
   Platform/CommonBoardPkg/CommonBoardPkg.dec
   Silicon/CommonSocPkg/CommonSocPkg.dec
 
+[Guids]
+  gEfiGraphicsDeviceInfoHobGuid
+  gEfiGraphicsInfoHobGuid
+
 [LibraryClasses]
   BaseLib
 
 [Pcd]
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
   gPlatformModuleTokenSpaceGuid.PcdOsBootOptionNumber
   gPlatformModuleTokenSpaceGuid.PcdCfgDataLoadSource
   gPlatformModuleTokenSpaceGuid.PcdCfgDatabaseSize

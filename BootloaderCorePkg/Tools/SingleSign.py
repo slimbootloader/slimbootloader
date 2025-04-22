@@ -49,6 +49,9 @@ SIGNING_KEY = {
     "KEY_ID_OS2_PUBLIC_RSA2048"      :    "OS2_TestKey_Pub_RSA2048.pem",
     "KEY_ID_OS2_PUBLIC_RSA3072"      :    "OS2_TestKey_Pub_RSA3072.pem",
 
+    # KEY_ID_OS1_PRIVATE is used for signing container header with BOOT signature
+    "KEY_ID_OS1_PRIVATE_RSA2048"     :    "OS1_TestKey_Priv_RSA2048.pem",
+    "KEY_ID_OS1_PRIVATE_RSA3072"     :    "OS1_TestKey_Priv_RSA3072.pem",
     }
 
 MESSAGE_SBL_KEY_DIR = (
@@ -72,7 +75,11 @@ def get_openssl_path ():
                     openssl_cfg = "C:\\Openssl\\openssl.cfg"
                     if os.path.exists(openssl_cfg):
                         os.environ['OPENSSL_CONF'] = openssl_cfg
-    openssl = os.path.join(os.environ.get ('OPENSSL_PATH', ''), 'openssl')
+        openssl = os.path.join(os.environ.get ('OPENSSL_PATH', ''), 'openssl.exe')
+    else:
+        # Get openssl path for Linux cases
+        openssl = shutil.which('openssl')
+
     return openssl
 
 def run_process (arg_list, print_cmd = False, capture_out = False):
@@ -255,7 +262,7 @@ def single_sign_gen_pub_key (in_key, pub_key_file = None):
     cmdline = [get_openssl_path(), 'rsa', '-pubout', '-text', '-noout', '-in', '%s' % in_key]
     # Check if it is public key or private key
     text = open(in_key, 'r').read()
-    if '-BEGIN RSA PRIVATE KEY-' in text:
+    if '-BEGIN RSA PRIVATE KEY-' in text or '-BEGIN PRIVATE KEY-' in text:
         is_prv_key = True
     elif '-BEGIN PUBLIC KEY-' in text:
         cmdline.extend (['-pubin'])

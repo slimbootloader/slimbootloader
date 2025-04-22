@@ -28,7 +28,7 @@
   BootloaderCommonPkg/BootloaderCommonPkg.dec
 
 [Guids]
-  gLoaderSerialPortInfoGuid
+  gUniversalPayloadSerialPortInfoGuid
 
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdSerialUseMmio         ## PRODUCES
@@ -37,3 +37,4 @@
   gPlatformCommonLibTokenSpaceGuid.PcdSerialRegisterStride  ## PRODUCES
   gPlatformCommonLibTokenSpaceGuid.PcdSerialClockRate       ## PRODUCES
   gPayloadTokenSpaceGuid.PcdPayloadHobList        ## PRODUCES
+

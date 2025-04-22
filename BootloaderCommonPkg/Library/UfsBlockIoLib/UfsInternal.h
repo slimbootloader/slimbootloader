@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2014, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2014 - 2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -26,7 +26,8 @@
 #include "UfsHcMem.h"
 
 #define UFS_PEIM_HC_SIG             SIGNATURE_32 ('U', 'F', 'S', 'H')
-#define UFS_PEIM_MAX_LUNS           8
+#define UFS_PEIM_MAX_LUNS           12
+#define UFS_INIT_COMPLETION_TIMEOUT 600000
 
 typedef struct {
   ///
@@ -133,7 +134,7 @@ typedef struct _UFS_PEIM_HC_PRIVATE_DATA {
 
   UINTN                             UfsHcBase;
   UINT32                            Capabilities;
-
+  UINT32                            Version;
   UINT8                             TaskTag;
 
   VOID                              *UtpTrlBase;
@@ -146,28 +147,23 @@ typedef struct _UFS_PEIM_HC_PRIVATE_DATA {
   UFS_PEIM_EXPOSED_LUNS             Luns;
 } UFS_PEIM_HC_PRIVATE_DATA;
 
-#define UFS_TIMEOUT                 MultU64x32((UINT64)(3), 1000000)
+#define UFS_TIMEOUT                 MultU64x32((UINT64)(3), 10000000)
 
 #define ROUNDUP8(x) (((x) % 8 == 0) ? (x) : ((x) / 8 + 1) * 8)
-
-#define IS_ALIGNED(addr, size)      (((UINTN) (addr) & (size - 1)) == 0)
 
 #define UFS_SCSI_OP_LENGTH_SIX      0x6
 #define UFS_SCSI_OP_LENGTH_TEN      0xa
 #define UFS_SCSI_OP_LENGTH_SIXTEEN  0x10
 
 typedef struct _UFS_DEVICE_MANAGEMENT_REQUEST_PACKET {
-  UINT64                            Timeout;
-  VOID                              *InDataBuffer;
-  VOID                              *OutDataBuffer;
-  UINT8                             Opcode;
-  UINT8                             DescId;
-  UINT8                             Index;
-  UINT8                             Selector;
-  UINT32                            InTransferLength;
-  UINT32                            OutTransferLength;
-  UINT8                             DataDirection;
-  UINT8                             Ocs;
+  UINT64           Timeout;
+  VOID             *DataBuffer;
+  UINT8            Opcode;
+  UINT8            DescId;
+  UINT8            Index;
+  UINT8            Selector;
+  UINT32           TransferLength;
+  UINT8            DataDirection;
 } UFS_DEVICE_MANAGEMENT_REQUEST_PACKET;
 
 /**
@@ -195,6 +191,20 @@ UfsExecScsiCmds (
   IN     UFS_PEIM_HC_PRIVATE_DATA      *Private,
   IN     UINT8                         Lun,
   IN OUT UFS_SCSI_REQUEST_PACKET       *Packet
+  );
+
+/**
+  Switches the link Power Mode and Gear.
+
+  @param Private                    The pointer to the UFS_PEIM_HC_PRIVATE_DATA data structure.
+
+  @retval EFI_SUCCESS                Successfully switched the Power Mode and Gear
+  @retval others                     Failed to switch the Power Mode and Gear
+
+**/
+EFI_STATUS
+UfsPowerModeAndGearSwitch (
+  IN  UFS_PEIM_HC_PRIVATE_DATA       *Private
   );
 
 /**
@@ -266,7 +276,32 @@ UfsRwDeviceDesc (
   IN     UINT8                        Index,
   IN     UINT8                        Selector,
   IN OUT VOID                         *Descriptor,
-  IN     UINT32                       DescSize
+  IN     UINT32                       *DescSize
+  );
+
+/**
+  Read or write specified attribute of a UFS device.
+
+  @param[in]      Private       The pointer to the UFS_PEIM_HC_PRIVATE_DATA data structure.
+  @param[in]      Read          The boolean variable to show r/w direction.
+  @param[in]      AttrId        The ID of Attribute.
+  @param[in]      Index         The Index of Attribute.
+  @param[in]      Selector      The Selector of Attribute.
+  @param[in, out] Attributes    The value of Attribute to be read or written.
+
+  @retval EFI_SUCCESS           The Attribute was read/written successfully.
+  @retval EFI_DEVICE_ERROR      A device error occurred while attempting to r/w the Attribute.
+  @retval EFI_TIMEOUT           A timeout occurred while waiting for the completion of r/w the Attribute.
+
+**/
+EFI_STATUS
+UfsRwAttributes (
+  IN     UFS_PEIM_HC_PRIVATE_DATA  *Private,
+  IN     BOOLEAN                     Read,
+  IN     UINT8                       AttrId,
+  IN     UINT8                       Index,
+  IN     UINT8                       Selector,
+  IN OUT UINT32                      *Attributes
   );
 
 /**
@@ -344,6 +379,38 @@ UfsFreeMem (
 EFI_STATUS
 UfsFreeMemPool (
   IN UFS_PEIM_MEM_POOL       *Pool
+  );
+
+/**
+  Initializes UfsHcInfo field in private data.
+
+  @param[in] Private  Pointer to host controller private data.
+
+  @retval EFI_SUCCESS  UfsHcInfo initialized successfully.
+  @retval Others       Failed to initalize UfsHcInfo.
+**/
+EFI_STATUS
+GetUfsHcInfo (
+  IN UFS_PEIM_HC_PRIVATE_DATA  *Private
+  );
+
+/**
+  Read specified flag from a UFS device.
+
+  @param[in]  Private           The pointer to the UFS_PASS_THRU_PRIVATE_DATA data structure.
+  @param[in]  FlagId            The ID of flag to be read.
+  @param[out] Value             The flag's value.
+
+  @retval EFI_SUCCESS           The flag was read successfully.
+  @retval EFI_DEVICE_ERROR      A device error occurred while attempting to read the flag.
+  @retval EFI_TIMEOUT           A timeout occurred while waiting for the completion of reading the flag.
+
+**/
+EFI_STATUS
+UfsReadFlag (
+  IN     UFS_PEIM_HC_PRIVATE_DATA   *Private,
+  IN     UINT8                        FlagId,
+  OUT    UINT8                        *Value
   );
 
 #endif

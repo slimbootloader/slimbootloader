@@ -1,0 +1,63 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : FEATURES:PLT:"Features"
+- $ACTION      :
+    page         : FEATURES
+- FEATURES_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ FEATURES_CFG_DATA, 0x310, 0, 0 ] }
+  - Features     :
+    - $STRUCT      :
+        name         : PlatformFeatures
+        struct       : FEATURES_DATA
+        length       : 0x05
+        value        : 0x00000003
+    - Acpi         :
+        name         : ACPI Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable ACPI feature. 1:ACPI Enabled (default), 0:ACPI Disabled
+        length       : 1b
+    - MeasuredBoot :
+        name         : MeasuredBoot Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable MeasuredBoot feature. 1:MeasuredBoot Enabled (default), 0:MeasuredBoot Disabled
+        length       : 1b
+    - DebugConsent :
+        name         : Platform Debug Consent
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled (DCI OOB+[DbC]), 2:Enabled (DCI OOB), 3:Enabled (USB3 DbC), 4:Enabled (XDP/MIPI60), 5:Enabled (USB2 DbC), 6:Enable (2-wire DCI OOB), 7:Manual
+        help         : >
+                       To 'opt-in' for debug, please select 'Enabled' with the desired debug probe type. Enabling this BIOS option may alter the default value of other debug-related BIOS options.\Manual- Do not use Platform Debug Consent to override other debug-relevant policies, but the user must set each debug option manually, aimed at advanced users.\nNote- DCI OOB (aka BSSB) uses CCA probe;[DCI OOB+DbC] and [USB2 DbC] have the same setting.
+        length       : 3b
+    - S0ix         :
+        name         : S0ix (Low Power Idle) Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable S0ix feature. 1:S0ix Enabled, 0:S0ix Disabled
+        length       : 1b
+    - NewGpioSchemeEnable   :
+        name         : New GPIO Scheme Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable New GPIO Scheme. 1:New GPIO Scheme Enabled, 0:New GPIO Scheme Disabled
+        length       : 1b
+    - Rsvd         :
+        name         : Reserved
+        type         : Reserved
+        help         : >
+                       reserved bits
+        length       : 25b

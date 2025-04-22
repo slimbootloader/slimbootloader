@@ -17,6 +17,7 @@
 #include <Library/SerialPortLib.h>
 #include <Library/HobLib.h>
 #include <Library/ConsoleOutLib.h>
+#include <Library/DebugPortLib.h>
 
 /**
   Write data from buffer to the console.
@@ -45,6 +46,10 @@ ConsoleWrite (
 
   if (PcdGet32 (PcdConsoleOutDeviceMask) & ConsoleOutFrameBuffer) {
     FrameBufferWrite ((UINT8 *)Buffer, NumberOfBytes);
+  }
+
+  if (PcdGet32 (PcdConsoleOutDeviceMask) & ConsoleOutDebugPort) {
+    DebugPortWrite ((UINT8 *)Buffer, NumberOfBytes);
   }
 
   return NumberOfBytes;

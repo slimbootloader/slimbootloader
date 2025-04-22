@@ -15,7 +15,7 @@
 #define IS_PD_SET     (((Address & 0xFFF) & IA32_PG_PD) == IA32_PG_PD)
 #define PD_SET_ADDR   (Address & ~(0xFFFF))
 #define PD_UNSET_ADDR (Address & ~(0xFFF))
-#define MIN_ADDR_BITS 32
+#define MIN_ADDR_BITS 36
 
 /**
   The function will check if 5-level paging is needed
@@ -71,8 +71,8 @@ IsPage1GSupport (
   @return Physical address bits.
 
 **/
-STATIC
 UINT8
+EFIAPI
 GetPhysicalAddressBits (
   VOID
   )
@@ -297,6 +297,8 @@ Create4GbPageTables (
   @param[in] RequestedAddressBits   If RequestedAddressBits is in valid range
                                     (MIN_ADDR_BITS < RequestedAddressBits < PhysicalAddressBits),
                                     paging table will cover the requested physical address range only.
+                                    When RequestedAddressBits is 0, it will build the address range
+                                    that the CPU can support.
 
   @retval    EFI_SUCCESS            Page table was created successfully.
   @retval    EFI_OUT_OF_RESOURCES   Failed to allocate page buffer
@@ -324,6 +326,10 @@ CreateIdentityMappingPageTables (
   UINTN             Cr0;
 
   PhysicalAddressBits = GetPhysicalAddressBits ();
+  if (RequestedAddressBits == 0) {
+    RequestedAddressBits = PhysicalAddressBits;
+  }
+
   Page1GSupport       = IsPage1GSupport ();
   Page5LevelSupport   = Is5LevelPagingNeeded ();
   DEBUG ((DEBUG_INFO, "RequestedAddressBits=%u PhysicalAddressBits=%u 5LevelPaging=%u 1GPage=%u\n",
@@ -357,9 +363,9 @@ CreateIdentityMappingPageTables (
   NumOfPdpEntries = (UINT32) LShiftU64 (1, PhysicalAddressBits - 30);
 
   if (!Page1GSupport) {
-    TotalPagesNum = ((NumOfPdpEntries + 1) * NumOfPml4Entries + 1) * NumOfPml5Entries + 1;
+    TotalPagesNum = ((UINTN)(NumOfPdpEntries + 1) * NumOfPml4Entries + 1) * NumOfPml5Entries + 1;
   } else {
-    TotalPagesNum = (NumOfPml4Entries + 1) * NumOfPml5Entries + 1;
+    TotalPagesNum = (UINTN)(NumOfPml4Entries + 1) * NumOfPml5Entries + 1;
   }
 
   if (!Page5LevelSupport) {
@@ -373,6 +379,7 @@ CreateIdentityMappingPageTables (
   if (PageBuffer == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
+  ZeroMem (PageBuffer, EFI_PAGES_TO_SIZE (TotalPagesNum));
 
   Address   = 0;
   Attribute = IA32_PG_P | IA32_PG_RW;
@@ -381,7 +388,7 @@ CreateIdentityMappingPageTables (
   // PML5
   if (Page5LevelSupport) {
     for (Idx = 0; Idx < NumOfPml5Entries; Idx++) {
-      Page64[Idx] = (UINTN)Page64 + SIZE_4KB * (Idx + 1) + Attribute;
+      Page64[Idx] = (UINT64)(UINTN)Page64 + SIZE_4KB * (Idx + 1) + Attribute;
     }
     // PML4 Entry
     Page64 = (UINT64 *)((UINTN)Page64 + SIZE_4KB);
@@ -390,7 +397,7 @@ CreateIdentityMappingPageTables (
   // PML4
   Entries = (NumOfPml5Entries == 1) ? NumOfPml4Entries : 512;
   for (Idx = 0; Idx < Entries; Idx++) {
-    Page64[Idx] = (UINTN)Page64 + SIZE_4KB * (Idx + 1) + Attribute;
+    Page64[Idx] = (UINT64)(UINTN)Page64 + SIZE_4KB * (Idx + 1) + Attribute;
   }
 
   Page64 = (UINT64 *)((UINTN)Page64 + SIZE_4KB);
@@ -404,11 +411,11 @@ CreateIdentityMappingPageTables (
     // PDP
     Entries *= (NumOfPml4Entries == 1 ? NumOfPdpEntries : 512);
     for (Idx = 0; Idx < Entries; Idx++) {
-      Page64[Idx] = (UINTN)Page64 + (Entries * sizeof (UINT64)) + (SIZE_4KB * Idx) + Attribute;
+      Page64[Idx] = (UINT64)(UINTN)Page64 + (SIZE_4KB * (Idx + 1)) + Attribute;
     }
+    Page64 = (UINT64 *)((UINTN)Page64 + SIZE_4KB);
 
     // PDE
-    Page64 = (UINT64 *)((UINTN)Page64 + Entries * sizeof(UINT64));
     Entries *= 512;
     for (Idx = 0; Idx < Entries; Idx++, Address += SIZE_2MB) {
       Page64[Idx] = Address + (Attribute | IA32_PG_PD);
@@ -416,13 +423,10 @@ CreateIdentityMappingPageTables (
   }
 
   Cr0 = AsmReadCr0 ();
-  if (Cr0 & BIT31) {
-    // Alreay in paging mode
-    AsmWriteCr3 ((UINTN)PageBuffer);
-  } else {
-    // Enable paging
-    AsmWriteCr4 (AsmReadCr4() | BIT4);
-    AsmWriteCr3 ((UINTN)PageBuffer);
+  // Set PAE
+  AsmWriteCr4 (AsmReadCr4() | BIT5);
+  AsmWriteCr3 ((UINTN)PageBuffer);
+  if ((Cr0 & BIT31) != BIT31) {
     AsmWriteCr0 (Cr0 | BIT31);
   }
 

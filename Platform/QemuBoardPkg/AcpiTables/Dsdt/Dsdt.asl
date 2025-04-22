@@ -24,6 +24,14 @@ DefinitionBlock (
 {
   OperationRegion(GNVS, SystemMemory, 0xFFFF0000, 0xAA55)
 
+  Name (GPIC, Zero)
+
+  // _PIC: Interrupt Model
+  Method (_PIC, 1, NotSerialized)
+  {
+      GPIC = Arg0
+  }
+
   //
   // System Sleep States
   //
@@ -210,113 +218,363 @@ DefinitionBlock (
       // PCI Interrupt Routing Table - PIC Mode Only
       //
       Method (_PRT, 0, NotSerialized) {
-        Return (
-          Package () {
-            //
-            // Bus 0; Devices 0 to 15
-            //
-            Package () {0x0000FFFF, 0x00, \_SB.PCI0.LPC.LNKD, 0x00},
-            Package () {0x0000FFFF, 0x01, \_SB.PCI0.LPC.LNKA, 0x00},
-            Package () {0x0000FFFF, 0x02, \_SB.PCI0.LPC.LNKB, 0x00},
-            Package () {0x0000FFFF, 0x03, \_SB.PCI0.LPC.LNKC, 0x00},
+        If (GPIC) {
+          Return (AR00) // APIC Mode
+        }
+        Return (PR00) // PIC Mode
+      }
 
-            //
-            // Bus 0, Device 1, Pin 0 (INTA) is special; it corresponds to the
-            // internally generated SCI (System Control Interrupt), which is
-            // always routed to GSI 9. By setting the third (= Source) field to
-            // zero, we could use the fourth (= Source Index) field to hardwire
-            // the pin to GSI 9 directly.
-            //
-            // That way however, in accordance with the ACPI spec's description
-            // of SCI, the interrupt would be treated as "active low,
-            // shareable, level", and that doesn't match qemu.
-            //
-            // In QemuInstallAcpiMadtTable() [OvmfPkg/AcpiPlatformDxe/Qemu.c]
-            // we install an Interrupt Override Structure for the identity
-            // mapped IRQ#9 / GSI 9 (the corresponding bit being set in
-            // Pcd8259LegacyModeEdgeLevel), which describes the correct
-            // polarity (active high). As a consequence, some OS'en (eg. Linux)
-            // override the default (active low) polarity originating from the
-            // _PRT; others (eg. FreeBSD) don't. Therefore we need a separate
-            // link device just to specify a polarity that matches the MADT.
-            //
-            Package () {0x0001FFFF, 0x00, \_SB.PCI0.LPC.LNKS, 0x00},
+      Name (PR00, Package() {
+          Package () {0x000FFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x000FFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x000FFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x000FFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
 
-            Package () {0x0001FFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
-            Package () {0x0001FFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
-            Package () {0x0001FFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
+          //
+          // Bus 0, Device 1
+          //
+          Package () {0x0001FFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x0001FFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x0001FFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x0001FFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
 
-            Package () {0x0002FFFF, 0x00, \_SB.PCI0.LPC.LNKB, 0x00},
-            Package () {0x0002FFFF, 0x01, \_SB.PCI0.LPC.LNKC, 0x00},
-            Package () {0x0002FFFF, 0x02, \_SB.PCI0.LPC.LNKD, 0x00},
-            Package () {0x0002FFFF, 0x03, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x0002FFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x0002FFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x0002FFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x0002FFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
+          //
+          // Bus 0, Device 3
+          //
+          Package () {0x0003FFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x0003FFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x0003FFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x0003FFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
 
-            Package () {0x0003FFFF, 0x00, \_SB.PCI0.LPC.LNKC, 0x00},
-            Package () {0x0003FFFF, 0x01, \_SB.PCI0.LPC.LNKD, 0x00},
-            Package () {0x0003FFFF, 0x02, \_SB.PCI0.LPC.LNKA, 0x00},
-            Package () {0x0003FFFF, 0x03, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x0004FFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x0004FFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x0004FFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x0004FFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
 
-            Package () {0x0004FFFF, 0x00, \_SB.PCI0.LPC.LNKD, 0x00},
-            Package () {0x0004FFFF, 0x01, \_SB.PCI0.LPC.LNKA, 0x00},
-            Package () {0x0004FFFF, 0x02, \_SB.PCI0.LPC.LNKB, 0x00},
-            Package () {0x0004FFFF, 0x03, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x0005FFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x0005FFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x0005FFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x0005FFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
 
-            Package () {0x0005FFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
-            Package () {0x0005FFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
-            Package () {0x0005FFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
-            Package () {0x0005FFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
+          Package () {0x0006FFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x0006FFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x0006FFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x0006FFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
 
-            Package () {0x0006FFFF, 0x00, \_SB.PCI0.LPC.LNKB, 0x00},
-            Package () {0x0006FFFF, 0x01, \_SB.PCI0.LPC.LNKC, 0x00},
-            Package () {0x0006FFFF, 0x02, \_SB.PCI0.LPC.LNKD, 0x00},
-            Package () {0x0006FFFF, 0x03, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x0007FFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x0007FFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x0007FFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x0007FFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
 
-            Package () {0x0007FFFF, 0x00, \_SB.PCI0.LPC.LNKC, 0x00},
-            Package () {0x0007FFFF, 0x01, \_SB.PCI0.LPC.LNKD, 0x00},
-            Package () {0x0007FFFF, 0x02, \_SB.PCI0.LPC.LNKA, 0x00},
-            Package () {0x0007FFFF, 0x03, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x0008FFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x0008FFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x0008FFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x0008FFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
 
-            Package () {0x0008FFFF, 0x00, \_SB.PCI0.LPC.LNKD, 0x00},
-            Package () {0x0008FFFF, 0x01, \_SB.PCI0.LPC.LNKA, 0x00},
-            Package () {0x0008FFFF, 0x02, \_SB.PCI0.LPC.LNKB, 0x00},
-            Package () {0x0008FFFF, 0x03, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x0009FFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x0009FFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x0009FFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x0009FFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
 
-            Package () {0x0009FFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
-            Package () {0x0009FFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
-            Package () {0x0009FFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
-            Package () {0x0009FFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
+          Package () {0x000AFFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x000AFFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x000AFFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x000AFFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
 
-            Package () {0x000AFFFF, 0x00, \_SB.PCI0.LPC.LNKB, 0x00},
-            Package () {0x000AFFFF, 0x01, \_SB.PCI0.LPC.LNKC, 0x00},
-            Package () {0x000AFFFF, 0x02, \_SB.PCI0.LPC.LNKD, 0x00},
-            Package () {0x000AFFFF, 0x03, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x000BFFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x000BFFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x000BFFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x000BFFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
 
-            Package () {0x000BFFFF, 0x00, \_SB.PCI0.LPC.LNKC, 0x00},
-            Package () {0x000BFFFF, 0x01, \_SB.PCI0.LPC.LNKD, 0x00},
-            Package () {0x000BFFFF, 0x02, \_SB.PCI0.LPC.LNKA, 0x00},
-            Package () {0x000BFFFF, 0x03, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x000CFFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x000CFFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x000CFFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x000CFFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
 
-            Package () {0x000CFFFF, 0x00, \_SB.PCI0.LPC.LNKD, 0x00},
-            Package () {0x000CFFFF, 0x01, \_SB.PCI0.LPC.LNKA, 0x00},
-            Package () {0x000CFFFF, 0x02, \_SB.PCI0.LPC.LNKB, 0x00},
-            Package () {0x000CFFFF, 0x03, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x000DFFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x000DFFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x000DFFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x000DFFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
 
-            Package () {0x000DFFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
-            Package () {0x000DFFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
-            Package () {0x000DFFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
-            Package () {0x000DFFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
+          Package () {0x000EFFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x000EFFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x000EFFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x000EFFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
 
-            Package () {0x000EFFFF, 0x00, \_SB.PCI0.LPC.LNKB, 0x00},
-            Package () {0x000EFFFF, 0x01, \_SB.PCI0.LPC.LNKC, 0x00},
-            Package () {0x000EFFFF, 0x02, \_SB.PCI0.LPC.LNKD, 0x00},
-            Package () {0x000EFFFF, 0x03, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x000FFFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x000FFFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x000FFFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x000FFFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
 
-            Package () {0x000FFFFF, 0x00, \_SB.PCI0.LPC.LNKC, 0x00},
-            Package () {0x000FFFFF, 0x01, \_SB.PCI0.LPC.LNKD, 0x00},
-            Package () {0x000FFFFF, 0x02, \_SB.PCI0.LPC.LNKA, 0x00},
-            Package () {0x000FFFFF, 0x03, \_SB.PCI0.LPC.LNKB, 0x00}
-          }
-        )
+          Package () {0x00010FFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x00010FFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x00010FFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x00010FFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
+
+          Package () {0x00011FFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x00011FFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x00011FFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x00011FFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
+
+          Package () {0x00012FFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x00012FFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x00012FFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x00012FFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
+
+          Package () {0x00013FFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x00013FFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x00013FFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x00013FFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
+
+          Package () {0x00014FFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x00014FFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x00014FFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x00014FFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
+
+          Package () {0x00015FFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x00015FFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x00015FFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x00015FFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
+
+          Package () {0x00016FFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x00016FFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x00016FFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x00016FFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
+
+          Package () {0x00017FFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x00017FFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x00017FFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x00017FFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
+
+          Package () {0x00018FFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x00018FFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x00018FFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x00018FFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
+
+          Package () {0x0001EFFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x0001EFFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x0001EFFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x0001EFFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
+
+          Package () {0x00019FFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x00019FFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x00019FFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x00019FFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
+
+          Package () {0x0001AFFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x0001AFFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x0001AFFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x0001AFFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
+
+          Package () {0x0001BFFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x0001BFFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x0001BFFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x0001BFFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
+
+          Package () {0x0001CFFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x0001CFFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x0001CFFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x0001CFFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
+
+          Package () {0x0001DFFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x0001DFFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x0001DFFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x0001DFFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
+
+          Package () {0x0001FFFFF, 0x00, \_SB.PCI0.LPC.LNKA, 0x00},
+          Package () {0x0001FFFFF, 0x01, \_SB.PCI0.LPC.LNKB, 0x00},
+          Package () {0x0001FFFFF, 0x02, \_SB.PCI0.LPC.LNKC, 0x00},
+          Package () {0x0001FFFFF, 0x03, \_SB.PCI0.LPC.LNKD, 0x00},
+      })
+
+      Name(AR00, Package(){
+
+          Package () {0x000FFFF, 0x00, 0, 16},
+          Package () {0x000FFFF, 0x01, 0, 17},
+          Package () {0x000FFFF, 0x02, 0, 18},
+          Package () {0x000FFFF, 0x03, 0, 19},
+
+          //
+          // Bus 0, Device 1
+          //
+          Package () {0x0001FFFF, 0x00, 0, 16},
+          Package () {0x0001FFFF, 0x01, 0, 17},
+          Package () {0x0001FFFF, 0x02, 0, 18},
+          Package () {0x0001FFFF, 0x03, 0, 19},
+
+          Package () {0x0002FFFF, 0x00, 0, 16},
+          Package () {0x0002FFFF, 0x01, 0, 17},
+          Package () {0x0002FFFF, 0x02, 0, 18},
+          Package () {0x0002FFFF, 0x03, 0, 19},
+          //
+          // Bus 0, Device 3
+          //
+          Package () {0x0003FFFF, 0x00, 0, 16},
+          Package () {0x0003FFFF, 0x01, 0, 17},
+          Package () {0x0003FFFF, 0x02, 0, 18},
+          Package () {0x0003FFFF, 0x03, 0, 19},
+
+          Package () {0x0004FFFF, 0x00, 0, 16},
+          Package () {0x0004FFFF, 0x01, 0, 17},
+          Package () {0x0004FFFF, 0x02, 0, 18},
+          Package () {0x0004FFFF, 0x03, 0, 19},
+
+          Package () {0x0005FFFF, 0x00, 0, 16},
+          Package () {0x0005FFFF, 0x01, 0, 17},
+          Package () {0x0005FFFF, 0x02, 0, 18},
+          Package () {0x0005FFFF, 0x03, 0, 19},
+
+          Package () {0x0006FFFF, 0x00, 0, 16},
+          Package () {0x0006FFFF, 0x01, 0, 17},
+          Package () {0x0006FFFF, 0x02, 0, 18},
+          Package () {0x0006FFFF, 0x03, 0, 19},
+
+          Package () {0x0007FFFF, 0x00, 0, 16},
+          Package () {0x0007FFFF, 0x01, 0, 17},
+          Package () {0x0007FFFF, 0x02, 0, 18},
+          Package () {0x0007FFFF, 0x03, 0, 19},
+
+          Package () {0x0008FFFF, 0x00, 0, 16},
+          Package () {0x0008FFFF, 0x01, 0, 17},
+          Package () {0x0008FFFF, 0x02, 0, 18},
+          Package () {0x0008FFFF, 0x03, 0, 19},
+
+          Package () {0x0009FFFF, 0x00, 0, 16},
+          Package () {0x0009FFFF, 0x01, 0, 17},
+          Package () {0x0009FFFF, 0x02, 0, 18},
+          Package () {0x0009FFFF, 0x03, 0, 19},
+
+          Package () {0x000AFFFF, 0x00, 0, 16},
+          Package () {0x000AFFFF, 0x01, 0, 17},
+          Package () {0x000AFFFF, 0x02, 0, 18},
+          Package () {0x000AFFFF, 0x03, 0, 19},
+
+          Package () {0x000BFFFF, 0x00, 0, 16},
+          Package () {0x000BFFFF, 0x01, 0, 17},
+          Package () {0x000BFFFF, 0x02, 0, 18},
+          Package () {0x000BFFFF, 0x03, 0, 19},
+
+          Package () {0x000CFFFF, 0x00, 0, 16},
+          Package () {0x000CFFFF, 0x01, 0, 17},
+          Package () {0x000CFFFF, 0x02, 0, 18},
+          Package () {0x000CFFFF, 0x03, 0, 19},
+
+          Package () {0x000DFFFF, 0x00, 0, 16},
+          Package () {0x000DFFFF, 0x01, 0, 17},
+          Package () {0x000DFFFF, 0x02, 0, 18},
+          Package () {0x000DFFFF, 0x03, 0, 19},
+
+          Package () {0x000EFFFF, 0x00, 0, 16},
+          Package () {0x000EFFFF, 0x01, 0, 17},
+          Package () {0x000EFFFF, 0x02, 0, 18},
+          Package () {0x000EFFFF, 0x03, 0, 19},
+
+          Package () {0x000FFFFF, 0x00, 0, 16},
+          Package () {0x000FFFFF, 0x01, 0, 17},
+          Package () {0x000FFFFF, 0x02, 0, 18},
+          Package () {0x000FFFFF, 0x03, 0, 19},
+
+          Package () {0x00010FFFF, 0x00, 0, 16},
+          Package () {0x00010FFFF, 0x01, 0, 17},
+          Package () {0x00010FFFF, 0x02, 0, 18},
+          Package () {0x00010FFFF, 0x03, 0, 19},
+
+          Package () {0x00011FFFF, 0x00, 0, 16},
+          Package () {0x00011FFFF, 0x01, 0, 17},
+          Package () {0x00011FFFF, 0x02, 0, 18},
+          Package () {0x00011FFFF, 0x03, 0, 19},
+
+          Package () {0x00012FFFF, 0x00, 0, 16},
+          Package () {0x00012FFFF, 0x01, 0, 17},
+          Package () {0x00012FFFF, 0x02, 0, 18},
+          Package () {0x00012FFFF, 0x03, 0, 19},
+
+          Package () {0x00013FFFF, 0x00, 0, 16},
+          Package () {0x00013FFFF, 0x01, 0, 17},
+          Package () {0x00013FFFF, 0x02, 0, 18},
+          Package () {0x00013FFFF, 0x03, 0, 19},
+
+          Package () {0x00014FFFF, 0x00, 0, 16},
+          Package () {0x00014FFFF, 0x01, 0, 17},
+          Package () {0x00014FFFF, 0x02, 0, 18},
+          Package () {0x00014FFFF, 0x03, 0, 19},
+
+          Package () {0x00015FFFF, 0x00, 0, 16},
+          Package () {0x00015FFFF, 0x01, 0, 17},
+          Package () {0x00015FFFF, 0x02, 0, 18},
+          Package () {0x00015FFFF, 0x03, 0, 19},
+
+          Package () {0x00016FFFF, 0x00, 0, 16},
+          Package () {0x00016FFFF, 0x01, 0, 17},
+          Package () {0x00016FFFF, 0x02, 0, 18},
+          Package () {0x00016FFFF, 0x03, 0, 19},
+
+          Package () {0x00017FFFF, 0x00, 0, 16},
+          Package () {0x00017FFFF, 0x01, 0, 17},
+          Package () {0x00017FFFF, 0x02, 0, 18},
+          Package () {0x00017FFFF, 0x03, 0, 19},
+
+          Package () {0x00018FFFF, 0x00, 0, 16},
+          Package () {0x00018FFFF, 0x01, 0, 17},
+          Package () {0x00018FFFF, 0x02, 0, 18},
+          Package () {0x00018FFFF, 0x03, 0, 19},
+
+          Package () {0x0001EFFFF, 0x00, 0, 16},
+          Package () {0x0001EFFFF, 0x01, 0, 17},
+          Package () {0x0001EFFFF, 0x02, 0, 18},
+          Package () {0x0001EFFFF, 0x03, 0, 19},
+
+          Package () {0x00019FFFF, 0x00, 0, 16},
+          Package () {0x00019FFFF, 0x01, 0, 17},
+          Package () {0x00019FFFF, 0x02, 0, 18},
+          Package () {0x00019FFFF, 0x03, 0, 19},
+
+          Package () {0x0001AFFFF, 0x00, 0, 16},
+          Package () {0x0001AFFFF, 0x01, 0, 17},
+          Package () {0x0001AFFFF, 0x02, 0, 18},
+          Package () {0x0001AFFFF, 0x03, 0, 19},
+
+          Package () {0x0001BFFFF, 0x00, 0, 16},
+          Package () {0x0001BFFFF, 0x01, 0, 17},
+          Package () {0x0001BFFFF, 0x02, 0, 18},
+          Package () {0x0001BFFFF, 0x03, 0, 19},
+
+          Package () {0x0001CFFFF, 0x00, 0, 16},
+          Package () {0x0001CFFFF, 0x01, 0, 17},
+          Package () {0x0001CFFFF, 0x02, 0, 18},
+          Package () {0x0001CFFFF, 0x03, 0, 19},
+
+          Package () {0x0001DFFFF, 0x00, 0, 16},
+          Package () {0x0001DFFFF, 0x01, 0, 17},
+          Package () {0x0001DFFFF, 0x02, 0, 18},
+          Package () {0x0001DFFFF, 0x03, 0, 19},
+
+          Package () {0x0001FFFFF, 0x00, 0, 16},
+          Package () {0x0001FFFFF, 0x01, 0, 17},
+          Package () {0x0001FFFFF, 0x02, 0, 18},
+          Package () {0x0001FFFFF, 0x03, 0, 19},
+      })
+
+      Device(PDRC)  // PCI Device Resource Consumption
+      {
+        Name(_HID,EISAID("PNP0C02"))
+        Name(_UID,1)
+
+        Name(BUF0,ResourceTemplate()
+        {
+          Memory32Fixed (ReadWrite,  0xE0000000, 0x10000000)    // MMCFG
+          Memory32Fixed (ReadWrite,  0xFED1C000, 0x1000)        // RCRB BAR
+          Memory32Fixed (ReadWrite,  0xFEE00000, 0x100000)      // LAPIC
+        })
+
+        Method(_CRS,0,Serialized)
+        {
+            Return(BUF0)
+        }
       }
 
       //
@@ -598,14 +856,11 @@ DefinitionBlock (
             IO (Decode16, 0x278, 0x278, 0x00, 0x08)
             IO (Decode16, 0x370, 0x370, 0x00, 0x02)
             IO (Decode16, 0x378, 0x378, 0x00, 0x08)
-            IO (Decode16, 0x440, 0x440, 0x00, 0x10)
             IO (Decode16, 0x678, 0x678, 0x00, 0x08)
             IO (Decode16, 0x778, 0x778, 0x00, 0x08)
             IO (Decode16, 0x800, 0x800, 0x00, 0x01)
             IO (Decode16, 0xafe0, 0xafe0, 0x00, 0x04)      // QEMU GPE0 BLK
             IO (Decode16, 0xb000, 0xb000, 0x00, 0x40)      // PMBLK1
-            Memory32Fixed (ReadOnly, 0xFEC00000, 0x1000)   // IO APIC
-            Memory32Fixed (ReadOnly, 0xFEE00000, 0x100000) // LAPIC
           })
         }
 

@@ -34,18 +34,20 @@ GetBootMediaType (
 {
   EFI_HOB_GUID_TYPE              *GuidHob;
   CURRENT_BOOT_MEDIA             *BootMediaData;
-  LOADER_GLOBAL_DATA             *LdrGlobal;
+  VOID                           *FspHobList;
   S3_DATA                        *S3Data;
 
-  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
-
-  S3Data = (S3_DATA *)LdrGlobal->S3DataPtr;
-  if (LdrGlobal->BootMode == BOOT_ON_S3_RESUME) {
+  S3Data = (S3_DATA *)GetS3DataPtr ();
+  if (GetBootMode () == BOOT_ON_S3_RESUME) {
     *BootMediaType = S3Data->BootMediaType;
     return EFI_SUCCESS;
   }
 
-  GuidHob = GetNextGuidHob(&gEfiBootMediaHobGuid, LdrGlobal->FspHobList);
+  GuidHob = NULL;
+  FspHobList = GetFspHobListPtr ();
+  if (FspHobList != NULL) {
+    GuidHob = GetNextGuidHob (&gEfiBootMediaHobGuid, FspHobList);
+  }
   ASSERT (GuidHob != NULL);
   BootMediaData = (CURRENT_BOOT_MEDIA *)GET_GUID_HOB_DATA (GuidHob);
 
@@ -75,19 +77,20 @@ GetBootPartition (
 {
   EFI_HOB_GUID_TYPE              *GuidHob;
   CURRENT_BOOT_MEDIA             *BootMediaData;
-  LOADER_GLOBAL_DATA             *LdrGlobal;
+  VOID                           *FspHobList;
   S3_DATA                        *S3Data;
 
-  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
-
-  S3Data = (S3_DATA *)LdrGlobal->S3DataPtr;
-
-  if (LdrGlobal->BootMode == BOOT_ON_S3_RESUME) {
+  S3Data = (S3_DATA *)GetS3DataPtr ();
+  if (GetBootMode () == BOOT_ON_S3_RESUME) {
     *BootPartition = S3Data->BootPartition;
     return EFI_SUCCESS;
   }
 
-  GuidHob = GetNextGuidHob(&gEfiBootMediaHobGuid, LdrGlobal->FspHobList);
+  GuidHob = NULL;
+  FspHobList = GetFspHobListPtr ();
+  if (FspHobList != NULL) {
+    GuidHob = GetNextGuidHob(&gEfiBootMediaHobGuid, FspHobList);
+  }
   ASSERT (GuidHob != NULL);
   BootMediaData = (CURRENT_BOOT_MEDIA *)GET_GUID_HOB_DATA (GuidHob);
 

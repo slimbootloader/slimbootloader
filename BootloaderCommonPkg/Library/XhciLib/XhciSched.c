@@ -2,13 +2,15 @@
 PEIM to produce gPeiUsb2HostControllerPpiGuid based on gPeiUsbControllerPpiGuid
 which is used to enable recovery function from USB Drivers.
 
-Copyright (c) 2014 - 2017, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2014 - 2022, Intel Corporation. All rights reserved.<BR>
 
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
 #include "XhcPeim.h"
+
+#define XHC_INIT_DEVICE_SLOT_RETRIES  1
 
 /**
   Create a command transfer TRB to support XHCI command interfaces.
@@ -291,10 +293,15 @@ XhcPeiCreateTransferTrb (
       TrbStart->TrbCtrSetup.IOC           = 1;
       TrbStart->TrbCtrSetup.IDT           = 1;
       TrbStart->TrbCtrSetup.Type          = TRB_TYPE_SETUP_STAGE;
-      if (Urb->Ep.Direction == EfiUsbDataIn) {
-        TrbStart->TrbCtrSetup.TRT = 3;
-      } else if (Urb->Ep.Direction == EfiUsbDataOut) {
-        TrbStart->TrbCtrSetup.TRT = 2;
+      if (Urb->DataLen > 0) {
+        if (Urb->Ep.Direction == EfiUsbDataIn) {
+          TrbStart->TrbCtrSetup.TRT = 3;
+        } else if (Urb->Ep.Direction == EfiUsbDataOut) {
+          TrbStart->TrbCtrSetup.TRT = 2;
+        } else {
+          DEBUG ((DEBUG_ERROR, "XhcPeiCreateTransferTrb: Direction sholud be IN or OUT when Data exists!\n"));
+          ASSERT (FALSE);
+        }
       } else {
         TrbStart->TrbCtrSetup.TRT = 0;
       }
@@ -693,7 +700,7 @@ XhcPeiCheckUrbResult (
         goto EXIT;
 
       case TRB_COMPLETION_USB_TRANSACTION_ERROR:
-        CheckedUrb->Result  |= EFI_USB_ERR_TIMEOUT;
+        CheckedUrb->Result  |= EDKII_USB_ERR_TRANSACTION;
         CheckedUrb->Finished = TRUE;
         DEBUG ((DEBUG_ERROR, "XhcPeiCheckUrbResult: TRANSACTION_ERROR! Completecode = %x\n", EvtTrb->Completecode));
         goto EXIT;
@@ -785,11 +792,10 @@ XhcPeiExecTransfer (
   )
 {
   EFI_STATUS    Status;
-  UINTN         Index;
-  UINT64        Loop;
   UINT8         SlotId;
   UINT8         Dci;
   BOOLEAN       Finished;
+  UINT64        EndTimeStamp;
 
   if (CmdTransfer) {
     SlotId = 0;
@@ -803,14 +809,17 @@ XhcPeiExecTransfer (
   }
 
   Status = EFI_SUCCESS;
-  Loop   = Timeout * XHC_1_MILLISECOND;
-  if (Timeout == 0) {
-    Loop = 0xFFFFFFFF;
-  }
 
   XhcPeiRingDoorBell (Xhc, SlotId, Dci);
 
-  for (Index = 0; Index < Loop; Index++) {
+  if (Timeout == 0) {
+    EndTimeStamp = MAX_UINT64;
+  } else {
+    EndTimeStamp = ReadTimeStamp() + MicroSecondToTimeStampTick (Timeout * XHC_1_MILLISECOND);
+  }
+
+  Finished = FALSE;
+  while (ReadTimeStamp() < EndTimeStamp) {
     Finished = XhcPeiCheckUrbResult (Xhc, Urb);
     if (Finished) {
       break;
@@ -818,7 +827,7 @@ XhcPeiExecTransfer (
     MicroSecondDelay (XHC_1_MICROSECOND);
   }
 
-  if (Index == Loop) {
+  if (!Finished) {
     Urb->Result = EFI_USB_ERR_TIMEOUT;
     Status      = EFI_TIMEOUT;
   } else if (Urb->Result != EFI_USB_NOERROR) {
@@ -851,11 +860,13 @@ XhcPeiPollPortStatusChange (
   EFI_STATUS        Status;
   UINT8             Speed;
   UINT8             SlotId;
+  UINT8             Retries;
   USB_DEV_ROUTE     RouteChart;
 
   DEBUG ((DEBUG_INFO, "XhcPeiPollPortStatusChange: PortChangeStatus: %x PortStatus: %x\n", PortState->PortChangeStatus, PortState->PortStatus));
 
   Status = EFI_SUCCESS;
+  Retries = XHC_INIT_DEVICE_SLOT_RETRIES;
 
   if ((PortState->PortChangeStatus & (USB_PORT_STAT_C_CONNECTION | USB_PORT_STAT_C_ENABLE | USB_PORT_STAT_C_OVERCURRENT | USB_PORT_STAT_C_RESET)) == 0) {
     return EFI_SUCCESS;
@@ -897,17 +908,28 @@ XhcPeiPollPortStatusChange (
     } else if ((PortState->PortStatus & USB_PORT_STAT_SUPER_SPEED) != 0) {
       Speed = EFI_USB_SPEED_SUPER;
     }
-    //
-    // Execute Enable_Slot cmd for attached device, initialize device context and assign device address.
-    //
-    SlotId = XhcPeiRouteStringToSlotId (Xhc, RouteChart);
-    if ((SlotId == 0) && ((PortState->PortChangeStatus & USB_PORT_STAT_C_RESET) != 0)) {
-      if (Xhc->HcCParams.Data.Csz == 0) {
-        Status = XhcPeiInitializeDeviceSlot (Xhc, ParentRouteChart, Port, RouteChart, Speed);
-      } else {
-        Status = XhcPeiInitializeDeviceSlot64 (Xhc, ParentRouteChart, Port, RouteChart, Speed);
+
+    do {
+      //
+      // Execute Enable_Slot cmd for attached device, initialize device context and assign device address.
+      //
+      SlotId = XhcPeiRouteStringToSlotId (Xhc, RouteChart);
+      if ((SlotId == 0) && ((PortState->PortChangeStatus & USB_PORT_STAT_C_RESET) != 0)) {
+        if (Xhc->HcCParams.Data.Csz == 0) {
+          Status = XhcPeiInitializeDeviceSlot (Xhc, ParentRouteChart, Port, RouteChart, Speed);
+        } else {
+          Status = XhcPeiInitializeDeviceSlot64 (Xhc, ParentRouteChart, Port, RouteChart, Speed);
+        }
       }
-    }
+      //
+      // According to the xHCI specification (section 4.6.5), "a USB Transaction
+      // Error Completion Code for an Address Device Command may be due to a Stall
+      // response from a device. Software should issue a Disable Slot Command for
+      // the Device Slot then an Enable Slot Command to recover from this error."
+      // Therefore, retry the device slot initialization if it fails due to a
+      // device error.
+      //
+    } while ((Status == EFI_DEVICE_ERROR) && (Retries-- != 0));
   }
 
   return Status;
@@ -1027,6 +1049,26 @@ XhcPeiRingDoorBell (
   } else {
     XhcPeiWriteDoorBellReg (Xhc, SlotId * sizeof (UINT32), Dci);
   }
+}
+
+/**
+  Set Command abort
+
+  @param  Xhc           The XHCI Instance.
+  @param  SlotId        The slot id to be disabled.
+
+**/
+VOID
+XhcCmdRingCmdAbort (
+  IN PEI_XHC_DEV        *Xhc,
+  IN UINT8              SlotId
+  )
+{
+  //
+  // Set XHC_CRCR_CA bit in XHC_CRCR_OFFSET to abort command.
+  //
+  DEBUG ((DEBUG_INFO, "Command Ring Control set Command Abort, SlotId: %d\n", SlotId));
+  XhcPeiSetOpRegBit (Xhc, XHC_CRCR_OFFSET, XHC_CRCR_CA);
 }
 
 /**
@@ -1234,6 +1276,16 @@ XhcPeiInitializeDeviceSlot (
     DeviceAddress = (UINT8) OutputContext->Slot.DeviceAddress;
     DEBUG ((DEBUG_INFO, "XhcPeiInitializeDeviceSlot: Address %d assigned successfully\n", DeviceAddress));
     Xhc->UsbDevContext[SlotId].XhciDevAddr = DeviceAddress;
+  } else {
+    DEBUG ((DEBUG_INFO, "    Address %d assigned unsuccessfully\n"));
+    //
+    // Software may abort the execution of Address Device Command when command failed
+    // due to timeout by following XHCI spec. 4.6.1.2.
+    //
+    if (Status == EFI_TIMEOUT) {
+      XhcCmdRingCmdAbort (Xhc, SlotId);
+    }
+    XhcPeiDisableSlotCmd (Xhc, SlotId);
   }
 
   DEBUG ((DEBUG_INFO, "XhcPeiInitializeDeviceSlot: Enable Slot, Status = %r\n", Status));
@@ -1445,6 +1497,16 @@ XhcPeiInitializeDeviceSlot64 (
     DeviceAddress = (UINT8) OutputContext->Slot.DeviceAddress;
     DEBUG ((DEBUG_INFO, "XhcPeiInitializeDeviceSlot64: Address %d assigned successfully\n", DeviceAddress));
     Xhc->UsbDevContext[SlotId].XhciDevAddr = DeviceAddress;
+  } else {
+    DEBUG ((DEBUG_INFO, "    Address %d assigned unsuccessfully\n"));
+    //
+    // Software may abort the execution of Address Device Command when command failed
+    // due to timeout by following XHCI spec. 4.6.1.2.
+    //
+    if (Status == EFI_TIMEOUT) {
+      XhcCmdRingCmdAbort (Xhc, SlotId);
+    }
+    XhcPeiDisableSlotCmd64 (Xhc, SlotId);
   }
 
   DEBUG ((DEBUG_INFO, "XhcPeiInitializeDeviceSlot64: Enable Slot, Status = %r\n", Status));
@@ -1715,6 +1777,9 @@ XhcPeiSetConfigCmd (
     }
 
     NumEp = IfDesc->NumEndpoints;
+    if ((NumEp == 0) && (MaxDci == 0)) {
+      MaxDci = 1;
+    }
 
     EpDesc = (USB_ENDPOINT_DESCRIPTOR *) (IfDesc + 1);
     for (EpIndex = 0; EpIndex < NumEp; EpIndex++) {
@@ -1931,6 +1996,9 @@ XhcPeiSetConfigCmd64 (
     }
 
     NumEp = IfDesc->NumEndpoints;
+    if ((NumEp == 0) && (MaxDci == 0)) {
+      MaxDci = 1;
+    }
 
     EpDesc = (USB_ENDPOINT_DESCRIPTOR *) (IfDesc + 1);
     for (EpIndex = 0; EpIndex < NumEp; EpIndex++) {
@@ -2117,6 +2185,7 @@ XhcPeiEvaluateContext (
   CMD_TRB_EVALUATE_CONTEXT      CmdTrbEvalu;
   EVT_TRB_COMMAND_COMPLETION    *EvtTrb;
   INPUT_CONTEXT                 *InputContext;
+  DEVICE_CONTEXT                *OutputContext;
   EFI_PHYSICAL_ADDRESS          PhyAddr;
 
   ASSERT (Xhc->UsbDevContext[SlotId].SlotId != 0);
@@ -2125,10 +2194,14 @@ XhcPeiEvaluateContext (
   // 4.6.7 Evaluate Context
   //
   InputContext = Xhc->UsbDevContext[SlotId].InputContext;
+  OutputContext = Xhc->UsbDevContext[SlotId].OutputContext;
   ZeroMem (InputContext, sizeof (INPUT_CONTEXT));
+
+  CopyMem (&InputContext->EP[0], &OutputContext->EP[0], sizeof (ENDPOINT_CONTEXT));
 
   InputContext->InputControlContext.Dword2 |= BIT1;
   InputContext->EP[0].MaxPacketSize         = MaxPacketSize;
+  InputContext->EP[0].EPState               = 0;
 
   ZeroMem (&CmdTrbEvalu, sizeof (CmdTrbEvalu));
   PhyAddr = UsbHcGetPciAddrForHostAddr (Xhc->MemPool, InputContext, sizeof (INPUT_CONTEXT));
@@ -2171,6 +2244,7 @@ XhcPeiEvaluateContext64 (
   CMD_TRB_EVALUATE_CONTEXT      CmdTrbEvalu;
   EVT_TRB_COMMAND_COMPLETION    *EvtTrb;
   INPUT_CONTEXT_64              *InputContext;
+  DEVICE_CONTEXT_64             *OutputContext;
   EFI_PHYSICAL_ADDRESS          PhyAddr;
 
   ASSERT (Xhc->UsbDevContext[SlotId].SlotId != 0);
@@ -2179,10 +2253,14 @@ XhcPeiEvaluateContext64 (
   // 4.6.7 Evaluate Context
   //
   InputContext = Xhc->UsbDevContext[SlotId].InputContext;
+  OutputContext = Xhc->UsbDevContext[SlotId].OutputContext;
   ZeroMem (InputContext, sizeof (INPUT_CONTEXT_64));
+
+  CopyMem (&InputContext->EP[0], &OutputContext->EP[0], sizeof (ENDPOINT_CONTEXT_64));
 
   InputContext->InputControlContext.Dword2 |= BIT1;
   InputContext->EP[0].MaxPacketSize         = MaxPacketSize;
+  InputContext->EP[0].EPState               = 0;
 
   ZeroMem (&CmdTrbEvalu, sizeof (CmdTrbEvalu));
   PhyAddr = UsbHcGetPciAddrForHostAddr (Xhc->MemPool, InputContext, sizeof (INPUT_CONTEXT_64));
@@ -2833,6 +2911,7 @@ XhcPeiInitSched (
   UINT32                Index;
   UINTN                 *ScratchEntryMap;
   EFI_STATUS            Status;
+  ScratchBuf = NULL;
 
   //
   // Initialize memory management.

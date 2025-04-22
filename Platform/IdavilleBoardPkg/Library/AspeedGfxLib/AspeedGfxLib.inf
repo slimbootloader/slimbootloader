@@ -1,0 +1,43 @@
+
+### @file
+#
+#  Copyright (c) 2021, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION          = 0x00010005
+  BASE_NAME            = AspeedGfxLib
+  FILE_GUID            = 54F6C807-3698-46FB-A3C2-F241A776B9DD
+  MODULE_TYPE          = BASE
+  VERSION_STRING       = 1.0
+  LIBRARY_CLASS        = AspeedGfxLib
+
+[Sources]
+  AspeedGfxLib.c
+  AspeedGfxInternal.c
+  ast_main.c
+  ast_mode.c
+  ast_post.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Platform/IdavilleBoardPkg/IdavilleBoardPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  HobLib
+  BaseMemoryLib
+  MemoryAllocationLib
+  IoLib
+
+[Guids]
+
+[Pcd]
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+
+[BuildOptions]
+  *_*_*_CC_FLAGS   = -D_SLIMBOOTLOADER

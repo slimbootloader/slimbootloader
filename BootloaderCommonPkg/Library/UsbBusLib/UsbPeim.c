@@ -204,6 +204,8 @@ PeiHubEnumeration (
         NewPeiUsbDevice->Tier             = (UINT8) (PeiUsbDevice->Tier + 1);
         NewPeiUsbDevice->IsHub            = 0x0;
         NewPeiUsbDevice->DownStreamPortNo = 0x0;
+        NewPeiUsbDevice->Port             = (UINT8)Index;
+        NewPeiUsbDevice->Parent           = &PeiUsbDevice->UsbIoPpi;
 
         if (((PortStatus.PortChangeStatus & USB_PORT_STAT_C_RESET) == 0) ||
             ((PortStatus.PortStatus & (USB_PORT_STAT_CONNECTION | USB_PORT_STAT_ENABLE)) == 0)) {
@@ -432,6 +434,8 @@ PeiUsbEnumeration (
         PeiUsbDevice->Usb2HcPpi         = Usb2HcPpi;
         PeiUsbDevice->IsHub             = 0x0;
         PeiUsbDevice->DownStreamPortNo  = 0x0;
+        PeiUsbDevice->Port              = Index;
+        PeiUsbDevice->Parent            = NULL;
 
         if (((PortStatus.PortChangeStatus & USB_PORT_STAT_C_RESET) == 0) ||
             ((PortStatus.PortStatus & (USB_PORT_STAT_CONNECTION | USB_PORT_STAT_ENABLE)) == 0)) {
@@ -591,6 +595,10 @@ PeiConfigureUsbDevice (
   EFI_STATUS                  Status;
   PEI_USB_IO_PPI              *UsbIoPpi;
   UINT8                       Retry;
+  UINT8                       StrLoop;
+  UINT32                      StrOffset;
+  UINT32                      WcharCnt;
+  EFI_USB_STRING_DESCRIPTOR  *StringDescriptor;
 
   UsbIoPpi = &PeiUsbDevice->UsbIoPpi;
   Status   = EFI_SUCCESS;
@@ -657,6 +665,32 @@ PeiConfigureUsbDevice (
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "PeiUsbGetDescriptor First Failed\n"));
     return Status;
+  }
+
+  //
+  // Get manufacturer and product name string
+  //
+  PeiUsbDevice->ProductName[0] = 0;
+  for (StrLoop = 0; StrLoop < 2; StrLoop++) {
+    Status = PeiUsbGetDescriptor (
+               PeiServices,
+               UsbIoPpi,
+               (USB_DT_STRING << 8) |
+                 ((StrLoop == 0) ? DeviceDescriptor.StrManufacturer : DeviceDescriptor.StrProduct),
+               0x0409,
+               (UINT16) sizeof (PeiUsbDevice->ConfigurationData),
+               PeiUsbDevice->ConfigurationData
+               );
+    if (!EFI_ERROR (Status)) {
+      StringDescriptor = (EFI_USB_STRING_DESCRIPTOR *)PeiUsbDevice->ConfigurationData;
+      StrOffset = OFFSET_OF(EFI_USB_STRING_DESCRIPTOR, String);
+      if (StringDescriptor->Length > StrOffset) {
+        WcharCnt = ARRAY_SIZE(PeiUsbDevice->ProductName) - 1;
+        StrnCatS (PeiUsbDevice->ProductName, WcharCnt,
+                  StringDescriptor->String,  (StringDescriptor->Length - StrOffset) / sizeof(CHAR16));
+        StrCatS  (PeiUsbDevice->ProductName, WcharCnt, L" ");
+      }
+    }
   }
 
   //
@@ -876,7 +910,7 @@ GetExpectedDescriptor (
 
     DescriptorHeader  = (UINT16) (*Ptr + ((* (Ptr + 1)) << 8));
 
-    Len               = Buffer[0];
+    Len               = Buffer[Parsed];
 
     //
     // Check to see if it is a start of expected descriptor
@@ -1197,4 +1231,38 @@ UsbDeinitDevice (
   FreePages (PeiUsbDev, MemPages);
 
   return EFI_SUCCESS;
+}
+
+
+/**
+  Retrieve the concatenated manufacturer and product string for a given USB device.
+
+  @param[in]  UsbIo for a USB device.
+
+  @retval     The constant manufacturer and product string.
+              NULL if UsbIo is not valid.
+
+**/
+CONST
+CHAR16 *
+EFIAPI
+GetUsbDeviceNameString (
+  IN PEI_USB_IO_PPI  *UsbIo
+  )
+{
+  PEI_USB_IO_PPI   *This;
+  PEI_USB_DEVICE   *PeiUsbDev;
+
+  if (UsbIo == NULL) {
+    return NULL;
+  }
+
+  This = (PEI_USB_IO_PPI *)UsbIo;
+  PeiUsbDev = PEI_USB_DEVICE_FROM_THIS (This);
+
+  if (PeiUsbDev->ProductName[0] == 0) {
+    return NULL;
+  } else {
+    return PeiUsbDev->ProductName;
+  }
 }

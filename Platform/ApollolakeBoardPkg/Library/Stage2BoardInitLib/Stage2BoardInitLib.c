@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017-2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017-2023, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -153,8 +153,11 @@ InitializeSmbiosInfo (
   Index         = 0;
   PlatformId    = GetPlatformId ();
   TempSmbiosStrTbl  = (SMBIOS_TYPE_STRINGS *) AllocateTemporaryMemory (0);
-  VerInfoTbl    = GetLoaderGlobalDataPointer()->VerInfoPtr;
-
+  VerInfoTbl    = GetVerInfoPtr ();
+  if (TempSmbiosStrTbl == NULL) {
+    DEBUG ((DEBUG_ERROR, "TempSmbiosStrTbl allocation failed\n"));
+    return EFI_OUT_OF_RESOURCES;
+  }
   //
   // SMBIOS_TYPE_BIOS_INFORMATION
   //
@@ -681,75 +684,16 @@ RestoreOtgRole (
 }
 
 /**
-  Set framebuffer range as WC using MTRR to improve performance.
-
-  The BSP MTRR needs to be programmed before FspSiliconInit() API so that
-  all APs' MTRRs will be syned up during FspSiliconInit() call.
+  Set IA Untrust mode at the end.
 
 **/
 VOID
-SetFrameBufferWriteCombining (
-  VOID
-)
-{
-  UINT32             MsrIdx;
-  UINT32             MsrMax;
-  UINT32             Data;
-  UINT32             GfxPciBase;
-  UINT64             Base64;
-
-  // Skip if GFX device does not exist
-  GfxPciBase = PCI_LIB_ADDRESS (0, 2, 0, 0);
-  if (PciRead16 (GfxPciBase) == 0xFFFF) {
-    return;
-  }
-
-  // Assume fixed 256MB prefetchable space
-  Data    = PciRead32 (GfxPciBase + PCI_BASE_ADDRESSREG_OFFSET + 12);
-  Base64  = LShiftU64 (Data, 32);
-  Base64 += (PciRead32 (GfxPciBase + PCI_BASE_ADDRESSREG_OFFSET + 8) & ~(SIZE_256MB - 1));
-
-  // Enable Framebuffer as WC.
-  MsrMax = EFI_MSR_CACHE_VARIABLE_MTRR_BASE +
-           (2 * (UINT32)(AsmReadMsr64(EFI_MSR_IA32_MTRR_CAP) & B_EFI_MSR_IA32_MTRR_CAP_VARIABLE_SUPPORT));
-  for (MsrIdx = EFI_MSR_CACHE_VARIABLE_MTRR_BASE; MsrIdx < MsrMax; MsrIdx += 2) {
-    // Try to find a free MTRR pair
-    if ((AsmReadMsr64(MsrIdx + 1) & B_EFI_MSR_CACHE_MTRR_VALID) == 0) {
-      break;
-    }
-  }
-
-  if (MsrIdx < MsrMax) {
-    // Framebuffer belongs to PMEM32 in PCI resource allocation.
-    // The 1st 256MB from PcdPciResourceMem32Base will be consumed by MEM32 resource.
-    // And framebuffer should be allocated to the next 256MB aligned address.
-    AsmWriteMsr64 (MsrIdx,     Base64 | CACHE_WRITECOMBINING);
-    AsmWriteMsr64 (MsrIdx + 1, 0xF00000000ULL + B_EFI_MSR_CACHE_MTRR_VALID + (UINT32)(~(SIZE_256MB - 1)));
-  } else {
-    DEBUG ((DEBUG_WARN, "Failed to find a free MTRR pair for framebuffer!\n"));
-  }
-}
-
-/**
-  Clear FSP HOB data
-
-**/
-VOID
-ClearFspHob (
+EFIAPI
+EnterIaUnTrustMode (
   VOID
   )
 {
-  LOADER_GLOBAL_DATA          *LdrGlobal;
-  EFI_HOB_HANDOFF_INFO_TABLE  *HandOffHob;
-  UINT32                      Length;
-
-  LdrGlobal  = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-  HandOffHob = (EFI_HOB_HANDOFF_INFO_TABLE  *) LdrGlobal->FspHobList;
-  if (HandOffHob != NULL) {
-    Length     = (UINT32)((UINTN)HandOffHob->EfiEndOfHobList - (UINTN)HandOffHob);
-    ZeroMem (HandOffHob, Length);
-    LdrGlobal->FspHobList = NULL;
-  }
+  AsmMsrOr64 (EFI_MSR_POWER_MISC, B_EFI_MSR_POWER_MISC_ENABLE_IA_UNTRUSTED_MODE);
 }
 
 /**
@@ -767,19 +711,9 @@ ProgramSecuritySetting (
 
   // Set the BIOS Lock Enable and EISS bits
   MmioOr8 (SpiBaseAddress + R_SPI_BCR, (UINT8) (B_SPI_BCR_BLE | B_SPI_BCR_EISS));
-}
 
-/**
-  Set IA Untrust mode at the end.
-
-**/
-VOID
-EFIAPI
-EnterIaUnTrustMode (
-  VOID
-  )
-{
-  AsmMsrOr64 (EFI_MSR_POWER_MISC, B_EFI_MSR_POWER_MISC_ENABLE_IA_UNTRUSTED_MODE);
+  // Enter untrust mode
+  EnterIaUnTrustMode ();
 }
 
 /**
@@ -834,7 +768,7 @@ UpdatePayloadId (
     PlatCfgData = (PLATFORM_CFG_DATA *)FindConfigDataByTag (CDATA_PLATFORM_TAG);
     if ((PlatCfgData != NULL) && (PlatCfgData->PayloadSelGpio.Enable != 0)) {
       // The default GPIOSet to Pull Up 20K
-      GpioGetInputValue (PlatCfgData->PayloadSelGpio.PadInfo, 0x0C, &GpioLevel);
+      GpioGetInputValueWithTerm (PlatCfgData->PayloadSelGpio.PadInfo, 0x0C, &GpioLevel);
       if (GpioLevel != 0) {
         PayloadId = 0;
       } else {
@@ -908,6 +842,21 @@ SdcardPowerUp (
   }
 }
 
+//Initialize Platform Igd OpRegion
+VOID
+EFIAPI
+IgdOpRegionPlatformInit (
+  VOID
+  )
+{
+  EFI_STATUS                Status;
+
+  Status = IgdOpRegionInit (NULL);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_WARN, "VBT not found %r\n", Status));
+  }
+}
+
 /**
   Board specific hook points.
 
@@ -926,7 +875,7 @@ BoardInit (
   UINT32              VarBase;
   UINT32              VarSize;
   UINT32              TcoCnt;
-  LOADER_GLOBAL_DATA *LdrGlobal;
+  VOID               *FspHobList;
   UINT32              TsegBase;
   UINT64              TsegSize;
   VTD_INFO           *VtdInfo;
@@ -944,12 +893,15 @@ BoardInit (
 
     // Get TSEG info from FSP HOB
     // It will be consumed in MpInit if SMM rebase is enabled
-    LdrGlobal  = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
-    TsegBase = (UINT32)GetFspReservedMemoryFromGuid (
-                       LdrGlobal->FspHobList,
-                       &TsegSize,
-                       &gReservedMemoryResourceHobTsegGuid
-                       );
+    TsegBase = 0;
+    FspHobList = GetFspHobListPtr ();
+    if (FspHobList != NULL) {
+      TsegBase = (UINT32)GetFspReservedMemoryFromGuid (
+                        FspHobList,
+                        &TsegSize,
+                        &gReservedMemoryResourceHobTsegGuid
+                        );
+    }
     if (TsegBase != 0) {
       Status = PcdSet32S (PcdSmramTsegBase, TsegBase);
       Status = PcdSet32S (PcdSmramTsegSize, (UINT32)TsegSize);
@@ -983,8 +935,10 @@ BoardInit (
     break;
   case PostPciEnumeration:
     // Enable framebuffer as WC for performance
-    SetFrameBufferWriteCombining ();
-
+    Status = SetFrameBufferWriteCombining (0, MAX_UINT32);
+    if (EFI_ERROR(Status)) {
+      DEBUG ((DEBUG_INFO, "Failed to set GFX framebuffer as WC\n"));
+    }
     if (PcdGetBool (PcdSeedListEnabled)) {
       Status = GenerateSeeds ();
       if (EFI_ERROR (Status)) {
@@ -1350,9 +1304,15 @@ SaveNvsData (
   UINT8                           Data8;
   UINT8                           BitMap;
   FLASH_MAP                      *FlashMapPtr;
+  VOID                           *FspHobList;
 
-  VariableMrcData = GetGuidHobData (((LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ())->FspHobList,
-                                          &VarLength, &gFspVariableNvDataHobGuid);
+  VariableMrcData = NULL;
+  FspHobList = GetFspHobListPtr ();
+  if (FspHobList != NULL) {
+    VariableMrcData = GetGuidHobData (FspHobList,
+                                      &VarLength,
+                                      &gFspVariableNvDataHobGuid);
+  }
   if (VariableMrcData == NULL || (Buffer == NULL) || (Length < sizeof (MrcParamHdr->Crc))) {
     return EFI_NOT_FOUND;
   }
@@ -1504,7 +1464,8 @@ UpdateSerialPortInfo (
   )
 {
   SerialPortInfo->Type     = 2;
-  SerialPortInfo->BaseAddr = GetSerialPortBase();
+  SerialPortInfo->BaseAddr64 = GetSerialPortBase ();
+  SerialPortInfo->BaseAddr   = (UINT32) SerialPortInfo->BaseAddr64;
   SerialPortInfo->RegWidth = GetSerialPortStrideSize();
 
   DEBUG ((DEBUG_INFO, "SerialPortInfo Type=%d BaseAddr=0x%08X RegWidth=%d\n",
@@ -1609,7 +1570,7 @@ UpdateLoaderPlatformInfo (
 
   EmmcTuningData.Hs400DataValid = 0;
   VariableLen = sizeof (EmmcTuningData);
-  Status = GetVariable ("MMCDLL", NULL, &VariableLen, &EmmcTuningData);
+  Status = GetVariable (L"MMCDLL", NULL, NULL, &VariableLen, &EmmcTuningData);
   if (EFI_ERROR (Status)) {
     AsciiStrCpyS (EmmcTuningData.SerialNumber, sizeof(EmmcTuningData.SerialNumber), "badbadbadbadba");
   }
@@ -1645,7 +1606,7 @@ UpdateSmmInfo (
   LdrSmmInfo->SmmSize = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + BGSM) & ~0xF;
   LdrSmmInfo->SmmSize -= LdrSmmInfo->SmmBase;
   LdrSmmInfo->Flags = SMM_FLAGS_4KB_COMMUNICATION;
-  DEBUG ((DEBUG_ERROR, "Stage2: SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", LdrSmmInfo->SmmBase, LdrSmmInfo->SmmSize));
+  DEBUG ((DEBUG_INFO, "SmmRamBase = 0x%x, SmmRamSize = 0x%x\n", LdrSmmInfo->SmmBase, LdrSmmInfo->SmmSize));
 
   //
   // Update smi ctrl register data
@@ -1849,7 +1810,7 @@ PlatformUpdateAcpiTable (
   } else if (Table->Signature == SIGNATURE_32 ('$', 'V', 'B', 'T')) {
     // Pointer to new VBT
     Status = PcdSet32S (PcdGraphicsVbtAddress, (UINT32)(UINTN)Table + VBT_OFFSET);
-    IgdOpRegionInit ();
+    IgdOpRegionPlatformInit();
   }
 
   if (MEASURED_BOOT_ENABLED() ) {
@@ -1936,7 +1897,7 @@ PlatformUpdateAcpiGnvs (
     Pnvs->Ipc1Enable = (UINT8)DevEnCfgData->DevEnControl1.Ipc1Enable;
   }
 
-  IgdOpRegionInit ();
+  IgdOpRegionPlatformInit();
 
   SysCpuInfo = MpGetInfo ();
   if (SysCpuInfo != NULL) {
