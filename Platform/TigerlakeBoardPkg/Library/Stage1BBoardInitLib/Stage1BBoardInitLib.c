@@ -41,6 +41,11 @@
 #include <Library/WatchDogTimerLib.h>
 #include <Library/SocInitLib.h>
 #include <Library/TccLib.h>
+#include <FirmwareInterfaceTable.h>
+
+#define R_IOPORT_CMOS_STANDARD_INDEX            0x70
+#define R_IOPORT_CMOS_STANDARD_DATA             0x71
+#define TXT_CMOS_STATUS_REG                     0x2A
 
 CONST PLT_DEVICE  mPlatformDevices[]= {
   {{0x00001700}, OsBootDeviceSata  , 0 },
@@ -99,6 +104,37 @@ TccModePreMemConfig (
   return EFI_SUCCESS;
 }
 #endif
+
+/* FIT Table Types required to get ACM base address for TXT upds */
+#define FIT_TABLE_TYPE_STARTUP_ACM           0x2
+#define FIT_TABLE_TYPE_HEADER                0x0
+
+VOID *
+FindBiosAcm ()
+{
+  FIRMWARE_INTERFACE_TABLE_ENTRY *FitEntry;
+  UINT32                         EntryNum;
+  UINT64                         FitTableOffset;
+  UINT32                         Index;
+  FitTableOffset = *(UINT64 *)(UINTN)(BASE_4GB - 0x40);
+  FitEntry = (FIRMWARE_INTERFACE_TABLE_ENTRY *)(UINTN)FitTableOffset;
+  if (FitEntry != NULL) {
+    if (FitEntry[0].Address != *(UINT64 *)"_FIT_   ") {
+      return NULL;
+    }
+    if (FitEntry[0].Type != FIT_TABLE_TYPE_HEADER) {
+      return NULL;
+    }
+    EntryNum = *(UINT32 *)(&FitEntry[0].Size[0]) & 0xFFFFFF;
+    for (Index = 0; Index < EntryNum; Index++) {
+      if (FitEntry[Index].Type == FIT_TABLE_TYPE_STARTUP_ACM) {
+        DEBUG ((DEBUG_INFO, "BiosAcm Location : 0x%X\n", (VOID *)(UINTN)FitEntry[Index].Address));
+        return (VOID *)(UINTN)FitEntry[Index].Address;
+      }
+    }
+  }
+  return NULL;
+}
 
 /**
   Update FSP-M UPD config data
@@ -253,7 +289,23 @@ UpdateFspConfig (
   Fspmcfg->X2ApicOptOut         = MemCfgData->X2ApicOptOut;
   Fspmcfg->DmaControlGuarantee  = MemCfgData->DmaControlGuarantee;
   Fspmcfg->TxtDprMemorySize     = MemCfgData->TxtDprMemorySize;
-  Fspmcfg->BiosAcmBase          = MemCfgData->BiosAcmBase;
+
+  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
+  if (FeaturesCfgData->Features.TxtEnabled == 1) {
+    DEBUG((DEBUG_INFO, "Enabling TXT in FSP-M UPD's\n"));
+    Fspmcfg->Txt                  = 0x1;
+    Fspmcfg->TxtImplemented       = 0x1;
+    Fspmcfg->SinitMemorySize      = 0x50000;
+    Fspmcfg->TxtHeapMemorySize    = 0xF0000;
+    Fspmcfg->BiosAcmBase          = (UINT32)(UINTN)FindBiosAcm();
+    IoWrite8 (R_IOPORT_CMOS_STANDARD_INDEX, TXT_CMOS_STATUS_REG);
+    if (!(IoRead8 (R_IOPORT_CMOS_STANDARD_DATA) & BIT4)) {
+      IoWrite8 (R_IOPORT_CMOS_STANDARD_DATA, BIT4);
+    }
+  } else {
+    IoWrite8 (R_IOPORT_CMOS_STANDARD_INDEX, TXT_CMOS_STATUS_REG);
+    IoWrite8 (R_IOPORT_CMOS_STANDARD_DATA, 0x00);
+  }
 
   Fspmcfg->UserBd               = MemCfgData->UserBd;
   Fspmcfg->RealtimeMemoryTiming = MemCfgData->RealtimeMemoryTiming;
