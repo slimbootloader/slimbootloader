@@ -1,0 +1,21 @@
+
+## @file
+#  Null TXT Library INF
+#  Copyright (c) 2025, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = TxtLibNull
+  FILE_GUID                      = 4cdb0041-33d6-42e9-85f8-b015c1b373ff
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = TxtLib
+
+[Sources]
+  TxtLibNull.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec

@@ -78,6 +78,7 @@ class Board(BaseBoard):
         self.HAVE_FUSA            = 0
         # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
         self.ENABLE_SMM_REBASE     = 2
+        self.TXT_ENABLED           = 0
 
         # Allow boot through GRUB config
         self.ENABLE_GRUB_CONFIG   = 1
@@ -288,6 +289,11 @@ class Board(BaseBoard):
             'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
             'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf'
         ]
+
+        if self.TXT_ENABLED:
+            dsc['LibraryClasses.%s' % self.BUILD_ARCH].append ('TxtLib|Silicon/$(SILICON_PKG_NAME)/Library/TxtLib/TxtLib.inf')
+        else:
+            dsc['LibraryClasses.%s' % self.BUILD_ARCH].append ('TxtLib|Silicon/CommonSocPkg/Library/TxtLib/TxtLibNull.inf')
 
         if self.BUILD_CSME_UPDATE_DRIVER:
             dsc['LibraryClasses.%s' % self.BUILD_ARCH].append ('MeFwUpdateLib|Silicon/$(PCH_PKG_NAME)/Library/MeFwUpdateLib/MeFwUpdateLib.inf')
