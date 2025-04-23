@@ -47,3 +47,6 @@ PLDSEL_CFG_DATA.PldSelGpio.PinNumber                        | 15
 PLDSEL_CFG_DATA.PldSelGpio.PinPolarity                      | 1
 
 SILICON_CFG_DATA.PchHdaEnable                               | 0x00
+
+# Set 'TxtEnabled' to '1' for TXT Feature enablement
+FEATURES_CFG_DATA.Features.TxtEnabled                       | 0

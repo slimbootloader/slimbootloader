@@ -7,6 +7,9 @@
 ##
 from StitchLoader import *
 
+# Global variable to control TXT inclusion - can be overridden by check_parameter()
+g_txt_enabled = False
+
 extra_usage_txt = \
 """This is an IFWI stitch config script for Slim Bootloader For the FIT tool and
 stitching ingredients listed in step 2 below, please contact your Intel representative.
@@ -44,8 +47,10 @@ stitching ingredients listed in step 2 below, please contact your Intel represen
 """
 
 def get_bpmgen2_params_change_list ():
+    global g_txt_enabled
     params_change_list = []
-    params_change_list.append ([
+    # Base parameters
+    base_params = [
       # variable                | value |
       # ===================================
       ('PlatformRules',         'TGL Client'),
@@ -57,14 +62,30 @@ def get_bpmgen2_params_change_list ():
       ('AcpiBase',              '0x1800'),
       ('IbbFlags',              '0x2'),
       ('IbbHashAlgID',          '0x0C:SHA384'),
-      ('TxtInclude',            'FALSE'),
       ('PcdInclude',            'TRUE'),
       ('BpmSigScheme',          '0x16:RSAPSS'),
       ('BpmSigPubKey',          r'BpmGen2/keys/bpm_pubkey_3072.pem'),
       ('BpmSigPrivKey',         r'BpmGen2/keys/bpm_privkey_3072.pem'),
       ('BpmKeySizeBits',        '3072'),
       ('BpmSigHashAlgID',       '0x0C:SHA384'),
-      ])
+    ]
+
+    if g_txt_enabled == True:
+        txt_params = [
+            ('TxtInclude',            'TRUE'),
+            ('PdSeconds',             '10'),
+            ('PttCmosOffset0',        '0xFE'),
+            ('PttCmosOffset1',        '0xFF'),
+            ('CmosIndexOffset',       '255'),
+        ]
+    else:
+        txt_params = [
+            ('TxtInclude',            'False'),
+        ]
+
+    # Combine all parameters
+    all_params = base_params + txt_params
+    params_change_list.append(all_params)
     return params_change_list
 
 def get_platform_sku():
@@ -96,6 +117,7 @@ def check_parameter(para_list):
         'tsn7'   : {},
         'lp4'    : {},
         '32MB'   : {},
+        'txt'    : {},
         'spi'    : {'25MHz', '33MHz', '50MHz', '100MHz'}
         }
 
@@ -105,6 +127,7 @@ def check_parameter(para_list):
         'tsn7' -- Enable TSN Port 7, by disable tsn port is disabled
         'lp4'  -- Stitch for DDRLP4 board, by default for DDR4 board
         '32MB' -- Stitch image set to 32MB, by default use 16MB.
+        'txt'  -- Enable Intel TXT support.
         'spi'  -- Set SPI frequency to be 25MHz, 33MHz, 50MHz, 100MHz.
         """
     for para in para_list:
@@ -122,6 +145,7 @@ def check_parameter(para_list):
                 print ("NOT support platform parameter: %s" %  para_list[para])
                 print ("platform parameter list:", para_supported[para])
                 return False
+
     return True
 
 def get_xml_change_list (platform, plt_params_list):
@@ -218,6 +242,14 @@ def get_xml_change_list (platform, plt_params_list):
         print ("Applying changes to enable DDRLP4 board")
         xml_change_list.append ([
             ('./Gpio/GpioVccioVoltageControl/GppF8voltSelect',                           '3.3Volts'),
+            ])
+
+    if 'txt' in plt_params_list:
+        print ("Applying changes to enable TXT support")
+        global g_txt_enabled
+        g_txt_enabled = True
+        xml_change_list.append ([
+            ('./PlatformProtection/TxtConfiguration/TxtSupported',                        'Yes'),
             ])
 
     return xml_change_list

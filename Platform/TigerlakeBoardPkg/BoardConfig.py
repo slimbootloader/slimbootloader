@@ -78,6 +78,7 @@ class Board(BaseBoard):
         self.HAVE_FUSA            = 0
         # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
         self.ENABLE_SMM_REBASE     = 2
+        self.TXT_ENABLED           = 0
 
         # Allow boot through GRUB config
         self.ENABLE_GRUB_CONFIG   = 1
@@ -286,7 +287,8 @@ class Board(BaseBoard):
             'GpioSiLib|Silicon/$(PCH_PKG_NAME)/Library/GpioSiLib/GpioSiLib.inf',
             'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf',
             'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
-            'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf'
+            'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf',
+            'TxtLib|Silicon/$(SILICON_PKG_NAME)/Library/TxtLib/TxtLib.inf'
         ]
 
         if self.BUILD_CSME_UPDATE_DRIVER:
