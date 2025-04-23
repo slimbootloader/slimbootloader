@@ -86,6 +86,7 @@
 #include <Library/PciePm.h>
 #include <Library/PlatformInfo.h>
 #include <Library/PlatformHookLib.h>
+#include <TxtDxeLibA.h>
 
 //
 // The EC implements an embedded controller interface at ports 0x60/0x64 and a ACPI compliant
@@ -906,6 +907,15 @@ BoardInit (
     }
     IgdOpRegionPlatformInit ();
 
+    IoWrite8 (0x74, 0x21);
+    UINT8 CmosTxtEnable = IoRead8  (0x75) ;
+    DEBUG((DEBUG_INFO, "CmosTxtEnable %x .....\n", CmosTxtEnable));
+    if (CmosTxtEnable == 0xA) {
+      InitTxt();
+    } else {
+      DEBUG((DEBUG_INFO, "Txt Init Skipped\n"));
+    }
+
     ///
     /// Initialize the HECI device (for test HeciInitLib only)
     ///
@@ -1269,6 +1279,15 @@ UpdateFspConfig (
 
   // Enable IEH
   FspsConfig->IehMode = 0x1;
+  IoWrite8 (0x74, 0x21);
+  UINT8 CmosTxtEnable = IoRead8  (0x75) ;
+  DEBUG((DEBUG_INFO, "CmosTxtEnable %x .....\n", CmosTxtEnable));
+  if (CmosTxtEnable == 0xA) {
+    DEBUG((DEBUG_INFO, "Enabling TXT in FSP-S UPD's\n"));
+    FspsConfig->TxtEnable = 0x1;
+  } else {
+    DEBUG((DEBUG_INFO, "Disabling TXT in FSP-S UPD's\n"));
+  }
 
   FspsConfig->SerialIoSpiMode[1] = 0x1;
   for (Index = 0; Index < GetPchMaxSerialIoSpiControllersNum (); Index++) {

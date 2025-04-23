@@ -10,6 +10,7 @@
 
 PLATFORMID_CFG_DATA.PlatformId                              | 0x000F
 PLAT_NAME_CFG_DATA.PlatformName                             | 'TGLH_DDR'
+GEN_CFG_DATA.PayloadId                                      | 'UEFI'
 
 MEMORY_CFG_DATA.DqsMapCpu2DramMc0Ch1                        | {0, 1}
 MEMORY_CFG_DATA.DqsMapCpu2DramMc0Ch3                        | {0, 1}
@@ -557,7 +558,7 @@ GPIO_CFG_DATA.GpioPinConfig1_GPD11.GPIOSkip_GPD11           | 1           # TGL-
 # If the switch is OFF then OS Loader will be used, if ON UEFI PLD
 # will be used (default is OFF). Need to set the GPIO as Input.
 #
-GEN_CFG_DATA.PayloadId                                      | 'AUTO'
+#GEN_CFG_DATA.PayloadId                                      | 'AUTO'
 GPIO_CFG_DATA.GpioPinConfig0_GPP_F10.GPIODirection_GPP_F10  | 11
 # PCH H :  GPIO_VER2_H_GPP_F10
 PLDSEL_CFG_DATA.PldSelGpio.Enable                           | 1

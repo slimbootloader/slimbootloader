@@ -286,7 +286,8 @@ class Board(BaseBoard):
             'GpioSiLib|Silicon/$(PCH_PKG_NAME)/Library/GpioSiLib/GpioSiLib.inf',
             'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf',
             'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
-            'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf'
+            'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf',
+            'TxtDxeLib|Silicon/$(SILICON_PKG_NAME)/Library/TxtInit/TxtDxe.inf'
         ]
 
         if self.BUILD_CSME_UPDATE_DRIVER:

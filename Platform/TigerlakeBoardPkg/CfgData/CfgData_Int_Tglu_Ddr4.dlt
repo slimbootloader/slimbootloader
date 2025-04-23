@@ -10,6 +10,7 @@
 
 PLATFORMID_CFG_DATA.PlatformId                              | 0x0001
 PLAT_NAME_CFG_DATA.PlatformName                             | 'TGLU_DDR'
+GEN_CFG_DATA.PayloadId                                      | 'UEFI'
 
 # Disable S0ix by default
 FEATURES_CFG_DATA.Features.S0ix                             | 0x0
@@ -42,7 +43,7 @@ SILICON_CFG_DATA.PortUsb20Enable.Usb2Port1                  | 0
 # When 3/4 is stuffed the value will read 0 for UEFI Payload.
 # When 3/4 is un-stuffed the value will read 1 for OS Loader.
 #
-GEN_CFG_DATA.PayloadId                                      | 'AUTO'
+#GEN_CFG_DATA.PayloadId                                      | 'AUTO'
 GPIO_CFG_DATA.GpioPinConfig0_GPP_B15.GPIODirection_GPP_B15  | 0xB
 # PCH LP :  GPIO_VER2_LP_GPP_B15
 PLDSEL_CFG_DATA.PldSelGpio.Enable                           | 1

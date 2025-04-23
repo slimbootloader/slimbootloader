@@ -71,6 +71,7 @@
   SmbiosInitLib
   WatchDogTimerLib
   PciePm
+  TxtDxeLib
 
 [Guids]
   gOsConfigDataGuid
