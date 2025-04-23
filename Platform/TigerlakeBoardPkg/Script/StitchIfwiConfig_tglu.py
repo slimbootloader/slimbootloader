@@ -57,7 +57,11 @@ def get_bpmgen2_params_change_list ():
       ('AcpiBase',              '0x1800'),
       ('IbbFlags',              '0x2'),
       ('IbbHashAlgID',          '0x0C:SHA384'),
-      ('TxtInclude',            'FALSE'),
+      ('TxtInclude',            'TRUE'),
+      ('PdSeconds',             '10'),
+      ('PttCmosOffset0',        '0xFE'),
+      ('PttCmosOffset1',        '0xFF'),
+      ('CmosIndexOffset',       '255'),
       ('PcdInclude',            'TRUE'),
       ('BpmSigScheme',          '0x16:RSAPSS'),
       ('BpmSigPubKey',          r'BpmGen2/keys/bpm_pubkey_3072.pem'),
@@ -96,6 +100,7 @@ def check_parameter(para_list):
         'tsn7'   : {},
         'lp4'    : {},
         '32MB'   : {},
+        'txt'    : {},
         'spi'    : {'25MHz', '33MHz', '50MHz', '100MHz'}
         }
 
@@ -105,6 +110,7 @@ def check_parameter(para_list):
         'tsn7' -- Enable TSN Port 7, by disable tsn port is disabled
         'lp4'  -- Stitch for DDRLP4 board, by default for DDR4 board
         '32MB' -- Stitch image set to 32MB, by default use 16MB.
+        'txt'  -- Enable Intel TXT support.
         'spi'  -- Set SPI frequency to be 25MHz, 33MHz, 50MHz, 100MHz.
         """
     for para in para_list:
@@ -218,6 +224,12 @@ def get_xml_change_list (platform, plt_params_list):
         print ("Applying changes to enable DDRLP4 board")
         xml_change_list.append ([
             ('./Gpio/GpioVccioVoltageControl/GppF8voltSelect',                           '3.3Volts'),
+            ])
+
+    if 'txt' in plt_params_list:
+        print ("Applying changes to enable TXT support")
+        xml_change_list.append ([
+            ('./PlatformProtection/TxtConfiguration/TxtSupported',                        'Yes'),
             ])
 
     return xml_change_list
