@@ -71,6 +71,7 @@
   SmbiosInitLib
   WatchDogTimerLib
   PciePm
+  TxtLib
 
 [Guids]
   gOsConfigDataGuid
@@ -114,3 +115,4 @@
   gPlatformModuleTokenSpaceGuid.PcdEnablePciePm
   gPlatformModuleTokenSpaceGuid.PcdPciResourceMem64Base
   gPlatformModuleTokenSpaceGuid.PcdFSPSBase
+  gPlatformCommonLibTokenSpaceGuid.PcdTxtEnabled

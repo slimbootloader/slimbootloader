@@ -48,11 +48,19 @@
         help         : >
                        Fusa Enabled feature. 1:Enabled (default), 0:Disabled
         length       : 1b
+    - TxtEnabled   :
+        name         : TXT Enabled
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable Trusted Execution Technology (TXT) feature. 1:TXT Enabled, 0:TXT Disabled
+        length       : 1b
+        value        : 0
     - Rsvd         :
         name         : Reserved
         type         : Reserved
         help         : >
                        reserved bits
-        length       : 28b
+        length       : 27b
 
 

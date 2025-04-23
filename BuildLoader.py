@@ -187,6 +187,7 @@ class BaseBoard(object):
         self.SUPPORT_ARI           = 0
         self.SUPPORT_SR_IOV        = 0
         self.SUPPORT_X2APIC        = 0
+        self.TXT_ENABLED           = 0
 
         self.BUILD_CSME_UPDATE_DRIVER    = 0
 
@@ -446,6 +447,19 @@ class Build(object):
             fit_entry.set_values(addr, module_size, 0x100, 0x7, 0)
             print ('  Patching entry %d with 0x%08X:0x%08X - BIOS Module(Stage1B)' % (num_fit_entries, fit_entry.address, fit_entry.size))
             num_fit_entries     += 1
+
+            # TXT POLICY
+            if self._board.TXT_ENABLED == 1:
+                IndexPort = 0x0070 #CMOS index port
+                DataPort  = 0x0071 #CMOS data port
+                Width     = 0x01   #1 byte of data
+                Bit       = 0x04   #Bit 4 of the data pointed by CMOS offset
+                Index     = 0x002a #CMOS offset for TXT enable
+                addr = IndexPort + (DataPort << 16) + (Width << 32) + (Bit << 40) + (Index << 48)
+                fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
+                fit_entry.set_values(addr, 0, 0, 0xa, 0)
+                print ('  Patching entry %d with 0x%08X:0x%08X - BIOS Module(Stage1B)' % (num_fit_entries, fit_entry.address, fit_entry.size))
+                num_fit_entries     += 1
 
             # KM
             addr = self._board.ACM_BASE + self._board.ACM_SIZE - (self._board.KM_SIZE + self._board.BPM_SIZE)
