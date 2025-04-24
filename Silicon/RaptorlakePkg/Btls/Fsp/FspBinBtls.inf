@@ -23,6 +23,6 @@
   BartlettLakeFspBinPkg/IoT/Include/FspmUpd.h                              : Silicon/RaptorlakePkg/Btls/Fsp/FspmUpd.h
   BartlettLakeFspBinPkg/IoT/Include/FspsUpd.h                              : Silicon/RaptorlakePkg/Btls/Fsp/FspsUpd.h
   BartlettLakeFspBinPkg/IoT/Include/MemInfoHob.h                           : Silicon/RaptorlakePkg/Btls/Fsp/MemInfoHob.h
-  BartlettLakeFspBinPkg/IoT/RaptorLakeS/Vbt/Vbt.bin                        : Platform/RaptorlakeBoardPkg/VbtBin/Vbt_rpls.dat
-  BartlettLakeFspBinPkg/IoT/RaptorLakeS/Vbt/Vbt.json                       : Platform/RaptorlakeBoardPkg/VbtBin/Vbt.json
+  RaptorLakeFspBinPkg/IoT/RaptorLakeS/Vbt/Vbt.bin                          : Platform/RaptorlakeBoardPkg/VbtBin/Vbt_rpls.dat
+  RaptorLakeFspBinPkg/IoT/RaptorLakeS/Vbt/Vbt.json                         : Platform/RaptorlakeBoardPkg/VbtBin/Vbt.json
   FSP_License.pdf                                                          : Silicon/RaptorlakePkg/Btls/Fsp/FSP_License.pdf
