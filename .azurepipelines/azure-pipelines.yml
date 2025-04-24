@@ -111,6 +111,10 @@ jobs:
         Build.Name:   "rpls"
         Build.Arch:   ""
         Build.Target: ""
+      RPLS_X64_DEBUG:
+        Build.Name:   "rpls"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
       RPLP_X86_DEBUG:
         Build.Name:   "rplp"
         Build.Arch:   ""
@@ -123,6 +127,18 @@ jobs:
         Build.Name:   "azb"
         Build.Arch:   ""
         Build.Target: "-r"
+      BTLS_X86_DEBUG:
+        Build.Name:   "btls"
+        Build.Arch:   ""
+        Build.Target: ""
+      BTLS_X86_RELEASE:
+        Build.Name:   "btls"
+        Build.Arch:   ""
+        Build.Target: "-r"
+      BTLS_X64_DEBUG:
+        Build.Name:   "btls"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
 
   pool:
     vmImage: 'ubuntu-20.04'
@@ -186,6 +202,18 @@ jobs:
       ARLU_X64_RELEASE:
         Build.Name:   "arlu"
         Build.Arch:   "-a x64"
+        Build.Target: "-r"
+      BTLS_X86_DEBUG:
+        Build.Name:   "btls"
+        Build.Arch:   ""
+        Build.Target: ""
+      BTLS_X64_DEBUG:
+        Build.Name:   "btls"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      BTLS_X86_RELEASE:
+        Build.Name:   "btls"
+        Build.Arch:   ""
         Build.Target: "-r"
 
   pool:
@@ -380,6 +408,18 @@ jobs:
         Build.Name:   "arlu"
         Build.Arch:   "-a x64"
         Build.Target: ""
+      BTLS_X86_DEBUG:
+        Build.Name:   "btls"
+        Build.Arch:   ""
+        Build.Target: ""
+      BTLS_X64_DEBUG:
+        Build.Name:   "btls"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      BTLS_X86_RELEASE:
+        Build.Name:   "btls"
+        Build.Arch:   ""
+        Build.Target: "-r"
   pool:
     vmImage: 'windows-2019'
 
