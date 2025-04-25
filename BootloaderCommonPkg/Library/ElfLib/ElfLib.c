@@ -291,6 +291,7 @@ ParseElfImage (
   Base = MAX_UINT32;
   FileOffset = 0;
   ElfCt->ReloadRequired = FALSE;
+  SegAlignment = 0;
 
   ASSERT(ElfCt->PhNum < MAX_ELF_PHNUM);
   for (Index = 0; Index < ElfCt->PhNum; Index++) {
