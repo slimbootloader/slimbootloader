@@ -408,7 +408,7 @@ jobs:
       echo "Create a new object"
       [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
       echo "Download nasm"
-      Invoke-WebRequest -Uri https://gstreamer.freedesktop.org/src/mirror/nasm-2.14.02-win64.zip -OutFile nasm.zip
+      Invoke-WebRequest -Uri https://www.nasm.us/pub/nasm/releasebuilds/2.14.02/win64/nasm-2.14.02-win64.zip -OutFile nasm.zip
       echo "Expand nasm"
       Expand-Archive .\nasm.zip C:\
 
