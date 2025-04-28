@@ -113,3 +113,7 @@ class Board(RaptorlakeBoardConfig.Board):
             self.ACM_SIZE     = acm_top - acm_btm
 
         self.FSP_M_STACK_TOP      = 0xFEFDFF00
+
+        # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
+        # 3: Enable NOSMRR (for edk2-stable202411 and newer UEFI payload)  4: Auto NOSMRR
+        self.ENABLE_SMM_REBASE    = 4
