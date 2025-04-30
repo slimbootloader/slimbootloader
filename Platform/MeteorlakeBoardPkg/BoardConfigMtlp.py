@@ -64,8 +64,8 @@ class Board(BaseBoard):
         self.ENABLE_SOURCE_DEBUG  = 0
         # If ENABLE_SOURCE_DEBUG is disabled, SKIP_STAGE1A_SOURCE_DEBUG will be ignored
         self.SKIP_STAGE1A_SOURCE_DEBUG = 1
-        # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
-        self.ENABLE_SMM_REBASE    = 2
+        # 3: Enable NOSMRR (for edk2-stable202411 and newer UEFI payload)  4: Auto NOSMRR
+        self.ENABLE_SMM_REBASE    = 4
 
         # 0 - PCH UART0, 1 - PCH UART1, 2 - PCH UART2, 0xFF - EC UART 0x3F8
         self.DEBUG_PORT_NUMBER = 0x0
