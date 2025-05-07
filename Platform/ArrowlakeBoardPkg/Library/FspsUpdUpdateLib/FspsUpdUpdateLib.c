@@ -809,7 +809,7 @@ UpdateFspConfig (
       FspsConfig->PcieGen4EqPh1UpTxPreset[2] = 0x7;
       FspsConfig->PcieGen4EqPh1UpTxPreset[4] = 0x7;
       FspsConfig->Usb4CmMode                 = 0x0;
-    break;
+      break;
     case PLATFORM_ID_ARL_S_SODIMM_RVP:
       FspsConfig->UsbTcPortEn = 0x3;
       FspsConfig->PchPmLanWakeFromDeepSx = 0x1;
@@ -853,6 +853,7 @@ UpdateFspConfig (
         FspsConfig->PcieGen4EqPh3NoOfPresetOrCoeff[Index] = 0x5;
         FspsConfig->PcieGen4EqPh3Preset3List[Index] = 0x7;
       }
+        break;
       case PLATFORM_ID_ARL_H_Island:
         HdaVerbTablePtr = (UINT32 *) AllocateZeroPool (2 * sizeof (UINT32));  // max 6 tables supported for now
         if (HdaVerbTablePtr != NULL) {
@@ -862,6 +863,7 @@ UpdateFspConfig (
           FspsConfig->PchHdaVerbTableEntryNum = HdaVerbTableNum;
           DEBUG ((DEBUG_INFO, "Island set verb alc897 table.\n"));
         }
+        break;
   }
 
   if (FeaturePcdGet (PcdEnablePciePm)) {
