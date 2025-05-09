@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2019 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -13,12 +13,7 @@
 #include <Guid/OsBootOptionGuid.h>
 #include <Register/PmcRegs.h>
 #include <Register/PchBdfAssignment.h>
-#include <Register/RegsSmbus.h>
-#include <Register/TcoRegs.h>
-
-#define  SMBUS_PORT_ID            0xC6
-#define  GENERAL_CONTROL_REG      0x0C
-#define  TCO_STS_NO_REBOOT        BIT2
+#include <Library/TcoTimerLib.h>
 
 /**
   Enables the execution
@@ -29,41 +24,6 @@ EnableCodeExecution (
 )
 {
 }
-
-/**
-  Check if boot is caused by watch dog timer
-
-  @RETVAL   TRUE     It is caused by watch dog timer timeout.
-  @RETVAL   FALSE    It is not caused by watch dog timer timeout.
-**/
-BOOLEAN
-IsRebootByWdt (
-  VOID
-)
-{
-  UINT32   TcoBase;
-  UINT32   SbRegBase;
-  UINT32   GeneralControlReg;
-  UINT16   TcoSts2Reg;
-  BOOLEAN  RebootByWdt;
-
-  RebootByWdt = FALSE;
-
-  // Get No_Reboot from SmBus PCR register via P2SB base address
-  SbRegBase  = PciRead32 (PCI_LIB_ADDRESS(0, PCI_DEVICE_NUMBER_PCH_P2SB, PCI_FUNCTION_NUMBER_PCH_P2SB, 0x10)) & 0xFF000000;
-  GeneralControlReg = MmioRead32  (SbRegBase + ((SMBUS_PORT_ID) << 16) + GENERAL_CONTROL_REG);
-
-  // Get Tco Status2 from from SmBus config space
-  TcoBase     = PciRead32 (PCI_LIB_ADDRESS(0, PCI_DEVICE_NUMBER_PCH_SMBUS, PCI_FUNCTION_NUMBER_PCH_SMBUS, R_SMBUS_CFG_TCOBASE)) & B_SMBUS_CFG_TCOBASE_BAR;
-  TcoSts2Reg  = IoRead16 (TcoBase + R_TCO_IO_TCO2_STS);
-
-  if (((GeneralControlReg & TCO_STS_NO_REBOOT) == 0) && ((TcoSts2Reg & B_TCO_IO_TCO2_STS_SECOND_TO) != 0)) {
-    RebootByWdt = TRUE;
-  }
-
-  return RebootByWdt;
-}
-
 
 /**
   Get the reset reason and save to global variable.
@@ -78,34 +38,45 @@ UpdateResetReason (
   UINT32                   PmConfa;
   UINT32                   Bar;
 
-  RstCause = ResetUnknown;
+  RstCause = ResetCold;
 
-  Bar     = MmioRead32 (MM_PCI_ADDRESS (0, PCI_DEVICE_NUMBER_PCH_PMC, PCI_FUNCTION_NUMBER_PCH_PMC, 0x10)) & ~0x0F;
+  if (GetBootMode() == BOOT_ON_S3_RESUME) {
+    RstCause = ResetWakeS3;
+    goto done;
+  } else if (GetBootMode() == BOOT_ON_S4_RESUME) {
+    RstCause = ResetWakeS4;
+    goto done;
+  }
+
+  Bar = MmioRead32 (MM_PCI_ADDRESS (0, PCI_DEVICE_NUMBER_PCH_PMC, PCI_FUNCTION_NUMBER_PCH_PMC, 0x10)) & ~0x0F;
+  if (Bar == 0) {
+    RstCause |= ResetUnknown;
+    goto done;
+  }
+
   PmConfa = MmioRead32 (Bar + R_PMC_PWRM_GEN_PMCON_A);
 
   // Reset reason
   if ((PmConfa & B_PMC_PWRM_GEN_PMCON_A_GBL_RST_STS) != 0) {
     RstCause = ResetGlobal;
-  } else if ((PmConfa & B_PMC_PWRM_GEN_PMCON_A_HOST_RST_STS) != 0 && (PmConfa & B_PMC_PWRM_GEN_PMCON_A_MEM_SR) != 0) {
-    RstCause = ResetWarm;
-  } else if ((PmConfa & B_PMC_PWRM_GEN_PMCON_A_HOST_RST_STS) != 0) {
-    RstCause = ResetCold;
-  } else if ((PmConfa & B_PMC_PWRM_GEN_PMCON_A_PWR_FLR) != 0) {
-    RstCause = ResetPowerOn;
+  } else if (PmConfa & B_PMC_PWRM_GEN_PMCON_A_HOST_RST_STS) {
+    if (PmConfa & B_PMC_PWRM_GEN_PMCON_A_MEM_SR) {
+      RstCause = ResetWarm;
+    } else {
+      RstCause = ResetCold;
+    }
   }
 
-  if (GetBootMode() == BOOT_ON_S3_RESUME) {
-    RstCause = ResetWakeS3;
-  } else if (GetBootMode() == BOOT_ON_S4_RESUME) {
-    RstCause = ResetWakeS4;
+  if ((PmConfa & B_PMC_PWRM_GEN_PMCON_A_PWR_FLR) != 0) {
+    RstCause |= ResetUnknown;
   }
 
-  if (IsRebootByWdt ()) {
+  if (WasBootCausedByTcoTimeout ()) {
     RstCause |= ResetTcoWdt;
   }
 
+done:
   SetResetReason (RstCause);
-
 }
 
 
