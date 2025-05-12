@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -147,7 +147,7 @@ GetCurrentBootOption (
   }
 
   // Give another chance like crashmode if ResetReason has non-cold boot reason
-  Data8 = (UINT8)~(ResetCold | ResetPowerOn | ResetGlobal | ResetWakeS3);
+  Data8 = (UINT8)~(ResetCold | ResetPowerOn | ResetGlobal | ResetWakeS3 | ResetWakeS4);
   if ((OsBootOptionList->ResetReason & Data8) == 0) {
     return OsBootOptionList->CurrentBoot;
   }
