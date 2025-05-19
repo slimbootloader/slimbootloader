@@ -669,6 +669,11 @@ BoardInit (
   case ReadyToBoot:
     if ((GetBootMode() != BOOT_ON_FLASH_UPDATE) && (GetPayloadId() == 0)) {
       ProgramSecuritySetting ();
+      //
+      // set SMI LOCK (SMI_LOCK)
+      // PWRM Offset 1024h Bit 4
+      //
+      MmioOr8 (PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_GEN_PMCON_B, (UINT8)B_PMC_PWRM_GEN_PMCON_B_SMI_LOCK);
     }
     break;
   case EndOfFirmware:
