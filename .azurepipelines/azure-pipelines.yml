@@ -18,7 +18,7 @@ jobs:
 - job: QEMU
 
   pool:
-    vmImage: 'ubuntu-20.04'
+    vmImage: 'ubuntu-24.04'
 
   steps:
   - checkout: self
@@ -141,7 +141,7 @@ jobs:
         Build.Target: ""
 
   pool:
-    vmImage: 'ubuntu-20.04'
+    vmImage: 'ubuntu-24.04'
 
   steps:
   - checkout: self
