@@ -1,7 +1,7 @@
 /** @file
   Header file for PchInfoLib.
 
-  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -738,4 +738,83 @@ BOOLEAN
 MtlSocIsPchAttached (
   VOID
 );
+
+/**
+  Get Serial IO SPI controller PCIe Device Number
+
+  @param[in]  SpiNumber       Serial IO SPI controller index
+
+  @retval Serial IO SPI controller PCIe Device Number
+**/
+UINT8
+EFIAPI
+MtlPchSerialIoSpiDevNumber (
+  IN UINT8       SpiNumber
+  );
+
+/**
+  Get Serial IO SPI controller PCIe Function Number
+
+  @param[in]  SpiNumber       Serial IO SPI controller index
+
+  @retval Serial IO SPI controller PCIe Function Number
+**/
+UINT8
+EFIAPI
+MtlPchSerialIoSpiFuncNumber (
+  IN UINT8       SpiNumber
+  );
+
+/**
+  Get Serial IO SPI controller address that can be passed to the PCI Segment Library functions.
+
+  @param[in]  SpiNumber       Serial IO SPI controller index
+
+  @retval Serial IO SPI controller address in PCI Segment Library representation
+**/
+UINT64
+EFIAPI
+MtlPchSerialIoSpiPciCfgBase (
+  IN UINT8        SpiNumber
+  );
+
+/**
+  Get Serial IO I2C controller PCIe Device Number
+
+  @param[in]  I2cNumber       Serial IO I2C controller index
+
+  @retval Serial IO I2C controller PCIe Device Number
+**/
+UINT8
+EFIAPI
+MtlPchSerialIoI2cDevNumber (
+  IN UINT8       I2cNumber
+  );
+
+/**
+  Get Serial IO I2C controller PCIe Function Number
+
+  @param[in]  I2cNumber       Serial IO I2C controller index
+
+  @retval Serial IO I2C controller PCIe Function Number
+**/
+UINT8
+EFIAPI
+MtlPchSerialIoI2cFuncNumber (
+  IN UINT8       I2cNumber
+  );
+
+/**
+  Get Serial IO I2C controller address that can be passed to the PCI Segment Library functions.
+
+  @param[in]  I2cNumber       Serial IO I2C controller index
+
+  @retval Serial IO I2C controller address in PCI Segment Library representation
+**/
+UINT64
+EFIAPI
+MtlPchSerialIoI2cPciCfgBase (
+  IN UINT8        I2cNumber
+  );
+
 #endif // _PCH_INFO_LIB_H_

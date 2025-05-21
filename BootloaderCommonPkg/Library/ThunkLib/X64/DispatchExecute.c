@@ -3,7 +3,7 @@
   Provide a thunk function to transition from long mode to compatibility mode to execute 32-bit code and then transit
   back to long mode.
 
-  Copyright (c) 2014 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2014 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -107,6 +107,9 @@ Execute32BitCode (
     // For TempRamInit in XIP, it might be running from temp memory.
     // To be safe, need to copy the thunk code into memory for execution to prevent crash.
     ExecuteCode = (EXECUTE_32BIT_CODE)(UINTN)AllocateTemporaryMemory (0);
+    if (ExecuteCode == NULL) {
+      return EFI_OUT_OF_RESOURCES;
+    }
     CopyMem ((VOID *)(UINTN)ExecuteCode, (VOID *)(UINTN)AsmExecute32BitCode, AsmGetExecute32CodeLength());
   } else {
     ExecuteCode = (EXECUTE_32BIT_CODE)AsmExecute32BitCode;
