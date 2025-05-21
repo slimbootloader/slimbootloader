@@ -1,7 +1,7 @@
 /** @file
-  Pch information library for ADL.
+  Pch information library for MTL.
 
-  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -939,7 +939,187 @@ MtlSocGetXhciMaxUsb2PortNum (
 }
 
 /**
-  Get Maximum Usb3 Port Number of XHCI Controller
+  Get Serial IO SPI controller PCIe Device Number
+
+  @param[in]  SpiNumber       Serial IO SPI controller index
+
+  @retval Serial IO SPI controller PCIe Device Number
+**/
+UINT8
+EFIAPI
+MtlPchSerialIoSpiDevNumber (
+  IN UINT8       SpiNumber
+  )
+{
+  if (GetPchMaxSerialIoSpiControllersNum () <= SpiNumber) {
+    ASSERT (FALSE);
+    return 0xFF;
+  }
+  switch (SpiNumber) {
+    case 0:
+      return PCI_DEVICE_NUMBER_PCH_SERIAL_IO_SPI0;
+    case 1:
+      return PCI_DEVICE_NUMBER_PCH_SERIAL_IO_SPI1;
+    case 2:
+      return PCI_DEVICE_NUMBER_PCH_SERIAL_IO_SPI2;
+    case 3:
+      return PCI_DEVICE_NUMBER_PCH_SERIAL_IO_SPI3;
+    default:
+      ASSERT (FALSE);
+      return 0xFF;
+  }
+}
+
+/**
+  Get Serial IO SPI controller PCIe Function Number
+
+  @param[in]  SpiNumber       Serial IO SPI controller index
+
+  @retval Serial IO SPI controller PCIe Function Number
+**/
+UINT8
+EFIAPI
+MtlPchSerialIoSpiFuncNumber (
+  IN UINT8       SpiNumber
+  )
+{
+  if (GetPchMaxSerialIoSpiControllersNum () <= SpiNumber) {
+    ASSERT (FALSE);
+    return 0xFF;
+  }
+  switch (SpiNumber) {
+    case 0:
+      return PCI_FUNCTION_NUMBER_PCH_SERIAL_IO_SPI0;
+    case 1:
+      return PCI_FUNCTION_NUMBER_PCH_SERIAL_IO_SPI1;
+    case 2:
+      return PCI_FUNCTION_NUMBER_PCH_SERIAL_IO_SPI2;
+    case 3:
+      return PCI_FUNCTION_NUMBER_PCH_SERIAL_IO_SPI3;
+    default:
+      ASSERT (FALSE);
+      return 0xFF;
+  }
+}
+
+/**
+  Get Serial IO SPI controller address that can be passed to the PCI Segment Library functions.
+
+  @param[in]  SpiNumber       Serial IO SPI controller index
+
+  @retval Serial IO SPI controller address in PCI Segment Library representation
+**/
+UINT64
+EFIAPI
+MtlPchSerialIoSpiPciCfgBase (
+  IN UINT8        SpiNumber
+  )
+{
+  return PCI_SEGMENT_LIB_ADDRESS (
+           DEFAULT_PCI_SEGMENT_NUMBER_PCH,
+           DEFAULT_PCI_BUS_NUMBER_PCH,
+           MtlPchSerialIoSpiDevNumber (SpiNumber),
+           MtlPchSerialIoSpiFuncNumber (SpiNumber),
+           0
+           );
+}
+
+/**
+  Get Serial IO I2C controller PCIe Device Number
+
+  @param[in]  I2cNumber       Serial IO I2C controller index
+
+  @retval Serial IO I2C controller PCIe Device Number
+**/
+UINT8
+EFIAPI
+MtlPchSerialIoI2cDevNumber (
+  IN UINT8       I2cNumber
+  )
+{
+  if (GetPchMaxSerialIoI2cControllersNum () <= I2cNumber) {
+    ASSERT (FALSE);
+    return 0xFF;
+  }
+  switch (I2cNumber) {
+    case 0:
+      return PCI_DEVICE_NUMBER_PCH_SERIAL_IO_I2C0;
+    case 1:
+      return PCI_DEVICE_NUMBER_PCH_SERIAL_IO_I2C1;
+    case 2:
+      return PCI_DEVICE_NUMBER_PCH_SERIAL_IO_I2C2;
+    case 3:
+      return PCI_DEVICE_NUMBER_PCH_SERIAL_IO_I2C3;
+    case 4:
+      return PCI_DEVICE_NUMBER_PCH_SERIAL_IO_I2C4;
+    case 5:
+      return PCI_DEVICE_NUMBER_PCH_SERIAL_IO_I2C5;
+    default:
+      ASSERT (FALSE);
+      return 0xFF;
+  }
+}
+
+/**
+  Get Serial IO I2C controller PCIe Function Number
+
+  @param[in]  I2cNumber       Serial IO I2C controller index
+
+  @retval Serial IO I2C controller PCIe Function Number
+**/
+UINT8
+EFIAPI
+MtlPchSerialIoI2cFuncNumber (
+  IN UINT8       I2cNumber
+  )
+{
+  if (GetPchMaxSerialIoI2cControllersNum () <= I2cNumber) {
+    ASSERT (FALSE);
+    return 0xFF;
+  }
+  switch (I2cNumber) {
+    case 0:
+      return PCI_FUNCTION_NUMBER_PCH_SERIAL_IO_I2C0;
+    case 1:
+      return PCI_FUNCTION_NUMBER_PCH_SERIAL_IO_I2C1;
+    case 2:
+      return PCI_FUNCTION_NUMBER_PCH_SERIAL_IO_I2C2;
+    case 3:
+      return PCI_FUNCTION_NUMBER_PCH_SERIAL_IO_I2C3;
+    case 4:
+      return PCI_FUNCTION_NUMBER_PCH_SERIAL_IO_I2C4;
+    case 5:
+      return PCI_FUNCTION_NUMBER_PCH_SERIAL_IO_I2C5;
+    default:
+      ASSERT (FALSE);
+      return 0xFF;
+  }
+}
+
+/**
+  Get Serial IO I2C controller address that can be passed to the PCI Segment Library functions.
+
+  @param[in]  I2cNumber       Serial IO I2C controller index
+
+  @retval Serial IO I2C controller address in PCI Segment Library representation
+**/
+UINT64
+EFIAPI
+MtlPchSerialIoI2cPciCfgBase (
+  IN UINT8        I2cNumber
+  )
+{
+  return PCI_SEGMENT_LIB_ADDRESS (
+           DEFAULT_PCI_SEGMENT_NUMBER_PCH,
+           DEFAULT_PCI_BUS_NUMBER_PCH,
+           MtlPchSerialIoI2cDevNumber (I2cNumber),
+           MtlPchSerialIoI2cFuncNumber (I2cNumber),
+           0
+           );
+}
+
+/**
+ Get Maximum Usb3 Port Number of XHCI Controller
 
   @retval Maximum Usb3 Port Number of XHCI Controller
 **/

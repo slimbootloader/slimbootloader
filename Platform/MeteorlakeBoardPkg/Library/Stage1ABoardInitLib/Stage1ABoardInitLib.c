@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -108,9 +108,7 @@ EarlyPlatformDataCheck (
     SetDebugPort (PcdGet8 (PcdDebugPortNumber));
   } else {
     SetDebugPort  (StitchData->DebugUart);
-    if ((StitchData->PlatformId > 0) && (StitchData->PlatformId < 32)) {
-      SetPlatformId (StitchData->PlatformId);
-    }
+    SetPlatformId (StitchData->PlatformId);
   }
 }
 
