@@ -45,9 +45,8 @@
 #define V_SPI_BC_BBS_LPC                1              ///< Boot BIOS strapped to LPC
 #define B_SPI_BCR_SMM_BWP               BIT5           ///< Enable InSMM.STS
 #define B_SPI_BCR_SRC                    (BIT3 | BIT2) ///< SPI Read Configuration (SRC)
-#define V_SPI_BCR_SRC_PREF_EN_CACHE_EN   0x08          ///< Prefetch Enable, Cache Enable
-#define V_SPI_BCR_SRC_PREF_DIS_CACHE_DIS 0x04          ///< Prefetch Disable, Cache Disable
-#define V_SPI_BCR_SRC_PREF_DIS_CACHE_EN  0x00          ///< Prefetch Disable, Cache Enable
+#define N_SPI_CFG_BC_SRC                2
+#define V_SPI_BCR_SRC_PREF_DIS_CACHE_DIS 0x01          ///< Prefetch Disable, Cache Disable
 #define N_SPI_BCR_SYNC_SS                8
 #define B_SPI_BCR_SYNC_SS                BIT8
 #define B_SPI_BCR_BILD                   BIT7
