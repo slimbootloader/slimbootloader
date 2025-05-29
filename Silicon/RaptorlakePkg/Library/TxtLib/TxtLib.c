@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2025, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -99,7 +99,7 @@ InitializeTxtLib (
     return EFI_NOT_FOUND;
   }
 
-  DumpFspHobList(FspHobList);
+  //DumpFspHobList(FspHobList);
   TxtInfoHob = GetNextGuidHob (&gTxtInfoHobGuid, FspHobList);
   if (TxtInfoHob == NULL) {
     DEBUG ((DEBUG_INFO, "TxtLib: Unable to find gTxtInfoHobGuid.\n"));
@@ -144,6 +144,31 @@ DummyWakupFunc (
   )
 {
   return;
+}
+
+/**
+  Disable CR4.SMXE bit on current processor.
+  This function clears the SMX enable bit on the BSP.
+**/
+VOID
+EFIAPI
+DisableCR4Smx (
+  VOID
+  )
+{
+  IA32_CR4    CR4;
+  UINT32      ApicId;
+
+  ApicId = GetApicId ();
+
+  CR4.UintN = AsmReadCr4 ();
+  DEBUG ((DEBUG_INFO, "TxtLib: CPU APIC ID 0x%02x - CR4.SMXE before: %d\n", ApicId, CR4.Bits.SMXE));
+
+  CR4.Bits.SMXE = 0;
+  AsmWriteCr4 (CR4.UintN);
+
+  CR4.UintN = AsmReadCr4 ();
+  DEBUG ((DEBUG_INFO, "TxtLib: CPU APIC ID 0x%02x - CR4.SMXE after: %d\n", ApicId, CR4.Bits.SMXE));
 }
 
 /**
@@ -889,11 +914,24 @@ TxtS3Resume()
 {
   EFI_PHYSICAL_ADDRESS        AlignedAddr = 0;
 
+  DEBUG ((DEBUG_INFO, "TxtS3Resume: Entry\n"));
+
   AlignedAddr = (EFI_PHYSICAL_ADDRESS)(UINTN)FindAcm();
+  DEBUG ((DEBUG_INFO, "TxtS3Resume: BIOS ACM Address = 0x%lx\n", AlignedAddr));
+
+  ///
+  /// Send INIT IPI to put all APs into wait-for-SIPI state
+  /// This is required before launching BIOS ACM
+  ///
+  SendInitIpiAllExcludingSelf();
+
+  /// Give the APs time to enter wait-for-SIPI state
+  MicroSecondDelay (10 * STALL_ONE_MILLI_SECOND);
+
   ///
   /// Launch the BIOS ACM to run the requested function
   ///
-  DEBUG ((DEBUG_INFO, "TxtLib::Running of LaunchBiosAcm in S3\n"));
+  DEBUG ((DEBUG_INFO, "TxtS3Resume: Launching BIOS ACM with SCHECK function\n"));
 #if TXT_ARCH_IA32
   #ifdef __GNUC__
   __asm__ __volatile__ (
@@ -913,24 +951,7 @@ TxtS3Resume()
 
   LaunchBiosAcm (AlignedAddr, TXT_LAUNCH_SCHECK);
 
-  return EFI_SUCCESS;
-}
-
-/**
-  Disable CR4.SMXE on all APs when TXT is enabled at ReadyToBoot.
-  This ensures SMX is disabled on all processors before OS boot.
-
-  This is a stub implementation for Tigerlake. Full implementation
-  is in RaptorlakePkg when CR4.SMXE disabling is required.
-
-  @retval EFI_SUCCESS     CR4.SMXE disabled on all APs successfully.
-**/
-EFI_STATUS
-EFIAPI
-DisableSmxOnAllAPs (
-  VOID
-  )
-{
-  DEBUG ((DEBUG_INFO, "TxtLib: DisableSmxOnAllAPs stub called\n"));
+  DEBUG ((DEBUG_INFO, "TxtS3Resume: BIOS ACM SCHECK complete\n"));
+  DEBUG ((DEBUG_INFO, "TxtS3Resume: Exit\n"));
   return EFI_SUCCESS;
 }

@@ -550,6 +550,7 @@ FindFitEntryData (
   @return  A pointer to ACM.
 **/
 VOID *
+EFIAPI
 FindAcm (
   VOID
   )

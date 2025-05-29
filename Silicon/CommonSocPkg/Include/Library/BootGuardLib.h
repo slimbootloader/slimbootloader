@@ -128,4 +128,15 @@ GetExistingAcmSvn (
   OUT UINT16  *Svn
   );
 
+/**
+  Find the address of ACM (Authenticated Code Module).
+
+  @return  A pointer to ACM.
+**/
+VOID *
+EFIAPI
+FindAcm (
+  VOID
+  );
+
 #endif

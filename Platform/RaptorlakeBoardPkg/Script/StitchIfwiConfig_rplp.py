@@ -1,12 +1,14 @@
 ## @ StitchIfwiConfig.py
 #  This is an IFWI stitch config script for RPL Slim Bootloader
 #
-# Copyright (c) 2023, Intel Corporation. All rights reserved. <BR>
+# Copyright (c) 2023 - 2026, Intel Corporation. All rights reserved. <BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
 import sys
 import os
+# Global variable to control TXT inclusion - can be overridden by check_parameter()
+g_txt_enabled = False
 
 extra_usage_txt = \
 """This is an IFWI stitch config script for Slim Bootloader For the FIT tool and
@@ -45,8 +47,10 @@ stitching ingredients listed in step 2 below, please contact your Intel represen
 """
 
 def get_bpmgen2_params_change_list ():
+    global g_txt_enabled
     params_change_list = []
-    params_change_list.append ([
+    # Base parameters
+    base_params = [
       # variable                | value |
       # ===================================
       ('PlatformRules',         'ADL Client'),
@@ -58,14 +62,30 @@ def get_bpmgen2_params_change_list ():
       ('AcpiBase',              '0x1800'),
       ('IbbFlags',              '0x12'),
       ('IbbHashAlgID',          '0x0C:SHA384'),
-      ('TxtInclude',            'FALSE'),
       ('PcdInclude',            'TRUE'),
       ('BpmSigScheme',          '0x16:RSAPSS'),
       ('BpmSigPubKey',          r'BpmGen2/keys/bpm_pubkey_3072.pem'),
       ('BpmSigPrivKey',         r'BpmGen2/keys/bpm_privkey_3072.pem'),
       ('BpmKeySizeBits',        '3072'),
       ('BpmSigHashAlgID',       '0x0C:SHA384'),
-      ])
+    ]
+
+    if g_txt_enabled == True:
+        txt_params = [
+            ('TxtInclude',            'TRUE'),
+            ('PdSeconds',             '10'),
+            ('PttCmosOffset0',        '0xFE'),
+            ('PttCmosOffset1',        '0xFF'),
+            ('CmosIndexOffset',       '255'),
+        ]
+    else:
+        txt_params = [
+            ('TxtInclude',            'False'),
+        ]
+
+    # Combine all parameters
+    all_params = base_params + txt_params
+    params_change_list.append(all_params)
     return params_change_list
 
 def get_platform_sku():
@@ -119,7 +139,8 @@ def check_parameter(para_list):
         '64MB'  : {},
         'debug' : {},
         'posc'  : {},
-        'fusa'  : {}
+        'fusa'  : {},
+        'txt'    : {},
         }
 
     para_help = \
@@ -137,6 +158,7 @@ def check_parameter(para_list):
         'debug' -- Enable DAM and DCI
         'posc' -- Stitch POSC binary into BIOS region.
         'fusa' -- Stitch Fusa DiagnosticAcm binary into BIOS region
+        'txt'  -- Enable Intel TXT support.
         """
     for para in para_list:
         if para == '':
@@ -500,4 +522,13 @@ def get_xml_change_list (platform, plt_params_list):
             ('./Debug/IntelMeFirmwareDebuggingOverrides/DbgOverrideProdSi',              '0x7'),
             ('./Debug/DirectConnectInterfaceConfiguration/Usb3DciOobEnable',             'Yes'),
             ])
+
+    if 'txt' in plt_params_list:
+        print ("Applying changes to enable TXT support")
+        global g_txt_enabled
+        g_txt_enabled = True
+        xml_change_list.append ([
+            ('./PlatformProtection/TxtConfiguration/TxtSupported',                        'Yes'),
+            ])
+
     return xml_change_list

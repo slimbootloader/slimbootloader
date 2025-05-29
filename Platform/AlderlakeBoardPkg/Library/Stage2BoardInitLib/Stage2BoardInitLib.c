@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2025, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2026, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -19,6 +19,7 @@
 #include <Library/FusaConfigLib.h>
 #include <Library/MediaAccessLib.h>
 #include "SioChip.h"
+#include <Library/TxtLib.h>
 
 GLOBAL_REMOVE_IF_UNREFERENCED UINT8    mBigCoreCount;
 GLOBAL_REMOVE_IF_UNREFERENCED UINT8    mSmallCoreCount;
@@ -462,6 +463,7 @@ BoardInit (
   BL_SW_SMI_INFO            *BlSwSmiInfo;
   FEATURES_DATA             *FeatureCfgData;
   UINT32                    Data;
+  FEATURES_CFG_DATA         *FeaturesCfgData;
 
   SiCfgData = NULL;
 
@@ -619,8 +621,38 @@ BoardInit (
         TriggerPayloadSwSmi (BlSwSmiInfo->BlSwSmiHandlerInput);
       }
     }
+
+    DEBUG ((DEBUG_INFO, "TXT: Checking TXT Enabled State\n"));
+    if (FeaturePcdGet (PcdTxtEnabled)) {
+      ///
+      /// Initialize TXT Before ACPI initialization.
+      /// This will update the correct TXT enabled state in ACPI table.
+      ///
+      FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
+      if (FeaturesCfgData->Features.TxtEnabled == 1) {
+        if (GetBootMode() != BOOT_ON_S3_RESUME) {
+          DEBUG ((DEBUG_INFO, "TXT: Calling InitTxt\n"));
+          InitTxt();
+        } else {
+          DEBUG ((DEBUG_INFO, "TXT: Calling TxtS3Restore\n"));
+          TxtS3Restore();
+        }
+      }
+    }
+
     break;
   case PrePayloadLoading:
+    // Disable CR4.SMXE on BSP before loading payload when TXT is enabled
+    if (FeaturePcdGet (PcdTxtEnabled)) {
+      FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
+      if ((FeaturesCfgData != NULL) && (FeaturesCfgData->Features.TxtEnabled == 1)) {
+        if (GetBootMode() != BOOT_ON_S3_RESUME) {
+          DEBUG ((DEBUG_INFO, "TXT: Disabling CR4.SMXE on BSP before payload loading\n"));
+          DisableCR4Smx ();
+        }
+      }
+    }
+
     Status = FixUpFlashMapEntry();
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_INFO, "Error fixing up Flash Map Memory Map entry %r\n", Status));
@@ -684,6 +716,30 @@ BoardInit (
     }
     break;
   case ReadyToBoot:
+    if (FeaturePcdGet (PcdTxtEnabled)) {
+      FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
+      if ((FeaturesCfgData->Features.TxtEnabled == 1)
+                  && (GetBootMode() == BOOT_ON_S3_RESUME)) {
+          // Disable APMC SMI around TxtS3Resume
+          // Rationale:
+          // - Re-enabling APMC before the ACPI wake vector causes repeated SW SMI
+          //   (APM/0xB2) entries when the OS/wake code touches APM ports, leading
+          //   to an SMI storm right after "Jump to Wake vector".
+          // - Masking APMC here prevents that storm while SCHECK runs and through
+          //   the immediate wake handoff. Pattern: read SMI_EN, clear APMC, call
+          //   TxtS3Resume(), then restore SMI_EN.
+          UINT32 SmiEnAddr = (UINT32)(ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN);
+
+          Data = IoRead32 ((UINTN) SmiEnAddr);
+          IoWrite32 ((UINTN) SmiEnAddr, Data & (UINT32)~B_ACPI_IO_SMI_EN_APMC);
+
+          DEBUG ((DEBUG_INFO, "TXT: Calling TxtS3Resume\n"));
+          TxtS3Resume ();
+
+          IoWrite32 ((UINTN) SmiEnAddr, Data);
+      }
+    }
+
     if ((GetBootMode() != BOOT_ON_FLASH_UPDATE) && (GetPayloadId() == 0)) {
       ProgramSecuritySetting ();
       //

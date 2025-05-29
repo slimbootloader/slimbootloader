@@ -525,3 +525,6 @@ GPIO_CFG_DATA.GpioPinConfig1_GPD12.GPIOSkip_GPD12 | 1
 # If removing the jumper from pin 1 to pin 2 UEFI payload will be used.
 #
 GPIO_CFG_DATA.GpioPinConfig0_GPP_A13.GPIODirection_GPP_A13 | 11
+
+# Set 'TxtEnabled' to '1' for TXT Feature enablement
+FEATURES_CFG_DATA.Features.TxtEnabled                       | 0

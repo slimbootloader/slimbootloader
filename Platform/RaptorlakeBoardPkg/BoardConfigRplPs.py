@@ -1,7 +1,7 @@
 ## @file
 # This file is used to provide board specific image information.
 #
-#  Copyright (c) 2023, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2023 - 2026, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -40,6 +40,11 @@ class Board(AlderlakeBoardConfig.Board):
         self.EPAYLOAD_SIZE        = 0x240000
         self.OS_LOADER_FD_SIZE    = 0x0005B000
         self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
+
+        # TXT (Trusted Execution Technology) support
+        # 0: Disabled (default)  1: Enabled
+        self.TXT_ENABLED          = 0
+
         # 0 - PCH UART0, 1 - PCH UART1, 2 - PCH UART2, 0xFF - EC UART 0x3F8
         self.DEBUG_PORT_NUMBER = 0x0
 
@@ -180,3 +185,17 @@ class Board(AlderlakeBoardConfig.Board):
         ])
 
         return img_list
+
+    def GetDscLibraryClasses (self, dsc):
+        dsc = super().GetDscLibraryClasses(dsc)
+        # Replace TxtLib with RaptorlakePkg version based on TXT_ENABLED flag
+        # RplPs inherits from AlderlakeBoardConfig which has TxtLibNull hardcoded
+        lib_classes = dsc['LibraryClasses.%s' % self.BUILD_ARCH]
+        if self.TXT_ENABLED:
+            # Use real TXT implementation
+            dsc['LibraryClasses.%s' % self.BUILD_ARCH] = [
+                'TxtLib|Silicon/RaptorlakePkg/Library/TxtLib/TxtLib.inf' if 'TxtLib' in lib else lib
+                for lib in lib_classes
+            ]
+        # else: keep TxtLibNull inherited from AlderlakeBoardConfig
+        return dsc
