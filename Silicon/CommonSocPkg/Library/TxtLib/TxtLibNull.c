@@ -3,40 +3,40 @@
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
-#ifndef _TXT_LIB_H_
-#define _TXT_LIB_H_
-
-#define R_IOPORT_CMOS_STANDARD_INDEX            0x70
-#define R_IOPORT_CMOS_STANDARD_DATA             0x71
-#define TXT_CMOS_STATUS_REG                     0x2A
+#include <PiPei.h>
+#include <Library/BaseLib.h>
+#include <Library/DebugLib.h>
 
 /**
   Determines whether or not the platform requires initialization for TXT use.
+
+  @param[in] TxtLibCtx      - A pointer to an initialized TXT DXE Context data structure
 
   @retval TRUE          - If the the platoform should be configured for TXT.
   @retval FALSE         - If TXT is not to be used.
 **/
 BOOLEAN
 EFIAPI
-IsTxtEnabled ();
-
-/*
-  Initialize Intel TXT
-*/
-EFI_STATUS
-EFIAPI
-InitTxt();
+IsTxtEnabled (
+  VOID
+  )
+{
+  return FALSE;
+}
 
 /**
-  Initializes Intel TXT for S3 resume by launching BIOS ACM.
-  This function finds the BIOS ACM and launches it with SCHECK function
-  to complete TXT initialization after S3 resume.
+  Initializes Intel TXT
 
-  @retval EFI_SUCCESS   - BIOS ACM launched successfully for S3 resume
+  @retval EFI_SUCCESS   - TXT initialization completed successfully
 **/
 EFI_STATUS
 EFIAPI
-TxtS3Resume();
+InitTxt(
+  VOID
+  )
+{
+  return EFI_SUCCESS;
+}
 
 /**
   Restores Intel TXT device memory registers (HEAP and SINIT) for S3 resume.
@@ -49,6 +49,25 @@ TxtS3Resume();
 **/
 EFI_STATUS
 EFIAPI
-TxtS3Restore();
+TxtS3Restore(
+  VOID
+  )
+{
+  return EFI_SUCCESS;
+}
 
-#endif
+/**
+  Initializes Intel TXT for S3 resume by launching BIOS ACM.
+  This function finds the BIOS ACM and launches it with SCHECK function
+  to complete TXT initialization after S3 resume.
+
+  @retval EFI_SUCCESS   - BIOS ACM launched successfully for S3 resume
+**/
+EFI_STATUS
+EFIAPI
+TxtS3Resume(
+  VOID
+  )
+{
+  return EFI_SUCCESS;
+}
