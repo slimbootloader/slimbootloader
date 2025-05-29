@@ -1,6 +1,6 @@
 #/*++
 #
-#  Copyright (c) 2025, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 #
@@ -36,8 +36,7 @@ BootGuardLib
 MdePkg/MdePkg.dec
 BootloaderCorePkg/BootloaderCorePkg.dec
 BootloaderCommonPkg/BootloaderCommonPkg.dec
-Silicon/TigerlakePchPkg/TigerlakePchPkg.dec
-Silicon/TigerlakePkg/TigerlakePkg.dec
+Silicon/AlderlakePkg/AlderlakePkg.dec
 Silicon/CommonSocPkg/CommonSocPkg.dec
 
 [Sources]

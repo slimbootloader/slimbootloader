@@ -1,5 +1,5 @@
 /** @file
-  Copyright (c) 2025, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2025 - 2026, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -50,5 +50,15 @@ TxtS3Resume();
 EFI_STATUS
 EFIAPI
 TxtS3Restore();
+
+/**
+  Disable CR4.SMXE bit on current processor.
+  This function clears the SMX enable bit on the BSP.
+**/
+VOID
+EFIAPI
+DisableCR4Smx (
+  VOID
+  );
 
 #endif

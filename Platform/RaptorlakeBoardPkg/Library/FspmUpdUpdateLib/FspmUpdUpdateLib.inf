@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2021 - 2023, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2021 - 2026, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -40,6 +40,7 @@
   WatchDogTimerLib
   TccLib
   FusaConfigLib
+  BootGuardLib
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
@@ -48,6 +49,9 @@
   gPlatformModuleTokenSpaceGuid.PcdStage1StackBaseOffset
   gPlatformModuleTokenSpaceGuid.PcdStage1StackSize
   gPlatformModuleTokenSpaceGuid.PcdStage1DataSize
+
+[FeaturePcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdTxtEnabled
 
 [FixedPcd]
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled

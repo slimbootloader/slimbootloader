@@ -466,3 +466,6 @@ GPIO_CFG_DATA.GpioPinConfig1_GPD09.GPIOSkip_GPD09 | 1
 GPIO_CFG_DATA.GpioPinConfig1_GPD10.GPIOSkip_GPD10 | 1
 GPIO_CFG_DATA.GpioPinConfig1_GPD11.GPIOSkip_GPD11 | 1
 GPIO_CFG_DATA.GpioPinConfig1_GPD12.GPIOSkip_GPD12 | 1
+
+# Set 'TxtEnabled' to '1' for TXT Feature enablement
+FEATURES_CFG_DATA.Features.TxtEnabled                       | 0

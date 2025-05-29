@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2024, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2026, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -28,6 +28,9 @@
 #include <GpioPinsVer2Lp.h>
 #include <Library/TccLib.h>
 #include <Library/FusaConfigLib.h>
+#include <FirmwareInterfaceTable.h>
+#include <Library/TxtLib.h>
+#include <Library/BootGuardLib.h>
 
 #include "BoardSaConfigPreMem.h"
 
@@ -280,10 +283,7 @@ UpdateFspConfig (
   Fspmcfg->FClkFrequency        = MemCfgData->FClkFrequency;
   Fspmcfg->TxtDprMemoryBase     = MemCfgData->TxtDprMemoryBase;
   Fspmcfg->TxtDprMemorySize     = MemCfgData->TxtDprMemorySize;
-  Fspmcfg->SinitMemorySize      = MemCfgData->SinitMemorySize;
-  Fspmcfg->TxtHeapMemorySize    = MemCfgData->TxtHeapMemorySize;
   Fspmcfg->BiosSize             = MemCfgData->BiosSize;
-  Fspmcfg->BiosAcmBase          = MemCfgData->BiosAcmBase;
   Fspmcfg->BiosGuard            = 0x0; // Need to disable, else it will fails in FSPS
   Fspmcfg->BiosGuardToolsInterface = 1;
 
@@ -407,6 +407,33 @@ UpdateFspConfig (
   Fspmcfg->VmxEnable                  = MemCfgData->VmxEnable;
   Fspmcfg->Lp5BankMode                = MemCfgData->Lp5BankMode;
   Fspmcfg->DisableStarv2medPrioOnNewReq = MemCfgData->DisableStarv2medPrioOnNewReq;
+
+  // TXT Configuration
+  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
+  if ((FeaturesCfgData->Features.TxtEnabled == 1) &&
+      (FeaturePcdGet (PcdTxtEnabled))) {
+    DEBUG((DEBUG_INFO, "Enabling TXT in FSP-M UPD's\n"));
+    Fspmcfg->Txt                  = 0x1;
+    Fspmcfg->TxtImplemented       = 0x1;
+    Fspmcfg->SinitMemorySize      = 0x50000;
+    Fspmcfg->TxtHeapMemorySize    = 0xF0000;
+    Fspmcfg->BiosAcmBase          = (UINT32)(UINTN)FindAcm();
+    Fspmcfg->VmxEnable            = 1;    // Txt need enable VMX
+
+    IoWrite8 (R_IOPORT_CMOS_STANDARD_INDEX, TXT_CMOS_STATUS_REG);
+    UINT8 CmosData = IoRead8 (R_IOPORT_CMOS_STANDARD_DATA);
+    if (!(CmosData & BIT4)) {
+      CmosData |= BIT4;
+      IoWrite8 (R_IOPORT_CMOS_STANDARD_INDEX, TXT_CMOS_STATUS_REG);
+      IoWrite8 (R_IOPORT_CMOS_STANDARD_DATA, CmosData);
+    }
+  } else {
+    IoWrite8 (R_IOPORT_CMOS_STANDARD_INDEX, TXT_CMOS_STATUS_REG);
+    UINT8 CmosData = IoRead8 (R_IOPORT_CMOS_STANDARD_DATA);
+    CmosData &= ~BIT4;
+    IoWrite8 (R_IOPORT_CMOS_STANDARD_INDEX, TXT_CMOS_STATUS_REG);
+    IoWrite8 (R_IOPORT_CMOS_STANDARD_DATA, CmosData);
+  }
 
   // CSI port
   CopyMem (Fspmcfg->IpuLaneUsed, MemCfgData->IpuLaneUsed, sizeof(MemCfgData->IpuLaneUsed));
