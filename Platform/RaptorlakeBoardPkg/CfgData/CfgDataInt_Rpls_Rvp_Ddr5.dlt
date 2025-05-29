@@ -643,3 +643,5 @@ GPIO_CFG_DATA.GpioPinConfig0_GPP_D23.GPIOResetConfig_GPP_D23 | 1
 GPIO_CFG_DATA.GpioPinConfig1_GPP_D23.GPIOLockConfig_GPP_D23 | 15
 GPIO_CFG_DATA.GpioPinConfig1_GPP_D23.RxRaw_GPP_D23 | 0
 
+# Set 'TxtEnabled' to '1' for TXT Feature enablement
+FEATURES_CFG_DATA.Features.TxtEnabled                       | 0

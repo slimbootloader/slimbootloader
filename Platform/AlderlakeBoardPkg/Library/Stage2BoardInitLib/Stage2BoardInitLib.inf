@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2020 - 2024, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2026, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -77,6 +77,7 @@
   PciSegmentLib
   MediaAccessLib
   DmarLib
+  TxtLib
 
 [Guids]
   gOsConfigDataGuid
@@ -122,6 +123,9 @@
   gPlatformModuleTokenSpaceGuid.PcdIgdOpRegionAddress
   gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr
   gPlatformModuleTokenSpaceGuid.PcdEnableSetup
+
+[FeaturePcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdTxtEnabled
 
 [FixedPcd]
   gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport

@@ -1,7 +1,7 @@
 ## @file
 # This file is used to provide board specific image information.
 #
-#  Copyright (c) 2021 - 2025, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2021 - 2026, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -67,6 +67,10 @@ class Board(BaseBoard):
         # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
         # 3: Enable NOSMRR (for edk2-stable202411 and newer UEFI payload)  4: Auto NOSMRR
         self.ENABLE_SMM_REBASE    = 4
+
+        # TXT (Trusted Execution Technology) support
+        # 0: Disabled (default)  1: Enabled
+        self.TXT_ENABLED          = 0
 
         # 0 - PCH UART0, 1 - PCH UART1, 2 - PCH UART2, 0xFF - EC UART 0x3F8
         self.DEBUG_PORT_NUMBER = 0xFF
@@ -300,6 +304,12 @@ class Board(BaseBoard):
             'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
             'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf'
         ]
+
+        # TXT Library: Use real implementation if TXT_ENABLED, else use NULL stub
+        if self.TXT_ENABLED:
+            dsc['LibraryClasses.%s' % self.BUILD_ARCH].append('TxtLib|Silicon/RaptorlakePkg/Library/TxtLib/TxtLib.inf')
+        else:
+            dsc['LibraryClasses.%s' % self.BUILD_ARCH].append('TxtLib|Silicon/CommonSocPkg/Library/TxtLib/TxtLibNull.inf')
 
         if self.BUILD_CSME_UPDATE_DRIVER:
             dsc['LibraryClasses.%s' % self.BUILD_ARCH].append ('MeFwUpdateLib|Silicon/$(SILICON_PKG_NAME)/Library/MeFwUpdateLib/MeFwUpdateLib.inf')
