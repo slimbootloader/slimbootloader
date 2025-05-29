@@ -68,6 +68,9 @@ class Board(BaseBoard):
         # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
         # 3: Enable NOSMRR (for edk2-stable202411 and newer UEFI payload)  4: Auto NOSMRR
         self.ENABLE_SMM_REBASE    = 4
+        # TXT (Trusted Execution Technology) support
+        # 0: Disabled (default)  1: Enabled
+        self.TXT_ENABLED          = 0
 
         # 0 - PCH UART0, 1 - PCH UART1, 2 - PCH UART2, 0xFF - EC UART 0x3F8
         self.DEBUG_PORT_NUMBER = 0x2
@@ -273,6 +276,12 @@ class Board(BaseBoard):
             'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
             'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf',
         ]
+
+        # TXT Library: Use real implementation if TXT_ENABLED, else use NULL stub
+        if self.TXT_ENABLED:
+            dsc['LibraryClasses.%s' % self.BUILD_ARCH].append('TxtLib|Silicon/CommonSocPkg/Library/TxtLib/TxtLib.inf')
+        else:
+            dsc['LibraryClasses.%s' % self.BUILD_ARCH].append('TxtLib|Silicon/CommonSocPkg/Library/TxtLib/TxtLibNull.inf')
 
         if self.BUILD_CSME_UPDATE_DRIVER:
             dsc['LibraryClasses.%s' % self.BUILD_ARCH].append ('MeFwUpdateLib|Silicon/$(SILICON_PKG_NAME)/Library/MeFwUpdateLib/MeFwUpdateLib.inf')

@@ -52,6 +52,9 @@
   gPlatformAlderLakeTokenSpaceGuid.PcdBoardRev
   gPlatformAlderLakeTokenSpaceGuid.PcdMemConfigId
 
+[FeaturePcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdTxtEnabled
+
 [FixedPcd]
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
   gPlatformModuleTokenSpaceGuid.PcdFusaSupport
