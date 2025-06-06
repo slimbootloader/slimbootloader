@@ -28,7 +28,7 @@ GPIO_TMPL: >
         help         : >
                        GPIO PAD Mode. If GPIO is set to one of NativeX modes then following settings are not applicable and can be skipped:-
                        Interrupt related settings, Host Software Ownership, Output/Input enabling/disabling, Output lock
-        condition    : $GPIO_CFG_DATA.GpioPinConfig1_$(1).Hide_$(1) == 0
+        condition    : $GPIO_CFG_DATA.GpioPinConfig1_$(1).Hide_$(1) == 0 and $GPIO_CFG_DATA.GpioPinConfig1_$(1).GPIOSkip_$(1) == 0
         length       : 5b
     - GPIOHostSoftPadOwn_$(1) :
         name         : HostSoftPadOwn
@@ -41,7 +41,7 @@ GPIO_TMPL: >
                        If GPIO is configured to generate SCI/SMI/NMI then this setting must be used for interrupts to work.
                        - HOST ownership to GPIO Driver mode - Use this setting only if GPIO pad should be controlled by GPIO OS Driver.
                        GPIO OS Driver will be able to control the pad if appropriate entry in ACPI exists.
-        condition    : $GPIO_CFG_DATA.GpioPinConfig1_$(1).Hide_$(1) == 0
+        condition    : $GPIO_CFG_DATA.GpioPinConfig1_$(1).Hide_$(1) == 0 and $GPIO_CFG_DATA.GpioPinConfig1_$(1).GPIOSkip_$(1) == 0
         length       : 2b
     - GPIODirection_$(1) :
         name         : Direction
@@ -53,7 +53,7 @@ GPIO_TMPL: >
                        - DirInInvOut = Set pad for both output and input with inversion, - DirIn = Set pad for input only,
                        - DirInInv = Set pad for input with inversion, - DirOut = Set pad for output only,
                        - DirNone  = Disable both output and input.
-        condition    : $GPIO_CFG_DATA.GpioPinConfig1_$(1).Hide_$(1) == 0
+        condition    : $GPIO_CFG_DATA.GpioPinConfig1_$(1).Hide_$(1) == 0 and $GPIO_CFG_DATA.GpioPinConfig1_$(1).GPIOSkip_$(1) == 0
         length       : 6b
     - GPIOOutputState_$(1) :
         name         : OutputState
@@ -62,7 +62,7 @@ GPIO_TMPL: >
         help         : >
                        GPIO Output State.This field is relevant only if output is enabled:-
                        - OutDefault = Leave output value unmodified, - OutLow = Set output to low, - OutHigh = Set output to high
-        condition    : $GPIO_CFG_DATA.GpioPinConfig1_$(1).Hide_$(1) == 0
+        condition    : $GPIO_CFG_DATA.GpioPinConfig1_$(1).Hide_$(1) == 0 and $GPIO_CFG_DATA.GpioPinConfig1_$(1).GPIOSkip_$(1) == 0
         length       : 2b
     - GPIOInterruptConfig_$(1) :
         name         : InterruptConfig
@@ -85,7 +85,7 @@ GPIO_TMPL: >
                        - IntDefault = Leave value of interrupt routing unmodified, - IntDisable = Disable IOxAPIC/SCI/SMI/NMI interrupt generation,
                        - IntNmi = Enable NMI interrupt only, - IntSmi = Enable SMI interrupt only, - IntSci = Enable SCI interrupt only, - IntApic = Enable IOxAPIC interrupt only,
                        - IntLevel = Set interrupt as level triggered, - IntEdge = Set interrupt as edge triggered, - IntLvlEdgDis = Disable interrupt trigger, - IntBothEdge = Set interrupt as both edge triggered
-        condition    : $GPIO_CFG_DATA.GpioPinConfig1_$(1).Hide_$(1) == 0
+        condition    : $GPIO_CFG_DATA.GpioPinConfig1_$(1).Hide_$(1) == 0 and $GPIO_CFG_DATA.GpioPinConfig1_$(1).GPIOSkip_$(1) == 0
         length       : 9b
     - GPIOResetConfig_$(1) :
         name         : Power/ResetConfig
@@ -97,7 +97,7 @@ GPIO_TMPL: >
                        - HostDeepReset = Pad settings will reset on:Warm/Cold/Global reset,DeepSx transition,G3,
                        - PlatformReset = Pad settings will reset on:S3/S4/S5 transition, Warm/Cold/Global reset, DeepSx transition, G3
                        - DswReset = Pad settings will reset on G3
-        condition    : $GPIO_CFG_DATA.GpioPinConfig1_$(1).Hide_$(1) == 0
+        condition    : $GPIO_CFG_DATA.GpioPinConfig1_$(1).Hide_$(1) == 0 and $GPIO_CFG_DATA.GpioPinConfig1_$(1).GPIOSkip_$(1) == 0
         length       : 8b
   - GpioPinConfig1_$(1) :
     - $STRUCT      :
@@ -117,7 +117,7 @@ GPIO_TMPL: >
                        - TermWpu1K = 1kOhm weak pull-up, - TermWpu2K = 2kOhm weak pull-up, - TermWpu5K = 5kOhm weak pull-up, - TermWpu20K = 20kOhm weak pull-up, - TermWpu1K2K = 1kOhm & 2kOhm weak pull-up,
                        - TermNative = Native function. This setting is applicable only to some native modes,
                        - NoTolerance1v8 = Disable 1.8V pad tolerance, Tolerance1v8 = Enable 1.8V pad tolerance
-        condition    : $GPIO_CFG_DATA.GpioPinConfig1_$(1).Hide_$(1) == 0
+        condition    : $GPIO_CFG_DATA.GpioPinConfig1_$(1).Hide_$(1) == 0 and $GPIO_CFG_DATA.GpioPinConfig1_$(1).GPIOSkip_$(1) == 0
         length       : 9b
     - GPIOLockConfig_$(1) :
         name         : LockConfig
@@ -128,13 +128,14 @@ GPIO_TMPL: >
                        - LockDefault = Leave value of pad as-is, - PadConfigLock = Lock Pad configuration,
                        - PadConfigUnlock = Leave Pad configuration unlocked, - PadLock = Lock both Pad configuration and output control,
                        - OutputStateUnlock = Leave Pad output control unlocked, PadUnlock = Leave both Pad configuration and output control unlocked
-        condition    : $GPIO_CFG_DATA.GpioPinConfig1_$(1).Hide_$(1) == 0
+        condition    : $GPIO_CFG_DATA.GpioPinConfig1_$(1).Hide_$(1) == 0 and $GPIO_CFG_DATA.GpioPinConfig1_$(1).GPIOSkip_$(1) == 0
         length       : 4b
     - RxRaw_$(1) :
         name         : RxRaw
         type         : Combo
         option       : 0x0:Default, 0x1:NoOverride, 0x3:RxDrive 1 internally
         help         : > This bit determines if the selected pad state is being overridden to '1'.
+        condition    : $GPIO_CFG_DATA.GpioPinConfig1_$(1).GPIOSkip_$(1) == 0
         length       : 2b
     - Reserved1_$(1) :
         name         : Reserved1
