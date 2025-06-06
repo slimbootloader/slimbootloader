@@ -226,7 +226,7 @@ UpdateFspConfig (
   CopyMem (Fspmcfg->PcieClkSrcUsage,       MemCfgData->PcieClkSrcUsage,       sizeof(MemCfgData->PcieClkSrcUsage));
   CopyMem (Fspmcfg->PcieClkSrcClkReq,      MemCfgData->PcieClkSrcClkReq,      sizeof(MemCfgData->PcieClkSrcClkReq));
   Fspmcfg->PchPcieRpEnableMask      = MemCfgData->PchPcieRpEnableMask;
-  CopyMem (Fspmcfg->PchPcieClkSrcUsage,    MemCfgData->PchPcieClkSrcUsage,    sizeof(MemCfgData->PcieClkSrcUsage));
+  CopyMem (Fspmcfg->PchPcieClkSrcUsage,    MemCfgData->PchPcieClkSrcUsage,    sizeof(MemCfgData->PchPcieClkSrcUsage));
   CopyMem (Fspmcfg->PchPcieClkSrcClkReq,   MemCfgData->PchPcieClkSrcClkReq,   sizeof(MemCfgData->PchPcieClkSrcClkReq));
 
   // Hd Audio
