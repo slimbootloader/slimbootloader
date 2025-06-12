@@ -394,6 +394,7 @@ GetBootLbaInfo (
   } else {
     BootOption->Image[0].LbaImage.LbaAddr = (UINT32) ((IsHex) ? StrHexToUintn (Buffer) : StrDecimalToUintn (Buffer));
   }
+  BootOption->Image[0].LbaImage.Valid = 1;
 
   return EFI_SUCCESS;
 }
