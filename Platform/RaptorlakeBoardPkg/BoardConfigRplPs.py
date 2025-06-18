@@ -26,7 +26,7 @@ class Board(AlderlakeBoardConfig.Board):
         self.BOARD_NAME           = 'rplps'
 
         self.VERINFO_PROJ_MAJOR_VER = 1
-        self.VERINFO_PROJ_MINOR_VER = 1
+        self.VERINFO_PROJ_MINOR_VER = 2
         self._CFGDATA_DEF_FILE    = 'CfgDataDefRplp.yaml'
         self._EXTRA_INC_PATH      = ['Silicon/RaptorlakePkg/Rplps/Fsp']
         self._FSP_PATH_NAME       = 'Silicon/RaptorlakePkg/Rplps/Fsp'
