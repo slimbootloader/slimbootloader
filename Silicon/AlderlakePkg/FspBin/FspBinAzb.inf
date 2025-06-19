@@ -11,7 +11,7 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = 3ba9ffddac41fd43ddb84a84be431a1b1fbbe055
+  COMMIT  = 9c289110ee1a3870bf730e66d1cf355d49ff386a
 
 [UserExtensions.SBL."CopyList"]
 # For AZB
