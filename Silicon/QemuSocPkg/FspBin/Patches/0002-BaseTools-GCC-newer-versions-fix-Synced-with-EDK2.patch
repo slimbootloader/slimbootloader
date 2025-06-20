@@ -9,6 +9,7 @@ Subject: [PATCH] BaseTools GCC newer versions fix - Synced with EDK2 This
  EDK2: - https://edk2.groups.io/g/devel/topic/89997410 -
  https://edk2.groups.io/g/devel/topic/89997412
 
+Signed-off-by: Fernando Silva <eng.fernandosilva@outlook.com>
 ---
  BaseTools/Source/C/GenFfs/GenFfs.c              | 2 +-
  BaseTools/Source/C/GenSec/GenSec.c              | 2 +-

@@ -201,6 +201,10 @@ def BuildFspBins (fsp_dir, sbl_dir, fsp_inf, silicon_pkg_name, flag):
     ret = subprocess.call(cmd.split(' '), cwd=fsp_dir)
     if ret:
         Fatal ('Failed to apply QEMU FSP BuildTools patch !')
+    cmd = 'git am --keep-cr --whitespace=nowarn %s/0003-Update-CFLAGS-so-compilation-works-on-Fedora-42.patch' % patch_dir
+    ret = subprocess.call(cmd.split(' '), cwd=fsp_dir)
+    if ret:
+        Fatal ('Failed to apply QEMU FSP Fedora 42 compatibility patch !')
     print ('Done\n')
 
     print ('Compiling QEMU FSP source ...')

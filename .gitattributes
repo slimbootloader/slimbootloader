@@ -18,3 +18,4 @@
 # endings. This means it must be treated as binary.
 Silicon/QemuSocPkg/FspBin/Patches/0001-Build-QEMU-FSP-2.0-binaries.patch binary
 Silicon/QemuSocPkg/FspBin/Patches/0002-BaseTools-GCC-newer-versions-fix-Synced-with-EDK2.patch binary
+Silicon/QemuSocPkg/FspBin/Patches/0003-Update-CFLAGS-so-compilation-works-on-Fedora-42.patch binary
