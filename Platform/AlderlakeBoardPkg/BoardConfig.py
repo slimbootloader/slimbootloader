@@ -116,7 +116,7 @@ class Board(BaseBoard):
         if self.FSPDEBUG_MODE:
             self.STAGE2_SIZE      = 0x000CF000
         else:
-            self.STAGE2_SIZE      = 0x000C3000
+            self.STAGE2_SIZE      = 0x000CA000
         self.STAGE2_FD_BASE       = 0x01000000
         self.STAGE2_FD_SIZE       = 0x001F0000
 
