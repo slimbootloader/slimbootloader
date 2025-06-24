@@ -11,7 +11,7 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = e276be95bac39f7f56a6755c0da105bcce283bfa
+  COMMIT  = 570ac0f5fa03a5ac273783c614948c63243f0728
 
 [UserExtensions.SBL."CopyList"]
   MeteorLakeFspBinPkg/IoT/MeteorLake/Fsp.fd                 : Silicon/MeteorlakePkg/FspBin/FspRel.bin
@@ -22,5 +22,5 @@
   MeteorLakeFspBinPkg/IoT/MeteorLake/Include/FspmUpd.h      : Silicon/MeteorlakePkg/Include/FspmUpd.h
   MeteorLakeFspBinPkg/IoT/MeteorLake/Include/FspsUpd.h      : Silicon/MeteorlakePkg/Include/FspsUpd.h
   MeteorLakeFspBinPkg/IoT/MeteorLake/Include/MemInfoHob.h   : Silicon/MeteorlakePkg/Include/MemInfoHob.h
-  MeteorLakeFspBinPkg/IoT/MeteorLake/VbtBin/Vbt_MTL.json    : Platform/MeteorlakeBoardPkg/VbtBin/Vbt.json
-  FSP_License.pdf                                           : Silicon/MeteorlakePkg/Fsp/FSP_License.pdf
+  MeteorLakeFspBinPkg/IoT/MeteorLake/VbtBin/Vbt_MTL.json    : Platform/MeteorlakeBoardPkg/VbtBin/VbtMtl.json
+  FSP_License.pdf                                           : Silicon/MeteorlakePkg/FspBin/FSP_License.pdf

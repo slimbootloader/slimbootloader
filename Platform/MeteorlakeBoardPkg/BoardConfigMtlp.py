@@ -1,7 +1,7 @@
 ## @file
 # This file is used to provide board specific image information.
 #
-#  Copyright (c) 2020 - 2024, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2025, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -24,7 +24,7 @@ class Board(BaseBoard):
 
         self.VERINFO_IMAGE_ID     = 'SB_MTLP'
         self.VERINFO_PROJ_MAJOR_VER = 1
-        self.VERINFO_PROJ_MINOR_VER = 1
+        self.VERINFO_PROJ_MINOR_VER = 3
         self.VERINFO_SVN            = 1
         self.VERINFO_BUILD_DATE     = time.strftime("%m/%d/%Y")
 
@@ -152,7 +152,7 @@ class Board(BaseBoard):
         self.UCODE_SIZE           = 0x000B7000
         self.UCODE_SLOT_SIZE      = 0x00037000
         self.MRCDATA_SIZE         = 0x00010000
-        self.CFGDATA_SIZE         = 0x00004000
+        self.CFGDATA_SIZE         = 0x00005000
         self.KEYHASH_SIZE         = 0x00001000
         self.VARIABLE_SIZE        = 0x00002000
         self.SBLRSVD_SIZE         = 0x00001000

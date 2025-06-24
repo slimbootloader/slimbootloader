@@ -2,7 +2,7 @@
 #
 #  Slim Bootloader CFGDATA Option File.
 #
-#  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2025, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -10,7 +10,7 @@
 
 - $ACTION      :
     page         : OS
-- !expand { BOOT_OPTION_TMPL : [ 0 ,   0       ,  0 ,    5   ,   0   ,    0xFF  ,     2 ,     1 , '/boot/sbl_os' ] }
-- !expand { BOOT_OPTION_TMPL : [ 1 ,   0       ,  0 ,    6   ,   1   ,    0     ,     2 ,     1 , '/boot/sbl_os' ] }
-- !expand { BOOT_OPTION_TMPL : [ 2 ,   0       ,  0 ,    6   ,   0   ,    0     ,     2 ,     1 , '/boot/sbl_os' ] }
-- !expand { BOOT_OPTION_TMPL : [ 3 ,   0       ,  0 ,    0   ,   0   ,    0xFF  ,     2 ,     1 , '/boot/sbl_os' ] }
+- !expand { BOOT_OPTION_TMPL : [ 0 ,   0       ,  0 ,    5   ,   0   ,    0xFF  ,     1 ,     1 , '/boot/sbl_os' ] }
+- !expand { BOOT_OPTION_TMPL : [ 1 ,   0       ,  0 ,    6   ,   1   ,    0     ,     1 ,     1 , '/boot/sbl_os' ] }
+- !expand { BOOT_OPTION_TMPL : [ 2 ,   0       ,  0 ,    6   ,   0   ,    0     ,     1 ,     1 , '/boot/sbl_os' ] }
+- !expand { BOOT_OPTION_TMPL : [ 3 ,   0       ,  0 ,    0   ,   0   ,    0xFF  ,     1 ,     1 , '/boot/sbl_os' ] }
