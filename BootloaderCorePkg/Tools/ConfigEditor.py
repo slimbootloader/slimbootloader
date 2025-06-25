@@ -346,6 +346,7 @@ class application(tkinter.Frame):
     def __init__(self, master=None):
         root = master
 
+        self.current_file = None
         self.debug = True
         self.page_id = ''
         self.page_list = {}
@@ -356,6 +357,9 @@ class application(tkinter.Frame):
         self.in_right = state()
         self.search_text = ''
         self.search_key  = 0
+
+        self.status = tkinter.Label(master, text="", bd=1, relief=tkinter.SUNKEN, anchor=tkinter.W)
+        self.status.pack(side=tkinter.BOTTOM, fill=tkinter.X)
 
         # Check if current directory contains a file with a .yaml extension
         # if not default self.last_dir to a Platform directory where it is easier to locate *BoardPkg\CfgData\*Def.yaml files
@@ -796,6 +800,7 @@ class application(tkinter.Frame):
         self.reload_config_data_from_bin(self.org_cfg_data_bin)
         try:
             self.cfg_data_obj.override_default_value(path)
+            self.update_file_display(path)
         except Exception as e:
             messagebox.showerror('LOADING ERROR', str(e))
             return
@@ -817,9 +822,20 @@ class application(tkinter.Frame):
 
         try:
             self.reload_config_data_from_bin(bin_data)
+            self.update_file_display(path)
         except Exception as e:
             messagebox.showerror('LOADING ERROR', str(e))
             return
+
+    def update_file_display(self, path):
+        self.current_file = path
+        if path:
+            filename = os.path.basename(path)
+            self.master.title(f"Config Editor - {filename}")
+            self.status.config(text=f"Opened: {path}")
+        else:
+            self.master.title("Config Editor")
+            self.status.config(text="")
 
     def load_cfg_file(self, path):
         # Save current values in widget and clear  database
@@ -843,6 +859,7 @@ class application(tkinter.Frame):
             return
 
         self.load_cfg_file(path)
+        self.update_file_display(path)
 
     def get_save_file_name (self, extension):
         path = filedialog.asksaveasfilename(
