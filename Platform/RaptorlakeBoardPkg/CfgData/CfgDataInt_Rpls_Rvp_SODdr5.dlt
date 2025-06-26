@@ -2,7 +2,7 @@
 #
 #  Platform Configuration Delta File.
 #
-#  Copyright (c) 2021 - 2022, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2021 - 2025, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 #
@@ -45,6 +45,7 @@ MEMORY_CFG_DATA.TcssXhciEn | 0x1
 MEMORY_CFG_DATA.TcssDma0En | 0x1
 MEMORY_CFG_DATA.TcssDma1En | 0x1
 
+MEMORY_CFG_DATA.PchHdaEnable               | 0x1
 MEMORY_CFG_DATA.PchHdaAudioLinkHdaEnable   | 0x1
 MEMORY_CFG_DATA.PchHdaAudioLinkDmicEnable  | {0x1, 0x1}
 MEMORY_CFG_DATA.PchHdaDspEnable            | 0x1
