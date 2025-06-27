@@ -11,7 +11,7 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = d746b5b938061b73aa2a4288183992e194f184ca
+  COMMIT  = a7130986134516b1e41309dd5a529e5f873bd15c
 
 [UserExtensions.SBL."CopyList"]
   ArrowLakeFspBinPkg/IoT/ArrowLakeS/Fsp.fd                 : Silicon/ArrowlakePkg/Arls/Fsp/FspRel.bin
@@ -21,6 +21,6 @@
   ArrowLakeFspBinPkg/IoT/ArrowLakeS/Include/FsptUpd.h      : Silicon/ArrowlakePkg/Arls/Fsp/FsptUpd.h
   ArrowLakeFspBinPkg/IoT/ArrowLakeS/Include/FspmUpd.h      : Silicon/ArrowlakePkg/Arls/Fsp/FspmUpd.h
   ArrowLakeFspBinPkg/IoT/ArrowLakeS/Include/FspsUpd.h      : Silicon/ArrowlakePkg/Arls/Fsp/FspsUpd.h
-  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Include/MemInfoHob.txt : Silicon/ArrowlakePkg/Arls/Fsp/MemInfoHob.h
+  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Include/MemInfoHob.h : Silicon/ArrowlakePkg/Arls/Fsp/MemInfoHob.h
   FSP_License.pdf                                          : Silicon/ArrowlakePkg/Arls/Fsp/FSP_License.pdf
   ArrowLakeFspBinPkg/IoT/ArrowLakeS/VbtBin/Vbt.json        : Platform/ArrowlakeBoardPkg/VbtBin/Vbt_arls.json
