@@ -14,11 +14,11 @@
   VERSION_STRING       = 1.0
 
 [Sources]
-  m_80_b0650_00000007.mcb # ARL U A0 PO Version
+  m_80_b0650_0000000a.mcb # ARL U A0 PO Version
 
 [UserExtensions.SBL."CloneRepo"]
   REPO   = https://github.com/slimbootloader/firmwareblob.git
-  COMMIT = f9d19aca682f7874a07068920fae2e50cec2be33
+  COMMIT = 722b0a7363642572578ce25ff6c8fd947ab1ef7b
 
 [UserExtensions.SBL."CopyList"]
-  Microcode/ArrowLake/m_80_b0650_00000007.pdb  : Silicon/ArrowlakePkg/Arlh/Microcode/m_80_b0650_00000007.mcb
+  Microcode/ArrowLake/m_80_b0650_0000000a.pdb  : Silicon/ArrowlakePkg/Arlh/Microcode/m_80_b0650_0000000a.mcb

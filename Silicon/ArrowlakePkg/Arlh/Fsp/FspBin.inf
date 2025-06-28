@@ -11,7 +11,7 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = 29e0f7ae5d26d827089a2e6446cda0852ac2146f
+  COMMIT  = a7130986134516b1e41309dd5a529e5f873bd15c
 
 [UserExtensions.SBL."CopyList"]
   ArrowLakeFspBinPkg/IoT/ArrowLakeUH/Fsp.fd                 : Silicon/ArrowlakePkg/Arlh/Fsp/FspRel.bin
