@@ -80,6 +80,7 @@ GetCpuSkuInfo (
     break;
     case CPUID_FULL_FAMILY_MODEL_RAPTORLAKE_DT_HALO:
     case CPUID_FULL_FAMILY_MODEL_RAPTORLAKE_2_DT_HALO:
+    case CPUID_FULL_FAMILY_MODEL_BTLS_12P_DT_HALO:
       CpuType = EnumCpuTrad;
       SkuFound = TRUE;
       break;
