@@ -299,7 +299,7 @@ def get_visual_studio_info (preference = ''):
     toolchain_prefix = ''
     toolchain_path   = ''
     toolchain_ver    = ''
-    vs_ver_list      = ['2019', '2017']
+    vs_ver_list      = ['2022', '2019', '2017']
     vs_ver_list_old  = ['2015', '2013']
 
     if preference:
