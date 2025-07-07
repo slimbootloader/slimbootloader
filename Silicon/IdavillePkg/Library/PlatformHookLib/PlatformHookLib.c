@@ -9,6 +9,7 @@
 #include <Library/BaseLib.h>
 #include <Library/IoLib.h>
 #include <Library/PciLib.h>
+#include <Library/BootloaderCoreLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Library/PchCycleDecodingLib.h>
 #include <PchReservedResources.h>
@@ -27,7 +28,6 @@ PlatformHookSerialPortInitialize (
   )
 {
   UINTN   BaseAddr;
-
   // LPC I/O Configuration
   // Remove COM0 and COM1 from LPC as we are using HSUART for debug messages
   //
@@ -48,7 +48,7 @@ PlatformHookSerialPortInitialize (
 
   BaseAddr = MM_PCI_ADDRESS (DEFAULT_PCI_BUS_NUMBER_PCH,
     PCI_DEVICE_NUMBER_PCH_HSUART,
-    PCI_FUNCTION_NUMBER_PCH_HSUART0,
+   (PCI_FUNCTION_NUMBER_PCH_HSUART0 + GetDebugPort()),
     0);
 
   MmioAnd16 (BaseAddr + PCI_COMMAND_OFFSET, (UINT16)~(EFI_PCI_COMMAND_IO_SPACE |
@@ -91,7 +91,7 @@ GetSerialPortBase (
 
   BaseAddr = MM_PCI_ADDRESS (DEFAULT_PCI_BUS_NUMBER_PCH,
       PCI_DEVICE_NUMBER_PCH_HSUART,
-      PCI_FUNCTION_NUMBER_PCH_HSUART0,
+     (PCI_FUNCTION_NUMBER_PCH_HSUART0 + GetDebugPort()),
       0);
 
   Bar = (UINT64)(MmioRead32 (BaseAddr + PCI_BASE_ADDRESSREG_OFFSET) & 0xFFFFFFF8);
