@@ -26,6 +26,7 @@
   MdePkg/MdePkg.dec
   IntelFsp2Pkg/IntelFsp2Pkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
   Silicon/IdavillePkg/IdavillePkg.dec
 
 [LibraryClasses]
