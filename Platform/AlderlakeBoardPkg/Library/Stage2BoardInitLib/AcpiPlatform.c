@@ -561,7 +561,7 @@ UpdateCpuNvs (
   ///
   /// Update NVS ASL items.
   ///
-  CpuNvs->Cpuid = GetCpuFamily() | GetCpuStepping();
+  CpuNvs->Cpuid = (UINT32)GetCpuFamily() | (UINT32)GetCpuStepping();
   CpuNvs->Revision = 1;
 
   ///
