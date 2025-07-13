@@ -295,13 +295,28 @@ def create_pad_dict (defines):
 # [h] to [yaml, dlt] start
 #
 
-def get_define_value (defines, search_name):
-    if search_name.isdigit():
-        return int(search_name)
+def get_value_from_string(s):
+    if s.startswith(("0x", "0X")):
+        try:
+            return int(s, 16)
+        except ValueError:
+            return None
+    elif s.isdigit():
+        return int(s)
+    else:
+        return None
+
+def get_define_value(defines, search_name):
+    value = get_value_from_string(search_name)
+    if value is not None:
+        return value
+    pattern = r'^#define[ \t]*%s[ \t]*([^\s]+)' % re.escape(search_name)
     for line in defines:
-        match = re.match('^#define[ \t]*%s[ \t]*(...)' % search_name, line.lstrip())
+        match = re.match(pattern, line.lstrip())
         if match:
-            return int(match.group(1))
+            value = get_value_from_string(match.group(1).strip())
+            if value is not None:
+                return value
     return 0
 
 
