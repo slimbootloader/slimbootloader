@@ -669,7 +669,7 @@ UpdateFspConfig (
     FspsConfig->CpuPciePowerGating[1] = SiCfgData->CpuPciePowerGating;
     FspsConfig->CpuPciePowerGating[2] = SiCfgData->CpuPciePowerGating;
     FspsConfig->CpuPciePowerGating[3] = SiCfgData->CpuPciePowerGating;
-#if !defined(PLATFORM_ADLN) && !defined(PLATFORM_ADLN50)
+#if !defined(PLATFORM_ADLN) && !defined(PLATFORM_ADLN50) && !defined(PLATFORM_ODROIDH4)
     FspsConfig->L2QosEnumerationEn = SiCfgData->L2QosEnumerationEn;
 #endif
   }
@@ -1117,6 +1117,54 @@ UpdateFspConfig (
         FspsConfig->CpuPcieRpGen5Uptp[1] = 0x7;
         FspsConfig->CpuPcieRpGen5Uptp[2] = 0x7;
         break;
+      case PLATFORM_ID_ADL_N_ODROID_H4:
+        FspsConfig->Usb4CmMode = 0x0;
+        FspsConfig->EnergyEfficientTurbo = 0x1;
+        FspsConfig->PkgCStateLimit = 0x6;
+        FspsConfig->PsysPmax = 0x0;
+        FspsConfig->PchUnlockGpioPads = 0x1;
+        FspsConfig->PchLanEnable = 0x0;
+        FspsConfig->PchPmVrAlert = 0x1;
+        FspsConfig->IomStayInTCColdSeconds = 0x0;
+        FspsConfig->IomBeforeEnteringTCColdSeconds = 0x0;
+        FspsConfig->UsbTcPortEn = 0x0;
+        FspsConfig->ITbtPcieRootPortEn[0] = 0x0;
+        FspsConfig->ITbtPcieRootPortEn[1] = 0x0;
+        FspsConfig->ITbtPcieRootPortEn[2] = 0x0;
+        FspsConfig->ITbtPcieRootPortEn[3] = 0x0;
+        FspsConfig->PortResetMessageEnable[0] = 0x0;
+        FspsConfig->PortResetMessageEnable[1] = 0x0;
+        FspsConfig->PortResetMessageEnable[2] = 0x0;
+        FspsConfig->PortResetMessageEnable[3] = 0x0;
+        FspsConfig->PortResetMessageEnable[4] = 0x0;
+        FspsConfig->PortResetMessageEnable[5] = 0x0;
+        FspsConfig->PortResetMessageEnable[6] = 0x0;
+        FspsConfig->IomTypeCPortPadCfg[0] = 0x0;
+        FspsConfig->IomTypeCPortPadCfg[1] = 0x0;
+        FspsConfig->IomTypeCPortPadCfg[2] = 0x0;
+        FspsConfig->IomTypeCPortPadCfg[3] = 0x0;
+        FspsConfig->MeUnconfigOnRtcClear = 0x2;
+        FspsConfig->CpuPcieRpPmSci[0] = 0x0;
+        FspsConfig->CpuPcieRpPmSci[1] = 0x0;
+        FspsConfig->CpuPcieRpPmSci[2] = 0x0;
+        FspsConfig->CpuPcieRpMaxPayload[0] = 0x0;
+        FspsConfig->CpuPcieRpMaxPayload[1] = 0x0;
+        FspsConfig->CpuPcieRpMaxPayload[2] = 0x0;
+        FspsConfig->CpuPcieRpLtrEnable[0] = 0x0;
+        FspsConfig->CpuPcieRpLtrEnable[1] = 0x0;
+        FspsConfig->CpuPcieRpLtrEnable[2] = 0x0;
+        FspsConfig->IshGpGpioPinMuxing[4] = 0x0;
+        FspsConfig->IshGpGpioPinMuxing[5] = 0x0;
+        FspsConfig->IshGpGpioPinMuxing[6] = 0x0;
+        FspsConfig->IshGpGpioPinMuxing[7] = 0x0;
+        FspsConfig->SataPortDevSlpPinMux[0] = 0x0;
+        FspsConfig->SataPortDevSlpPinMux[1] = 0x0;
+        FspsConfig->TdcTimeWindow[1] = 0x3e8;
+        FspsConfig->UsbPdoProgramming = 0x1;
+        FspsConfig->PmcUsb2PhySusPgEnable = 0x0;
+        FspsConfig->PmcModPhySusPgEnable = 0x0;
+        FspsConfig->PchUsbOverCurrentEnable = 0x0;
+        FspsConfig->PchXhciUaolEnable = 0x0;
       case PLATFORM_ID_ADL_PS_DDR5_RVP:
         FspsConfig->AmtEnabled = 0x0;
         FspsConfig->FwProgress = 0x0;

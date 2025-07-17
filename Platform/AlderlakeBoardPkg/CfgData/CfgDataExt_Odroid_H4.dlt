@@ -1,0 +1,386 @@
+#/** @file
+#
+#  Platform Configuration Delta File.
+#
+#  Copyright (c) 2023, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+#**/
+
+PLATFORMID_CFG_DATA.PlatformId           | 0x000C
+PLAT_NAME_CFG_DATA.PlatformName          | 'ODROIDH4'
+
+GEN_CFG_DATA.PayloadId                   | 'UEFI'
+
+# FIPS mode enablement feature
+FEATURES_CFG_DATA.Features.MeFipsMode    | 0x0
+
+# S0ix feature
+FEATURES_CFG_DATA.Features.S0ix          | 0x0
+
+# DTT feature
+FEATURES_CFG_DATA.Features.DTT           | 0x0
+
+#
+#Delta configuration for DDR
+#
+MEMORY_CFG_DATA.SpdAddressTable          | { 0xA4, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+MEMORY_CFG_DATA.SpdDataSel000            | 0
+MEMORY_CFG_DATA.SpdDataSel010            | 0
+MEMORY_CFG_DATA.SpdDataSel020            | 0
+MEMORY_CFG_DATA.SpdDataSel030            | 0
+MEMORY_CFG_DATA.SpdDataSel100            | 0
+MEMORY_CFG_DATA.SpdDataSel101            | 0
+MEMORY_CFG_DATA.SpdDataSel110            | 0
+MEMORY_CFG_DATA.SpdDataSel120            | 0
+MEMORY_CFG_DATA.SpdDataSel130            | 0
+MEMORY_CFG_DATA.DqsMapCpu2DramMc0Ch0     | { 0, 0}
+MEMORY_CFG_DATA.DqsMapCpu2DramMc0Ch1     | { 0, 0}
+MEMORY_CFG_DATA.DqsMapCpu2DramMc0Ch2     | { 0, 0}
+MEMORY_CFG_DATA.DqsMapCpu2DramMc0Ch3     | { 0, 0}
+MEMORY_CFG_DATA.DqsMapCpu2DramMc1Ch0     | { 0, 0}
+MEMORY_CFG_DATA.DqsMapCpu2DramMc1Ch1     | { 0, 0}
+MEMORY_CFG_DATA.DqsMapCpu2DramMc1Ch2     | { 0, 0}
+MEMORY_CFG_DATA.DqsMapCpu2DramMc1Ch3     | { 0, 0}
+MEMORY_CFG_DATA.DqMapCpu2DramMc0Ch0      | {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+MEMORY_CFG_DATA.DqMapCpu2DramMc0Ch1      | {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+MEMORY_CFG_DATA.DqMapCpu2DramMc0Ch2      | {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+MEMORY_CFG_DATA.DqMapCpu2DramMc0Ch3      | {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+MEMORY_CFG_DATA.DqMapCpu2DramMc1Ch0      | {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+MEMORY_CFG_DATA.DqMapCpu2DramMc1Ch1      | {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+MEMORY_CFG_DATA.DqMapCpu2DramMc1Ch2      | {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+MEMORY_CFG_DATA.DqMapCpu2DramMc1Ch3      | {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+MEMORY_CFG_DATA.DqPinsInterleaved        | 0x0
+MEMORY_CFG_DATA.ECT                      | 0x1
+MEMORY_CFG_DATA.TsegSize                 | 0x1000000
+MEMORY_CFG_DATA.UserBd                   | 0x0
+MEMORY_CFG_DATA.IpuLaneUsed              | {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+MEMORY_CFG_DATA.CsiSpeed                 | {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+MEMORY_CFG_DATA.CpuPcieRpClockReqMsgEnable | {0x0, 0x0, 0x0}
+MEMORY_CFG_DATA.CpuPcieRpPcieSpeed         | {0x00, 0x00, 0x00, 0x00}
+MEMORY_CFG_DATA.EnableC6Dram               | 0x1
+MEMORY_CFG_DATA.BootFrequency              | 0x2
+MEMORY_CFG_DATA.CpuPcieRpEnableMask        | 0x0
+MEMORY_CFG_DATA.FClkFrequency              | 0x0
+MEMORY_CFG_DATA.PcieClkSrcUsage            | { 0x08, 0x02, 0x03, 0x06, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+MEMORY_CFG_DATA.PcieClkSrcClkReq           | { 0x00, 0x01, 0x02, 0x03, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+MEMORY_CFG_DATA.PcieRpEnableMask           | 0x14C
+MEMORY_CFG_DATA.PchHdaAudioLinkDmicEnable  | {0x0, 0x0}
+MEMORY_CFG_DATA.PchHdaAudioLinkSndwEnable  | {0x00, 0x00, 0x00, 0x00}
+MEMORY_CFG_DATA.TcssItbtPcie0En            | 0x0
+MEMORY_CFG_DATA.TcssItbtPcie1En            | 0x0
+MEMORY_CFG_DATA.TcssItbtPcie2En            | 0x0
+MEMORY_CFG_DATA.TcssItbtPcie3En            | 0x0
+MEMORY_CFG_DATA.TcssXhciEn                 | 0x0
+MEMORY_CFG_DATA.TcssDma0En                 | 0x0
+MEMORY_CFG_DATA.TcssDma1En                 | 0x0
+MEMORY_CFG_DATA.UsbTcPortEnPreMem          | 0x0
+MEMORY_CFG_DATA.CpuDmiHwEqGen3CoeffListCm  | { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+MEMORY_CFG_DATA.BdatEnable                 | 0x0
+MEMORY_CFG_DATA.Ibecc                      | 0x1
+MEMORY_CFG_DATA.PchHdaAudioLinkHdaEnable   | 0x1
+MEMORY_CFG_DATA.PchHdaEnable               | 0x1
+MEMORY_CFG_DATA.PchHdaDspEnable            | 0x0
+MEMORY_CFG_DATA.CpuDmiHwEqGen3CoeffListCp  | { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+MEMORY_CFG_DATA.CpuDmiHwEqGen4CoeffListCm  | { 0x00, 0x0E, 0x0A, 0x07, 0x07, 0x07, 0x07, 0x07 }
+MEMORY_CFG_DATA.CpuDmiHwEqGen4CoeffListCp  | { 0x00, 0x07, 0x06, 0x07, 0x07, 0x07, 0x07, 0x07 }
+MEMORY_CFG_DATA.WdtDisableAndLock          | 0
+MEMORY_CFG_DATA.FirstDimmBitMaskEcc        | 0x0
+MEMORY_CFG_DATA.Lp5BankMode                | 0x0
+MEMORY_CFG_DATA.PrmrrSize                  | 0x200000
+# This setting is used for debug purposes
+#MEMORY_CFG_DATA.PlatformDebugConsent       | 0x0
+
+GRAPHICS_CFG_DATA.InternalGfx              | 0x2
+
+GEN_CFG_DATA.VbtImageId                    | 3
+
+#Delta configuration for Silicon settings
+SILICON_CFG_DATA.SataPortsDevSlp            | {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+SILICON_CFG_DATA.PortUsb20Enable            | {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+SILICON_CFG_DATA.PortUsb30Enable            | {0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+SILICON_CFG_DATA.SerialIoUartMode           | {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+SILICON_CFG_DATA.SerialIoUartAutoFlow       | {0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00}
+SILICON_CFG_DATA.SerialIoI2cMode            | {0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+SILICON_CFG_DATA.Usb2PhyPetxiset            | {0x02, 0x02, 0x06, 0x06, 0x02, 0x06, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+SILICON_CFG_DATA.Usb2PhyPredeemp            | {0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+SILICON_CFG_DATA.SataLedEnable              | 0x1
+SILICON_CFG_DATA.CpuUsb3OverCurrentPin      | {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+SILICON_CFG_DATA.PchIshGpEnable             | {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+SILICON_CFG_DATA.PcieRpAspm                 | {0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04}
+SILICON_CFG_DATA.Usb2OverCurrentPin         | {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+SILICON_CFG_DATA.Usb3OverCurrentPin         | {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+SILICON_CFG_DATA.PchDmiAspmCtrl             | 0x4
+SILICON_CFG_DATA.CpuPcieRpAspm              | {0x3, 0x3, 0x3, 0x0}
+SILICON_CFG_DATA.CpuPcieRpL1Substates       | {0x2, 0x2, 0x2, 0x2}
+SILICON_CFG_DATA.CpuPcieRpMultiVcEnabled    | { 0x0, 0x0, 0x0, 0x0 }
+SILICON_CFG_DATA.PtmEnabled                 | { 0x1, 0x1, 0x1, 0x1}
+SILICON_CFG_DATA.EnableTimedGpio0           | 0x0
+SILICON_CFG_DATA.EnableTimedGpio1           | 0x0
+SILICON_CFG_DATA.EcAvailable                | 0x0
+SILICON_CFG_DATA.PchIshI2cEnable            | {0x00, 0x00, 0x00}
+SILICON_CFG_DATA.PchPmSlpAMinAssert         | 0x4
+
+POWER_CFG_DATA.TccActivationOffset          | 0xA
+POWER_CFG_DATA.TurboRatioLimitRatio         | {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+POWER_CFG_DATA.TurboRatioLimitNumCore       | {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}
+POWER_CFG_DATA.AtomTurboRatioLimitRatio     | {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+POWER_CFG_DATA.AtomTurboRatioLimitNumCore   | {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}
+POWER_CFG_DATA.Eist                         | 0x1
+POWER_CFG_DATA.TdcEnable                    | {0x1, 0x1, 0x0, 0x0, 0x0}
+POWER_CFG_DATA.ImonSlope                    | {0x00, 0x00, 0x67, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+POWER_CFG_DATA.EnableItbm                   | 0x1
+
+PEP_CFG_DATA.PepAudio     | 0x1
+PEP_CFG_DATA.PepVmd       | 0x0
+PEP_CFG_DATA.PepHeci3     | 0x0
+PEP_CFG_DATA.PepPcieLan   | 0x1
+PEP_CFG_DATA.PepPcieWlan  | 0x1
+
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A00.GPIOSkip_GPP_A00 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A01.GPIOSkip_GPP_A01 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A02.GPIOSkip_GPP_A02 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A03.GPIOSkip_GPP_A03 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A04.GPIOSkip_GPP_A04 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A05.GPIOSkip_GPP_A05 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A06.GPIOSkip_GPP_A06 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A07.GPIOSkip_GPP_A07 | 1
+
+# LAN_DISABLE#
+GPIO_CFG_DATA.GpioPinConfig0_GPP_A08 | 0x0350A3A1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A08 | 0x02082E01
+
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A09.GPIOSkip_GPP_A09 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A10.GPIOSkip_GPP_A10 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A11.GPIOSkip_GPP_A11 | 1
+
+# SATAXPCIE1
+GPIO_CFG_DATA.GpioPinConfig0_GPP_A12 | 0x0310A4A3
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A12 | 0x020C2E01
+
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A13.GPIOSkip_GPP_A13 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A14.GPIOSkip_GPP_A14 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A15.GPIOSkip_GPP_A15 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A16.GPIOSkip_GPP_A16 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A17.GPIOSkip_GPP_A17 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A18.GPIOSkip_GPP_A18 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A19.GPIOSkip_GPP_A19 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A20.GPIOSkip_GPP_A20 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A21.GPIOSkip_GPP_A21 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A22.GPIOSkip_GPP_A22 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_A23.GPIOSkip_GPP_A23 | 1
+
+# CORE_VID0
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B00 | 0x0310A4A3
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B00 | 0x00002E01
+
+# CORE_VID1
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B01 | 0x0310A4A3
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B01 | 0x00012E01
+
+# VRALERT#
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B02 | 0x0310A4A3
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B02 | 0x00022E01
+
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B03.GPIOSkip_GPP_B03 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B04.GPIOSkip_GPP_B04 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B05.GPIOSkip_GPP_B05 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B06.GPIOSkip_GPP_B06 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B07.GPIOSkip_GPP_B07 | 1
+
+# EMMC_DET#
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B08 | 0x0510A5A1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B08 | 0x00082E19
+
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B09.GPIOSkip_GPP_B09 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B10.GPIOSkip_GPP_B10 | 1
+
+# PMC_ALERT#
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B11 | 0x0310A4A3
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B11 | 0x000B2E01
+
+# SLP_S0#
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B12 | 0x0310A4A3
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B12 | 0x000C2E01
+
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B13.GPIOSkip_GPP_B13 | 1
+
+# SATA_LED#
+GPIO_CFG_DATA.GpioPinConfig0_GPP_B14 | 0x0310A4A1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B14 | 0x000E2E01
+
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B15.GPIOSkip_GPP_B15 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B16.GPIOSkip_GPP_B16 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B17.GPIOSkip_GPP_B17 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B18.GPIOSkip_GPP_B18 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B19.GPIOSkip_GPP_B19 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B20.GPIOSkip_GPP_B20 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B21.GPIOSkip_GPP_B21 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B22.GPIOSkip_GPP_B22 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_B23.GPIOSkip_GPP_B23 | 1
+
+# SMBUS
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C00 | 0x0310A4A3
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C00 | 0x0B002E01
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C01 | 0x0310A4A3
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C01 | 0x0B012E01
+
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C02.GPIOSkip_GPP_C02 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C03.GPIOSkip_GPP_C03 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C04.GPIOSkip_GPP_C04 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C05.GPIOSkip_GPP_C05 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C06.GPIOSkip_GPP_C06 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C07.GPIOSkip_GPP_C07 | 1
+
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D00.GPIOSkip_GPP_D00 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D01.GPIOSkip_GPP_D01 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D02.GPIOSkip_GPP_D02 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D03.GPIOSkip_GPP_D03 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D04.GPIOSkip_GPP_D04 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D05.GPIOSkip_GPP_D05 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D06.GPIOSkip_GPP_D06 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D07.GPIOSkip_GPP_D07 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D08.GPIOSkip_GPP_D08 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D09.GPIOSkip_GPP_D09 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D10.GPIOSkip_GPP_D10 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D11.GPIOSkip_GPP_D11 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D12.GPIOSkip_GPP_D12 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D13.GPIOSkip_GPP_D13 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D14.GPIOSkip_GPP_D14 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D15.GPIOSkip_GPP_D15 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D16.GPIOSkip_GPP_D16 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D17.GPIOSkip_GPP_D17 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D18.GPIOSkip_GPP_D18 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_D19.GPIOSkip_GPP_D19 | 1
+
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E00.GPIOSkip_GPP_E00 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E01.GPIOSkip_GPP_E01 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E02.GPIOSkip_GPP_E02 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E03.GPIOSkip_GPP_E03 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E04.GPIOSkip_GPP_E04 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E05.GPIOSkip_GPP_E05 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E06.GPIOSkip_GPP_E06 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E07.GPIOSkip_GPP_E07 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E08.GPIOSkip_GPP_E08 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E09.GPIOSkip_GPP_E09 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E10.GPIOSkip_GPP_E10 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E11.GPIOSkip_GPP_E11 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E12.GPIOSkip_GPP_E12 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E13.GPIOSkip_GPP_E13 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E14.GPIOSkip_GPP_E14 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E15.GPIOSkip_GPP_E15 | 1
+
+# to NVMe slot pad 67
+GPIO_CFG_DATA.GpioPinConfig0_GPP_E16 | 0x0310A5A1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E16 | 0x0E102E01
+
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E17.GPIOSkip_GPP_E17 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E18.GPIOSkip_GPP_E18 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E19.GPIOSkip_GPP_E19 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E20.GPIOSkip_GPP_E20 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E21.GPIOSkip_GPP_E21 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E22.GPIOSkip_GPP_E22 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_E23.GPIOSkip_GPP_E23 | 1
+
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F00.GPIOSkip_GPP_F00 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F01.GPIOSkip_GPP_F01 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F02.GPIOSkip_GPP_F02 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F03.GPIOSkip_GPP_F03 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F04.GPIOSkip_GPP_F04 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F05.GPIOSkip_GPP_F05 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F06.GPIOSkip_GPP_F06 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F07.GPIOSkip_GPP_F07 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F08.GPIOSkip_GPP_F08 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F09.GPIOSkip_GPP_F09 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F10.GPIOSkip_GPP_F10 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F11.GPIOSkip_GPP_F11 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F12.GPIOSkip_GPP_F12 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F13.GPIOSkip_GPP_F13 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F14.GPIOSkip_GPP_F14 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F15.GPIOSkip_GPP_F15 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F16.GPIOSkip_GPP_F16 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F17.GPIOSkip_GPP_F17 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F18.GPIOSkip_GPP_F18 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F19.GPIOSkip_GPP_F19 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F20.GPIOSkip_GPP_F20 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F21.GPIOSkip_GPP_F21 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F22.GPIOSkip_GPP_F22 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_F23.GPIOSkip_GPP_F23 | 1
+
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H00.GPIOSkip_GPP_H00 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H01.GPIOSkip_GPP_H01 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H02.GPIOSkip_GPP_H02 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H03.GPIOSkip_GPP_H03 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H04.GPIOSkip_GPP_H04 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H05.GPIOSkip_GPP_H05 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H06.GPIOSkip_GPP_H06 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H07.GPIOSkip_GPP_H07 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H08.GPIOSkip_GPP_H08 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H09.GPIOSkip_GPP_H09 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H10.GPIOSkip_GPP_H10 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H11.GPIOSkip_GPP_H11 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H12.GPIOSkip_GPP_H12 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H13.GPIOSkip_GPP_H13 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H14.GPIOSkip_GPP_H14 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H15.GPIOSkip_GPP_H15 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H16.GPIOSkip_GPP_H16 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H17.GPIOSkip_GPP_H17 | 1
+
+# PROC_C10_GATE#
+GPIO_CFG_DATA.GpioPinConfig0_GPP_H18 | 0x0310A4A3
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H18 | 0x07122E01
+
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H19.GPIOSkip_GPP_H19 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H20.GPIOSkip_GPP_H20 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H21.GPIOSkip_GPP_H21 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H22.GPIOSkip_GPP_H22 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_H23.GPIOSkip_GPP_H23 | 1
+
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I05.GPIOSkip_GPP_I05 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I07.GPIOSkip_GPP_I07 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I08.GPIOSkip_GPP_I08 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I09.GPIOSkip_GPP_I09 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I10.GPIOSkip_GPP_I10 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I11.GPIOSkip_GPP_I11 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I12.GPIOSkip_GPP_I12 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I13.GPIOSkip_GPP_I13 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I14.GPIOSkip_GPP_I14 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I15.GPIOSkip_GPP_I15 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I16.GPIOSkip_GPP_I16 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I17.GPIOSkip_GPP_I17 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_I18.GPIOSkip_GPP_I18 | 1
+
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R00.GPIOSkip_GPP_R00 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R01.GPIOSkip_GPP_R01 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R02.GPIOSkip_GPP_R02 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R03.GPIOSkip_GPP_R03 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R04.GPIOSkip_GPP_R04 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R05.GPIOSkip_GPP_R05 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R06.GPIOSkip_GPP_R06 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_R07.GPIOSkip_GPP_R07 | 1
+
+GPIO_CFG_DATA.GpioPinConfig1_GPP_S00.GPIOSkip_GPP_S00 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_S01.GPIOSkip_GPP_S01 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_S02.GPIOSkip_GPP_S02 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_S03.GPIOSkip_GPP_S03 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_S04.GPIOSkip_GPP_S04 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_S05.GPIOSkip_GPP_S05 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_S06.GPIOSkip_GPP_S06 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_S07.GPIOSkip_GPP_S07 | 1
+
+GPIO_CFG_DATA.GpioPinConfig1_GPD00.GPIOSkip_GPD00 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPD01.GPIOSkip_GPD01 | 1
+GPIO_CFG_DATA.GpioPinConfig0_GPD02 | 0x0350A3A1
+GPIO_CFG_DATA.GpioPinConfig1_GPD02 | 0x05022E01
+GPIO_CFG_DATA.GpioPinConfig1_GPD03.GPIOSkip_GPD03 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPD04.GPIOSkip_GPD04 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPD05.GPIOSkip_GPD05 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPD06.GPIOSkip_GPD06 | 1
+GPIO_CFG_DATA.GpioPinConfig0_GPD07 | 0x0350A3A1
+GPIO_CFG_DATA.GpioPinConfig1_GPD07 | 0x05072E01
+GPIO_CFG_DATA.GpioPinConfig1_GPD08.GPIOSkip_GPD08 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPD09.GPIOSkip_GPD09 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPD10.GPIOSkip_GPD10 | 1
+GPIO_CFG_DATA.GpioPinConfig0_GPD11 | 0x0350A3A1
+GPIO_CFG_DATA.GpioPinConfig1_GPD11 | 0x050B2E01

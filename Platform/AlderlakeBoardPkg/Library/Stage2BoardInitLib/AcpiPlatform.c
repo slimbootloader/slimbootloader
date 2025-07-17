@@ -1226,6 +1226,59 @@ PlatformUpdateAcpiGnvs (
     PlatformNvs->WlanWakeGpio = GPIO_VER2_LP_GPP_D13;
     PlatformNvs->WlanRootPortNumber = 4;
     break;
+
+  case PLATFORM_ID_ADL_N_ODROID_H4:
+    PlatformNvs->PcieSlot1WakeGpio = 0;
+    PlatformNvs->PcieSlot1RpNumber = 0;
+    PlatformNvs->PcieSlot1PowerEnableGpioPolarity = 0;
+    PlatformNvs->PcieSlot1RstGpio = 0;
+    PlatformNvs->PcieSlot1RstGpioPolarity = 0;
+
+    PlatformNvs->PcieSlot2WakeGpio = 0;
+    PlatformNvs->PcieSlot2RpNumber = 0;
+    PlatformNvs->PcieSlot2PowerEnableGpio = 0;
+    PlatformNvs->PcieSlot2PowerEnableGpioPolarity = 0;
+    PlatformNvs->PcieSlot2RstGpio = 0;
+    PlatformNvs->PcieSlot2RstGpioPolarity = 0;
+
+    PlatformNvs->PcieSlot3WakeGpio = 0;
+    PlatformNvs->PcieSlot3RpNumber = 0;
+    PlatformNvs->PcieSlot3PowerEnableGpio = 0;
+    PlatformNvs->PcieSlot3PowerEnableGpioPolarity = 0;
+    PlatformNvs->PcieSlot3RstGpio = 0;
+    PlatformNvs->PcieSlot3RstGpioPolarity = 0;
+
+    PlatformNvs->WlanWakeGpio = 0;
+    PlatformNvs->WlanRootPortNumber = 0;
+
+    PlatformNvs->PegSlot1PwrEnableGpioNo = 0;
+    PlatformNvs->PegSlot1PwrEnableGpioPolarity = 0;
+    PlatformNvs->PegSlot1RstGpioNo = 0;
+    PlatformNvs->PegSlot1RstGpioPolarity = 0;
+    PlatformNvs->PegSlot1WakeGpioPin = 0;
+
+    PlatformNvs->M2Ssd2PowerEnableGpio = 0;
+    PlatformNvs->M2Ssd2PowerEnableGpioPolarity = 0;
+    PlatformNvs->M2Ssd2RstGpio = 0;
+    PlatformNvs->M2Ssd2RstGpioPolarity = 0;
+
+    PlatformNvs->PchM2SsdPowerEnableGpioPolarity = 0;
+    PlatformNvs->PchM2SsdRstGpio = 0;
+    PlatformNvs->PchM2SsdRstGpioPolarity = 0;
+
+    PlatformNvs->PchM2Ssd2PowerEnableGpio = 0;
+    PlatformNvs->PchM2Ssd2PowerEnableGpioPolarity = 0;
+    PlatformNvs->PchM2Ssd2RstGpio = 0;
+    PlatformNvs->PchM2Ssd2RstGpioPolarity = 0;
+
+    PlatformNvs->PchM2Ssd3PowerEnableGpio = 0;
+    PlatformNvs->PchM2Ssd3PowerEnableGpioPolarity = 0;
+    PlatformNvs->PchM2Ssd3RstGpio = 0;
+    PlatformNvs->PchM2Ssd3RstGpioPolarity = 0;
+
+    PlatformNvs->SataPortPowerEnableGpio = 0;
+    PlatformNvs->SataPortPowerEnableGpioPolarity = 0;
+
   case PLATFORM_ID_AZB_LP5_CRB2A:
     break;
   default:
@@ -1311,6 +1364,15 @@ PlatformUpdateAcpiGnvs (
     SaNvs->UFSIrq = 30;
   } else {
     SaNvs->UFSIrq = 18;
+  }
+
+  if (GetPlatformId () == PLATFORM_ID_ADL_N_ODROID_H4) {
+    PlatformNvs->Rtd3Support = 0x0;
+    SaNvs->CpuPcieRtd3 = 0;
+    SaNvs->CpuPcieRp0Enable = 0;
+    SaNvs->CpuPcieRp1Enable = 0;
+    SaNvs->CpuPcieRp2Enable = 0;
+    SaNvs->CpuPcieRp3Enable = 0;
   }
 
   PlatformNvs->PpmFlags = CpuNvs->PpmFlags;

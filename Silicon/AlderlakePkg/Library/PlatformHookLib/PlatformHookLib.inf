@@ -29,6 +29,7 @@
   BootloaderCorePkg/BootloaderCorePkg.dec
   Silicon/AlderlakePkg/AlderlakePkg.dec
   Silicon/CommonSocPkg/CommonSocPkg.dec
+  Platform/AlderlakeBoardPkg/AlderlakeBoardPkg.dec
 
 [LibraryClasses]
   BaseLib
