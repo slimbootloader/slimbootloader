@@ -184,27 +184,27 @@ def BuildFspBins (fsp_dir, sbl_dir, fsp_inf, silicon_pkg_name, flag):
     sys.stdout.flush()
     CloneRepo (fsp_dir, fsp_inf)
 
-    dep_dir = os.path.join(fsp_dir, 'MdeModulePkg/Library/BrotliCustomDecompressLib/brotli/c/include/')
-    if not os.path.exists(dep_dir):
-        os.makedirs(dep_dir)
+    # skip submodule init since it takes a long time.
+    # This will cause some build errors from missing include folders, so create dummy folders
+    dep_dirs = [
+        'MdeModulePkg/Library/BrotliCustomDecompressLib/brotli/c/include/',
+        'MdePkg/Library/MipiSysTLib/mipisyst/library/include'
+    ]
+    for dir in dep_dirs:
+        abs_dep_dir = os.path.join(fsp_dir, dir)
+        if not os.path.exists(abs_dep_dir):
+            os.makedirs(abs_dep_dir)
 
     print ('Applying QEMU FSP patch ...')
     patch_dir = os.path.join(sbl_dir, 'Silicon/QemuSocPkg/FspBin/Patches')
     cmd = 'git am --abort'
     with open(os.devnull, 'w') as fnull:
         ret = subprocess.call(cmd.split(' '), cwd=fsp_dir, stdout=fnull, stderr=subprocess.STDOUT)
-    cmd = 'git am --keep-cr --whitespace=nowarn %s/0001-Build-QEMU-FSP-2.0-binaries.patch' % patch_dir
+    cmd = 'git am --keep-cr --whitespace=fix %s/0001-PATCH-Build-QEMU-FSP-2.0-binaries-with-edk2stable202.patch' % patch_dir
     ret = subprocess.call(cmd.split(' '), cwd=fsp_dir)
     if ret:
         Fatal ('Failed to apply QEMU FSP patch !')
-    cmd = 'git am --keep-cr --whitespace=nowarn %s/0002-BaseTools-GCC-newer-versions-fix-Synced-with-EDK2.patch' % patch_dir
-    ret = subprocess.call(cmd.split(' '), cwd=fsp_dir)
-    if ret:
-        Fatal ('Failed to apply QEMU FSP BuildTools patch !')
-    cmd = 'git am --keep-cr --whitespace=nowarn %s/0003-Update-CFLAGS-so-compilation-works-on-Fedora-42.patch' % patch_dir
-    ret = subprocess.call(cmd.split(' '), cwd=fsp_dir)
-    if ret:
-        Fatal ('Failed to apply QEMU FSP Fedora 42 compatibility patch !')
+
     print ('Done\n')
 
     print ('Compiling QEMU FSP source ...')
