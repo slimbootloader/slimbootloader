@@ -11,4 +11,4 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/tianocore/edk2.git
-  COMMIT  = edk2-stable202011
+  COMMIT  = edk2-stable202411
