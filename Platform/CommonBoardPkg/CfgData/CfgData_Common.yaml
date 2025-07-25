@@ -78,6 +78,13 @@
                      have same behavior with debug build in the release build.
       length       : 0x01
       value        : 0
+  - Rtd3Signature :
+      name         : Rtd3 Table to load
+      type         : EditText
+      help         : >
+                     Specify the Rtd3 table signature, a maximum of 8 characters
+      length       : 0x8
+      value        : ''
   - Dummy        :
       length       : 0x3
       value        : 0x0
