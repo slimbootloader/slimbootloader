@@ -164,6 +164,28 @@ GLOBAL_REMOVE_IF_UNREFERENCED const UINT8 mAdlNLpddr5RowDisplayDdiConfig[16] = {
 };
 
 //
+// Display DDI settings for ODROID H4: DDIA-HDMI, DDIB-DP, TCP0-DP
+//
+GLOBAL_REMOVE_IF_UNREFERENCED const UINT8 mOdroidH4DisplayDdiConfig[16] = {
+  DdiPortEdp,         // DDI Port A Config : DdiPortDisabled = No LFP is Connected, DdiPortEdp = eDP, DdiPortMipiDsi = MIPI DSI
+  DdiPortEdp,         // DDI Port B Config : DdiPortDisabled = No LFP is Connected, DdiPortEdp = eDP, DdiPortMipiDsi = MIPI DSI
+  DdiHpdEnable,       // DDI Port A HPD    : DdiHpdDisable = Disable, DdiHpdEnable = Enable HPD
+  DdiHpdEnable,       // DDI Port B HPD    : DdiHpdDisable = Disable, DdiHpdEnable = Enable HPD
+  DdiHpdDisable,      // DDI Port C HPD    : DdiHpdDisable = Disable, DdiHpdEnable = Enable HPD
+  DdiHpdEnable,       // DDI Port 1 HPD    : DdiHpdDisable = Disable, DdiHpdEnable = Enable HPD
+  DdiHpdDisable,      // DDI Port 2 HPD    : DdiHpdDisable = Disable, DdiHpdEnable = Enable HPD
+  DdiHpdDisable,      // DDI Port 3 HPD    : DdiHpdDisable = Disable, DdiHpdEnable = Enable HPD
+  DdiHpdDisable,      // DDI Port 4 HPD    : DdiHpdDisable = Disable, DdiHpdEnable = Enable HPD
+  DdiDdcEnable,       // DDI Port A DDC    : DdiDisable = Disable, DdiDdcEnable = Enable DDC
+  DdiDdcEnable,       // DDI Port B DDC    : DdiDisable = Disable, DdiDdcEnable = Enable DDC
+  DdiDisable,         // DDI Port C DDC    : DdiDisable = Disable, DdiDdcEnable = Enable DDC
+  DdiDdcEnable,       // DDI Port 1 DDC    : DdiDisable = Disable, DdiDdcEnable = Enable DDC
+  DdiDisable,         // DDI Port 2 DDC    : DdiDisable = Disable, DdiDdcEnable = Enable DDC
+  DdiDisable,         // DDI Port 3 DDC    : DdiDisable = Disable, DdiDdcEnable = Enable DDC
+  DdiDisable          // DDI Port 4 DDC    : DdiDisable = Disable, DdiDdcEnable = Enable DDC
+};
+
+//
 // Display DDI settings for RPL-P COM-HPC CRB DDR5  DDIA-DP, DDIB-DP ,TCP0-DP and TCP1-DP
 //
 GLOBAL_REMOVE_IF_UNREFERENCED const UINT8 mRplPDdr5SODimmCrbDisplayDdiConfig[16] = {

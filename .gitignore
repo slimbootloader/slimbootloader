@@ -13,3 +13,6 @@ ResetVector.*.raw
 /Conf
 /PayloadPkg/PayloadBins
 PayloadModPkg
+edk2
+SblKeys
+image.rom

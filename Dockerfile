@@ -1,12 +1,12 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 # Install build dependencies
 RUN apt-get update && apt-get -y install sudo build-essential python3 python-is-python3 \
-    uuid-dev nasm openssl gcc-multilib git m4 bison flex qemu-system-x86
+    uuid-dev nasm openssl gcc-multilib git m4 bison flex qemu-system-x86 clang llvm lld
 
 # Install ACPICA Utilities
 RUN apt-get -y install acpica-tools
-RUN apt-get -y install python3-distutils
+RUN apt-get -y install python3-setuptools
 
 # Install stitching dependencies
 RUN apt-get install -y --no-install-recommends libxcb1 \
@@ -23,7 +23,7 @@ RUN apt-get install --no-install-recommends -y locales && \
     locale-gen ${LANG} && update-locale LANG=${LANG}
 
 # Add a user account, give sudo access
-RUN useradd -m docker && echo "docker:docker" | chpasswd && adduser docker sudo
+RUN deluser --remove-home ubuntu && useradd -U -u 1000 -m docker && echo "docker:docker" | chpasswd && adduser docker sudo
 
 USER docker
 RUN git config --global user.name "User" && git config --global user.email "user@example.com"

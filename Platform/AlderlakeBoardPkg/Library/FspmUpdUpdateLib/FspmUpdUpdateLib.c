@@ -512,6 +512,10 @@ UpdateFspConfig (
     // DP + DP
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mAdlNLpddr5RowDisplayDdiConfig, sizeof(mAdlNLpddr5RowDisplayDdiConfig));
     break;
+  case PLATFORM_ID_ADL_N_ODROID_H4:
+    // HDMI + DP + DP
+    CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mOdroidH4DisplayDdiConfig, sizeof(mOdroidH4DisplayDdiConfig));
+    break;
   case PLATFORM_ID_RPL_P_DDR5_CRB:
     DEBUG((DEBUG_INFO, "PLATFORM_ID_RPL_P_DDR5_CRB board Id %x .....\n", PlatformId));
     CopyMem(SaDisplayConfigTable, (VOID *)(UINTN)mRplPDdr5SODimmCrbDisplayDdiConfig, sizeof(mRplPDdr5SODimmCrbDisplayDdiConfig));
@@ -628,6 +632,9 @@ UpdateFspConfig (
         Fspmcfg->PcieClkReqGpioMux[9] = 0x796e9000;
         Fspmcfg->TcssXdciEn = 0x1;
         Fspmcfg->Lp5CccConfig = 0xff;
+      case PLATFORM_ID_ADL_N_ODROID_H4:
+        Fspmcfg->SkipCpuReplacementCheck = 0x1;
+        Fspmcfg->LpDdrDqDqsReTraining = 0x1;
         break;
       default:
         DEBUG ((DEBUG_INFO, "Unknown board for FSP-M UPD settings.\n"));

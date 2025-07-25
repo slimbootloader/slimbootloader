@@ -20,6 +20,7 @@
 #define B_LPC_CFG_IOE_ME1                         BIT11           ///< Microcontroller Enable #1, Enables decoding of I/O locations 62h and 66h to LPC.
 #define B_LPC_CFG_IOE_CBE                         BIT1            ///< Com Port B Enable, Enables decoding of the COMB range to LPC. Range is selected LIOD.CB.
 #define B_LPC_CFG_IOE_CAE                         BIT0            ///< Com Port A Enable, Enables decoding of the COMA range to LPC. Range is selected LIOD.CA.
+#define B_LPC_CFG_IOE_SIO_2E_2F                   BIT12
 #define B_LPC_CFG_IOE_ME2                         BIT13
 
 #define R_ESPI_CFG_ESPI_LGIR1                     0x84                      ///< LPC Generic IO Range 1

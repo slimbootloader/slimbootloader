@@ -24,6 +24,9 @@ Defines Platform BoardIds
 #define BoardIdAdlNLp5Rvp                             0x07
 #define PLATFORM_ID_ADL_N_LPDDR5_RVP                  0x07
 
+#define BoardIdAdlNOdroidH4                           0x0C
+#define PLATFORM_ID_ADL_N_ODROID_H4                   0x0C
+
 // Added for ADL-PS Board IDs
 #define BoardIdAdlPSDdr5Rvp                           0x0B
 #define PLATFORM_ID_ADL_PS_DDR5_RVP                   0x0B

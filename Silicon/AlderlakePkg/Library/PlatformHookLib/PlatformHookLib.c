@@ -18,6 +18,7 @@
 #include <PchAccess.h>
 #include <IndustryStandard/Pci.h>
 #include <Register/SerialIoUartRegs.h>
+#include <PlatformBoardId.h>
 
 #define MM_PCI_OFFSET(Bus, Device, Function) \
     ( (UINTN)(Bus << 20) +    \
@@ -88,6 +89,117 @@ GetSerialPortBase (
   }
 }
 
+VOID
+EFIAPI
+PnpWriteReg (
+  UINT8 Reg,
+  UINT8 Value
+  )
+{
+  IoWrite8(0x2E, Reg);
+  IoWrite8(0x2F, Value);
+}
+
+UINT8
+EFIAPI
+PnpReadReg (
+  UINT8 Reg
+  )
+{
+  IoWrite8(0x2E, Reg);
+  return IoRead8(0x2F);
+}
+
+VOID
+EFIAPI
+PnpSelectLdn (
+  UINT8 Ldn
+  )
+{
+  PnpWriteReg(0x7, Ldn);
+}
+
+
+VOID
+EFIAPI
+It8613EnterConfig (
+  VOID
+  )
+{
+  IoWrite8(0x2e, 0x87);
+  IoWrite8(0x2e, 0x01);
+  IoWrite8(0x2e, 0x55);
+  IoWrite8(0x2e, 0x55);
+}
+
+VOID
+EFIAPI
+It8613ExitConfig (
+  VOID
+  )
+{
+  PnpWriteReg(0x2e, 0x01);
+}
+
+VOID
+EFIAPI
+InitIt8613Serial (
+  VOID
+)
+{
+  It8613EnterConfig ();
+  PnpSelectLdn (7);
+
+  /* Internal VCC_OK */
+  PnpWriteReg (0x23, 0x40);
+  /* Pin7 as GP23 - USB2_EN, Pin9 as GP21 - USB3_EN */
+  PnpWriteReg (0x26, 0xfb);
+  /* Pin24 as GPO50 (value of 0 on bit0 is reserved, JP1 strapping)*/
+  PnpWriteReg (0x29, 0x01);
+  /* K8 power sequence sofyware disabled */
+  PnpWriteReg (0x2c, 0x41);
+  /* PCICLK 25MHz */
+  PnpWriteReg (0x2d, 0x02);
+
+  PnpWriteReg (0xbc, 0xc0);
+  PnpWriteReg (0xbd, 0x03);
+  PnpWriteReg (0xc1, 0x0a);
+  PnpWriteReg (0xc8, 0x00);
+  PnpWriteReg (0xc9, 0x0a);
+  PnpWriteReg (0xda, 0xb0);
+  PnpWriteReg (0xdb, 0x44);
+
+  /* Kill watchdog */
+  PnpWriteReg (0x72, 0x00);
+  PnpWriteReg (0x73, 0x00);
+  PnpWriteReg (0x74, 0x00);
+
+  /* Configure GPIO I/O BASE */
+  PnpWriteReg (0x62, 0x0a);
+  PnpWriteReg (0x63, 0x00);
+
+  /* Enable Simple I/O on GP21 and GP23 */
+  PnpWriteReg (0xc1, PnpReadReg(0xc1) | 0x0a);
+  /* Configure GP21 and GP23 as output */
+  PnpWriteReg (0xc9, PnpReadReg(0xc9) | 0x0a);
+
+  /* Drive GP21 and GP23 low to enable VBUS on USB ports */
+  IoWrite8(0xa01, IoRead8(0xa01) & ~0x0a);
+
+  /* Init UART */
+  PnpSelectLdn (1);
+  PnpWriteReg (0x30, 0x0);
+  PnpWriteReg (0x60, 0x3);
+  PnpWriteReg (0x61, 0xf8);
+  PnpWriteReg (0x70, 0x4);
+  PnpWriteReg (0xf0, 0x1);
+  PnpWriteReg (0xf1, 0x52);
+  PnpWriteReg (0x30, 0x1);
+
+  It8613ExitConfig ();
+}
+
+
 /**
   Performs platform specific initialization required for the CPU to access
   the hardware associated with a SerialPortLib instance.  This function does
@@ -123,8 +235,17 @@ LegacySerialPortInitialize (
   Data16 = PciRead16 (eSPIBaseAddr + R_LPC_CFG_IOE);
   Data16 |= B_LPC_CFG_IOE_CBE;
   Data16 |= B_LPC_CFG_IOE_CAE;
+  Data16 |= B_LPC_CFG_IOE_SIO_2E_2F;
   MmioWrite16 (PCH_PCR_ADDRESS (PID_DMI, R_PCH_DMI_PCR_LPCIOE), Data16);
   PciWrite16 (eSPIBaseAddr + R_LPC_CFG_IOE, Data16);
+
+  if (GetPlatformId() == PLATFORM_ID_ADL_N_ODROID_H4) {
+    /* Enable I/O range 0xa00 decoding for IT8613E GPIO */
+    MmioWrite32 (PCH_PCR_ADDRESS (PID_DMI, R_PCH_DMI_PCR_LPCLGIR1), 0x007c0a01);
+    PciWrite32 (eSPIBaseAddr + R_ESPI_CFG_ESPI_LGIR1, 0x007c0a01);
+
+    InitIt8613Serial ();
+  }
 
   return RETURN_SUCCESS;
 }

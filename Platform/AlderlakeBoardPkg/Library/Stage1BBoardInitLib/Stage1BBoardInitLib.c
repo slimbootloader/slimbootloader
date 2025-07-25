@@ -799,6 +799,9 @@ DEBUG_CODE_END();
     case PLATFORM_ID_ADL_N_UP7EN50:
       ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePreMemAdlNLpddr5Rvp) / sizeof (mGpioTablePreMemAdlNLpddr5Rvp[0]), (UINT8*)mGpioTablePreMemAdlNLpddr5Rvp);
       break;
+    case PLATFORM_ID_ADL_N_ODROID_H4:
+      // Do nothing
+      break;
     case PLATFORM_ID_AZB_LP5_CRB2A:
 #if FixedPcdGetBool(PcdAzbWwanSupport)
       ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePreMemAzbLp5) / sizeof (mGpioTablePreMemAzbLp5[0]), (UINT8*)mGpioTablePreMemAzbLp5);
