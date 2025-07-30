@@ -1,4 +1,4 @@
-From 0a29e50ebf551d1d1c587bd4eaa504e719b6797e Mon Sep 17 00:00:00 2001
+From 67d75fe836aecef207b43873b9e1ac7978be3bcd Mon Sep 17 00:00:00 2001
 From: Bejean Mosher <bejean.mosher@intel.com>
 Date: Mon, 21 Jul 2025 16:26:37 -0400
 Subject: [PATCH] [PATCH] Build QEMU FSP 2.0 binaries with edk2stable202411
@@ -10,6 +10,7 @@ Signed-off-by: Bejean Mosher <bejean.mosher@intel.com>
  BaseTools/Source/C/GNUmakefile                |   2 -
  BaseTools/Source/C/Makefile                   |   2 -
  BuildFsp.py                                   | 421 +++++++++
+ IntelFsp2Pkg/FspSecCore/FspSecCoreS.inf       |   2 +
  QemuFspPkg/BuildFv.cmd                        | 248 ++++++
  QemuFspPkg/FspDescription/FspDescription.inf  |  29 +
  QemuFspPkg/FspDescription/FspDescription.txt  |   2 +
@@ -48,7 +49,7 @@ Signed-off-by: Bejean Mosher <bejean.mosher@intel.com>
  QemuFspPkg/QemuVideo/QemuVideo.c              | 780 +++++++++++++++++
  QemuFspPkg/QemuVideo/QemuVideo.h              | 116 +++
  QemuFspPkg/QemuVideo/QemuVideo.inf            |  56 ++
- 41 files changed, 6348 insertions(+), 4 deletions(-)
+ 42 files changed, 6350 insertions(+), 4 deletions(-)
  create mode 100644 BuildFsp.py
  create mode 100644 QemuFspPkg/BuildFv.cmd
  create mode 100644 QemuFspPkg/FspDescription/FspDescription.inf
@@ -542,6 +543,16 @@ index 0000000000..0eba72e980
 +
 +if __name__ == '__main__':
 +    sys.exit(Main())
+diff --git a/IntelFsp2Pkg/FspSecCore/FspSecCoreS.inf b/IntelFsp2Pkg/FspSecCore/FspSecCoreS.inf
+index fb80c0e339..96a9755fb7 100644
+--- a/IntelFsp2Pkg/FspSecCore/FspSecCoreS.inf
++++ b/IntelFsp2Pkg/FspSecCore/FspSecCoreS.inf
+@@ -56,3 +56,5 @@
+ [Ppis]
+   gEfiTemporaryRamSupportPpiGuid                              ## PRODUCES
+ 
++[BuildOptions]
++  GCC:*_*_*_CC_FLAGS = -fno-jump-tables
 diff --git a/QemuFspPkg/BuildFv.cmd b/QemuFspPkg/BuildFv.cmd
 new file mode 100644
 index 0000000000..c43b05031b
