@@ -51,11 +51,13 @@
   History.c
   Shell.c
   CmdAcpi.c
+  CmdSetup.c
 
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
   Silicon/CommonSocPkg/CommonSocPkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
 
 [LibraryClasses]
   BaseLib
@@ -80,7 +82,6 @@
   ShellExtensionLib
   MtrrLib
   RngLib
-  MemoryAllocationLib
   LoaderPerformanceLib
   IppCryptoPerfLib
 
@@ -90,6 +91,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleInDeviceMask
   gPlatformCommonLibTokenSpaceGuid.PcdBootPerformanceMask
   gPlatformCommonLibTokenSpaceGuid.PcdEnableCryptoPerfTest
+  gPlatformModuleTokenSpaceGuid.PcdEnableSetup
 
 [Guids]
   gLoaderPerformanceInfoGuid
