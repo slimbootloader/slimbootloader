@@ -9,7 +9,7 @@
 #**/
 
 PLATFORMID_CFG_DATA.PlatformId           | 0x000C
-PLAT_NAME_CFG_DATA.PlatformName          | 'ODROIDH4'
+PLAT_NAME_CFG_DATA.PlatformName          | 'ODROID-H4'
 
 GEN_CFG_DATA.PayloadId                   | 'UEFI'
 

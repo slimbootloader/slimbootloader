@@ -36,7 +36,7 @@
       name         : Platform Name
       type         : EditText
       help         : >
-                     Specify the platform name, a maximum of 8 characters
-      length       : 0x8
+                     Specify the platform name, a maximum of 16 characters
+      length       : 0x10
       value        : ''
 

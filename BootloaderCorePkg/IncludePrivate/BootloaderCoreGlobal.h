@@ -29,7 +29,7 @@ typedef  VOID   (EFIAPI *PAYLOAD_ENTRY) (VOID *HobList, VOID *Params);
 #define  STAGE_IDT_ENTRY_COUNT        34
 #define  STAGE_GDT_ENTRY_COUNT        7
 
-#define  PLATFORM_NAME_SIZE           8
+#define  PLATFORM_NAME_SIZE           16
 
 typedef enum {
   EnumBufFlashMap,
