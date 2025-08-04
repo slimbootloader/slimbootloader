@@ -55,7 +55,8 @@ InitializeSmbiosInfo (
   SMBIOS_TYPE_STRINGS  *TempSmbiosStrTbl;
   BOOT_LOADER_VERSION  *VerInfoTbl;
   VOID                 *SmbiosStringsPtr;
-  UINT8                TempName[9];
+  CHAR8                TempName[17];
+  UINT32               PayloadId;
 
   if (FeaturePcdGet (PcdSmbiosEnabled)) {
     Index         = 0;
@@ -64,49 +65,50 @@ InitializeSmbiosInfo (
       return EFI_OUT_OF_RESOURCES;
     }
     VerInfoTbl  = GetVerInfoPtr ();
-    TempName[8] = 0;
+    TempName[16] = '\0';
 
     //
     // SMBIOS_TYPE_BIOS_INFORMATION
     //
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BIOS_INFORMATION,
-      1, "Intel Corporation");
-  if (VerInfoTbl != NULL) {
-    CopyMem (TempName, &VerInfoTbl->ImageId, sizeof (UINT64));
-    for (Length = 7; Length != 0; Length--) {
-      if (TempName[Length] != 0x20) break;
-      TempName[Length] = 0;
+      1, "3mdeb");
+    if (VerInfoTbl != NULL) {
+      PayloadId   = GetPayloadId ();
+      if (PayloadId == UEFI_PAYLOAD_ID_SIGNATURE) {
+        AsciiSPrint (TempStrBuf, sizeof (TempStrBuf),
+          "Dasharo (Slim Bootloader+UEFI) v%d.%d.%d\0",
+          VerInfoTbl->ImageVersion.ProjMajorVersion,
+          VerInfoTbl->ImageVersion.ProjMinorVersion,
+          VerInfoTbl->ImageVersion.ProjPatchVersion);
+      } else if (PayloadId == LINX_PAYLOAD_ID_SIGNATURE) {
+        AsciiSPrint (TempStrBuf, sizeof (TempStrBuf),
+          "Dasharo (Slim Bootloader+Linux) v%d.%d.%d\0",
+          VerInfoTbl->ImageVersion.ProjMajorVersion,
+          VerInfoTbl->ImageVersion.ProjMinorVersion,
+          VerInfoTbl->ImageVersion.ProjPatchVersion);
+      } else {
+        AsciiSPrint (TempStrBuf, sizeof (TempStrBuf),
+          "Dasharo (Slim Bootloader) v%d.%d.%d\0",
+          VerInfoTbl->ImageVersion.ProjMajorVersion,
+          VerInfoTbl->ImageVersion.ProjMinorVersion,
+          VerInfoTbl->ImageVersion.ProjPatchVersion);
+      }
+    } else {
+      AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "Dasharo (Slim Bootloader)\0");
     }
-    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf),
-      "%a.%02d.%02d.%02d.%02d.%02d.%03d.%c-%08X%a\0",
-      TempName,
-      VerInfoTbl->ImageVersion.SecureVerNum,
-      VerInfoTbl->ImageVersion.CoreMajorVersion,
-      VerInfoTbl->ImageVersion.CoreMinorVersion,
-      VerInfoTbl->ImageVersion.ProjMajorVersion,
-      VerInfoTbl->ImageVersion.ProjMinorVersion,
-      VerInfoTbl->ImageVersion.BuildNumber,
-      VerInfoTbl->ImageVersion.BldDebug ? 'D' : 'R',
-      *((UINT32*)&VerInfoTbl->SourceVersion + 1),
-      VerInfoTbl->ImageVersion.Dirty ? "-dirty" : "");
-  } else {
-    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "Unknown");
-  }
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BIOS_INFORMATION,
-    2, TempStrBuf);
+    AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BIOS_INFORMATION,
+      2, TempStrBuf);
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BIOS_INFORMATION,
       3, __DATE__);
 
+    AsciiSPrint (TempName, sizeof (TempName), "%a", GetPlatformName());
     //
     // SMBIOS_TYPE_SYSTEM_INFORMATION
     //
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
-      1, "Intel Corporation");
-
-    CopyMem (TempName, GetPlatformName(), sizeof (UINT64));
-    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a (CPU:%a)", TempName, GetCpuName ());
+      1, "HARDKERNEL");
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
-      2, TempStrBuf);
+      2, TempName);
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
       3, "0.0");
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
@@ -120,10 +122,9 @@ InitializeSmbiosInfo (
     // SMBIOS_TYPE_BASEBOARD_INFORMATION
     //
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BASEBOARD_INFORMATION,
-      1, "Intel Corporation");
-    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a (ID:%02X)", TempName, GetPlatformId ());
+      1, "HARDKERNEL");
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BASEBOARD_INFORMATION,
-      2, TempStrBuf);
+      2, TempName);
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BASEBOARD_INFORMATION,
       3, "1");
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BASEBOARD_INFORMATION,
