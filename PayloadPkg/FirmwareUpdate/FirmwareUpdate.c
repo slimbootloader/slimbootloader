@@ -133,7 +133,9 @@ VerifySblVersion (
   // Update last update version to the version we are about to update
   //
   Status = UpdateStatus(ImageHdr->UpdateHardwareInstance, \
-                        (CapsuleBlVersion->ImageVersion.ProjMajorVersion << 8) | CapsuleBlVersion->ImageVersion.ProjMinorVersion, \
+                        (CapsuleBlVersion->ImageVersion.ProjMajorVersion << 16) | \
+                        (CapsuleBlVersion->ImageVersion.ProjMinorVersion << 8) | \
+                         CapsuleBlVersion->ImageVersion.ProjPatchVersion, \
                         0xFFFFFFFF);
   if (EFI_ERROR (Status)) {
     DEBUG((DEBUG_ERROR, "Updating status to reserved region failed: %r\n", Status));

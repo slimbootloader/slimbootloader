@@ -157,6 +157,7 @@ class ImageVer(Structure):
     _pack_ = 1
     _fields_ = [
         ('BuildNumber',       c_uint16),
+        ('ProjPatchVersion',  c_uint8),
         ('ProjMinorVersion',  c_uint8),
         ('ProjMajorVersion',  c_uint8),
         ('CoreMinorVersion',  c_uint8),
@@ -897,6 +898,7 @@ def get_verinfo_via_file (ver_dict, file):
     ver_info.ImageId        = struct.unpack('Q', image_id)[0]
     try:
         ver_info.SourceVersion  = int(ver_dict['SourceVersion'], 16)
+        ver_info.ImageVersion.ProjPatchVersion = int(ver_dict['ProjPatchVersion'])
         ver_info.ImageVersion.ProjMinorVersion = int(ver_dict['ProjMinorVersion'])
         ver_info.ImageVersion.ProjMajorVersion = int(ver_dict['ProjMajorVersion'])
         ver_info.ImageVersion.CoreMinorVersion = int(ver_dict['CoreMinorVersion'])
@@ -947,6 +949,7 @@ def get_verinfo_via_git (ver_dict, repo_dir = '.'):
     ver_info.ImageVersion.BuildNumber  = build_number
     ver_info.ImageId                   = struct.unpack('Q', imgid)[0]
     ver_info.SourceVersion             = commitid
+    ver_info.ImageVersion.ProjPatchVersion = ver_dict['VERINFO_PROJ_PATCH_VER']
     ver_info.ImageVersion.ProjMinorVersion = ver_dict['VERINFO_PROJ_MINOR_VER']
     ver_info.ImageVersion.ProjMajorVersion = ver_dict['VERINFO_PROJ_MAJOR_VER']
     ver_info.ImageVersion.CoreMinorVersion = ver_dict['VERINFO_CORE_MINOR_VER']
@@ -970,6 +973,7 @@ def gen_ver_info_txt (ver_file, ver_info):
     h_file.write('SecureVerNum  = %03d\n'  % ver_info.ImageVersion.SecureVerNum)
     h_file.write('ProjMajorVersion  = %03d\n'  % ver_info.ImageVersion.ProjMajorVersion)
     h_file.write('ProjMinorVersion  = %03d\n'  % ver_info.ImageVersion.ProjMinorVersion)
+    h_file.write('ProjPatchVersion  = %03d\n'  % ver_info.ImageVersion.ProjPatchVersion)
     h_file.write('CoreMajorVersion  = %03d\n'  % ver_info.ImageVersion.CoreMajorVersion)
     h_file.write('CoreMinorVersion  = %03d\n'  % ver_info.ImageVersion.CoreMinorVersion)
     h_file.write('BuildNumber   = %05d\n'  % ver_info.ImageVersion.BuildNumber)

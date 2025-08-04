@@ -20,6 +20,7 @@ extern EFI_GUID gBootLoaderVersionGuid;
 #pragma pack(1)
 typedef struct {
   UINT16             BuildNumber;
+  UINT8              ProjPatchVersion;
   UINT8              ProjMinorVersion;
   UINT8              ProjMajorVersion;
   UINT8              CoreMinorVersion;

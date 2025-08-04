@@ -1275,7 +1275,7 @@ class Build(object):
         if hasattr(self._board, 'BOARD_PKG_NAME_OVERRIDE'):
             ver_txt_file = os.path.join(os.environ['PLT_SOURCE'], 'Platform', self._board.BOARD_PKG_NAME_OVERRIDE, ver_info_name + '.txt')
 
-        keys = ['VERINFO_IMAGE_ID', 'VERINFO_BUILD_DATE', 'VERINFO_PROJ_MINOR_VER',
+        keys = ['VERINFO_IMAGE_ID', 'VERINFO_BUILD_DATE', 'VERINFO_PROJ_MINOR_VER', 'VERINFO_PROJ_PATCH_VER',
                 'VERINFO_PROJ_MAJOR_VER', 'VERINFO_CORE_MINOR_VER', 'VERINFO_CORE_MAJOR_VER',
                 'VERINFO_SVN', 'FSPDEBUG_MODE', 'RELEASE_MODE', 'BUILD_ARCH']
         ver_dict = {}
