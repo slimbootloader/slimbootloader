@@ -21,6 +21,9 @@ class Board(AlderlakeBoardConfig.Board):
         super(Board, self).__init__(*args, **kwargs)
 
         self.VERINFO_IMAGE_ID     = 'SB_ADLN'
+        self.VERINFO_PROJ_MAJOR_VER = 0
+        self.VERINFO_PROJ_MINOR_VER = 9
+        self.VERINFO_PROJ_PATCH_VER = 0
         self.BOARD_NAME           = 'odroidh4'
         self._EXTRA_INC_PATH      = ['Silicon/AlderlakePkg/Adln/Include']
         self._FSP_PATH_NAME       = 'Silicon/AlderlakePkg/Adln/FspBin'
