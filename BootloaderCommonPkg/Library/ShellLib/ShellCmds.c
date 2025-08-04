@@ -56,6 +56,10 @@ LoadShellCommands (
     for (Iter = ShellExtensionCmds; *Iter != NULL; Iter++) {
       ShellCommandRegister (Shell, *Iter);
     }
+
+    if (FeaturePcdGet (PcdEnableSetup)) {
+      ShellCommandRegister (Shell, &ShellCommandSetup);;
+    }
   }
 
   return EFI_SUCCESS;
