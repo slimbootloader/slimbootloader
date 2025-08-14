@@ -16,6 +16,6 @@
 #define LOCAL_APIC_BASE_ADDRESS      0xFEE00000
 
 // FSP will assign temporary resource to serial io devices, align with FSP resource here.
-#define LPSS_UART_TEMP_BASE_ADDRESS(x)  (PCH_SERIAL_IO_BASE_ADDRESS + 0x12000 + (((x)<<1)<<12))
+#define LPSS_UART_TEMP_BASE_ADDRESS(x)  (PCH_SERIAL_IO_BASE_ADDRESS + 0x1E000 + (((x)<<1)<<12))
 
 #endif

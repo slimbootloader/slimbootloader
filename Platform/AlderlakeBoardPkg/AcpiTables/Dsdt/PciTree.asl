@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2021 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -106,7 +106,7 @@ Scope(\_SB) {
 // D25
     Package(){0x0019FFFF, 0, 0, 31 },
     Package(){0x0019FFFF, 1, 0, 32 },
-    Package(){0x0019FFFF, 2, 0, 33 },
+    Package(){0x0019FFFF, 2, 0, 42 },
 // D23
     Package(){0x0017FFFF, 0, 0, 16 },
 // D22
