@@ -1218,10 +1218,6 @@ class Build(object):
                 (get_fsp_header_revision(fsp_bin) >= 7) and
                 (get_fsp_image_attribute(fsp_bin) & (1<<2))) else False)
 
-        if self._board.BUILD_CSME_UPDATE_DRIVER:
-            if os.name != 'nt':
-                raise Exception  ('BUILD_CSME_UPDATE_DRIVER is enabled, build only works in WINDOWS !')
-
         # create component base/size variables
         self.update_component_list ()
         self.create_platform_vars ()

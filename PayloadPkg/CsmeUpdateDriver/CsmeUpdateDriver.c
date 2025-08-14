@@ -7,7 +7,7 @@
 
 #include "CsmeUpdateDriver.h"
 
-typedef VOID *(*CSME_ALLOCATE_ZERO_POOL_CB)(UINTN AllocationSize);
+typedef VOID *(EFIAPI *CSME_ALLOCATE_ZERO_POOL_CB)(UINTN AllocationSize);
 
 /**
   Entry point to the csme update driver.

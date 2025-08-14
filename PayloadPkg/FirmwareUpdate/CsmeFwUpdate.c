@@ -44,40 +44,6 @@ FindImage (
   );
 
 /**
-  Main routine to update CSME firmware.
-
-  This function has the logic to perform CSME firmware update.
-
-  @param[in] Buffer         Pointer to csme update binary
-  @param[in] BufferLength   Csme Update binary length
-  @param[in] UpdateApi      Pointer to update service API's
-
-  @retval  EFI_SUCCESS      Update successful
-  @retval  other            error status from the update routine
-**/
-EFI_STATUS
-StartCsmeUpdate (
-  IN  UINT8     *Buffer,
-  IN  UINTN     BufferLength,
-  IN  CSME_UPDATE_DRIVER_OUTPUT *UpdateApi
-  );
-
-/**
-  Display send image status.
-
-  A callback function that reports the progress of sending
-  the update image buffer to FW (not the progress of the update itself).
-
-  @param[in] bytesSentToFw         The number of bytes of the buffer, that were already sent to FW.
-  @param[in] totalBytesToSendToFw  The total number of bytes of the buffer.
-**/
-static void
-DisplaySendStatus (
-  IN UINT32 bytesSentToFw,
-  IN UINT32 totalBytesToSendToFw
-  );
-
-/**
   Reads a range of PCI configuration registers into a caller supplied buffer.
 
   Reads the range of PCI configuration registers specified by StartAddress and
@@ -175,6 +141,7 @@ CsmePciReadBuffer (
   @param[in] totalBytesToSendToFw  The total number of bytes of the buffer.
 **/
 static void
+EFIAPI
 DisplaySendStatus (
   IN UINT32 bytesSentToFw,
   IN UINT32 totalBytesToSendToFw
