@@ -71,11 +71,12 @@
   @retval SUCCESS  If Update started successfully. Error code otherwise.
 **/
 UINT32
+EFIAPI
 FwuFullUpdateFromBuffer(
   IN  UINT8 *Buffer,
   IN  UINT32 BufferLength,
   IN  EFI_GUID *OemId,
-  IN  void(*Func)(UINT32, UINT32)
+  IN  void(EFIAPI *Func)(UINT32, UINT32)
   );
 
 /**
@@ -91,11 +92,12 @@ FwuFullUpdateFromBuffer(
   @retval SUCCESS  If Update started successfully. Error code otherwise.
 **/
 UINT32
+EFIAPI
 FwuPartialUpdateFromBuffer(
   IN  UINT8 *Buffer,
   IN  UINT32 BufferLength,
   IN  UINT32 PartitionId,
-  IN  void(*Func)(UINT32, UINT32)
+  IN  void(EFIAPI *Func)(UINT32, UINT32)
   );
 
 /**
@@ -116,6 +118,7 @@ FwuPartialUpdateFromBuffer(
   @retval SUCCESS  If Update is still in progress, or finished successfully. Error code otherwise.
 **/
 UINT32
+EFIAPI
 FwuCheckUpdateProgress(
   OUT BOOLEAN *InProgress,
   OUT UINT32 *CurrentPercent,
@@ -134,6 +137,7 @@ FwuCheckUpdateProgress(
   @retval SUCCESS  If succeeded. Error code otherwise.
 **/
 UINT32
+EFIAPI
 FwuEnabledState(
   OUT UINT16 *EnabledState
   );
@@ -146,6 +150,7 @@ FwuEnabledState(
   @retval SUCCESS  If succeeded. Error code otherwise.
 **/
 UINT32
+EFIAPI
 FwuOemId(
   OUT EFI_GUID *OemId
   );
@@ -163,6 +168,7 @@ FwuOemId(
   @retval SUCCESS  If succeeded. Error code otherwise.
 **/
 UINT32
+EFIAPI
 FwuFwType(
   OUT UINT32 *FwType
   );
@@ -178,6 +184,7 @@ FwuFwType(
   @retval SUCCESS  If succeeded. Error code otherwise.
 **/
 UINT32
+EFIAPI
 FwuPchSku(
   OUT UINT32 *PchSku
   );
@@ -195,6 +202,7 @@ FwuPchSku(
   @retval SUCCESS  If succeeded. Error code otherwise.
 **/
 UINT32
+EFIAPI
 FwuPartitionVersionFromFlash(
   IN  UINT32 PartitionId,
   OUT UINT16 *Major,
@@ -218,6 +226,7 @@ FwuPartitionVersionFromFlash(
   @retval SUCCESS  If succeeded. Error code otherwise.
 **/
 UINT32
+EFIAPI
 FwuPartitionVersionFromBuffer(
   IN  UINT8 *Buffer,
   IN  UINT32 BufferLength,
@@ -237,6 +246,7 @@ FwuPartitionVersionFromBuffer(
   @retval SUCCESS  If succeeded. Error code otherwise.
 **/
 UINT32
+EFIAPI
 FwuPartitionVendorIdFromFlash(
   IN  UINT32 PartitionId,
   OUT UINT32 *VendorId
@@ -254,6 +264,7 @@ FwuPartitionVendorIdFromFlash(
   @retval SUCCESS  If succeeded. Error code otherwise.
 **/
 UINT32
+EFIAPI
 FwuSaveRestorePointToBuffer(
   OUT UINT8 **Buffer,
   OUT UINT32 *BufferLength
@@ -272,6 +283,7 @@ FwuSaveRestorePointToBuffer(
   @retval SUCCESS  If succeeded. Error code otherwise.
 **/
 UINT32
+EFIAPI
 FwuSetIshConfig(
   IN  UINT8 *Buffer,
   IN  UINT32 BufferLength
@@ -286,6 +298,7 @@ FwuSetIshConfig(
   @retval SUCCESS  If succeeded. Error code otherwise.
 **/
 UINT32
+EFIAPI
 FwuGetIshPdtVersion(
   OUT UINT8 *PdtVersion,
   OUT UINT8 *VdvVersion

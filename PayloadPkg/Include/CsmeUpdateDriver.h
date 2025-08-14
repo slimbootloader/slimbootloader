@@ -35,25 +35,25 @@ typedef struct
 
 typedef
 UINT32
-( *FWU_FULL_UPDATE_FROM_BUFFER) (
+(EFIAPI *FWU_FULL_UPDATE_FROM_BUFFER) (
   IN  UINT8         *Buffer,
   IN  UINT32        BufferLength,
   IN  EFI_GUID      *OemId,
-  IN  void(*Func)(UINT32, UINT32)
+  IN  void(EFIAPI *Func)(UINT32, UINT32)
   );
 
 typedef
 UINT32
-( *FWU_PARTIAL_UPDATE_FROM_BUFFER) (
+(EFIAPI *FWU_PARTIAL_UPDATE_FROM_BUFFER) (
   IN  UINT8         *Buffer,
   IN  UINT32        BufferLength,
   IN  UINT32        PartitionId,
-  IN  void(*Func)(UINT32, UINT32)
+  IN  void(EFIAPI *Func)(UINT32, UINT32)
   );
 
 typedef
 UINT32
-( *FWU_CHECK_UPDATE_PROGRESS) (
+(EFIAPI *FWU_CHECK_UPDATE_PROGRESS) (
   OUT BOOLEAN       *InProgress,
   OUT UINT32        *CurrentPercent,
   OUT UINT32        *FwUpdateStatus,
@@ -62,31 +62,31 @@ UINT32
 
 typedef
 UINT32
-( *FWU_ENABLED_STATE) (
+(EFIAPI *FWU_ENABLED_STATE) (
   OUT UINT16       *EnabledState
   );
 
 typedef
 UINT32
-( *FWU_OEMID) (
+(EFIAPI *FWU_OEMID) (
   OUT EFI_GUID     *OemId
   );
 
 typedef
 UINT32
-( *FWU_FW_TYPE) (
+(EFIAPI *FWU_FW_TYPE) (
   OUT UINT32       *FwType
   );
 
 typedef
 UINT32
-( *FWU_PCH_SKU) (
+(EFIAPI *FWU_PCH_SKU) (
   OUT UINT32       *PchSku
   );
 
 typedef
 UINT32
-( *FWU_PARTITION_VERSION_FROM_FLASH) (
+(EFIAPI *FWU_PARTITION_VERSION_FROM_FLASH) (
   IN  UINT32       PartitionId,
   OUT UINT16      *Major,
   OUT UINT16      *Minor,
@@ -96,7 +96,7 @@ UINT32
 
 typedef
 UINT32
-( *FWU_PARTITION_VERSION_FROM_BUFFER) (
+(EFIAPI *FWU_PARTITION_VERSION_FROM_BUFFER) (
   IN  UINT8       *Buffer,
   IN  UINT32      BufferLength,
   IN  UINT32      PartitionId,
@@ -108,28 +108,28 @@ UINT32
 
 typedef
 UINT32
-( *FWU_PARTITION_VENDORID_FROM_FLASH) (
+(EFIAPI *FWU_PARTITION_VENDORID_FROM_FLASH) (
   IN  UINT32      PartitionId,
   OUT UINT32      *VendorId
   );
 
 typedef
 UINT32
-( *FWU_SAVERESTORE_POINT_TO_BUFFER) (
+(EFIAPI *FWU_SAVERESTORE_POINT_TO_BUFFER) (
   OUT UINT8       **buffer,
   OUT UINT32      *bufferLength
   );
 
 typedef
 UINT32
-( *FWU_SET_ISH_CONFIG) (
+(EFIAPI *FWU_SET_ISH_CONFIG) (
   IN  UINT8       *Buffer,
   IN  UINT32      BufferLength
   );
 
 typedef
 UINT32
-( *FWU_GET_ISH_PDT_VERSION) (
+(EFIAPI *FWU_GET_ISH_PDT_VERSION) (
   OUT UINT8       *PdtVersion,
   OUT UINT8       *VdvVersion
   );

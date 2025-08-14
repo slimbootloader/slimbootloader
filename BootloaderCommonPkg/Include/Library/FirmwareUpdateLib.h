@@ -138,7 +138,7 @@ typedef struct {
 #define CAPSULE_IMAGE_SIZE(h)   ((h)->HeaderSize + (h)->PubKeySize + (h)->ImageSize + (h)->SignatureSize)
 #define COMP_STATUS_OFFSET(x, y)   ((x) + sizeof(FW_UPDATE_STATUS) + ((y) * sizeof(FW_UPDATE_COMP_STATUS)))
 
-typedef  VOID   (*DRIVER_ENTRY) (VOID *Params);
+typedef  VOID (EFIAPI *DRIVER_ENTRY) (VOID *Params);
 
 /**
   Get capsule image for firmware update.
