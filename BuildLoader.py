@@ -278,6 +278,7 @@ class BaseBoard(object):
         self.BUILD_IDENTICAL_TS    = 0
         self.ENABLE_SBL_RESILIENCY = 0
         self._ACM_CPU_FMS          = []
+        self._ACM_CPU_EXT_FM_FM_MASK = 0xF0
 
         self.RTCM_RSVD_SIZE        = 0xFF000
 
@@ -408,7 +409,7 @@ class Build(object):
             if self._board.ACM_FIT_VERISON == 0x200:
                 for CPU_FMS in self._board._ACM_CPU_FMS :
                     fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
-                    fit_entry.set_values(self._board.ACM_BASE, CPU_FMS, self._board.ACM_FIT_VERISON, 0x2, 0xF0)
+                    fit_entry.set_values(self._board.ACM_BASE, CPU_FMS, self._board.ACM_FIT_VERISON, 0x2, self._board._ACM_CPU_EXT_FM_FM_MASK)
                     print ('  Patching entry %d with 0x%08X:0x%08X - ACM' % (num_fit_entries, fit_entry.address, fit_entry.size))
                     num_fit_entries     += 1
 
