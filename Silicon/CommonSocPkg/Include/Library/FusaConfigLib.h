@@ -46,4 +46,17 @@ FusaConfigPostSi (
   VOID
   );
 
+/**
+  Perform Fusa Boot Option Configuration required.
+
+  @param OsBootOptionList The pointer to boot option list
+
+  @retval EFI_STATUS
+ */
+EFI_STATUS
+EFIAPI
+FusaConfigBootOption (
+  VOID *OsBootOptionList
+  );
+
 #endif
