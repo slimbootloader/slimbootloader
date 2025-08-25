@@ -98,7 +98,7 @@ GetBootGuardInfo (
     if (((MeFwSts4 & (B_TPM_DISCONNECT | B_BOOT_GUARD_ENF_MASK)) != 0) ||
         ((BootGuardAcmStatus & B_BOOT_GUARD_ACM_ERRORCODE_MASK) != 0)) {
       DEBUG ((DEBUG_INFO, "All TPM's on Platform are Disconnected\n"));
-      BootGuardInfo->DisconnectAllTpms = TRUE;
+      //BootGuardInfo->DisconnectAllTpms = TRUE;
     }
     BootGuardInfo->BypassTpmInit = FALSE;
     BootGuardInfo->MeasuredBoot = FALSE;

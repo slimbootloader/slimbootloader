@@ -86,6 +86,7 @@
 #include <Library/PciePm.h>
 #include <Library/PlatformInfo.h>
 #include <Library/PlatformHookLib.h>
+#include <TxtLib.h>
 
 //
 // The EC implements an embedded controller interface at ports 0x60/0x64 and a ACPI compliant
@@ -906,9 +907,11 @@ BoardInit (
     }
     IgdOpRegionPlatformInit ();
 
-    ///
-    /// Initialize the HECI device (for test HeciInitLib only)
-    ///
+    FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
+    if (FeaturesCfgData->Features.TxtEnabled == 1) {
+        InitTxt();
+    }
+
     Status = HeciInitialize (HECI1_DEVICE);
     DEBUG ((DEBUG_INFO, "HeciInitLib init Status: %r\n", Status));
 
@@ -1149,6 +1152,8 @@ UpdateFspConfig (
   UINT8                HdaVerbTableNum;
   FSP_INFO_HEADER      *FspHeader;
   UINT32               FspsBase;
+  FEATURES_CFG_DATA    *FeaturesCfgData;
+
 
   FspsBase = PcdGet32 (PcdFSPSBase);
   FspHeader = (FSP_INFO_HEADER *)(UINTN)(FspsBase + FSP_INFO_HEADER_OFF);
@@ -1273,6 +1278,12 @@ UpdateFspConfig (
 
   // Enable IEH
   FspsConfig->IehMode = 0x1;
+
+  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
+  if (FeaturesCfgData->Features.TxtEnabled == 1) {
+    DEBUG((DEBUG_INFO, "Enabling TXT in FSP-S UPD's\n"));
+    FspsConfig->TxtEnable = 0x1;
+  }
 
   FspsConfig->SerialIoSpiMode[1] = 0x1;
   for (Index = 0; Index < GetPchMaxSerialIoSpiControllersNum (); Index++) {
