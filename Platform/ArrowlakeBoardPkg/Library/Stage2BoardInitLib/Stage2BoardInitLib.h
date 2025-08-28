@@ -94,6 +94,7 @@
 #include <Library/MtlPchPcieRpLib.h>
 #include <Library/MtlSocInfoLib.h>
 #include <Guid/PciRootBridgeInfoGuid.h>
+#include <Library/ContainerLib.h>
 
 #define V_EPOC_XTAL_38_4_MHZ  0x38400000
 //

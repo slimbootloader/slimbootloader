@@ -255,6 +255,7 @@
   gPlatformModuleTokenSpaceGuid.PcdResizableBarSupport    | FALSE      | BOOLEAN | 0x20000216
   gPlatformModuleTokenSpaceGuid.PcdEnablePciePm           | FALSE      | BOOLEAN | 0x20000222
   gPlatformModuleTokenSpaceGuid.PcdEnableFwuNotify        | FALSE      | BOOLEAN | 0x20000225
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosOverride         | FALSE      | BOOLEAN | 0x20000227
 
 [PcdsDynamic]
   gPlatformModuleTokenSpaceGuid.PcdFspResetStatus         | 0          | UINT64 | 0x20000224
