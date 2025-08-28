@@ -6,6 +6,7 @@
 **/
 
 #include "Stage2BoardInitLib.h"
+#include <Library/SmbiosOverride.h>
 #include <Library/PrintLib.h>
 
 /**
@@ -58,6 +59,18 @@ InitializeSmbiosInfo (
   VOID                 *SmbiosStringsPtr;
   UINT8                TempName[9];
 
+  // Default string values
+  CHAR8                *SystemManufacturer;
+  CHAR8                *SystemProductName;
+  CHAR8                *SystemVersion;
+  CHAR8                *SystemSerialNumber;
+  CHAR8                *SystemSku;
+  CHAR8                *SystemFamily;
+  CHAR8                *BaseboardManufacturer;
+  CHAR8                *BaseboardProductName;
+  CHAR8                *BaseboardVersion;
+  CHAR8                *BaseboardSerialNumber;
+
   if (FeaturePcdGet (PcdSmbiosEnabled)) {
     Index         = 0;
     TempSmbiosStrTbl  = (SMBIOS_TYPE_STRINGS *) AllocateTemporaryMemory (0);
@@ -66,6 +79,55 @@ InitializeSmbiosInfo (
     }
     VerInfoTbl  = GetVerInfoPtr ();
     TempName[8] = 0;
+
+    // Set SMBIOS default values
+    SystemManufacturer = "Intel Corporation";
+    SystemVersion = "0.0";
+    SystemSerialNumber = "System Serial Number";
+    SystemSku = "System SKU Number";
+    SystemFamily = GetCpuName();
+
+    BaseboardManufacturer = "Intel Corporation";
+    BaseboardVersion = "1";
+    BaseboardSerialNumber = "No Board Serial Number";
+
+    CHAR8 SystemProductStrBuf[SMBIOS_STRING_MAX_LENGTH];
+    CopyMem (TempName, GetPlatformName(), sizeof (UINT64));
+    AsciiSPrint (SystemProductStrBuf, sizeof (TempStrBuf), "%a (CPU:%a)", TempName, GetCpuName ());
+    SystemProductName = SystemProductStrBuf;
+
+    CHAR8 BaseboardStrBuf[SMBIOS_STRING_MAX_LENGTH];
+    AsciiSPrint (BaseboardStrBuf, sizeof (BaseboardStrBuf), "%a (ID:%02X)", TempName, GetPlatformId ());
+    BaseboardProductName = BaseboardStrBuf;
+
+    // Load Device Info binary and Override Smbios value
+    if (FeaturePcdGet (PcdSmbiosOverride)) {
+      DEVICE_INFO_DATA     *DeviceInfo = NULL;
+      UINT32               DeviceInfoSize = 0;
+      EFI_STATUS           Status;
+
+      Status = LoadComponent (SIGNATURE_32 ('D', 'E', 'V', 'I'), SIGNATURE_32 ('D', 'I', 'N', 'F'),
+                            (VOID **)&DeviceInfo, &DeviceInfoSize);
+      if (!EFI_ERROR(Status) && DeviceInfo != NULL) {
+        DEBUG((DEBUG_INFO, "Device info binary loaded successfully, size: %d\n", DeviceInfoSize));
+
+        // Override defaults with device info binary data
+        SystemManufacturer = GetSmbiosStringValue(DeviceInfo->SystemManufacturer, SystemManufacturer);
+        SystemProductName = GetSmbiosStringValue(DeviceInfo->SystemProductName, SystemProductName);
+        SystemVersion = GetSmbiosStringValue(DeviceInfo->SystemVersion, SystemVersion);
+        SystemSerialNumber = GetSmbiosStringValue(DeviceInfo->SystemSerialNumber, SystemSerialNumber);
+        SystemSku = GetSmbiosStringValue(DeviceInfo->SystemSku, SystemSku);
+        SystemFamily = GetSmbiosStringValue(DeviceInfo->SystemFamily, SystemFamily);
+
+        BaseboardManufacturer = GetSmbiosStringValue(DeviceInfo->BaseboardManufacturer, BaseboardManufacturer);
+        BaseboardProductName = GetSmbiosStringValue(DeviceInfo->BaseboardProductName, BaseboardProductName);
+        BaseboardVersion = GetSmbiosStringValue(DeviceInfo->BaseboardVersion, BaseboardVersion);
+        BaseboardSerialNumber = GetSmbiosStringValue(DeviceInfo->BaseboardSerialNumber, BaseboardSerialNumber);
+
+      } else {
+        DEBUG((DEBUG_INFO, "Device info binary not found, using defaults: %r\n", Status));
+      }
+    }
 
     //
     // SMBIOS_TYPE_BIOS_INFORMATION
@@ -102,33 +164,30 @@ InitializeSmbiosInfo (
     // SMBIOS_TYPE_SYSTEM_INFORMATION
     //
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
-      1, "Intel Corporation");
+      1, SystemManufacturer);
 
-    CopyMem (TempName, GetPlatformName(), sizeof (UINT64));
-    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a (CPU:%a)", TempName, GetCpuName ());
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
-      2, TempStrBuf);
+      2, SystemProductName);
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
-      3, "0.0");
+      3, SystemVersion);
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
-      4, "System Serial Number");
+      4, SystemSerialNumber);
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
-      5, "System SKU Number");
+      5, SystemSku);
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
-      6, GetCpuName());
+      6, SystemFamily);
 
     //
     // SMBIOS_TYPE_BASEBOARD_INFORMATION
     //
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BASEBOARD_INFORMATION,
-      1, "Intel Corporation");
-    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a (ID:%02X)", TempName, GetPlatformId ());
+      1, BaseboardManufacturer);
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BASEBOARD_INFORMATION,
-      2, TempStrBuf);
+      2, BaseboardProductName);
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BASEBOARD_INFORMATION,
-      3, "1");
+      3, BaseboardVersion);
     AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BASEBOARD_INFORMATION,
-      4, "No Board Serial Number");
+      4, BaseboardSerialNumber);
 
     //
     // SMBIOS_TYPE_PROCESSOR_INFORMATION : TBD

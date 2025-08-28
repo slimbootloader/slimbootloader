@@ -125,6 +125,7 @@
   FitLib|BootloaderCommonPkg/Library/FitLib/FitLib.inf
   FdtLib|MdePkg/Library/BaseFdtLib/BaseFdtLib.inf
   BuildFdtLib|BootloaderCommonPkg/Library/BuildFdtLib/BuildFdtLib.inf
+  SmbiosOverrideLib|BootloaderCommonPkg/Library/SmbiosOverrideLib/SmbiosOverrideLib.inf
 
 !if $(ENABLE_SOURCE_DEBUG)
   DebugAgentLib|BootloaderCommonPkg/Library/DebugAgentLib/DebugAgentLib.inf
@@ -361,6 +362,8 @@
   gPlatformModuleTokenSpaceGuid.PcdEnablePciePm           | $(ENABLE_PCIE_PM)
   gPlatformCommonLibTokenSpaceGuid.PcdFspNoEop            | $(HAVE_NO_FSP_EOP)
   gPlatformModuleTokenSpaceGuid.PcdEnableFwuNotify        | $(ENABLE_FWU_NOTIFY)
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosOverride         | $(ENABLE_SMBIOS_OVERRIDE)
+
 
 !ifdef $(S3_DEBUG)
   gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled         | $(S3_DEBUG)

@@ -70,6 +70,8 @@
   MtlPchPcieRpLib
   PciePm
   P2sbLib
+  ContainerLib
+  SmbiosOverrideLib
 
 [Guids]
   gOsConfigDataGuid
@@ -117,3 +119,4 @@
   gPlatformModuleTokenSpaceGuid.PcdIgdOpRegionAddress
   gPlatformModuleTokenSpaceGuid.PcdPciResAllocTableBase
   gPlatformModuleTokenSpaceGuid.PcdEnablePciePm
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosOverride
