@@ -934,7 +934,7 @@ BoardInit (
         AppendS3Info ((VOID *)&mS3SaveReg, FALSE);
       }
     }
-    if ((GetBootMode() != BOOT_ON_FLASH_UPDATE) && (GetPayloadId() != 0)) {
+    if (!PcdGetBool(PcdEnableSetup) && (GetBootMode() != BOOT_ON_FLASH_UPDATE) && (GetPayloadId() != 0)) {
       ProgramSecuritySetting ();
     }
 
@@ -1633,6 +1633,15 @@ UpdateOsBootMediumInfo (
     }
   }
 
+  if ((OsBootOptionList != NULL)
+    && (OsBootOptionList->OsBootOptionCount < PcdGet32(PcdOsBootOptionNumber))
+    && (FeaturePcdGet(PcdEnableSetup))) {
+      OsBootOptionList->OsBootOption[OsBootOptionList->OsBootOptionCount].DevType = OsBootDeviceMemory;
+      OsBootOptionList->OsBootOption[OsBootOptionList->OsBootOptionCount].FsType = EnumFileSystemTypeAuto;
+      AsciiStrCpyS ((CHAR8*)OsBootOptionList->OsBootOption[OsBootOptionList->OsBootOptionCount].Image[0].FileName, MAX_FILE_PATH_LEN, "!SETP/MPYM:STPY");
+      OsBootOptionList->OsBootOptionCount++;
+  }
+
   return;
 }
 
@@ -2216,7 +2225,7 @@ UpdateCpuNvs (
   CpuConfigData = (CPU_CONFIG_DATA *)(UINTN)CpuInitDataHob->CpuConfigData;
   CpuSku = GetCpuSku();
 
-  CpuNvs->Cpuid = GetCpuFamily() | GetCpuStepping();
+  CpuNvs->Cpuid = (UINT32)GetCpuFamily() | (UINT32)GetCpuStepping();
   CpuNvs->Revision = CPU_NVS_AREA_REVISION;
   ///
   /// Calculate the number of Oc bins supported. Read in MSR 194h FLEX_RATIO bits (19:17)

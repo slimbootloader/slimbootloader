@@ -240,6 +240,20 @@ class Board(BaseBoard):
         #   VbtBin folder.
         #self._MULTI_VBT_FILE      = {1:'Vbt.dat', 2:'Vbt2.dat'}
 
+        self.ENABLE_SBL_SETUP       = 0
+        self.SETUP_SIZE             = 0
+
+        if self.ENABLE_SBL_SETUP:
+            self.HAVE_VERIFIED_BOOT = 0
+            self.HAVE_MEASURED_BOOT = 0
+            self.SETUP_MPYM_SIZE    = 0x12000
+            self.SETUP_STPY_SIZE    = 0x06000
+            self.SETUP_CFGJ_SIZE    = 0x0B000
+            self.SETUP_CFGD_SIZE    = 0x02000
+
+            self.SETUP_SIZE           = 0x1000 + self.SETUP_MPYM_SIZE + self.SETUP_STPY_SIZE + self.SETUP_CFGJ_SIZE + self.SETUP_CFGD_SIZE
+
+
     def PlatformBuildHook (self, build, phase):
         if phase == 'pre-build:before':
             # create build folder if not exist
@@ -346,23 +360,40 @@ class Board(BaseBoard):
         container_list.append (
           # Name | Image File             |    CompressAlg  | AuthType                        | Key File                        | Region Align   | Region Size |  Svn Info
           # ========================================================================================================================================================
-          ('IPFW',      'SIIPFW.bin',          '',     container_list_auth_type,   'KEY_ID_CONTAINER'+'_'+self._RSA_SIGN_TYPE,        0,          0     ,        0),   # Container Header
+          [('IPFW',      'SIIPFW.bin',          '',     container_list_auth_type,   'KEY_ID_CONTAINER'+'_'+self._RSA_SIGN_TYPE,        0,          0     ,        0)],   # Container Header
         )
         bins = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Binaries')
 
         CompFilePreOsChecker='PreOsChecker.bin' if os.path.exists(os.path.join(bins, 'PreOsChecker.bin')) else ''
 
         if self.ENABLE_PRE_OS_CHECKER:
-            container_list.append (
+            container_list[0].append (
               ('POSC',CompFilePreOsChecker,      '',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0,   self.POSC_SIZE,      0),   # Pre-OS Checker
             )
 
         if self.ENABLE_TSN:
-            container_list.append (
+            container_list[0].append (
               ('TMAC',  '',   'Lz4',     container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,     0,   self.TMAC_SIZE,        0),   # TSN MAC Address
             )
+        
+        if self.ENABLE_SBL_SETUP:
+            def_auth = container_list_auth_type
+            cont_key = 'KEY_ID_CONTAINER'+'_'+self._RSA_SIGN_TYPE
+            mpy_path  = os.path.join(bins, 'MicroPython.efi')
+            if not os.path.isfile(mpy_path):
+                raise Exception ("MicroPython.efi is required under 'Binaries', please build MicroPython payload module separately !")
+            sbl_setup = os.path.join(os.environ['SBL_SOURCE'], 'BootloaderCorePkg', 'Tools', 'SblSetup.py')
+            container_list.append ([
+                # Name       | Image File |    CompressAlg  | AuthType    | Key File  | Region Align | Region Size          |  Svn Info
+                # ==================================================================================================================================================================
+                ('SETP',     'SETP.bin',       '',           def_auth,      cont_key,   0,             0,                      0),   # Container Header
+                ('MPYM',      mpy_path,        'Lzma',       'SHA2_384',    '',         0,             self.SETUP_MPYM_SIZE,   0),   # Component 1
+                ('STPY',      sbl_setup,       'Lz4',        'SHA2_384',    '',         0,             self.SETUP_STPY_SIZE,   0),   # Component 2
+                ('CFGJ',     'CfgDataDef.json', 'Lzma',      'SHA2_384',    '',         0,             self.SETUP_CFGJ_SIZE,   0),   # Component 3
+                ('CFGD',     '',               'Dummy',      '',            '',         0,             self.SETUP_CFGD_SIZE,   0),   # Component 4
+            ])
 
-        return [container_list]
+        return container_list
 
     def GetOutputImages (self):
         # define extra images that will be copied to output folder
@@ -444,5 +475,11 @@ class Board(BaseBoard):
                 ),
         ])
 
+        setup_mode = STITCH_OPS.MODE_FILE_PAD if self.ENABLE_SBL_SETUP else STITCH_OPS.MODE_FILE_IGNOR
+        for img_tuple in img_list:
+            if img_tuple[0] == 'NON_REDUNDANT.bin':
+                img_tuple[1].append(
+                    ('SETP.bin'     ,  ''        , self.SETUP_SIZE,    setup_mode,               STITCH_OPS.MODE_POS_TAIL)
+                )
         return img_list
 
