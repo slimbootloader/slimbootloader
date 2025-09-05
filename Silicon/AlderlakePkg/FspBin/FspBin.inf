@@ -11,7 +11,7 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = 15848ee4934acbd94069454f369e9869bb0f1295
+  COMMIT  = 5d0424c89ddd4903cdd31eb36bc1c921c15422e3
 
 [UserExtensions.SBL."CopyList"]
 # For ADL-PS
