@@ -25,16 +25,6 @@ typedef VOID   (*PLATFORM_CPU_INIT_HOOK) (UINT32 CpuIndex);
 
 
 /**
-  BSP initialization routine.
-
-**/
-VOID
-BspInit (
-  VOID
-  );
-
-
-/**
   Multiprocessor Initialization.
 
   @param[in]  Phase       Initialization phase for MP.

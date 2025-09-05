@@ -297,12 +297,10 @@ NormalBootPath (
     CallBoardNotify = TRUE;
   }
 
-  if (FixedPcdGetBool (PcdSmpEnabled)) {
-    // Only delay MpInitDone for OsLoader
-    if ((PayloadId != 0) || (GetBootMode() == BOOT_ON_FLASH_UPDATE)) {
-      Status = MpInit (EnumMpInitDone);
-      AddMeasurePoint (0x31C0);
-    }
+  // Only delay MpInitDone for OsLoader
+  if ((PayloadId != 0) || (GetBootMode() == BOOT_ON_FLASH_UPDATE)) {
+    Status = MpInit (EnumMpInitDone);
+    AddMeasurePoint (0x31C0);
   }
 
   if (CallBoardNotify) {
@@ -376,10 +374,8 @@ S3ResumePath (
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
   S3Data    = (S3_DATA *)LdrGlobal->S3DataPtr;
 
-  if (FixedPcdGetBool (PcdSmpEnabled)) {
-    MpInit (EnumMpInitDone);
-    AddMeasurePoint (0x31C0);
-  }
+  MpInit (EnumMpInitDone);
+  AddMeasurePoint (0x31C0);
 
   // Call the board notification
   BoardInit (EndOfStages);
@@ -586,16 +582,11 @@ SecStartup (
   }
 
   // MP Init phase 1
-  if (FixedPcdGetBool (PcdSmpEnabled)) {
-    Status = MpInit (EnumMpInitWakeup);
-  } else {
-    DEBUG ((DEBUG_INIT, "BSP Init\n"));
-    BspInit ();
-  }
+  Status = MpInit (EnumMpInitWakeup);
   AddMeasurePoint (0x3060);
 
   // MP Init phase 2
-  if (FixedPcdGetBool (PcdSmpEnabled) && !EFI_ERROR (Status)) {
+  if (!EFI_ERROR (Status)) {
     Status = MpInit (EnumMpInitRun);
     AddMeasurePoint (0x3080);
   }
