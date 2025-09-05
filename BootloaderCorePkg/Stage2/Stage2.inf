@@ -132,7 +132,6 @@
   gPlatformModuleTokenSpaceGuid.PcdGraphicsVbtAddress
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled
   gPlatformModuleTokenSpaceGuid.PcdAcpiEnabled
-  gPlatformModuleTokenSpaceGuid.PcdSmpEnabled
   gPlatformModuleTokenSpaceGuid.PcdPciEnumEnabled
   gPlatformModuleTokenSpaceGuid.PcdFSPSBase
   gPlatformModuleTokenSpaceGuid.PcdFlashBaseAddress
