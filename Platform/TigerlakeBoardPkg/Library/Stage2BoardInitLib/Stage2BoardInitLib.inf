@@ -114,3 +114,4 @@
   gPlatformModuleTokenSpaceGuid.PcdEnablePciePm
   gPlatformModuleTokenSpaceGuid.PcdPciResourceMem64Base
   gPlatformModuleTokenSpaceGuid.PcdFSPSBase
+  gPlatformModuleTokenSpaceGuid.PcdEnableSetup
