@@ -18,7 +18,7 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO   = https://github.com/slimbootloader/firmwareblob.git
-  COMMIT = 722b0a7363642572578ce25ff6c8fd947ab1ef7b
+  COMMIT = 12e3be7ba1c3e816ba7412341f1ba3ab65180120
 
 [UserExtensions.SBL."CopyList"]
   Microcode/ArrowLake/m_82_c0662_00000118.pdb  : Silicon/ArrowlakePkg/Arls/Microcode/m_82_c0662_00000118.mcb
