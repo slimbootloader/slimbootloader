@@ -650,6 +650,7 @@ class Build(object):
             return parent_size
 
         # Create compoent list and update base and offset
+        self.add_device_info_to_non_volatile_region(self._img_list)
         img_list         = self._img_list
         region_name_list = [img[0] for img in img_list]
         comp_list        = []
@@ -1025,6 +1026,29 @@ class Build(object):
         else:
             shutil.copy(stage1b_path, stage1b_b_path)
 
+    def add_device_info_to_non_volatile_region (self, img_list):
+        # Check if DeviceInfo.bin exists in platform binaries folder
+        bins_dir = os.path.join(os.environ['PLT_SOURCE'], 'Platform', self._board.BOARD_PKG_NAME, 'Binaries')
+        device_info_file = os.path.join(bins_dir, 'DeviceInfo.bin')
+
+        if not os.path.exists(device_info_file):
+            print(f"DeviceInfo.bin not found at {device_info_file}, skipping device info addition to image layout")
+            return
+
+        print(f"Adding DeviceInfo_signed.bin to NON_VOLATILE region in image layout")
+
+        # Find NON_VOLATILE.bin in img_list and add device info
+        for idx, (comp_name, file_list) in enumerate(img_list):
+            if comp_name == 'NON_VOLATILE.bin':
+                # Add DeviceInfo_signed.bin to non-volatile region
+                device_info_entry = ('DeviceInfo_signed.bin', '', getattr(self._board, 'OEMDATA_SIZE', 0x2000),
+                                    STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL)
+                file_list.append(device_info_entry)
+                print(file_list)
+                print(f"Added DeviceInfo_signed.bin to NON_VOLATILE region")
+                break
+        else:
+            print("NON_VOLATILE.bin not found in image layout, \cannot add device info")
 
     def create_bootloader_image (self, layout_name):
 
@@ -1120,6 +1144,20 @@ class Build(object):
             extra_list = []
         out_file = os.path.join("Outputs", self._board.BOARD_NAME, 'Stitch_Components.zip')
         copy_images_to_output (self._fv_dir, out_file, self._img_list, rgn_name_list, extra_list)
+
+
+    def add_device_info_container(self, container_list, device_info_file):
+        container_list_auth_type = self._board._RSA_SIGN_TYPE + '_' + self._board._SIGNING_SCHEME[4:] + '_' + self._board._SIGN_HASH
+
+            # Add device info container to the main container list
+        device_info_container = [
+            ('DEVI', 'DeviceInfo_signed.bin', '', container_list_auth_type, 'KEY_ID_CONTAINER'+'_'+self._board._RSA_SIGN_TYPE, 0, 0, 0),   # Container Header
+            ('DINF', device_info_file, 'Lz4', container_list_auth_type, 'KEY_ID_CONTAINER_COMP'+'_'+self._board._RSA_SIGN_TYPE, 0, 0, 0),   # Component
+        ]
+        container_list.append(device_info_container)
+        print(container_list)
+        print(f"Added DeviceInfo container to build")
+
 
     def pre_build(self):
         # Update search path
@@ -1446,6 +1484,12 @@ class Build(object):
         if getattr(self._board, "GetContainerList", None):
             container_list = self._board.GetContainerList ()
             component_dir = os.path.join(os.environ['PLT_SOURCE'], 'Platform', self._board.BOARD_PKG_NAME, 'Binaries')
+            device_info_file = os.path.join(component_dir, 'DeviceInfo.bin')
+            if os.path.exists(device_info_file):
+                print(f"Found DeviceInfo.bin at {device_info_file}, adding to container list")
+                self.add_device_info_container(container_list, device_info_file)
+            else:
+                print(f"DeviceInfo.bin not found at {device_info_file}, skipping container list addition")
             gen_container_bin (container_list, self._fv_dir, component_dir, self._key_dir , '')
 
         # patch stages

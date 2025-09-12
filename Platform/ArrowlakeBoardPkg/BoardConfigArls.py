@@ -116,6 +116,9 @@ class Board(BaseBoard):
         self.ENABLE_FWU           = 1
         self.ENABLE_SMBIOS        = 1
 
+        # Enable SMBIOS value override with user defined value
+        self.ENABLE_SMBIOS_OVERRIDE = 0
+
         self.ENABLE_CSME_UPDATE   = 1
 
         # CSME update library is required to enable this option and will be available as part of CSME kit
@@ -204,6 +207,11 @@ class Board(BaseBoard):
 
         self.NON_REDUNDANT_SIZE   = 0x3BF000 + self.SIIPFW_SIZE
         self.NON_VOLATILE_SIZE    = 0x001000
+
+        if self.ENABLE_SMBIOS_OVERRIDE:
+            self.OEMDATA_SIZE = 0x002000
+            self.NON_VOLATILE_SIZE = 0x003000
+
         self.SLIMBOOTLOADER_SIZE  = (self.TOP_SWAP_SIZE + self.REDUNDANT_SIZE) * 2 + \
                                     self.NON_REDUNDANT_SIZE + self.NON_VOLATILE_SIZE
         self.SLIMBOOTLOADER_SIZE  = ((self.SLIMBOOTLOADER_SIZE + 0xFFFFF) & ~0xFFFFF)
