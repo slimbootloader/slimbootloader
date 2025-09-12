@@ -522,6 +522,10 @@ SecStartup (
   }
 
   BoardInit (PostSiliconInit);
+
+  if (FixedPcdGetBool (PcdSmbiosEnabled)) {
+    ApplySmbiosDeviceInfoOverride ();
+  }
   AddMeasurePoint (0x3040);
 
 #if FixedPcdGetBool (PcdEnableCryptoPerfTest)

@@ -101,7 +101,10 @@ class Board(BaseBoard):
         self._CONTAINER_PRIVATE_KEY = 'KEY_ID_CONTAINER' + '_' + self._RSA_SIGN_TYPE
         self.ENABLE_SMP_INIT      = 1 # SMP is N/A on SIMICS
         self.ENABLE_FWU           = 1
-        self.ENABLE_SMBIOS        = 1
+        self.ENABLE_SMBIOS        = 0
+
+        # Enable SMBIOS value override with user defined value
+        self.ENABLE_SMBIOS_OVERRIDE = 0
 
         self.ENABLE_CSME_UPDATE   = 1
 
@@ -178,6 +181,11 @@ class Board(BaseBoard):
 
         self.NON_REDUNDANT_SIZE   = 0x3BF000 + self.SIIPFW_SIZE
         self.NON_VOLATILE_SIZE    = 0x001000
+
+        if self.ENABLE_SMBIOS_OVERRIDE:
+            self.OEMDATA_SIZE = 0x002000
+            self.NON_VOLATILE_SIZE = 0x003000
+
         self.SLIMBOOTLOADER_SIZE  = (self.TOP_SWAP_SIZE + self.REDUNDANT_SIZE) * 2 + \
                                     self.NON_REDUNDANT_SIZE + self.NON_VOLATILE_SIZE
         self.SLIMBOOTLOADER_SIZE  = ((self.SLIMBOOTLOADER_SIZE + 0xFFFFF) & ~0xFFFFF)
@@ -319,10 +327,20 @@ class Board(BaseBoard):
         container_list.append (
           # Name | Image File             |    CompressAlg  | AuthType                        | Key File                        | Region Align   | Region Size |  Svn Info
           # ========================================================================================================================================================
-          ('IPFW',      'SIIPFW.bin',          '',     container_list_auth_type,   'KEY_ID_CONTAINER'+'_'+self._RSA_SIGN_TYPE,        0,          0     ,        0),   # Container Header
+          [('IPFW',      'SIIPFW.bin',          '',     container_list_auth_type,   'KEY_ID_CONTAINER'+'_'+self._RSA_SIGN_TYPE,        0,          0     ,        0)],   # Container Header
         )
 
-        return [container_list]
+        bins = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Binaries')
+
+        if self.ENABLE_SMBIOS_OVERRIDE:
+            CompFileOemData = os.path.join(bins, 'DeviceInfo.bin')
+            # Add OEM Data container to the main container list
+            container_list.append ([
+                ('DEVI', 'DeviceInfo_signed.bin', '', container_list_auth_type, 'KEY_ID_CONTAINER'+'_'+self._RSA_SIGN_TYPE, 0, 0, 0),   # Container Header
+                ('DINF', CompFileOemData, 'Lz4', container_list_auth_type, 'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0, 0, 0),   # Component
+            ])
+
+        return container_list
 
     def GetOutputImages (self):
         # define extra images that will be copied to output folder
@@ -347,11 +365,13 @@ class Board(BaseBoard):
                 ),
             ])
 
+        non_volatile_img_list = [('SBLRSVD.bin', '' , self.SBLRSVD_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL)]
+
+        if self.ENABLE_SMBIOS_OVERRIDE:
+            non_volatile_img_list.append(('DeviceInfo_signed.bin',   ''     , self.OEMDATA_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL))
+
         img_list.extend ([
-            ('NON_VOLATILE.bin', [
-                ('SBLRSVD.bin',    ''        , self.SBLRSVD_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
-                ]
-            ),
+            ('NON_VOLATILE.bin', non_volatile_img_list),
             ('NON_REDUNDANT.bin', [
                 ('SIIPFW.bin'   ,  ''        , self.SIIPFW_SIZE,   STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
                 ('VARIABLE.bin' ,  ''        , self.VARIABLE_SIZE, STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),

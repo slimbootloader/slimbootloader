@@ -151,6 +151,8 @@
   gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesBase
   gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesSize
   gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsPtr
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt
   gPlatformModuleTokenSpaceGuid.PcdLinuxPayloadEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashMask
   gPlatformModuleTokenSpaceGuid.PcdSmmRebaseMode
