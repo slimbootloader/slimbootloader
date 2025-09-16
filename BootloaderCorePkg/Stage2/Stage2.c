@@ -123,6 +123,138 @@ PreparePayload (
   return Dst;
 }
 
+/**
+  Get SMBIOS string value with fallback logic
+
+  @param[in] DeviceInfoValue    Value from device info binary (null-terminated)
+  @param[in] DefaultValue       Default platform value
+
+  @retval    Device info value if available and non-empty, otherwise default value
+**/
+CHAR8*
+GetSmbiosStringValue (
+  IN CHAR8    *DeviceInfoValue,
+  IN CHAR8    *DefaultValue
+  )
+{
+  // Use device info value if available and non-empty, otherwise use default
+  if (DeviceInfoValue != NULL && DeviceInfoValue[0] != '\0') {
+    return DeviceInfoValue;
+  }
+  return DefaultValue;
+}
+
+
+
+
+/**
+  Apply device info override to existing SMBIOS strings
+
+  @param[in] DeviceInfo    Pointer to device info data
+
+  @retval EFI_SUCCESS     Override applied successfully
+  @retval EFI_NOT_FOUND   No SMBIOS strings found to override
+**/
+STATIC
+EFI_STATUS
+ApplySmbiosDeviceInfoOverride (
+  IN DEVICE_INFO_DATA *DeviceInfo
+  )
+{
+  SMBIOS_TYPE_STRINGS  *SmbiosStrings;
+  UINT16               StringCount;
+  UINT16               Index;
+  CHAR8                *NewString;
+  CHAR8                *CurrentString;
+  UINTN                NewLength;
+
+  if (DeviceInfo == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  // Get existing SMBIOS strings
+  SmbiosStrings = (SMBIOS_TYPE_STRINGS *)(UINTN)PcdGet32 (PcdSmbiosStringsPtr);
+  StringCount = PcdGet16 (PcdSmbiosStringsCnt);
+
+  if (SmbiosStrings == NULL || StringCount == 0) {
+    DEBUG ((DEBUG_WARN, "No SMBIOS strings found to override\n"));
+    return EFI_NOT_FOUND;
+  }
+
+  DEBUG ((DEBUG_INFO, "Applying device info overrides to %d SMBIOS strings\n", StringCount));
+
+  // Override SMBIOS strings based on device info
+  for (Index = 0; Index < StringCount; Index++) {
+    NewString = NULL;
+
+    // Check each SMBIOS type and string index for potential override
+    switch (SmbiosStrings[Index].Type) {
+      case SMBIOS_TYPE_SYSTEM_INFORMATION:
+        switch (SmbiosStrings[Index].Idx) {
+          case 1: // Manufacturer
+            NewString = GetSmbiosStringValue(DeviceInfo->SystemManufacturer, SmbiosStrings[Index].String);
+            break;
+          case 2: // Product Name
+            NewString = GetSmbiosStringValue(DeviceInfo->SystemProductName, SmbiosStrings[Index].String);
+            break;
+          case 3: // Version
+            NewString = GetSmbiosStringValue(DeviceInfo->SystemVersion, SmbiosStrings[Index].String);
+            break;
+          case 4: // Serial Number
+            NewString = GetSmbiosStringValue(DeviceInfo->SystemSerialNumber, SmbiosStrings[Index].String);
+            break;
+          case 5: // SKU Number
+            NewString = GetSmbiosStringValue(DeviceInfo->SystemSku, SmbiosStrings[Index].String);
+            break;
+          case 6: // Family
+            NewString = GetSmbiosStringValue(DeviceInfo->SystemFamily, SmbiosStrings[Index].String);
+            break;
+        }
+        break;
+
+      case SMBIOS_TYPE_BASEBOARD_INFORMATION:
+        switch (SmbiosStrings[Index].Idx) {
+          case 1: // Manufacturer
+            NewString = GetSmbiosStringValue(DeviceInfo->BaseboardManufacturer, SmbiosStrings[Index].String);
+            break;
+          case 2: // Product
+            NewString = GetSmbiosStringValue(DeviceInfo->BaseboardProductName, SmbiosStrings[Index].String);
+            break;
+          case 3: // Version
+            NewString = GetSmbiosStringValue(DeviceInfo->BaseboardVersion, SmbiosStrings[Index].String);
+            break;
+          case 4: // Serial Number
+            NewString = GetSmbiosStringValue(DeviceInfo->BaseboardSerialNumber, SmbiosStrings[Index].String);
+            break;
+        }
+        break;
+
+      default:
+        // No override for this type
+        break;
+    }
+
+    // Apply the override if a new string was determined
+    if (NewString != NULL && NewString != SmbiosStrings[Index].String) {
+      CurrentString = SmbiosStrings[Index].String;
+      NewLength = AsciiStrLen(NewString);
+
+      // Allocate new memory for the overridden string
+      SmbiosStrings[Index].String = (CHAR8 *)AllocatePool(NewLength + 1);
+      if (SmbiosStrings[Index].String != NULL) {
+        AsciiStrCpyS(SmbiosStrings[Index].String, NewLength + 1, NewString);
+        DEBUG ((DEBUG_INFO, "SMBIOS Type %d Index %d: '%a' -> '%a'\n",
+                SmbiosStrings[Index].Type, SmbiosStrings[Index].Idx,
+                CurrentString, SmbiosStrings[Index].String));
+      } else {
+        DEBUG ((DEBUG_ERROR, "Failed to allocate memory for SMBIOS string override\n"));
+        SmbiosStrings[Index].String = CurrentString; // Restore original
+      }
+    }
+  }
+
+  return EFI_SUCCESS;
+}
 
 /**
   Normal boot flow.
@@ -518,6 +650,26 @@ SecStartup (
   }
 
   BoardInit (PostSiliconInit);
+  if (FixedPcdGetBool (PcdSmbiosEnabled)) {
+    // Load device info for SMBIOS override if container exists
+    DEVICE_INFO_DATA     *DeviceInfo = NULL;
+    UINT32               DeviceInfoSize = 0;
+
+    Status = LoadComponent (SIGNATURE_32 ('D', 'E', 'V', 'I'), SIGNATURE_32 ('D', 'I', 'N', 'F'),
+                          (VOID **)&DeviceInfo, &DeviceInfoSize);
+    if (!EFI_ERROR(Status) && DeviceInfo != NULL) {
+      DEBUG((DEBUG_INFO, "Device info binary loaded successfully from non-volatile region, size: %d\n", DeviceInfoSize));
+      // Apply override to existing SMBIOS strings
+      Status = ApplySmbiosDeviceInfoOverride(DeviceInfo);
+      if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_WARN, "Failed to apply SMBIOS device info override: %r\n", Status));
+      } else {
+        DEBUG((DEBUG_INFO, "SMBIOS device info override applied successfully\n"));
+      }
+    } else {
+      DEBUG((DEBUG_INFO, "Device info binary not found: %r\n", Status));
+    }
+  }
   AddMeasurePoint (0x3040);
 
 #if FixedPcdGetBool (PcdEnableCryptoPerfTest)
