@@ -3,7 +3,7 @@
   Memory S3 Save data, Memory Info data and Memory Platform
   data hobs.
 
-  Copyright (c) 1999 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2024, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 #ifndef _MEM_INFO_HOB_H_

@@ -1,10 +1,8 @@
 /** @file
   This file contains define definitions specific to processor
 
-
-  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2024, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
-
 **/
 #ifndef _POWER_MGMT_DEFINITIONS_H_
 #define _POWER_MGMT_DEFINITIONS_H_
@@ -20,9 +18,6 @@
 //   and build C-state table accordingly.
 //
 #ifdef __GNUC__
-//
-// @todo Add workaround for GCC build, In GCC build the BIT can not be changed to value by GCC (ex: BIT0 can not be changed to 0x1)
-//
 #define PPM_EIST                0x1        ///< BIT 0 : Enhanced Intel Speed Step Technology.
 #define PPM_C1                  0x2        ///< BIT 1 : C1 enabled, supported.
 #define PPM_C1E                 0x4        ///< BIT 2 : C1E enabled.
