@@ -389,32 +389,31 @@ UpdateFspConfig (
   Fspmcfg->SafeMode = 0x1;                // Need enable, else failed in MRC
 
   // TXT Configuration
-  if (FeaturePcdGet (PcdTxtEnabled)) {
-    FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
-    if (FeaturesCfgData->Features.TxtEnabled == 1) {
-      DEBUG((DEBUG_INFO, "Enabling TXT in FSP-M UPD's\n"));
-      Fspmcfg->Txt                  = 0x1;
-      Fspmcfg->TxtImplemented       = 0x1;
-      Fspmcfg->SinitMemorySize      = 0x50000;
-      Fspmcfg->TxtHeapMemorySize    = 0xF0000;
-      Fspmcfg->BiosAcmBase          = (UINT32)(UINTN)FindBiosAcm();
-      Fspmcfg->VmxEnable            = 1;    // Txt need enable VMX
+  FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
+  if ((FeaturesCfgData->Features.TxtEnabled == 1) &&
+      (FeaturePcdGet (PcdTxtEnabled))) {
+    DEBUG((DEBUG_INFO, "Enabling TXT in FSP-M UPD's\n"));
+    Fspmcfg->Txt                  = 0x1;
+    Fspmcfg->TxtImplemented       = 0x1;
+    Fspmcfg->SinitMemorySize      = 0x50000;
+    Fspmcfg->TxtHeapMemorySize    = 0xF0000;
+    Fspmcfg->BiosAcmBase          = (UINT32)(UINTN)FindBiosAcm();
+    Fspmcfg->VmxEnable            = 1;    // Txt need enable VMX
 
-      IoWrite8 (R_IOPORT_CMOS_STANDARD_INDEX, TXT_CMOS_STATUS_REG);
-      UINT8 CmosData = IoRead8 (R_IOPORT_CMOS_STANDARD_DATA);
-      if (!(CmosData & BIT4)) {
-        CmosData |= BIT4;
-        IoWrite8 (R_IOPORT_CMOS_STANDARD_INDEX, TXT_CMOS_STATUS_REG);
-        IoWrite8 (R_IOPORT_CMOS_STANDARD_DATA, CmosData);
-      }
-    } else {
-      IoWrite8 (R_IOPORT_CMOS_STANDARD_INDEX, TXT_CMOS_STATUS_REG);
-      UINT8 CmosData = IoRead8 (R_IOPORT_CMOS_STANDARD_DATA);
-      CmosData &= ~BIT4;
+    IoWrite8 (R_IOPORT_CMOS_STANDARD_INDEX, TXT_CMOS_STATUS_REG);
+    UINT8 CmosData = IoRead8 (R_IOPORT_CMOS_STANDARD_DATA);
+    if (!(CmosData & BIT4)) {
+      CmosData |= BIT4;
       IoWrite8 (R_IOPORT_CMOS_STANDARD_INDEX, TXT_CMOS_STATUS_REG);
       IoWrite8 (R_IOPORT_CMOS_STANDARD_DATA, CmosData);
     }
- }
+  } else {
+    IoWrite8 (R_IOPORT_CMOS_STANDARD_INDEX, TXT_CMOS_STATUS_REG);
+    UINT8 CmosData = IoRead8 (R_IOPORT_CMOS_STANDARD_DATA);
+    CmosData &= ~BIT4;
+    IoWrite8 (R_IOPORT_CMOS_STANDARD_INDEX, TXT_CMOS_STATUS_REG);
+    IoWrite8 (R_IOPORT_CMOS_STANDARD_DATA, CmosData);
+  }
 
   // IBECC configuration
   Fspmcfg->Ibecc                    = MemCfgData->Ibecc;
