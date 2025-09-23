@@ -273,7 +273,6 @@ BuildBaseInfoHob (
   IN  STAGE2_PARAM                     *Stage2Param
   )
 {
-  SERIAL_PORT_INFO                     *SerialPortInfo;
   LOADER_FSP_INFO                      *LoaderFspInfo;
   MEMORY_MAP_INFO                      *MemoryMapInfo;
   UINT32                               Length;
@@ -296,19 +295,6 @@ BuildBaseInfoHob (
   if (LoaderFspInfo != NULL) {
     LoaderFspInfo->FspsBase   = PCD_GET32_WITH_ADJUST (PcdFSPSBase);
     LoaderFspInfo->FspHobList = (UINT32)(UINTN)LdrGlobal->FspHobList;
-  }
-
-  // Build serial port hob
-  SerialPortInfo = BuildGuidHob (&gLoaderSerialPortInfoGuid, sizeof (SERIAL_PORT_INFO));
-  if (SerialPortInfo != NULL) {
-    SerialPortInfo->Revision    = LOADER_SERIAL_PORT_INFO_REVISION;
-    SerialPortInfo->Type        = 1;
-    SerialPortInfo->BaseAddr64  = 0x3F8;
-    SerialPortInfo->BaseAddr    = 0x3F8;
-    SerialPortInfo->Baud        = 115200;
-    SerialPortInfo->RegWidth    = 1;
-    SerialPortInfo->InputHertz  = 1843200;
-    SerialPortInfo->UartPciAddr = 0;
   }
 
   // Build graphic info hob
@@ -548,9 +534,7 @@ BuildUniversalPayloadHob (
   VOID
 )
 {
-  SERIAL_PORT_INFO                    *SerialPortInfo;
   MEMORY_MAP_INFO                     *MemoryMapInfo;
-  UNIVERSAL_PAYLOAD_SERIAL_PORT_INFO  *PldSerialPortInfo;
   UNIVERSAL_PAYLOAD_ACPI_TABLE        *AcpiHob;
   UNIVERSAL_PAYLOAD_SMBIOS_TABLE      *SmbiosHob;
   UINT8                                PhysicalAddressBits;
@@ -577,21 +561,6 @@ BuildUniversalPayloadHob (
     SmbiosHob->Header.Revision  = UNIVERSAL_PAYLOAD_SMBIOS_TABLE_REVISION;
     SmbiosHob->Header.Length    = sizeof (UNIVERSAL_PAYLOAD_SMBIOS_TABLE);
     SmbiosHob->SmBiosEntryPoint = PcdGet32 (PcdSmbiosTablesBase);
-  }
-
-  // Update serial port hob
-  SerialPortInfo = (SERIAL_PORT_INFO *)GetGuidHobData (NULL, NULL, &gLoaderSerialPortInfoGuid);
-  if (SerialPortInfo != NULL) {
-    PldSerialPortInfo = BuildGuidHob (&gUniversalPayloadSerialPortInfoGuid, sizeof (UNIVERSAL_PAYLOAD_SERIAL_PORT_INFO));
-    if (PldSerialPortInfo != NULL) {
-      ZeroMem (PldSerialPortInfo, sizeof (UNIVERSAL_PAYLOAD_SERIAL_PORT_INFO));
-      PldSerialPortInfo->Header.Revision = UNIVERSAL_PAYLOAD_SERIAL_PORT_INFO_REVISION;
-      PldSerialPortInfo->Header.Length   = sizeof (UNIVERSAL_PAYLOAD_SERIAL_PORT_INFO);
-      PldSerialPortInfo->UseMmio         = (SerialPortInfo->Type == 2) ? TRUE : FALSE;
-      PldSerialPortInfo->RegisterBase    = SerialPortInfo->BaseAddr64;
-      PldSerialPortInfo->BaudRate        = SerialPortInfo->Baud;
-      PldSerialPortInfo->RegisterStride  = (UINT8) SerialPortInfo->RegWidth;
-    }
   }
 
   // Build CPU memory space and IO space hob
@@ -841,7 +810,7 @@ BuildExtraInfoHob (
 {
   LOADER_GLOBAL_DATA               *LdrGlobal;
   S3_DATA                          *S3Data;
-  SERIAL_PORT_INFO                 *SerialPortInfo;
+  UNIVERSAL_PAYLOAD_SERIAL_PORT_INFO *SerialPortInfo;
   SYSTEM_TABLE_INFO                *SystemTableInfo;
   SYS_CPU_INFO                     *SysCpuInfo;
   PERFORMANCE_INFO                 *PerformanceInfo;
@@ -877,10 +846,16 @@ BuildExtraInfoHob (
     LoaderLibData->Data  = LdrGlobal->LibDataPtr;
   }
 
-  // Update serial port hob
-  SerialPortInfo = (SERIAL_PORT_INFO *)GetGuidHobData (NULL, NULL, &gLoaderSerialPortInfoGuid);
+  // Build serial port hob
+  SerialPortInfo = BuildGuidHob (&gUniversalPayloadSerialPortInfoGuid, sizeof (UNIVERSAL_PAYLOAD_SERIAL_PORT_INFO));
   if (SerialPortInfo != NULL) {
-    PlatformUpdateHobInfo (&gLoaderSerialPortInfoGuid, SerialPortInfo);
+    SerialPortInfo->Header.Revision = UNIVERSAL_PAYLOAD_SERIAL_PORT_INFO_REVISION;
+    SerialPortInfo->Header.Length   = sizeof (UNIVERSAL_PAYLOAD_SERIAL_PORT_INFO);
+    SerialPortInfo->RegisterBase    = GetSerialPortBase ();
+    SerialPortInfo->UseMmio         = (SerialPortInfo->RegisterBase > SIZE_64KB) ? TRUE : FALSE;
+    SerialPortInfo->BaudRate        = 115200;
+    SerialPortInfo->RegisterStride  = GetSerialPortStrideSize ();
+    PlatformUpdateHobInfo (&gUniversalPayloadSerialPortInfoGuid, SerialPortInfo);
   }
 
   // Build ACPI Hob
