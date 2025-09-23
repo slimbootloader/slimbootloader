@@ -162,5 +162,6 @@
   gPlatformCommonLibTokenSpaceGuid.PcdHandOffFdtEnable
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize
+  gPlatformCommonLibTokenSpaceGuid.PcdElfSupportEnabled
 [Depex]
   TRUE
