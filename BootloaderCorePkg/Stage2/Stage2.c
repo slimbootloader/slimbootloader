@@ -214,7 +214,7 @@ NormalBootPath (
     DEBUG ((DEBUG_INFO, "FV Format Payload\n"));
     UefiSig = Dst[0];
     Status  = LoadFvImage (Dst, Stage2Param->PayloadActualLength, (VOID **)&PldEntry, &PldMachine);
-  } else if (IsElfFormat ((CONST UINT8 *)Dst)) {
+  } else if (FeaturePcdGet (PcdElfSupportEnabled) && IsElfFormat ((CONST UINT8 *)Dst)) {
     DEBUG ((DEBUG_INFO, "ELF Format Payload\n"));
     // Assume Universal Payload first
     ZeroMem (&PayloadInfo, sizeof(PayloadInfo));
