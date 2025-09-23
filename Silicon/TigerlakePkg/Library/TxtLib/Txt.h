@@ -122,11 +122,6 @@ typedef struct _BIOS_OS_DATA_REGION {
   ///
   UINT32                BiosSinitSize;
   ///
-  /// Physical base address of the SINIT AC module stored in system firmware.
-  /// A value of 0 indicates the system firmware is not providing a SINIT module for OS use.
-  ///
-  EFI_PHYSICAL_ADDRESS  BiosSinitBase;
-  ///
   /// Physical base address of the Platform Default Launch Control Policy structure.
   /// If the Platform Default Policy does not require additional data this field should
   /// be set to 0x00 and will be ignored.
