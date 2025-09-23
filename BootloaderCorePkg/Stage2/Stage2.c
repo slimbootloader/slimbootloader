@@ -148,10 +148,12 @@ NormalBootPath (
   UINT8                          *CmdLine;
   UINT32                          CmdLineLen;
   UINT32                          UefiSig;
-  UINT32                          HobSize;
   UINT16                          PldMachine;
+#if !FixedPcdGetBool (PcdElfSupportDisabled)
   LOADED_PAYLOAD_INFO             PayloadInfo;
   UNIVERSAL_PAYLOAD_EXTRA_DATA   *PldImgInfo;
+  UINT32                          HobSize;
+#endif
   FIT_IMAGE_CONTEXT               Context;
   FIT_RELOCATE_ITEM              *RelocateTable;
   INTN                            Delta;
@@ -214,6 +216,7 @@ NormalBootPath (
     DEBUG ((DEBUG_INFO, "FV Format Payload\n"));
     UefiSig = Dst[0];
     Status  = LoadFvImage (Dst, Stage2Param->PayloadActualLength, (VOID **)&PldEntry, &PldMachine);
+#if !FixedPcdGetBool (PcdElfSupportDisabled)
   } else if (IsElfFormat ((CONST UINT8 *)Dst)) {
     DEBUG ((DEBUG_INFO, "ELF Format Payload\n"));
     // Assume Universal Payload first
@@ -235,6 +238,7 @@ NormalBootPath (
       PldMachine = (UINT16)PayloadInfo.Machine;
       PldEntry   = (PAYLOAD_ENTRY)PayloadInfo.EntryPoint;
     }
+#endif
   } else {
     if (FeaturePcdGet (PcdLinuxPayloadEnabled)) {
       if (IsBzImage (Dst)) {

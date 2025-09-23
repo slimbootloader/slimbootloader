@@ -66,7 +66,9 @@
 #include <Library/ResetSystemLib.h>
 #include <Library/ConfigDataLib.h>
 #include <Library/DebugAgentLib.h>
-#include <Library/ElfLib.h>
+#if !FixedPcdGetBool (PcdElfSupportDisabled)
+  #include <Library/ElfLib.h>
+#endif
 #include <Library/SmbiosInitLib.h>
 #include <Library/UniversalPayloadLib.h>
 #include <VerInfo.h>
