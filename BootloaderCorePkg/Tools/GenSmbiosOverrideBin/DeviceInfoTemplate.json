@@ -1,0 +1,31 @@
+{
+  "deviceInfo": {
+    "system": {
+      "manufacturer": "Your Company Name",
+      "productName": "Your Product Name",
+      "version": "1.0",
+      "serialNumber": "SN123456789",
+      "uuid": "12345678-1234-1234-1234-123456789ABC",
+      "sku": "SKU001",
+      "family": "Product Family"
+    },
+    "baseboard": {
+      "manufacturer": "Board Manufacturer",
+      "productName": "Board Product Name",
+      "version": "1.0",
+      "serialNumber": "BSN123456789",
+      "assetTag": "ASSET001"
+    },
+    "chassis": {
+      "manufacturer": "Chassis Manufacturer",
+      "version": "1.0",
+      "serialNumber": "CSN123456789",
+      "assetTag": "CHASSIS001"
+    },
+    "oem": {
+      "version": "OEM1.0",
+      "customField1": "Custom OEM Data 1",
+      "customField2": "Custom OEM Data 2"
+    }
+  }
+}
