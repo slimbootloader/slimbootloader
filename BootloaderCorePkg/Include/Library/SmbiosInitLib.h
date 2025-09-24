@@ -19,6 +19,34 @@ typedef struct {
   CHAR8     *String;
 } SMBIOS_TYPE_STRINGS;
 
+typedef struct {
+  // System Information (SMBIOS Type 1)
+  CHAR8   SystemManufacturer[64];             // System manufacturer string
+  CHAR8   SystemProductName[64];              // System product name string
+  CHAR8   SystemVersion[32];                  // System version string
+  CHAR8   SystemSerialNumber[32];             // System serial number string
+  CHAR8   SystemUuid[37];                     // System UUID string (RFC 4122 format)
+  CHAR8   SystemSku[32];                      // System SKU string
+  CHAR8   SystemFamily[64];                   // System family string
+
+  // Baseboard Information (SMBIOS Type 2)
+  CHAR8   BaseboardManufacturer[64];          // Baseboard manufacturer string
+  CHAR8   BaseboardProductName[64];           // Baseboard product name string
+  CHAR8   BaseboardVersion[32];               // Baseboard version string
+  CHAR8   BaseboardSerialNumber[32];          // Baseboard serial number string
+  CHAR8   BaseboardAssetTag[32];              // Baseboard asset tag string
+
+  // Chassis Information (SMBIOS Type 3)
+  CHAR8   ChassisManufacturer[64];            // Chassis manufacturer string
+  CHAR8   ChassisVersion[32];                 // Chassis version string
+  CHAR8   ChassisSerialNumber[32];            // Chassis serial number string
+  CHAR8   ChassisAssetTag[32];                // Chassis asset tag string
+
+  // OEM Data (Platform-specific extensions)
+  CHAR8   OemVersion[32];                     // OEM structure version
+  CHAR8   OemCustomField1[64];                // OEM custom field 1
+  CHAR8   OemCustomField2[64];                // OEM custom field 2
+} DEVICE_INFO_DATA;
 #pragma pack()
 
 /**
@@ -91,6 +119,22 @@ InitSmbiosStringPtr (
 EFI_STATUS
 EFIAPI
 SmbiosInit (
+  VOID
+  );
+
+/**
+  Loads device information from the non-volatile region and applies overrides to SMBIOS strings.
+
+  This function attempts to load a device info binary from the firmware image. If found,
+  it updates the SMBIOS string table with values from the device info, overriding default
+  platform strings such as manufacturer, product name, version, and serial number.
+
+  @retval EFI_SUCCESS      Device info override applied successfully.
+  @retval EFI_NOT_FOUND    Device info binary not found or no SMBIOS strings to override.
+**/
+EFI_STATUS
+EFIAPI
+ApplySmbiosDeviceInfoOverride (
   VOID
   );
 
