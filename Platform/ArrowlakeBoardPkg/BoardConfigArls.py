@@ -247,6 +247,8 @@ class Board(BaseBoard):
         self._CFGDATA_INT_FILE = []
         self._CFGDATA_EXT_FILE = [self._generated_cfg_file_prefix + 'CfgDataInt_Arls_UDimm_Rvp_S02.dlt' , self._generated_cfg_file_prefix + 'CfgDataInt_Arls_UDimm_Rvp_S03.dlt' , self._generated_cfg_file_prefix + 'CfgDataInt_Arls_Sodimm_Rvp_S04.dlt']
 
+    # This function will read the inf file to find [UserExtensions.SBL."CopyList"] section.
+    # If found it will return the list of src dst pair for copy operation.
     def GetCopyList (self,driver_inf):
         fd = open (driver_inf, 'r')
         lines = fd.readlines()
@@ -298,6 +300,11 @@ class Board(BaseBoard):
                 break
         return copy_list
 
+    # Get IppCrypto inf file based on optimization level.
+    # e.g. if self.ENABLE_CRYPTO_SHA_OPT is 'X64_Y8' then IppCrypto2LibY8.inf will be used.
+    # Each optimization will have its own inf files that will be included in the build.
+    # This function will also copy the required source files to the build folder if
+    # CopyList is defined in the inf file.
     def GetIppCryptoInf(self):
         ipp_crypto_opt_lvl = 0
         ipp_crypto_opt_name = None
