@@ -73,7 +73,7 @@ class Board(BaseBoard):
         self.ENABLE_SMBIOS        = 1
         self.ENABLE_VTD           = 1
         self.ENABLE_SMM_REBASE    = 2
-
+        self.DISABLE_ELF_SUPPORT  = 0 # Disable ELF payload support (set to 0 to enable - default is enabled)
         self.SIIPFW_SIZE          = 0x1000
         self.ENABLE_TCC           = 1
         if self.ENABLE_TCC:

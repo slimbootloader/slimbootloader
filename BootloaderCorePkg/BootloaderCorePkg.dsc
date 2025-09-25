@@ -132,6 +132,7 @@
   DebugAgentLib|BootloaderCommonPkg/Library/DebugAgentLib/DebugAgentLibNull.inf
 !endif
   ElfLib|BootloaderCommonPkg/Library/ElfLib/ElfLib.inf
+
   S3SaveRestoreLib|BootloaderCorePkg/Library/S3SaveRestoreLib/S3SaveRestoreLib.inf
   BoardSupportLib|Platform/CommonBoardPkg/Library/BoardSupportLib/BoardSupportLib.inf
   PagingLib|BootloaderCommonPkg/Library/PagingLib/PagingLib.inf
@@ -276,6 +277,7 @@
   gPlatformModuleTokenSpaceGuid.PcdIdenticalTopSwapsBuilt       | $(BUILD_IDENTICAL_TS)
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled          | $(ENABLE_TCC)
   gPlatformCommonLibTokenSpaceGuid.PcdEnableCryptoPerfTest      | $(ENABLE_IPP_CRYPTO_PERF)
+  gPlatformCommonLibTokenSpaceGuid.PcdElfSupportDisabled        | $(DISABLE_ELF_SUPPORT)
   gPlatformCommonLibTokenSpaceGuid.PcdHandOffFdtEnable          | $(ENABLE_UPL_HANDOFF_FDT)
 
 [PcdsPatchableInModule]
