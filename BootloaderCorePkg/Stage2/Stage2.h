@@ -81,6 +81,7 @@
 #include <Guid/SmmBaseHob.h>
 #include <Library/IppCryptoPerfLib.h>
 #include <Library/BuildFdtLib.h>
+#include <Library/PlatformHookLib.h>
 
 #define UIMAGE_FIT_MAGIC               (0x56190527)
 

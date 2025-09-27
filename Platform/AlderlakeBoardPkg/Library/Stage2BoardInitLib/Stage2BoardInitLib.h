@@ -37,7 +37,6 @@
 #include <Library/BdatLib.h>
 #include <Guid/GraphicsInfoHob.h>
 #include <Guid/SystemTableInfoGuid.h>
-#include <Guid/SerialPortInfoGuid.h>
 #include <Guid/OsConfigDataHobGuid.h>
 #include <Guid/CsmePerformanceInfoGuid.h>
 #include <Guid/SmmInformationGuid.h>
