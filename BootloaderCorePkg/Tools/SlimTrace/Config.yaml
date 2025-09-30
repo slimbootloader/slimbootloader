@@ -1,0 +1,11 @@
+# Example configurations for reference
+AZB :
+    BoardPkg    : Alderlake
+    CleanCmd    : python BuildLoader.py clean -d
+    BuildCmd    : python BuildLoader.py build azb
+    BoardConfig : BoardConfigAzb.py
+IDV :
+    BoardPkg    : Idaville
+    CleanCmd    : python SblBuild.py clean
+    BuildCmd    : python SblBuild.py build idv -a x64 -fd
+    BoardConfig : BoardConfig.py

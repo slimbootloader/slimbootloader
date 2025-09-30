@@ -1,0 +1,6 @@
+tceetree_out
+*.out
+*.out.*
+*.files
+*.log
+__pycache__
