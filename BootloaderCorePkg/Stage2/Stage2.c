@@ -512,11 +512,6 @@ SecStartup (
   AddMeasurePoint (0x3030);
   FspResetHandler (Status);
 
-
-  if (FixedPcdGetBool (PcdSmbiosEnabled)) {
-    InitSmbiosStringPtr ();
-  }
-
   BoardInit (PostSiliconInit);
   AddMeasurePoint (0x3040);
 
