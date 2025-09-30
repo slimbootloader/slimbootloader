@@ -259,6 +259,7 @@ class BaseBoard(object):
         self._TOOL_CHAIN           = ''
         self._PAYLOAD_NAME         = ''
         self._FSP_PATH_NAME        = ''
+        self._SMBIOS_YAML_FILE     = ''
         self._EXTRA_INC_PATH       = []
 
         self._PLATFORM_ID          = None
@@ -663,7 +664,7 @@ class Build(object):
 
             return parent_size
 
-        # Create compoent list and update base and offset
+        # Create component list and update base and offset
         img_list         = self._img_list
         region_name_list = [img[0] for img in img_list]
         comp_list        = []
@@ -1321,6 +1322,12 @@ class Build(object):
         if self._board.HAVE_FSP_BIN:
             rebase_fsp(fsp_path, self._fv_dir, self._board.FSP_T_BASE, self._board.FSP_M_BASE, self._board.FSP_S_BASE)
             split_fsp(os.path.join(self._fv_dir, 'Fsp.bin'), self._fv_dir)
+
+        # Create SMBIOS binary
+        if self._board._SMBIOS_YAML_FILE:
+            smbios_yaml_file = os.path.join(os.environ['PLT_SOURCE'], self._board._SMBIOS_YAML_FILE)
+            smbios_bin_file  = os.path.join(self._fv_dir, 'smbios.bin')
+            gen_smbios_bin(smbios_yaml_file, smbios_bin_file)
 
         # create master key hash
         if self._board.HAVE_VERIFIED_BOOT:
