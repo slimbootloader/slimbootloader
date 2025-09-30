@@ -73,12 +73,43 @@ AddSmbiosType (
   );
 
 /**
-  This function is called to initialize the SmbiosStringsPtr.
+  Add a SMBIOS string entry to the destination buffer.
+
+  @param[out]     Dest   Pointer to the destination buffer where the entry will be added.
+  @param[in]      Type   SMBIOS type for the entry.
+  @param[in]      Index  String index for the entry.
+  @param[in]      String Null-terminated ASCII string to store.
+
+  @retval Pointer to the next available position in the buffer.
 **/
-VOID
+CHAR8 *
 EFIAPI
-InitSmbiosStringPtr (
-  VOID
+AddSmbiosTypeString (
+  OUT    CHAR8                 *Dest,
+  IN     UINT8                 Type,
+  IN     UINT8                 Index,
+  IN     CHAR8                 *String
+  );
+
+/**
+  Load and initialize customized SMBIOS string data.
+
+  This function allocates a buffer for SMBIOS strings, populates it with BIOS and baseboard information,
+  and loads additional SMBIOS string data from a specified component. The buffer pointer is stored in a PCD
+  for later use. The function ensures that the buffer is not overrun when copying additional data.
+
+  @param[in]  ContainerSig   Signature identifying the container to load SMBIOS data from.
+  @param[in]  ComponentName  Name of the component containing SMBIOS string data.
+
+  @retval EFI_SUCCESS            The SMBIOS string data was loaded and initialized successfully.
+  @retval EFI_OUT_OF_RESOURCES   Memory allocation for the SMBIOS string table failed.
+  @retval Other                  Error returned by LoadComponent if loading SMBIOS data fails.
+**/
+EFI_STATUS
+EFIAPI
+LoadSmbiosStringsFromComponent (
+  IN  UINT32    ContainerSig,
+  IN  UINT32    ComponentName
   );
 
 /**
