@@ -9,7 +9,7 @@
 
 #include <Guid/GraphicsInfoHob.h>
 #include <Guid/SystemTableInfoGuid.h>
-#include <Guid/SerialPortInfoGuid.h>
+#include <UniversalPayload/SerialPortInfo.h>
 #include <Guid/LoaderFspInfoGuid.h>
 #include <Guid/MemoryMapInfoGuid.h>
 #include <Guid/PerformanceInfoGuid.h>

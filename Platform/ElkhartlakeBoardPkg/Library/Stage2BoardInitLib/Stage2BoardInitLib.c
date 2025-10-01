@@ -21,7 +21,6 @@
 #include <Library/ContainerLib.h>
 #include <Guid/GraphicsInfoHob.h>
 #include <Guid/SystemTableInfoGuid.h>
-#include <Guid/SerialPortInfoGuid.h>
 #include <FspsUpd.h>
 #include <GlobalNvsAreaDef.h>
 #include <ConfigDataDefs.h>
@@ -1927,28 +1926,6 @@ SaveNvsData (
   return Status;
 }
 
-/**
- Update serial port information to global HOB data structure.
-
- @param SerialPortInfo  Pointer to global HOB data structure.
- **/
-VOID
-EFIAPI
-UpdateSerialPortInfo (
-  IN  SERIAL_PORT_INFO  *SerialPortInfo
-)
-{
-  SerialPortInfo->BaseAddr64 = GetSerialPortBase ();
-  SerialPortInfo->BaseAddr   = (UINT32) SerialPortInfo->BaseAddr64;
-  SerialPortInfo->RegWidth = GetSerialPortStrideSize ();
-  if (GetDebugPort () >= PCH_MAX_SERIALIO_UART_CONTROLLERS) {
-    // IO Type
-    SerialPortInfo->Type = 1;
-  } else {
-    // MMIO Type
-    SerialPortInfo->Type = 2;
-  }
-}
 
 /**
  Update the OS boot option
@@ -2113,7 +2090,5 @@ PlatformUpdateHobInfo (
     UpdateLoaderPlatformInfo (HobInfo);
   } else if (Guid == &gSmmInformationGuid) {
     UpdateSmmInfo (HobInfo);
-  } else if (Guid == &gLoaderSerialPortInfoGuid) {
-    UpdateSerialPortInfo (HobInfo);
   }
 }

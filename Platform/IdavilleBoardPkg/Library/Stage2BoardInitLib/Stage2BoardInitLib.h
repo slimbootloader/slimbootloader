@@ -51,7 +51,6 @@
 #include <GpioPinsCdf.h>
 #include <Guid/GraphicsInfoHob.h>
 #include <Guid/SystemTableInfoGuid.h>
-#include <Guid/SerialPortInfoGuid.h>
 #include <Guid/OsConfigDataHobGuid.h>
 #include <Guid/SmmInformationGuid.h>
 #include <Guid/PciRootBridgeInfoGuid.h>

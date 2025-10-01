@@ -76,10 +76,10 @@
   FitLib
   IppCryptoPerfLib
   BuildFdtLib
+  PlatformHookLib
 
 [Guids]
   gFspReservedMemoryResourceHobGuid
-  gLoaderSerialPortInfoGuid
   gLoaderPlatformDeviceInfoGuid
   gLoaderSystemTableInfoGuid
   gLoaderPerformanceInfoGuid
