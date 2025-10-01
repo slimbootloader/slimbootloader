@@ -10,6 +10,16 @@
 #define R_IOPORT_CMOS_STANDARD_DATA             0x71
 #define TXT_CMOS_STATUS_REG                     0x2A
 
+/**
+  Determines whether or not the platform requires initialization for TXT use.
+
+  @retval TRUE          - If the the platoform should be configured for TXT.
+  @retval FALSE         - If TXT is not to be used.
+**/
+BOOLEAN
+EFIAPI
+IsTxtEnabled ();
+
 /*
   Initialize Intel TXT
 */

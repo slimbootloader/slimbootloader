@@ -26,6 +26,7 @@
 #include <Guid/SmmInformationGuid.h>
 #include <FspsUpd.h>
 #include <GlobalNvsAreaDef.h>
+#include <CpuNvsAreaDef.h>
 #include <ConfigDataDefs.h>
 #include <Library/BootloaderCoreLib.h>
 #include <IndustryStandard/Acpi.h>
@@ -900,19 +901,22 @@ BoardInit (
       }
     }
 
-    break;
-  case PrePayloadLoading:
-    if (FeaturePcdGet (PcdSmbiosEnabled) && FeaturePcdGet (PcdEnableDts)) {
-      AppendSmbiosBootDts ();
-    }
-    IgdOpRegionPlatformInit ();
-
+    ///
+    /// Initialize TXT Before ACPI initialization.
+    /// This will update the correct TXT enabled state in ACPI table.
+    ///
     if (FeaturePcdGet (PcdTxtEnabled)) {
       FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
       if (FeaturesCfgData->Features.TxtEnabled == 1) {
           InitTxt();
       }
     }
+    break;
+  case PrePayloadLoading:
+    if (FeaturePcdGet (PcdSmbiosEnabled) && FeaturePcdGet (PcdEnableDts)) {
+      AppendSmbiosBootDts ();
+    }
+    IgdOpRegionPlatformInit ();
 
     ///
     /// Initialize the HECI device (for test HeciInitLib only)
@@ -2415,9 +2419,27 @@ UpdateCpuNvs (
     CpuNvs->DtsIoTrapLength = DTS_IO_TRAP_LENGTH;
     CpuNvs->DtsAcpiEnable = DTS_ACPI_DISABLE;
   }
+
+  ///
+  /// Update TXT status for ACPI
+  ///
+  CpuNvs->TxtEnabled = 0;  // Default to disabled
+  if (FeaturePcdGet (PcdTxtEnabled)) {
+    FEATURES_CFG_DATA *FeaturesCfgData;
+    FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
+    if ((FeaturesCfgData != NULL) && (FeaturesCfgData->Features.TxtEnabled == 1)) {
+      if (IsTxtEnabled()) {
+        CpuNvs->TxtEnabled = 1;
+        DEBUG ((DEBUG_INFO, "TXT is enabled in MSR 0x3A, setting TXTE=1\n"));
+      } else {
+        DEBUG ((DEBUG_INFO, "TXT config enabled but MSR 0x3A indicates TXT not enabled.\n"));
+      }
+    }
+  }
+
   DEBUG ((DEBUG_INFO, "Update Cpu Nvs Done\n"));
 
-  DEBUG ((DEBUG_INFO, "Revision 0x%X, PpmFlags 0x%08X\n", CpuNvs->Revision, CpuNvs->PpmFlags));
+  DEBUG ((DEBUG_INFO, "Revision 0x%X, PpmFlags 0x%08X, TxtEnabled 0x%X\n", CpuNvs->Revision, CpuNvs->PpmFlags, CpuNvs->TxtEnabled));
 }
 
 /**

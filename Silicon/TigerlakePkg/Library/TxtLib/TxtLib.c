@@ -242,15 +242,14 @@ IsTxtResetSet (
   @retval FALSE         - If TXT is not to be used.
 **/
 BOOLEAN
-IsTxtEnabled (
-  IN TXT_LIB_CONTEXT *TxtLibCtx
-  )
+EFIAPI
+IsTxtEnabled ()
 {
 
   UINT64        Ia32FeatureControl;
   TXT_INFO_DATA *TxtInfoData;
 
-  TxtInfoData = TxtLibCtx->TxtInfoData;
+  TxtInfoData = mTxtLibCtx.TxtInfoData;
 
   ///
   /// If TxtInfoHob reported TXT disabled, return FALSE to indicate TXT should not be used
