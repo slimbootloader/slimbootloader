@@ -535,7 +535,6 @@ SecStartup (
     if (Status == EFI_NOT_FOUND) {
       DEBUG ((DEBUG_INFO, "Display splash early setup failed, will retry after PCI enumeration.\n"));
       SplashPostPci = TRUE;
-      Status = EFI_SUCCESS;
     }
   }
 
