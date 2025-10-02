@@ -86,26 +86,79 @@ def CopyFileList (copy_list, src_dir, sbl_dir):
         shutil.copy (src_path, dst_path)
     print ('Done\n')
 
+def CleanFileList (copy_list, sbl_dir):
+    for _, dst_path in copy_list:
+        dst_path = os.path.join (sbl_dir, dst_path)
+        if os.path.exists(dst_path):
+            print('Removing %s' % dst_path)
+            os.remove(dst_path)
+
+
+def SubstituteMacrosInPath (path, defines_dict):
+    match = re.search(r'\$\(([^)]+)\)', path)
+    if match:
+        var_name = match.group(1)
+        if var_name in defines_dict:
+            return path.replace(f"$({var_name})", defines_dict[var_name])
+    return path
+
+
 def GetCopyList (driver_inf):
     fd = open (driver_inf, 'r')
     lines = fd.readlines()
     fd.close ()
 
+    have_defines_section  = False
     have_copylist_section = False
     copy_list      = []
+    defines_dict   = {}
     for line in lines:
         line = line.strip ()
-        if line.startswith('['):
-            if line.startswith('[UserExtensions.SBL."CopyList"]'):
-                have_copylist_section = True
-            else:
-                have_copylist_section = False
 
+        # Skip empty lines and comments
+        if not line or line.startswith('#'):
+            continue
+
+        # Check for section headers
+        if line.startswith('['):
+            if line.startswith('[Defines]'):
+                have_defines_section = True
+                have_copylist_section = False
+            elif line.startswith('[UserExtensions.SBL."CopyList"]'):
+                have_copylist_section = True
+                have_defines_section = False
+            else:
+                have_defines_section = False
+                have_copylist_section = False
+            continue
+
+        # Parse DEFINE statements in [Defines] section
+        if have_defines_section and line.startswith('DEFINE '):
+            define_match = re.match(r'DEFINE\s+(\w+)\s*=\s*(.+)', line)
+            if define_match:
+                defines_dict[define_match.group(1)] = define_match.group(2).strip()
+
+        # Parse copy list entries in [UserExtensions.SBL."CopyList"] section
         if have_copylist_section:
-            match = re.match("^(.+)\\s*:\\s*(.+)", line)
+            match = re.match(r'^(.+)\s*:\s*(.+)', line)
             if match:
                 copy_list.append((match.group(1).strip(), match.group(2).strip()))
 
+    if defines_dict:
+        # substitute macro DEFINES in the copy list
+        while True:
+            var_found = False
+            for i, entry in enumerate (copy_list):
+                src_file, dest_file = entry
+                updated_src  = SubstituteMacrosInPath (src_file, defines_dict)
+                updated_dest = SubstituteMacrosInPath (dest_file, defines_dict)
+
+                if updated_src != src_file or updated_dest != dest_file:
+                    var_found = True
+                    copy_list[i] = (updated_src, updated_dest)
+
+            if not var_found:
+                break
     return copy_list
 
 def GetRepoAndCommit (driver_inf):
@@ -215,12 +268,13 @@ def BuildFspBins (fsp_dir, sbl_dir, fsp_inf, silicon_pkg_name, flag):
         flags = [flag]
 
     for flag in flags:
-        os.environ['WORKSPACE'] = ''
-        os.environ['EDK_TOOLS_PATH'] = ''
-        os.environ['EDK_TOOLS_BIN'] = ''
-        os.environ['BASE_TOOLS_PATH'] = ''
-        os.environ['CONF_PATH'] = ''
-        ret = subprocess.call([sys.executable, os.path.join(fsp_dir, 'BuildFsp.py'), flag], cwd=fsp_dir)
+        local_env = os.environ.copy()
+        local_env['WORKSPACE'] = ''
+        local_env['EDK_TOOLS_PATH'] = ''
+        local_env['EDK_TOOLS_BIN'] = ''
+        local_env['BASE_TOOLS_PATH'] = ''
+        local_env['CONF_PATH'] = ''
+        ret = subprocess.call([sys.executable, os.path.join(fsp_dir, 'BuildFsp.py'), flag], cwd=fsp_dir, env=local_env)
         if ret:
             Fatal ('Failed to build QEMU FSP binary !')
 
@@ -228,18 +282,90 @@ def BuildFspBins (fsp_dir, sbl_dir, fsp_inf, silicon_pkg_name, flag):
 
     CopyFileList (copy_list, fsp_dir, sbl_dir)
 
-def Main():
+def GetInfFilesFromDsc (dsc_file_path):
+    inf_files = []
+    if not os.path.exists(dsc_file_path):
+        return inf_files
 
-    if len(sys.argv) < 6:
-        print ('Silicon directory, silicon package name, and target are required!')
-        return -1
+    with open(dsc_file_path, 'r') as f:
+        lines = f.readlines()
 
-    sbl_dir          = sys.argv[1]
-    silicon_pkg_name = sys.argv[2]
-    fsp_inf          = sys.argv[3]
-    microcode_inf    = sys.argv[4]
-    target           = sys.argv[5]
+    defines_dict = {}
+    in_defines_section = False
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith('#'):
+            continue
 
+        # Check for [Defines] section
+        if line.startswith('[Defines]'):
+            in_defines_section = True
+            continue
+        elif line.startswith('[') and line.endswith(']'):
+            in_defines_section = False
+            continue
+
+        # Extract DEFINE macros
+        if in_defines_section and line.startswith('DEFINE '):
+            define_match = re.match(r'DEFINE\s+(\w+)\s*=\s*(.+)', line)
+            if define_match:
+                defines_dict[define_match.group(1)] = define_match.group(2).strip()
+
+        # Look for INF files
+        if '.inf' in line:
+            inf_match = re.search(r'([^\s|]+\.inf)', line)
+            if inf_match:
+                inf_file = inf_match.group(1)
+                if inf_file not in inf_files:
+                    inf_files.append(inf_file)
+
+    # Resolve macros in INF file paths
+    if defines_dict:
+        while True:
+            var_found = False
+            for i, inf_file in enumerate (inf_files):
+                updated_inf = SubstituteMacrosInPath (inf_file, defines_dict)
+                if updated_inf != inf_file:
+                    var_found = True
+                    inf_files[i] = updated_inf
+
+            if not var_found:
+                break
+
+    return inf_files
+
+
+def ProcessInfFileCopyList (sbl_dir, ignore_file_list, clean_copy_list = False):
+    dsc_file_path = os.path.join(sbl_dir, 'BootloaderCorePkg', 'Platform.dsc')
+    if not os.path.exists(dsc_file_path):
+        print ('DSC file not found!')
+        return
+
+    inf_files  = GetInfFilesFromDsc (dsc_file_path)
+    for inf_file in inf_files:
+        if inf_file in ignore_file_list:
+            continue
+
+        inf_file = os.path.join(sbl_dir, inf_file)
+        if not os.path.exists(inf_file):
+            continue
+
+        copy_list = GetCopyList (inf_file)
+        if len(copy_list) == 0:
+            continue
+
+        inf_dir = os.path.dirname(inf_file)
+        updated_copy_list = []
+        for src_f, dest_f in copy_list:
+            # Make source and destination paths relative to INF file directory
+            updated_copy_list.append((os.path.join(inf_dir, src_f), os.path.join(inf_dir, dest_f)))
+
+        if clean_copy_list:
+            CleanFileList (updated_copy_list, sbl_dir)
+        else:
+            CopyFileList (updated_copy_list, '', sbl_dir)
+
+def ProcessFspAndMicrocodeInf (sbl_dir, silicon_pkg_name, fsp_inf, microcode_inf, target):
     workspace_dir  = os.path.join(sbl_dir, '../Download', silicon_pkg_name)
     fsp_repo_dir   = os.path.abspath (os.path.join(workspace_dir, 'IntelFsp'))
     qemu_repo_dir  = os.path.abspath (os.path.join(workspace_dir, 'QemuFsp'))
@@ -254,7 +380,4 @@ def Main():
 
     CopyBins (ucode_repo_dir, sbl_dir, microcode_inf)
 
-    return 0
 
-if __name__ == '__main__':
-    sys.exit(Main())
