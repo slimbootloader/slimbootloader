@@ -247,57 +247,6 @@ class Board(BaseBoard):
         self._CFGDATA_INT_FILE = []
         self._CFGDATA_EXT_FILE = [self._generated_cfg_file_prefix + 'CfgDataInt_Arls_UDimm_Rvp_S02.dlt' , self._generated_cfg_file_prefix + 'CfgDataInt_Arls_UDimm_Rvp_S03.dlt' , self._generated_cfg_file_prefix + 'CfgDataInt_Arls_Sodimm_Rvp_S04.dlt']
 
-    def GetCopyList (self,driver_inf):
-        fd = open (driver_inf, 'r')
-        lines = fd.readlines()
-        fd.close ()
-
-        have_copylist_section = False
-        have_defines_section = False
-        copy_list      = []
-        defines_dict   = {}
-        for line in lines:
-            line = line.strip ()
-            if line.startswith('#'):
-                continue
-            if line.startswith('['):
-                if line.startswith('[Defines]'):
-                    have_defines_section = True
-                else:
-                    have_defines_section = False
-
-                if line.startswith('[UserExtensions.SBL."CopyList"]'):
-                    have_copylist_section = True
-                else:
-                    have_copylist_section = False
-
-            # read .inf variables from file.
-            if have_defines_section:
-                match = re.match("^DEFINE\s+(.+)\\s*=\\s*(.+)", line)
-                if match:
-                    defines_dict[match.group(1).strip()] = match.group(2).strip()
-
-            if have_copylist_section:
-                match = re.match("^(.+)\\s*:\\s*(.+)", line)
-                if match:
-                    copy_list.append((match.group(1).strip(), match.group(2).strip()))
-
-        # substitute .inf DEFINES in copy list
-        while True:
-            # Entry may have multiple variables. Do multiple passes until no variables left
-            var_found = 0
-            for entry in copy_list:
-                match0 = re.match("\\$\\(([^\\)\\s]+)\\)", entry[0])
-                match1 = re.match("\\$\\(([^\\)\\s]+)\\)", entry[1])
-                if match0 is not None or match1 is not None:
-                    var_found = 1
-                    idx = copy_list.index(entry)
-                    copy_list[idx] = (entry[0].replace("$(" + match0.group(1)+ ")", defines_dict[match0.group(1)]),
-                        entry[1].replace("$(" + match1.group(1)+ ")", defines_dict[match1.group(1)]))
-            if var_found == 0:
-                break
-        return copy_list
-
     def GetIppCryptoInf(self):
         ipp_crypto_opt_lvl = 0
         ipp_crypto_opt_name = None
@@ -310,16 +259,6 @@ class Board(BaseBoard):
 
         if ipp_crypto_opt_name[-2:]:
             ipp_crypto_inf = os.path.join('BootloaderCommonPkg', 'Library', 'IppCrypto2Lib', 'IppCrypto2Lib%s.inf' % ipp_crypto_opt_name[-2:])
-
-            ipp_crypto_inf_full = os.path.join(os.environ['SBL_SOURCE'],ipp_crypto_inf)
-
-            if os.path.exists(ipp_crypto_inf_full):
-                copy_list = self.GetCopyList(ipp_crypto_inf_full)
-                for entry in copy_list:
-                    src = os.path.join(os.path.dirname(ipp_crypto_inf_full), entry[0])
-                    dst = os.path.join(os.path.dirname(ipp_crypto_inf_full), entry[1])
-                    shutil.copy(src, dst)
-
         return ipp_crypto_inf
 
     def PlatformBuildHook (self, build, phase):
