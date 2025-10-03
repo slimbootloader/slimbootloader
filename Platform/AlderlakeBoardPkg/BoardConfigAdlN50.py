@@ -143,6 +143,9 @@ class Board(AlderlakeBoardConfig.Board):
             self.TMAC_SIZE = 0x00001000
             self.SIIPFW_SIZE += self.TMAC_SIZE
 
+        if self._SMBIOS_YAML_FILE:
+            self.SIIPFW_SIZE += 0x1000
+
         self.NON_REDUNDANT_SIZE   = 0x3BF000 + self.SIIPFW_SIZE
         self.NON_VOLATILE_SIZE    = 0x001000
         self.SLIMBOOTLOADER_SIZE  = (self.TOP_SWAP_SIZE + self.REDUNDANT_SIZE) * 2 + \

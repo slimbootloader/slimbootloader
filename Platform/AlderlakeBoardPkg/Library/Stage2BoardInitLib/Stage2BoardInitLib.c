@@ -549,8 +549,9 @@ BoardInit (
       }
     }
     BuildOsConfigDataHob ();
+    // Override the Smbios default Info using SMBIOS binary blob
     if (FeaturePcdGet (PcdSmbiosEnabled)) {
-      InitializeSmbiosInfo ();
+      LoadSmbiosStringsFromComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('S', 'M', 'B', 'S'));
     }
 
     if ((SiCfgData != NULL) && (SiCfgData->EcAvailable == 0)) {
