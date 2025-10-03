@@ -162,7 +162,10 @@ BoardInit (
     break;
   case PostSiliconInit:
     PlatformPostSiliconInit ();
-    InitializeSmbiosInfo ();
+    // Override the Smbios default Info using SMBIOS binary blob
+    if (FeaturePcdGet (PcdSmbiosEnabled)) {
+      LoadSmbiosStringsFromComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('S', 'M', 'B', 'S'));
+    }
     SetTmeVar ();
     FreeSgxMem ();
     break;
