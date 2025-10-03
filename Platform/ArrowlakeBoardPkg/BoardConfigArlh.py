@@ -35,6 +35,7 @@ class Board(BaseBoard):
         self.FSP_IMAGE_ID         = '$MTLFSP$'
         self._EXTRA_INC_PATH      = ['Silicon/ArrowlakePkg/Arlh/Fsp']
         self._FSP_PATH_NAME       = 'Silicon/ArrowlakePkg/Arlh/Fsp'
+        self._SMBIOS_YAML_FILE    = os.path.join('Platform', self.BOARD_PKG_NAME, 'SmbiosStrings.yaml')
         self.FSP_INF_FILE         = 'Silicon/ArrowlakePkg/Arlh/Fsp/FspBin.inf'
         self.MICROCODE_INF_FILE   = 'Silicon/ArrowlakePkg/Arlh/Microcode/Microcode.inf'
         self.ACPI_TABLE_INF_FILE  = 'Platform/ArrowlakeBoardPkg/AcpiTables/AcpiTablesP.inf'
@@ -188,6 +189,9 @@ class Board(BaseBoard):
                                     self.CFGDATA_SIZE + self.KEYHASH_SIZE
 
         self.SIIPFW_SIZE = 0x1000
+
+        if self._SMBIOS_YAML_FILE:
+            self.SIIPFW_SIZE += 0x1000
 
         self.ENABLE_TCC = 0
         if self.ENABLE_TCC:
@@ -397,6 +401,9 @@ class Board(BaseBoard):
           # Name | Image File             |    CompressAlg  | AuthType                        | Key File                        | Region Align   | Region Size |  Svn Info
           # ========================================================================================================================================================
           ('IPFW',      'SIIPFW.bin',          '',     container_list_auth_type,   'KEY_ID_CONTAINER'+'_'+self._RSA_SIGN_TYPE,        0,          0     ,        0),   # Container Header
+        )
+        container_list.append (
+          ('SMBS',      'smbios.bin',    'Dummy',        container_list_auth_type,   'KEY_ID_CONTAINER'+'_'+self._RSA_SIGN_TYPE,            0,              0x1000,    0),   # SMBIOS Component
         )
 
         bins = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Binaries')
