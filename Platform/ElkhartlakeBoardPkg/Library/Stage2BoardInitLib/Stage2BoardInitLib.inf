@@ -89,17 +89,11 @@
   gPlatformModuleTokenSpaceGuid.PcdPayloadReservedMemSize
   gPlatformModuleTokenSpaceGuid.PcdFramebufferInitEnabled
   gPlatformModuleTokenSpaceGuid.PcdSplashLogoAddress
-  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsPtr
-  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt
-  gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesBase
   gPlatformModuleTokenSpaceGuid.PcdSmmRebaseMode
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled
-  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsPtr
-  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt
-  gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesBase
   gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
   gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr
