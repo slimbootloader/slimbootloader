@@ -100,35 +100,6 @@ CreateNhltAcpiTable (
   return PlatformService->AcpiTableUpdate ((UINT8 *)Table, Table->Header.Length);
 }
 
-/**
-  Add a Smbios type string into a buffer
-
-**/
-STATIC
-EFI_STATUS
-AddSmbiosTypeString (
-  SMBIOS_TYPE_STRINGS  *Dest,
-  UINT8                 Type,
-  UINT8                 Index,
-  CHAR8                *String
-  )
-{
-  UINTN   Length;
-
-  Dest->Type    = Type;
-  Dest->Idx     = Index;
-  if (String != NULL) {
-    Length = AsciiStrLen (String);
-
-    Dest->String  = (CHAR8 *)AllocateZeroPool (Length + 1);
-    if (Dest->String == NULL) {
-      return EFI_OUT_OF_RESOURCES;
-    }
-    CopyMem (Dest->String, String, Length);
-  }
-
-  return EFI_SUCCESS;
-}
 
 /**
   Initialize necessary information for Smbios
@@ -143,26 +114,21 @@ InitializeSmbiosInfo (
   )
 {
   CHAR8                 TempStrBuf[SMBIOS_STRING_MAX_LENGTH];
-  UINT16                Index;
+  CHAR8                *SmbiosStrTbl;
   UINT16                PlatformId;
   UINTN                 Length;
-  SMBIOS_TYPE_STRINGS  *TempSmbiosStrTbl;
+  CHAR8                *TempSmbiosStrTbl;
   BOOT_LOADER_VERSION  *VerInfoTbl;
-  VOID                 *SmbiosStringsPtr;
 
-  Index         = 0;
   PlatformId    = GetPlatformId ();
-  TempSmbiosStrTbl  = (SMBIOS_TYPE_STRINGS *) AllocateTemporaryMemory (0);
-  VerInfoTbl    = GetVerInfoPtr ();
-  if (TempSmbiosStrTbl == NULL) {
-    DEBUG ((DEBUG_ERROR, "TempSmbiosStrTbl allocation failed\n"));
-    return EFI_OUT_OF_RESOURCES;
-  }
+  TempSmbiosStrTbl  = (CHAR8 *) AllocateTemporaryMemory (0);
+  SmbiosStrTbl = TempSmbiosStrTbl;
   //
   // SMBIOS_TYPE_BIOS_INFORMATION
   //
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BIOS_INFORMATION,
-    1, "Intel Corporation");
+  SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_BIOS_INFORMATION, 1, "Intel Corporation");
+
+  VerInfoTbl = GetVerInfoPtr ();
   if (VerInfoTbl != NULL) {
     AsciiSPrint (TempStrBuf, sizeof (TempStrBuf),
       "SBL:%03d.%03d.%03d.%03d.%03d.%05d.%c-%016lX%a\0",
@@ -178,15 +144,13 @@ InitializeSmbiosInfo (
   } else {
     AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "Unknown");
   }
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BIOS_INFORMATION,
-    2, TempStrBuf);
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BIOS_INFORMATION,
-    3, "Unknown date");
+  SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_BIOS_INFORMATION, 2, TempStrBuf);
+  SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_BIOS_INFORMATION, 3, __DATE__);
 
   //
   // SMBIOS_TYPE_SYSTEM_INFORMATION
   //
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
+  SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_SYSTEM_INFORMATION,
     1, "Intel Corporation");
   if (PlatformId == PLATFORM_ID_OXH) {
     AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "Oxbow Hill CRB Client Platform");
@@ -203,21 +167,21 @@ InitializeSmbiosInfo (
   } else {
     AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "Unknown");
   }
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
+  SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_SYSTEM_INFORMATION,
     2, TempStrBuf);
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
+  SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_SYSTEM_INFORMATION,
     3, "0.1");
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
+  SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_SYSTEM_INFORMATION,
     4, "System Serial Number");
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
+  SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_SYSTEM_INFORMATION,
     5, "System SKU Number");
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
+  SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_SYSTEM_INFORMATION,
     6, "ApolloLake Client System");
 
   //
   // SMBIOS_TYPE_BASEBOARD_INFORMATION
   //
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BASEBOARD_INFORMATION,
+  SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_BASEBOARD_INFORMATION,
     1, "Intel Corporation");
   if (PlatformId == PLATFORM_ID_OXH) {
     AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "Oxbow Hill CRB Board");
@@ -234,28 +198,27 @@ InitializeSmbiosInfo (
   } else {
     AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "Unknown");
   }
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BASEBOARD_INFORMATION,
+  SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_BASEBOARD_INFORMATION,
     2, TempStrBuf);
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BASEBOARD_INFORMATION,
+  SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_BASEBOARD_INFORMATION,
     3, "1");
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BASEBOARD_INFORMATION,
+  SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_BASEBOARD_INFORMATION,
     4, "Board Serial Number");
 
   //
   // SMBIOS_TYPE_END_OF_TABLE
   //
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_END_OF_TABLE,
+  SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_END_OF_TABLE,
     0, NULL);
 
-  Length = sizeof (SMBIOS_TYPE_STRINGS) * Index;
-  SmbiosStringsPtr = AllocatePool (Length);
-  if (SmbiosStringsPtr == NULL) {
+  Length = SmbiosStrTbl - TempSmbiosStrTbl;
+  SmbiosStrTbl = AllocatePool (Length);
+  if (SmbiosStrTbl == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
 
-  CopyMem (SmbiosStringsPtr, TempSmbiosStrTbl, Length);
-  (VOID) PcdSet32S (PcdSmbiosStringsPtr, (UINT32)(UINTN)SmbiosStringsPtr);
-  (VOID) PcdSet16S (PcdSmbiosStringsCnt, Index);
+  CopyMem (SmbiosStrTbl, TempSmbiosStrTbl, Length);
+  (VOID) PcdSet32S (PcdSmbiosStringsPtr, (UINT32)(UINTN)SmbiosStrTbl);
 
   return EFI_SUCCESS;
 }
