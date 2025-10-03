@@ -30,6 +30,7 @@ class Board(BaseBoard):
 
         self.BOARD_NAME           = 'idv'
         self.BOARD_PKG_NAME       = 'IdavilleBoardPkg'
+        self._SMBIOS_YAML_FILE    = os.path.join('Platform', self.BOARD_PKG_NAME, 'SmbiosStrings.yaml')
         self.SILICON_PKG_NAME     = 'IdavillePkg'
         self.FSP_IMAGE_ID         = 'ICXD-FSP'
         self._EXTRA_INC_PATH      = ['Silicon/IdavillePkg/Lcc/Include']
@@ -82,6 +83,9 @@ class Board(BaseBoard):
             self.TCC_STREAM_SIZE = 0x00005000
             self.SIIPFW_SIZE    += self.TCC_CCFG_SIZE + self.TCC_CRL_SIZE + self.TCC_STREAM_SIZE
             self.RTCM_RSVD_SIZE  = 0x1FF000
+
+        if self._SMBIOS_YAML_FILE:
+            self.SIIPFW_SIZE += 0x1000
 
         # For large ACPI table region
         self.LOADER_RSVD_MEM_SIZE             = 0x00A00000
@@ -275,6 +279,9 @@ class Board(BaseBoard):
           # Name | Image File         |    CompressAlg    | AuthType                            | Key File                  | Region Align   | Region Size    |  Svn Info
           # ===============================================================================================================================================================
           ('IPFW',      'SIIPFW.bin',          '',     container_list_auth_type,   'KEY_ID_CONTAINER'+'_'+self._RSA_SIGN_TYPE,    0,           0        ,      0),   # Container Header
+        )
+        container_list.append (
+          ('SMBS',      'smbios.bin',    'Dummy',        container_list_auth_type,   'KEY_ID_CONTAINER'+'_'+self._RSA_SIGN_TYPE,            0,              0x1000,    0),   # SMBIOS Component
         )
 
         bins = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Binaries')
