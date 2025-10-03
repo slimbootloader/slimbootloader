@@ -23,7 +23,6 @@
   GpioTableAdlTsn.h
   Stage2BoardInitLib.h
   Stage2BoardInitLib.c
-  SmbiosInit.c
   MiscInit.c
   LowPowerSupport.c
   LowPowerSupport.h
@@ -98,9 +97,6 @@
   gPlatformModuleTokenSpaceGuid.PcdMrcDataSize
   gPlatformModuleTokenSpaceGuid.PcdPayloadReservedMemSize
   gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled
-  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsPtr
-  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt
-  gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesBase
   gPlatformModuleTokenSpaceGuid.PcdFuncCpuInitHook
   gPlatformCommonLibTokenSpaceGuid.PcdSerialUseMmio
   gPlatformCommonLibTokenSpaceGuid.PcdSerialRegisterBase
