@@ -1,0 +1,63 @@
+# Each entry has exactly 3 lines: - type:, idx:, string
+# Entry Strings are always quoted with double quotes
+
+smbios_strings:
+  # Type 0: BIOS Information
+  - type: 0    # BIOS Vendor
+    idx: 1
+    string: "Intel Corporation"
+    # type 0, Idx 2 and 3 are optional
+
+  # Type 1: System Information
+  - type: 1    # Manufacturer
+    idx: 1
+    string: "Intel Corporation"
+  - type: 1    # Product Name
+    idx: 2
+    string: "Elkhart Lake Client Platform"
+  - type: 1    # Version
+    idx: 3
+    string: "0.1"
+  - type: 1    # Serial Number
+    idx: 4
+    string: "System Serial Number"
+  - type: 1    # SKU Variant
+    idx: 5
+    string: "System SKU Number"
+  - type: 1    # Family Name
+    idx: 6
+    string: "Elkhart Lake Client System"
+
+  # Type 2: Baseboard Information
+  - type: 2    # Manufacturer
+    idx: 1
+    string: "Intel Corporation"
+    # By default using platform name and platform ID (optional)
+    #- type: 2    # BaseBoard Name
+    #  idx: 2
+    #  string: "Elkhart Lake Board"
+  - type: 2    # Version
+    idx: 3
+    string: "1"
+  - type: 2    # Serial Number
+    idx: 4
+    string: "Board Serial Number"
+
+  # Type 3: System Enclosure
+  - type: 3    # Manufacturer
+    idx: 1
+    string: "Intel Corporation"
+  - type: 3    # Version
+    idx: 2
+    string: "Enclosure Version"
+  - type: 3    # Serial Number
+    idx: 3
+    string: "Enclosure Serial"
+  - type: 3    # Asset Tag
+    idx: 4
+    string: "Asset Tag"
+
+  # Type 127: End of strings
+  - type: 127  # End of Table
+    idx: 0
+    string: ""
