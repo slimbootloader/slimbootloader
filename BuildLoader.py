@@ -22,6 +22,7 @@ import shutil
 import argparse
 import subprocess
 import multiprocessing
+import PrepareBuildComponentBin as PreBuild
 from   ctypes import *
 from   BuildUtility import *
 
@@ -1185,26 +1186,19 @@ class Build(object):
         fsp_path = os.path.join(fsp_dir, self._fsp_basename + '.bin')
 
         if self._board.HAVE_FSP_BIN:
-            check_build_component_bin = os.path.join(tool_dir, 'PrepareBuildComponentBin.py')
-            if os.path.exists(check_build_component_bin):
+            # Determine target flag
+            target = '/d' if self._board.FSPDEBUG_MODE else '/r'
 
-                # Create basic command
-                cmd = [ sys.executable,
-                        check_build_component_bin,
-                        work_dir,
-                        self._board.SILICON_PKG_NAME,
-                        self._board.FSP_INF_FILE,
-                        self._board.MICROCODE_INF_FILE]
-
-                # Add target
-                if (self._board.FSPDEBUG_MODE):
-                    cmd.append('/d')
-                else:
-                    cmd.append('/r')
-
-                ret = subprocess.call(cmd)
-                if ret:
-                    raise Exception  ('Failed to prepare build component binaries !')
+            try:
+                PreBuild.ProcessFspAndMicrocodeInf (
+                    work_dir,
+                    self._board.SILICON_PKG_NAME,
+                    self._board.FSP_INF_FILE,
+                    self._board.MICROCODE_INF_FILE,
+                    target
+                    )
+            except Exception as e:
+                raise Exception(f'Failed to process FSP and uCode INF: {str(e)}')
 
         # create FSP size and UPD size can be known
         fsp_list = ['FSP_T', 'FSP_M', 'FSP_S']
@@ -1316,6 +1310,12 @@ class Build(object):
         # create platform include dsc file
         platform_dsc_path = os.path.join(sbl_dir, 'BootloaderCorePkg', 'Platform.dsc')
         self.create_dsc_inc_file (platform_dsc_path)
+
+        # process INF files having [UserExtensions.SBL."CopyList"]
+        try:
+            PreBuild.ProcessInfFileCopyList (sbl_dir, [self._board.FSP_INF_FILE, self._board.MICROCODE_INF_FILE])
+        except Exception as e:
+            raise Exception(f'Failed to process other INF files: {str(e)}')
 
         # rebase FSP accordingly
         if self._board.HAVE_FSP_BIN:
@@ -1567,27 +1567,8 @@ def main():
             files.extend ([
             ])
 
-        def GetCopyList (driver_inf):
-            fd = open (driver_inf, 'r')
-            lines = fd.readlines()
-            fd.close ()
-
-            have_copylist_section = False
-            copy_list      = []
-            for line in lines:
-                line = line.strip ()
-                if line.startswith('['):
-                    if line.startswith('[UserExtensions.SBL."CopyList"]'):
-                        have_copylist_section = True
-                    else:
-                        have_copylist_section = False
-
-                if have_copylist_section:
-                    match = re.match("^(.+)\\s*:\\s*(.+)", line)
-                    if match:
-                        copy_list.append((match.group(1).strip(), match.group(2).strip()))
-
-            return copy_list
+        # Remove files in [UserExtensions.SBL."CopyList"] in INF files
+        PreBuild.ProcessInfFileCopyList (sbl_dir, [], True)
 
         if args.board:
             for index, name in enumerate(board_names):
@@ -1609,7 +1590,7 @@ def main():
                         dest_dir = plt_dir
 
                     if os.path.exists(fsp_inf_full_path):
-                        for _, file in GetCopyList (fsp_inf_full_path):
+                        for _, file in PreBuild.GetCopyList (fsp_inf_full_path):
                             file_full_path = os.path.join(dest_dir, file)
                             if os.path.exists(file_full_path):
                                 print('Removing %s' % file_full_path)
@@ -1627,7 +1608,7 @@ def main():
                         dest_dir = plt_dir
 
                     if os.path.exists(micorcode_inf_full_path):
-                        for _, file in GetCopyList (micorcode_inf_full_path):
+                        for _, file in PreBuild.GetCopyList (micorcode_inf_full_path):
                             file_full_path = os.path.join(dest_dir, file)
                             if os.path.exists(file_full_path):
                                 print('Removing %s' % file_full_path)
