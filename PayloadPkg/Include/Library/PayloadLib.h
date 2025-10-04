@@ -12,7 +12,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <PiPei.h>
 #include <Guid/LoaderFspInfoGuid.h>
 #include <Guid/MemoryMapInfoGuid.h>
-#include <Guid/SystemTableInfoGuid.h>
 #include <Guid/PerformanceInfoGuid.h>
 #include <Guid/LoaderLibraryDataGuid.h>
 #include <Library/BaseLib.h>
@@ -33,17 +32,6 @@ typedef struct {
   UINT32           LdrFeatures;
   BL_PERF_DATA     PerfData;
 } PAYLOAD_GLOBAL_DATA;
-
-/**
-  Returns the System table info HOB data.
-
-  @retval   Pointer to the system table info hob
-
-**/
-SYSTEM_TABLE_INFO *
-GetSystemTableInfo (
-  VOID
-  );
 
 /**
   Returns the pointer to the Loader platform info.

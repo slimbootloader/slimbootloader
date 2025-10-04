@@ -840,9 +840,7 @@ BuildExtraInfoHob (
   )
 {
   LOADER_GLOBAL_DATA               *LdrGlobal;
-  S3_DATA                          *S3Data;
   SERIAL_PORT_INFO                 *SerialPortInfo;
-  SYSTEM_TABLE_INFO                *SystemTableInfo;
   SYS_CPU_INFO                     *SysCpuInfo;
   PERFORMANCE_INFO                 *PerformanceInfo;
   OS_BOOT_OPTION_LIST              *OsBootOptionInfo;
@@ -867,7 +865,6 @@ BuildExtraInfoHob (
   SECUREBOOT_INFO                  *SecureBootInfoHob;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
-  S3Data    = (S3_DATA *)LdrGlobal->S3DataPtr;
 
   // Build library data hob
   LoaderLibData = BuildGuidHob (&gLoaderLibraryDataGuid, sizeof (LOADER_LIBRARY_DATA));
@@ -881,16 +878,6 @@ BuildExtraInfoHob (
   SerialPortInfo = (SERIAL_PORT_INFO *)GetGuidHobData (NULL, NULL, &gLoaderSerialPortInfoGuid);
   if (SerialPortInfo != NULL) {
     PlatformUpdateHobInfo (&gLoaderSerialPortInfoGuid, SerialPortInfo);
-  }
-
-  // Build ACPI Hob
-  SystemTableInfo = BuildGuidHob (&gLoaderSystemTableInfoGuid, sizeof (SYSTEM_TABLE_INFO));
-  if (SystemTableInfo != NULL) {
-    SystemTableInfo->AcpiTableBase = S3Data->AcpiBase;
-    SystemTableInfo->AcpiTableSize = S3Data->AcpiTop - S3Data->AcpiBase;
-    SystemTableInfo->SmbiosTableBase = (UINT64)PcdGet32 (PcdSmbiosTablesBase);
-    SystemTableInfo->SmbiosTableSize = (UINT32)PcdGet16 (PcdSmbiosTablesSize);
-    PlatformUpdateHobInfo (&gLoaderSystemTableInfoGuid, SystemTableInfo);
   }
 
   // Build Loader Platform Data Hob

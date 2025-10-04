@@ -18,28 +18,6 @@
 #include <Guid/LoaderPlatformInfoGuid.h>
 
 /**
-  Returns the System table info HOB data.
-
-  @retval   Pointer to the system table info hob
-
-**/
-SYSTEM_TABLE_INFO *
-GetSystemTableInfo (
-  VOID
-  )
-{
-  EFI_HOB_GUID_TYPE             *GuidHob;
-
-  GuidHob = GetNextGuidHob (&gLoaderSystemTableInfoGuid, (VOID *)(UINTN)PcdGet32 (PcdPayloadHobList));
-  if (GuidHob == NULL) {
-    ASSERT (GuidHob);
-    return NULL;
-  }
-
-  return (SYSTEM_TABLE_INFO *)GET_GUID_HOB_DATA (GuidHob);
-}
-
-/**
   Returns the pointer to the Loader Platform Information.
 
   If the pointer to the HOB list is NULL, then ASSERT().
