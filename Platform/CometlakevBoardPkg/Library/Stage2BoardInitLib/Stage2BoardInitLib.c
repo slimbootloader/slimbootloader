@@ -18,7 +18,6 @@
 #include <Library/BoardInitLib.h>
 #include <Library/SerialPortLib.h>
 #include <Guid/GraphicsInfoHob.h>
-#include <Guid/SystemTableInfoGuid.h>
 #include <Guid/SerialPortInfoGuid.h>
 #include <FspsUpd.h>
 #include <GlobalNvsAreaDef.h>

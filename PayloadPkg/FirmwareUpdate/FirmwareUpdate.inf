@@ -59,7 +59,6 @@
 [Guids]
   gLoaderMemoryMapInfoGuid
   gLoaderFspInfoGuid
-  gLoaderSystemTableInfoGuid
   gEfiPartTypeSystemPartGuid
   gFirmwareUpdateImageFileGuid
   gFlashMapInfoGuid

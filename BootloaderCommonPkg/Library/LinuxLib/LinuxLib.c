@@ -16,7 +16,7 @@
 #include <Library/PrintLib.h>
 #include <Guid/GraphicsInfoHob.h>
 #include <Guid/MemoryMapInfoGuid.h>
-#include <Guid/SystemTableInfoGuid.h>
+#include <UniversalPayload/AcpiTable.h>
 
 #define ACPI_RSDP_CMDLINE_STR         "acpi_rsdp="
 
@@ -267,7 +267,7 @@ UpdateLinuxBootParams (
   MEMORY_MAP_INFO            *MapInfo;
   UINTN                       Index;
   EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *GfxMode;
-  SYSTEM_TABLE_INFO          *SystemTableInfo;
+  UNIVERSAL_PAYLOAD_ACPI_TABLE *AcpiTable;
   CHAR8                       ParamValue[64];
 
   if (Bp == NULL) {
@@ -329,15 +329,15 @@ UpdateLinuxBootParams (
   // To check the existence, simply search for "acpi_rsdp=" string since it's
   // case-sensitive with the immediate '=' trailing according to kernel spec.
   //
-  GuidHob = GetFirstGuidHob (&gLoaderSystemTableInfoGuid);
+  GuidHob = GetFirstGuidHob (&gUniversalPayloadAcpiTableGuid);
   if (GuidHob != NULL) {
-    SystemTableInfo = (SYSTEM_TABLE_INFO *)GET_GUID_HOB_DATA (GuidHob);
-    Bp->AcpiRsdpAddr = SystemTableInfo->AcpiTableBase;
+    AcpiTable = (UNIVERSAL_PAYLOAD_ACPI_TABLE *)GET_GUID_HOB_DATA (GuidHob);
+    Bp->AcpiRsdpAddr = AcpiTable->Rsdp;
     if (Bp->Hdr.Version < 0x020E) {
       // Bp.AcpiRsdpAddr was only added in Linux boot protocol 2.14
       // For old version, just append "acpi_rsdp=" instead.
       if (AsciiStrStr ((CHAR8 *)(UINTN)Bp->Hdr.CmdLinePtr, (CHAR8 *)ACPI_RSDP_CMDLINE_STR) == NULL) {
-        AsciiSPrint (ParamValue, sizeof (ParamValue), " %a0x%lx", ACPI_RSDP_CMDLINE_STR, SystemTableInfo->AcpiTableBase);
+        AsciiSPrint (ParamValue, sizeof (ParamValue), " %a0x%lx", ACPI_RSDP_CMDLINE_STR, AcpiTable->Rsdp);
         AsciiStrCatS ((CHAR8 *)(UINTN)Bp->Hdr.CmdLinePtr, CMDLINE_LENGTH_MAX, ParamValue);
         Bp->Hdr.CmdlineSize = (UINT32)AsciiStrLen ((CHAR8 *)(UINTN)Bp->Hdr.CmdLinePtr);
       }
