@@ -92,7 +92,6 @@
   gPlatformModuleTokenSpaceGuid.PcdPayloadReservedMemSize
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled
   gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsPtr
-  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt
   gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesBase
   gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled

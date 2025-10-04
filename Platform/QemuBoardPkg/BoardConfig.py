@@ -34,6 +34,7 @@ class Board(BaseBoard):
 
         self.BOARD_NAME           = 'qemu'
         self.BOARD_PKG_NAME       = 'QemuBoardPkg'
+        self._SMBIOS_YAML_FILE    = os.path.join('Platform', self.BOARD_PKG_NAME, 'SmbiosStrings.yaml')
         self.SILICON_PKG_NAME     = 'QemuSocPkg'
 
         #
@@ -110,6 +111,9 @@ class Board(BaseBoard):
 
         self.TEST_SIZE            = 0x00001000
         self.SIIPFW_SIZE          = 0x00010000
+
+        if self._SMBIOS_YAML_FILE:
+            self.SIIPFW_SIZE += 0x1000
         self.EPAYLOAD_SIZE        = 0x0020D000
         self.PAYLOAD_SIZE         = 0x00021000
         self.CFGDATA_SIZE         = 0x00001000
@@ -256,12 +260,10 @@ class Board(BaseBoard):
           # Name       | Image File |    CompressAlg          | AuthType                               | Key File                    | Region Align | Region Size |  Svn Info
           # ==================================================================================================================================================================
           ('IPFW',      'SIIPFW.bin',    '',             container_list_auth_type,   'KEY_ID_CONTAINER'+'_'+self._RSA_SIGN_TYPE,            0,              0,         0),   # Container Header
-          ('TST1',      '',              'Dummy',               '',                                        '',                              0,              0x2000,    0),   # Component 1
-          ('TST2',      '',              'Lz4',                 '',                                        '',                              0,              0x3000,    0),   # Component 2
-          ('TST3',      '',              'Lz4',          container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,       0,              0x3000,    0),   # Component 3
-          ('TST4',      '',              'Lzma',                   'SHA2_384',                               '',                            0,              0x3000,    0),   # Component 4
-          ('TST5',      '',              'Dummy',        container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,       0,              0x3000,    0),   # Component 5
-          ('TST6',      '',               '',                    '',                                    '',                                 0,              0x1000,    0),   # Component 6
+          ('SMBS',      'smbios.bin',    'Dummy',        container_list_auth_type,   'KEY_ID_CONTAINER'+'_'+self._RSA_SIGN_TYPE,            0,              0x1000,    0),   # Component 1
+          ('TST1',      '',              'Lz4',          container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,       0,              0x3000,    0),   # Component 2
+          ('TST2',      '',              'Lzma',                   'SHA2_384',                               '',                            0,              0x3000,    0),   # Component 3
+          ('TST3',      '',              'Dummy',        container_list_auth_type,   'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE,       0,              0x3000,    0),   # Component 4
         ])
 
         if self.ENABLE_SBL_SETUP:

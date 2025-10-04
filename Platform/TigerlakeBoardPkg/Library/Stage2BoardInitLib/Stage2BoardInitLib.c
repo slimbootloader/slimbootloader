@@ -478,161 +478,6 @@ ProgramSecuritySetting (
 }
 
 /**
-  Add a Smbios type string into a buffer
-
-**/
-STATIC
-EFI_STATUS
-AddSmbiosTypeString (
-  SMBIOS_TYPE_STRINGS  *Dest,
-  UINT8                 Type,
-  UINT8                 Index,
-  CHAR8                *String
-  )
-{
-  UINTN   Length;
-
-  Dest->Type    = Type;
-  Dest->Idx     = Index;
-  if (String != NULL) {
-    Length = AsciiStrLen (String);
-
-    Dest->String  = (CHAR8 *)AllocateZeroPool (Length + 1);
-    if (Dest->String == NULL) {
-      return EFI_OUT_OF_RESOURCES;
-    }
-    CopyMem (Dest->String, String, Length);
-  }
-
-  return EFI_SUCCESS;
-}
-
-/**
-  Initialize necessary information for Smbios
-
-  @retval EFI_SUCCESS             Initialized necessary information successfully
-  @retval EFI_OUT_OF_RESOURCES    Failed to allocate memory for Smbios info
-
-**/
-EFI_STATUS
-InitializeSmbiosInfo (
-  VOID
-  )
-{
-  CHAR8                 TempStrBuf[SMBIOS_STRING_MAX_LENGTH];
-  UINT16                Index;
-  UINT8                 BrdIdx;
-  UINTN                 Length;
-  SMBIOS_TYPE_STRINGS  *TempSmbiosStrTbl;
-  BOOT_LOADER_VERSION  *VerInfoTbl;
-  VOID                 *SmbiosStringsPtr;
-
-  Index         = 0;
-  TempSmbiosStrTbl  = (SMBIOS_TYPE_STRINGS *) AllocateTemporaryMemory (0);
-  if (TempSmbiosStrTbl == NULL) {
-    return EFI_OUT_OF_RESOURCES;
-  }
-  VerInfoTbl    = GetVerInfoPtr ();
-
-  //
-  // SMBIOS_TYPE_BIOS_INFORMATION
-  //
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BIOS_INFORMATION,
-    1, "Intel Corporation");
-  if (VerInfoTbl != NULL) {
-    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf),
-      "SB_TGL.%03d.%03d.%03d.%03d.%03d.%05d.%c-%016lX%a\0",
-      VerInfoTbl->ImageVersion.SecureVerNum,
-      VerInfoTbl->ImageVersion.CoreMajorVersion,
-      VerInfoTbl->ImageVersion.CoreMinorVersion,
-      VerInfoTbl->ImageVersion.ProjMajorVersion,
-      VerInfoTbl->ImageVersion.ProjMinorVersion,
-      VerInfoTbl->ImageVersion.BuildNumber,
-      VerInfoTbl->ImageVersion.BldDebug ? 'D' : 'R',
-      VerInfoTbl->SourceVersion,
-      VerInfoTbl->ImageVersion.Dirty ? "-dirty" : "");
-  } else {
-    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "Unknown");
-  }
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BIOS_INFORMATION,
-    2, TempStrBuf);
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BIOS_INFORMATION,
-    3, __DATE__);
-
-  //
-  // SMBIOS_TYPE_SYSTEM_INFORMATION
-  //
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
-    1, "Intel Corporation");
-
-  AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "TigerLake Client Platform");
-
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
-    2, TempStrBuf);
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
-    3, "0.1");
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
-    4, "System Serial Number");
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
-    5, "System SKU Number");
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_SYSTEM_INFORMATION,
-    6, "TigerLake Client System");
-
-  //
-  // SMBIOS_TYPE_BASEBOARD_INFORMATION
-  //
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BASEBOARD_INFORMATION,
-    1, "Intel Corporation");
-  switch (GetPlatformId ()) {
-    case BoardIdTglUDdr4:
-      BrdIdx = 1;
-      break;
-    case BoardIdTglULp4Type4:
-      BrdIdx = 2;
-      break;
-    case BoardIdTglHDdr4SODimm:
-    case 0xF:
-      BrdIdx = 3;
-      break;
-    case BoardIdTglUpxi11:
-      BrdIdx = 4;
-      break;
-    default:
-      BrdIdx = 0;
-      break;
-  }
-  AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", mBoardIdIndex[BrdIdx]);
-
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BASEBOARD_INFORMATION,
-    2, TempStrBuf);
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BASEBOARD_INFORMATION,
-    3, "1");
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_BASEBOARD_INFORMATION,
-    4, "Board Serial Number");
-
-  //
-  // SMBIOS_TYPE_PROCESSOR_INFORMATION : TBD
-  //
-
-  //
-  // SMBIOS_TYPE_END_OF_TABLE
-  //
-  AddSmbiosTypeString (&TempSmbiosStrTbl[Index++], SMBIOS_TYPE_END_OF_TABLE,
-    0, NULL);
-
-  Length = sizeof (SMBIOS_TYPE_STRINGS) * Index;
-  SmbiosStringsPtr = AllocatePool (Length);
-  if (SmbiosStringsPtr == NULL) {
-    return EFI_OUT_OF_RESOURCES;
-  }
-  CopyMem (SmbiosStringsPtr, TempSmbiosStrTbl, Length);
-  (VOID) PcdSet32S (PcdSmbiosStringsPtr, (UINT32)(UINTN)SmbiosStringsPtr);
-  (VOID) PcdSet16S (PcdSmbiosStringsCnt, Index);
-
-  return EFI_SUCCESS;
-}
-
-/**
   Clear SMI sources
 
 **/
@@ -869,10 +714,10 @@ BoardInit (
       }
     }
     //
-    // Initialize Smbios Info for SmbiosInit
+    // Override the Smbios default Info using SMBIOS binary blob
     //
     if (FeaturePcdGet (PcdSmbiosEnabled)) {
-      InitializeSmbiosInfo ();
+      LoadSmbiosStringsFromComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('S', 'M', 'B', 'S'));
       if (FeaturePcdGet (PcdEnableDts)) {
         ReadCpuDts ();
       }

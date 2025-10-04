@@ -339,8 +339,9 @@ BoardInit (
       }
     }
     BuildOsConfigDataHob ();
+    // Override the Smbios default Info using SMBIOS binary blob
     if (FeaturePcdGet (PcdSmbiosEnabled)) {
-      InitializeSmbiosInfo ();
+      LoadSmbiosStringsFromComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('S', 'M', 'B', 'S'));
     }
 
     // FIPS is disabled by default. Enable it only when specified by config data.

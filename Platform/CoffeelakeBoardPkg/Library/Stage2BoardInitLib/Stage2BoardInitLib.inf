@@ -83,7 +83,6 @@
   gPlatformModuleTokenSpaceGuid.PcdFramebufferInitEnabled
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled
   gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsPtr
-  gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt
   gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesBase
   gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcHs400SupportEnabled

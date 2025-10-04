@@ -17,6 +17,9 @@
 #include <Library/BootloaderCommonLib.h>
 #include <Library/TimeStampLib.h>
 #include <Library/MpInitLib.h>
+#include <Library/ContainerLib.h>
+#include <Library/PrintLib.h>
+#include <Guid/BootLoaderVersionGuid.h>
 #include "SmbiosTables.h"
 
 
@@ -35,38 +38,6 @@ GLOBAL_REMOVE_IF_UNREFERENCED PROCESSOR_FAMILY_FIELD mProcessorFamilyField[] = {
   { "Xeon(R)",      ProcessorFamilyIntelXeon },
 };
 
-//
-// Add more platform specific strings
-// in the following format
-//
-CONST SMBIOS_TYPE_STRINGS  mDefaultSmbiosStrings[] = {
-  // Type                               StrId   String
-  // Type 0
-  {  SMBIOS_TYPE_BIOS_INFORMATION ,        1,  SMBIOS_STRING_VENDOR           },  // Vendor
-  {  SMBIOS_TYPE_BIOS_INFORMATION ,        2,  SMBIOS_STRING_UNKNOWN_VERSION  },  // BIOS Version
-  {  SMBIOS_TYPE_BIOS_INFORMATION ,        3,  SMBIOS_STRING_UNKNOWN          },  // BIOS Release Date
-  // Type 1
-  {  SMBIOS_TYPE_SYSTEM_INFORMATION ,      1,  SMBIOS_STRING_VENDOR           },  // Manufacturer
-  {  SMBIOS_TYPE_SYSTEM_INFORMATION ,      2,  SMBIOS_STRING_UNKNOWN          },  // Product Name
-  {  SMBIOS_TYPE_SYSTEM_INFORMATION ,      3,  SMBIOS_STRING_UNKNOWN_VERSION  },  // Version
-  {  SMBIOS_TYPE_SYSTEM_INFORMATION ,      4,  SMBIOS_STRING_UNKNOWN          },  // Serial Number
-  {  SMBIOS_TYPE_SYSTEM_INFORMATION ,      5,  SMBIOS_STRING_UNKNOWN          },  // SKU Variant
-  {  SMBIOS_TYPE_SYSTEM_INFORMATION ,      6,  SMBIOS_STRING_PLATFORM         },  // Family name
-  // Type 2
-  {  SMBIOS_TYPE_BASEBOARD_INFORMATION ,   1,  SMBIOS_STRING_UNKNOWN          },  // Manufacturer
-  {  SMBIOS_TYPE_BASEBOARD_INFORMATION ,   2,  SMBIOS_STRING_UNKNOWN          },  // Product Name
-  {  SMBIOS_TYPE_BASEBOARD_INFORMATION ,   3,  SMBIOS_STRING_UNKNOWN_VERSION  },  // Version
-  {  SMBIOS_TYPE_BASEBOARD_INFORMATION ,   4,  SMBIOS_STRING_UNKNOWN          },  // Serial Number
-  {  SMBIOS_TYPE_BASEBOARD_INFORMATION ,   5,  SMBIOS_STRING_UNKNOWN          },  // AssetTag
-  {  SMBIOS_TYPE_BASEBOARD_INFORMATION ,   6,  SMBIOS_STRING_UNKNOWN          },  // LocationInChassis
-  // Type 3
-  {  SMBIOS_TYPE_SYSTEM_ENCLOSURE ,        1,  SMBIOS_STRING_UNKNOWN          },  // Manufacturer
-  {  SMBIOS_TYPE_SYSTEM_ENCLOSURE ,        2,  SMBIOS_STRING_UNKNOWN_VERSION  },  // Version
-  {  SMBIOS_TYPE_SYSTEM_ENCLOSURE ,        3,  SMBIOS_STRING_UNKNOWN          },  // Serial Number
-  {  SMBIOS_TYPE_SYSTEM_ENCLOSURE ,        4,  SMBIOS_STRING_UNKNOWN          },  // AssetTag
-  // Type 127 - End of strings
-  {  SMBIOS_TYPE_END_OF_TABLE,             0,  ""                             }
-};
 
 /**
   Check if the Smbios types (including the entry point struct)
@@ -230,23 +201,118 @@ CalculateNumStrInType (
   IN  UINT8   Type
 )
 {
-  UINT8                   Idx;
+  UINT8                   Index;
   UINT8                   Count;
-  SMBIOS_TYPE_STRINGS    *SmbiosStringsPtr;
+  SMBIOS_TYPE_STRINGS    *SmbiosStrings;
+  CHAR8                  *StringPtr;
+  UINT8                   UniqueIdx[32] = {0};
 
-  Idx   = 0;
   Count = 0;
-  SmbiosStringsPtr = (SMBIOS_TYPE_STRINGS *) (UINTN) PcdGet32 (PcdSmbiosStringsPtr);
-
-  if (SmbiosStringsPtr != NULL) {
-    for (Idx = 0; SmbiosStringsPtr[Idx].Type != SMBIOS_TYPE_END_OF_TABLE; Idx++) {
-      if (SmbiosStringsPtr[Idx].Type == Type && SmbiosStringsPtr[Idx].Idx != 0) {
-        Count++;
+  SmbiosStrings = (SMBIOS_TYPE_STRINGS *) (UINTN) PcdGet32 (PcdSmbiosStringsPtr);
+  if (SmbiosStrings != NULL) {
+    for (Index = 0; Index < PcdGet16 (PcdSmbiosStringsCnt); Index++) {
+      StringPtr = (CHAR8 *)SmbiosStrings + sizeof(SmbiosStrings->Type) + sizeof (SmbiosStrings->Idx);
+      if (SmbiosStrings->Type == Type && SmbiosStrings->Idx != 0) {
+        if (UniqueIdx[SmbiosStrings->Idx] == 0) {
+          Count++;
+        }
+      }
+      // Move to next entry
+      SmbiosStrings = (SMBIOS_TYPE_STRINGS *)(StringPtr + AsciiStrSize (StringPtr));
+      if (SmbiosStrings->Type == SMBIOS_TYPE_END_OF_TABLE) {
+        break;
       }
     }
   }
 
   return Count;
+}
+
+
+/**
+  Dump all SMBIOS strings from the SMBIOS string table.
+
+  This function iterates through the smbios table pointed to by PcdSmbiosStringsPtr,
+  and prints each entry's type, string ID, and string value for debugging purposes.
+  The function stops when it encounters the SMBIOS_TYPE_END_OF_TABLE marker.
+**/
+VOID
+DumpSmbiosStrings (
+  VOID
+)
+{
+  UINT8                   Index;
+  SMBIOS_TYPE_STRINGS    *SmbiosStrings;
+  CHAR8                  *StringPtr;
+
+  DEBUG ((DEBUG_INFO, "Print the SMBIOS strings list to update SMBIOS table\n"));
+  SmbiosStrings = (SMBIOS_TYPE_STRINGS *) (UINTN) PcdGet32 (PcdSmbiosStringsPtr);
+  if (SmbiosStrings != NULL) {
+    for (Index = 0; Index < PcdGet16 (PcdSmbiosStringsCnt); Index++) {
+      StringPtr = (CHAR8 *)SmbiosStrings + sizeof(SmbiosStrings->Type) + sizeof (SmbiosStrings->Idx);
+      DEBUG ((DEBUG_INFO, "%02d: Type: %d,Index:0x%d, String = %a\n", Index, SmbiosStrings->Type, SmbiosStrings->Idx, StringPtr));
+      SmbiosStrings = (SMBIOS_TYPE_STRINGS *)(StringPtr + AsciiStrSize (StringPtr));
+      if (SmbiosStrings->Type == SMBIOS_TYPE_END_OF_TABLE) {
+        break;
+      }
+    }
+  }
+}
+
+/**
+  Dump all SMBIOS structures and their associated strings from the SMBIOS table.
+
+  This function iterates through the SMBIOS table pointed to by PcdSmbiosTablesBase,
+  printing each structure's type, length, and all associated strings for debugging purposes.
+  It advances through the table by skipping the formatted section and traversing the string area
+  until the double-null terminator is found, then moves to the next structure.
+**/
+VOID
+DumpSmbiosTable (
+  VOID
+)
+{
+  SMBIOS_STRUCTURE              *TypeHdr;
+  SMBIOS_TABLE_ENTRY_POINT      *SmbiosEntry;
+  CHAR8                         *StringPtr;
+  UINT32                         CurLimit;
+  UINT32                         Idx;
+  UINT8                          StringIdx;
+
+  SmbiosEntry = (SMBIOS_TABLE_ENTRY_POINT *)(UINTN)PcdGet32 (PcdSmbiosTablesBase);
+  if (SmbiosEntry == NULL) {
+    return;
+  }
+
+  TypeHdr  = (SMBIOS_STRUCTURE *) (UINTN) SmbiosEntry->TableAddress;
+  CurLimit = (UINT32) (UINTN) (SmbiosEntry->TableAddress + SmbiosEntry->TableLength);
+  DEBUG ((DEBUG_INFO, "\n Dumping SMBIOS table strings, base=0x%p, len=0x%x, CurLimit=0x%x\n", TypeHdr, SmbiosEntry->TableLength, CurLimit));
+
+  Idx = 0;
+  while ((UINT32)(UINTN)TypeHdr < CurLimit) {
+    DEBUG ((DEBUG_INFO, "Checking table 0x%p: Type: %d, Length: 0x%x\n", TypeHdr, TypeHdr->Type, TypeHdr->Length));
+
+    // Dump all strings for this SMBIOS structure
+    StringPtr = (CHAR8 *)TypeHdr + TypeHdr->Length;
+    StringIdx = 1;
+    while (!(StringPtr[0] == 0 && StringPtr[1] == 0)) {
+      if (StringPtr[0] != 0) {
+        DEBUG ((DEBUG_INFO, "  0x%p: String %d: %a\n", StringPtr, StringIdx, StringPtr));
+        StringIdx++;
+      }
+      // Move to next string (null-terminated)
+      while (*StringPtr != 0) {
+        StringPtr++;
+      }
+
+      if (StringPtr[1] == 0) break;
+      StringPtr++; // Skip null terminator
+    }
+
+    // Advance to next SMBIOS structure
+    TypeHdr = (SMBIOS_STRUCTURE *)(StringPtr + TYPE_TERMINATOR_SIZE); // Skip double null
+    Idx++;
+  }
 }
 
 /**
@@ -267,55 +333,30 @@ GetSmbiosString (
   )
 {
   SMBIOS_TYPE_STRINGS       *SmbiosStrings;
-  UINT16                    SmbiosStringsCnt;
   UINT16                    Index;
-  UINTN                     Loop;
-  UINTN                     LoopCnt;
-  CHAR8                     *String;
+  CHAR8                     *StringPtr;
+  CHAR8                     *StringFound;
 
-  SmbiosStrings     = (SMBIOS_TYPE_STRINGS *)(UINTN)PcdGet32 (PcdSmbiosStringsPtr);
-  SmbiosStringsCnt  = PcdGet16 (PcdSmbiosStringsCnt);
-  if ((SmbiosStrings == NULL) || (SmbiosStringsCnt == 0)) {
-    //
-    // Even if platform doesnt provide the strings,
-    // Stage2 has init the Pcd with the default strings array.
-    // It is likely impossible to reach here! But added to be safe.
-    //
+  if ((SMBIOS_TYPE_STRINGS *)(UINTN)PcdGet32 (PcdSmbiosStringsPtr) == NULL) {
     return SMBIOS_STRING_UNKNOWN;
   }
 
-  // Try to find in platform string table first,
-  // then try to find in default string table
-  String  = NULL;
-  LoopCnt = (SmbiosStrings == mDefaultSmbiosStrings) ? 1 : 2;
-  for (Loop = 0; Loop < LoopCnt; Loop++) {
-    if (Loop == 1) {
-      SmbiosStrings    = (SMBIOS_TYPE_STRINGS *)mDefaultSmbiosStrings;
-      SmbiosStringsCnt = ARRAY_SIZE (mDefaultSmbiosStrings);
-    }
+  // Search PcdSmbiosStringsPtr, if multiple strings are found, use the last occurrence
+  StringFound   = SMBIOS_STRING_UNKNOWN;
+  SmbiosStrings = (SMBIOS_TYPE_STRINGS *)(UINTN)PcdGet32 (PcdSmbiosStringsPtr);
 
-    for (Index = 0; Index < SmbiosStringsCnt; Index++) {
-      if (SmbiosStrings[Index].Type == SMBIOS_TYPE_END_OF_TABLE) {
-        break;
-      }
-      if (Type == SmbiosStrings[Index].Type && StringId == SmbiosStrings[Index].Idx) {
-        if (SmbiosStrings[Index].String != NULL && AsciiStrLen (SmbiosStrings[Index].String) != 0) {
-          String = SmbiosStrings[Index].String;
-        }
-        break;
-      }
+  for (Index = 0; Index < PcdGet16 (PcdSmbiosStringsCnt); Index++) {
+    StringPtr = (CHAR8 *)SmbiosStrings + sizeof(SmbiosStrings->Type) + sizeof (SmbiosStrings->Idx);
+    if (Type == SmbiosStrings->Type && StringId == SmbiosStrings->Idx) {
+      StringFound = StringPtr;
     }
-
-    if (String != NULL) {
+    SmbiosStrings = (SMBIOS_TYPE_STRINGS *)(StringPtr + AsciiStrSize (StringPtr));
+    if (SmbiosStrings->Type == SMBIOS_TYPE_END_OF_TABLE) {
       break;
     }
   }
 
-  if (String == NULL) {
-    String = SMBIOS_STRING_UNKNOWN;
-  }
-
-  return String;
+  return StringFound;
 }
 
 /**
@@ -394,7 +435,7 @@ AddSmbiosString (
     String = SMBIOS_STRING_UNKNOWN;
   }
 
-  StringPtr = (CHAR8 *) ((UINT8 *) TypeHdr + TypeHdr->Length);
+  StringPtr = (CHAR8 *) TypeHdr + TypeHdr->Length;
   // Find end of an existing string
   while ( !(StringPtr[0] == 0 && StringPtr[1] == 0) ) {
     StrPresent = TRUE;
@@ -448,7 +489,6 @@ AddSmbiosType (
   UINT16                        HdrLen;
 
   SmbiosEntry = (SMBIOS_TABLE_ENTRY_POINT *) (UINTN) PcdGet32 (PcdSmbiosTablesBase);
-  NumStr      = 0;
   TypeHdr     = (SMBIOS_STRUCTURE *) HdrInfo;
 
   if (TypeHdr == NULL) {
@@ -465,11 +505,7 @@ AddSmbiosType (
   //
   // Check for overflow before adding the Type
   //
-  if (NumStr > 0) {
-    Status = CheckSmbiosOverflow (HdrLen, NumStr);
-  } else {
-    Status = CheckSmbiosOverflow (HdrLen, 0);
-  }
+  Status = CheckSmbiosOverflow (HdrLen, NumStr);
   if (EFI_ERROR(Status)) {
     return Status;
   }
@@ -486,7 +522,7 @@ AddSmbiosType (
   //
   TypeHdr = (VOID *) (UINTN) (SmbiosEntry->TableAddress + SmbiosEntry->TableLength);
   CopyMem (TypeHdr, HdrInfo, HdrLen);
-  StringPtr = (CHAR8 *) ((UINT8 *) TypeHdr + HdrLen);
+  StringPtr = (CHAR8 *) TypeHdr + HdrLen;
   if (NumStr > 0) {
     for (StrIdx = 1; StrIdx <= NumStr; ++StrIdx) {
       StringPtr = CopySmbiosString (StringPtr, GetSmbiosString (TypeHdr->Type, StrIdx));
@@ -515,47 +551,6 @@ AddSmbiosType (
   return Status;
 }
 
-/**
-  This function is called to initialize the SmbiosStringsPtr.
-**/
-VOID
-EFIAPI
-InitSmbiosStringPtr (
-  VOID
-  )
-{
-
-  EFI_STATUS            Status;
-  UINT16                Length;
-  VOID                 *SmbiosStringsPtr;
-
-  //
-  // Allocate the memmory for SMBIOS String Ptr,
-  //
-
-  SmbiosStringsPtr = AllocateZeroPool (PcdGet16(PcdSmbiosStringsCnt) * sizeof (SMBIOS_TYPE_STRINGS));
-  if (SmbiosStringsPtr == NULL) {
-    DEBUG ((DEBUG_INFO, "SmbiosStringsPtr Memory allocation failed"));
-    ASSERT_EFI_ERROR(EFI_OUT_OF_RESOURCES);
-  }
-
-  //
-  // Copy contents from Default String Array
-  //
-
-  Length = sizeof (mDefaultSmbiosStrings);
-  if(Length <= (PcdGet16(PcdSmbiosStringsCnt) * sizeof (SMBIOS_TYPE_STRINGS))) {
-    CopyMem (SmbiosStringsPtr, mDefaultSmbiosStrings, Length);
-  } else {
-    DEBUG ((DEBUG_INFO, "SmbiosStringsPtr Not Sufficient 0x%x", Length));
-    ASSERT_EFI_ERROR(EFI_OUT_OF_RESOURCES);
-  }
-  //
-  // Initialize SMBIOS String Ptr, Update Length
-  //
-  Status = PcdSet32S (PcdSmbiosStringsPtr, (UINT32)(UINTN)SmbiosStringsPtr);
-  ASSERT_EFI_ERROR (Status);
-}
 
 /**
   This function builds required processor info SMBIOS type.
@@ -697,6 +692,118 @@ BuildProcessorInfo (
   return Status;
 }
 
+
+/**
+  Add a SMBIOS string entry to the destination buffer.
+
+  @param[out]     Dest   Pointer to the destination buffer where the entry will be added.
+  @param[in]      Type   SMBIOS type for the entry.
+  @param[in]      Index  String index for the entry.
+  @param[in]      String Null-terminated ASCII string to store.
+
+  @retval Pointer to the next available position in the buffer.
+**/
+CHAR8 *
+EFIAPI
+AddSmbiosTypeString (
+  OUT    CHAR8                 *Dest,
+  IN     UINT8                 Type,
+  IN     UINT8                 Index,
+  IN     CHAR8                 *String
+  )
+{
+  SMBIOS_TYPE_STRINGS  *SmbiosStrings;
+  UINTN                Len;
+
+  SmbiosStrings       = (SMBIOS_TYPE_STRINGS *)Dest;
+  SmbiosStrings->Type = Type;
+  SmbiosStrings->Idx  = Index;
+  if (String != NULL) {
+    Len = AsciiStrSize (String);
+    CopyMem (Dest + OFFSET_OF(SMBIOS_TYPE_STRINGS, String), String, Len);
+  } else {
+    ASSERT (SmbiosStrings->Type == SMBIOS_TYPE_END_OF_TABLE);
+    (Dest + OFFSET_OF(SMBIOS_TYPE_STRINGS, String))[0] = 0;
+    (Dest + OFFSET_OF(SMBIOS_TYPE_STRINGS, String))[1] = 0;
+    Len = TYPE_TERMINATOR_SIZE;
+  }
+
+  return Dest + sizeof (SmbiosStrings->Type) + sizeof (SmbiosStrings->Idx) + Len;
+}
+
+
+/**
+  Load and initialize customized SMBIOS string data.
+
+  This function allocates a buffer for SMBIOS strings, populates it with BIOS and baseboard information,
+  and loads additional SMBIOS string data from a specified component. The buffer pointer is stored in a PCD
+  for later use. The function ensures that the buffer is not overrun when copying additional data.
+
+  @param[in]  ContainerSig   Signature identifying the container to load SMBIOS data from.
+  @param[in]  ComponentName  Name of the component containing SMBIOS string data.
+
+  @retval EFI_SUCCESS            The SMBIOS string data was loaded and initialized successfully.
+  @retval EFI_OUT_OF_RESOURCES   Memory allocation for the SMBIOS string table failed.
+  @retval Other                  Error returned by LoadComponent if loading SMBIOS data fails.
+**/
+EFI_STATUS
+EFIAPI
+LoadSmbiosStringsFromComponent (
+  IN  UINT32    ContainerSig,
+  IN  UINT32    ComponentName
+  )
+{
+  EFI_STATUS            Status;
+  CHAR8                 *SmbiosStrTbl;
+  CHAR8                 *SmbiosData;
+  UINT32                SmbiosDataSize;
+  BOOT_LOADER_VERSION   *VerInfoTbl;
+  CHAR8                 TempStrBuf[SMBIOS_STRING_MAX_LENGTH];
+
+  SmbiosStrTbl = AllocateZeroPool (SIZE_4KB);
+  if (SmbiosStrTbl == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+  (VOID) PcdSet32S (PcdSmbiosStringsPtr, (UINT32)(UINTN)SmbiosStrTbl);
+
+  VerInfoTbl = GetVerInfoPtr ();
+  if (VerInfoTbl != NULL) {
+    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf),
+      "SBL:%03d.%03d.%03d.%03d.%03d.%05d.%c-%016lX%a\0",
+      VerInfoTbl->ImageVersion.SecureVerNum,
+      VerInfoTbl->ImageVersion.CoreMajorVersion,
+      VerInfoTbl->ImageVersion.CoreMinorVersion,
+      VerInfoTbl->ImageVersion.ProjMajorVersion,
+      VerInfoTbl->ImageVersion.ProjMinorVersion,
+      VerInfoTbl->ImageVersion.BuildNumber,
+      VerInfoTbl->ImageVersion.BldDebug ? 'D' : 'R',
+      VerInfoTbl->SourceVersion,
+      VerInfoTbl->ImageVersion.Dirty ? "-dirty" : "");
+  } else {
+    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "SBL version Unknown");
+  }
+  SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_BIOS_INFORMATION, 2, TempStrBuf);
+
+  SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_BIOS_INFORMATION, 3, __DATE__);
+
+  AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%8a (ID:%02X)", GetPlatformName(), GetPlatformId ());
+  SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_BASEBOARD_INFORMATION, 2, TempStrBuf);
+
+  SmbiosData     = NULL;
+  SmbiosDataSize = 0;
+  Status = LoadComponent (ContainerSig, ComponentName, (VOID **)&SmbiosData, &SmbiosDataSize);
+  if (EFI_ERROR(Status)) {
+    return Status;
+  }
+
+  if ((((UINT32)(UINTN)SmbiosStrTbl - PcdGet32(PcdSmbiosStringsPtr)) + SmbiosDataSize) < SIZE_4KB) {
+    CopyMem (SmbiosStrTbl, SmbiosData, SmbiosDataSize);
+  }
+
+  return EFI_SUCCESS;
+}
+
+
 /**
   This function is called to initialize the SMBIOS tables.
 
@@ -748,6 +855,7 @@ SmbiosInit (
   Status |= AddSmbiosType (&mDefaultChasisInfo);
   Status |= BuildProcessorInfo ();
   Status |= AddSmbiosType (&mMemArrayMappedAddr);
+
   if (Status != EFI_SUCCESS) {
     Status = EFI_DEVICE_ERROR;
   }
