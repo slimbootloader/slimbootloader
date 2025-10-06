@@ -53,7 +53,6 @@
 #include <Guid/GraphicsInfoHob.h>
 #include <Guid/SmmInformationGuid.h>
 #include <Guid/MpCpuTaskInfoHob.h>
-#include <Guid/PciRootBridgeInfoGuid.h>
 #include <UniversalPayload/PciRootBridges.h>
 #include <UniversalPayload/AcpiTable.h>
 #include <UniversalPayload/SmbiosTable.h>

@@ -15,11 +15,31 @@
 #include <InternalPciEnumerationLib.h>
 #include <Library/PciEnumerationLib.h>
 #include <Library/BootloaderCommonLib.h>
+#include <UniversalPayload/PciRootBridges.h>
 #include "PciAri.h"
 #include "PciIov.h"
 #include "InternalPciEnumerationLib.h"
 
 #define  DEBUG_PCI_ENUM    0
+
+// PCI attribute definitions for Universal Payload HOB
+#define EFI_PCI_ATTRIBUTE_ISA_MOTHERBOARD_IO          0x0001
+#define EFI_PCI_ATTRIBUTE_ISA_IO                      0x0002
+#define EFI_PCI_ATTRIBUTE_VGA_PALETTE_IO              0x0004
+#define EFI_PCI_ATTRIBUTE_VGA_MEMORY                  0x0008
+#define EFI_PCI_ATTRIBUTE_VGA_IO                      0x0010
+#define EFI_PCI_ATTRIBUTE_IDE_PRIMARY_IO              0x0020
+#define EFI_PCI_ATTRIBUTE_IDE_SECONDARY_IO            0x0040
+#define EFI_PCI_ATTRIBUTE_ISA_IO_16                   0x10000
+#define EFI_PCI_ATTRIBUTE_VGA_PALETTE_IO_16           0x20000
+#define EFI_PCI_ATTRIBUTE_VGA_IO_16                   0x40000
+
+#define EFI_PCI_HOST_BRIDGE_COMBINE_MEM_PMEM          1
+#define EFI_PCI_HOST_BRIDGE_MEM64_DECODE              2
+
+#define PNP_EISA_ID_CONST                             0x41d0
+#define EISA_ID(_Name, _Num)      ((UINT32)((_Name) | (_Num) << 16))
+#define EISA_PNP_ID(_PNPId)       (EISA_ID(PNP_EISA_ID_CONST, (_PNPId)))
 
 UINT8   *mPoolPtr;
 
@@ -1487,39 +1507,66 @@ DumpPciResources (
 }
 
 /**
-  Dump PCI Root Bridge Info Hob
+  Dump Universal Payload PCI Root Bridge HOB
 
 **/
 VOID
-DumpPciRootBridgeInfoHob (
+DumpUniversalPayloadPciRootBridgeHob (
   VOID
   )
 {
-  PCI_ROOT_BRIDGE_INFO_HOB    *RootBridgeInfoHob;
-  UINT8                        Count;
-  UINT8                        Index;
+  UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGES  *UpldRootBridges;
+  UINT8                               Count;
 
-  RootBridgeInfoHob = (PCI_ROOT_BRIDGE_INFO_HOB *) GetGuidHobData (NULL, NULL,
-    &gLoaderPciRootBridgeInfoGuid);
+  UpldRootBridges = (UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGES *) GetGuidHobData (NULL, NULL,
+    &gUniversalPayloadPciRootBridgeInfoGuid);
 
-  if (RootBridgeInfoHob != NULL) {
-    DEBUG ((DEBUG_INFO, "PciRootBridgeInfoHob: Rev 0x%X, Count 0x%X\n",
-      RootBridgeInfoHob->Revision, RootBridgeInfoHob->Count));
+  if (UpldRootBridges != NULL) {
+    DEBUG ((DEBUG_INFO, "Universal Payload PCI Root Bridge HOB: Rev 0x%X, Count 0x%X\n",
+      UpldRootBridges->Header.Revision, UpldRootBridges->Count));
 
-    for (Count = 0; Count < RootBridgeInfoHob->Count; Count++) {
-      DEBUG ((DEBUG_INFO, "Bus(0x%02X-%02X)\n",
-        RootBridgeInfoHob->Entry[Count].BusBase,
-        RootBridgeInfoHob->Entry[Count].BusLimit));
+    for (Count = 0; Count < UpldRootBridges->Count; Count++) {
+      DEBUG ((DEBUG_INFO, "Root Bridge %d:\n", Count));
+      DEBUG ((DEBUG_INFO, "  HID: 0x%08X, UID: 0x%X, Segment: 0x%X\n",
+        UpldRootBridges->RootBridge[Count].HID,
+        UpldRootBridges->RootBridge[Count].UID,
+        UpldRootBridges->RootBridge[Count].Segment));
+      DEBUG ((DEBUG_INFO, "  Bus: 0x%02X-0x%02X\n",
+        UpldRootBridges->RootBridge[Count].Bus.Base,
+        UpldRootBridges->RootBridge[Count].Bus.Limit));
 
-      for (Index = 0; Index < PCI_MAX_BAR; Index++) {
-        if (RootBridgeInfoHob->Entry[Count].Resource[Index].ResLength > 0) {
-          DEBUG ((DEBUG_INFO, "  BarType-%d: Base 0x%016lX Length 0x%016lX\n",
-            Index + 1,
-            RootBridgeInfoHob->Entry[Count].Resource[Index].ResBase,
-            RootBridgeInfoHob->Entry[Count].Resource[Index].ResLength));
-        }
+      if (UpldRootBridges->RootBridge[Count].Io.Base != MAX_UINT16) {
+        DEBUG ((DEBUG_INFO, "  I/O: 0x%04X-0x%04X\n",
+          UpldRootBridges->RootBridge[Count].Io.Base,
+          UpldRootBridges->RootBridge[Count].Io.Limit));
+      }
+
+      if (UpldRootBridges->RootBridge[Count].Mem.Base != MAX_UINT32) {
+        DEBUG ((DEBUG_INFO, "  Mem32: 0x%08X-0x%08X\n",
+          UpldRootBridges->RootBridge[Count].Mem.Base,
+          UpldRootBridges->RootBridge[Count].Mem.Limit));
+      }
+
+      if (UpldRootBridges->RootBridge[Count].MemAbove4G.Base != MAX_UINT64) {
+        DEBUG ((DEBUG_INFO, "  Mem64: 0x%016lX-0x%016lX\n",
+          UpldRootBridges->RootBridge[Count].MemAbove4G.Base,
+          UpldRootBridges->RootBridge[Count].MemAbove4G.Limit));
+      }
+
+      if (UpldRootBridges->RootBridge[Count].PMem.Base != MAX_UINT32) {
+        DEBUG ((DEBUG_INFO, "  PMem32: 0x%08X-0x%08X\n",
+          UpldRootBridges->RootBridge[Count].PMem.Base,
+          UpldRootBridges->RootBridge[Count].PMem.Limit));
+      }
+
+      if (UpldRootBridges->RootBridge[Count].PMemAbove4G.Base != MAX_UINT64) {
+        DEBUG ((DEBUG_INFO, "  PMem64: 0x%016lX-0x%016lX\n",
+          UpldRootBridges->RootBridge[Count].PMemAbove4G.Base,
+          UpldRootBridges->RootBridge[Count].PMemAbove4G.Limit));
       }
     }
+  } else {
+    DEBUG ((DEBUG_INFO, "Universal Payload PCI Root Bridge HOB not found\n"));
   }
 }
 
@@ -1762,110 +1809,114 @@ PciScanRootBridges (
 }
 
 /**
-  Fill PCI Root Bridge Resource Info into HOB
-
-  @param [in] Root                A pointer of the current root bridge
-  @param [in] RootBridgeInfoHob   A pointer of root bridge resource info HOB
-  @param [in] MaxRootBridgeCount  The maximum number of root bridges
-
-  @retval EFI_SUCCESS             Create HOBs successfully
-  @retval EFI_INVALID_PARAMETER   Invalid parameters passing
-  @retval EFI_LOAD_ERROR          Invalid data integrity
-
- **/
-EFI_STATUS
-FillPciRootBridgeInfo (
-  IN      PCI_IO_DEVICE             *Root,
-  IN OUT  PCI_ROOT_BRIDGE_INFO_HOB  *RootBridgeInfoHob,
-  IN      UINT8                      MaxRootBridgeCount
-  )
-{
-  UINT8           Index;
-  UINT8           Count;
-  PCI_BAR_TYPE    BarType;
-
-  if ((RootBridgeInfoHob == NULL) || (Root == NULL)) {
-    return EFI_INVALID_PARAMETER;
-  }
-
-  Count = RootBridgeInfoHob->Count;
-  if (Count >= MaxRootBridgeCount) {
-    return EFI_LOAD_ERROR;
-  }
-
-  RootBridgeInfoHob->Entry[Count].BusBase  = Root->BusNumberRanges.BusBase;
-  RootBridgeInfoHob->Entry[Count].BusLimit = Root->BusNumberRanges.BusLimit;
-  for (Index = 0; Index < PCI_MAX_BAR; Index++) {
-    if (Root->PciBar[Index].Length == 0) {
-      continue;
-    }
-    BarType = Root->PciBar[Index].BarType;
-    if ((BarType == PciBarTypeUnknown) || (BarType > PciBarTypePMem64)) {
-      continue;
-    }
-    RootBridgeInfoHob->Entry[Count].Resource[BarType - 1].ResBase   = Root->PciBar[Index].BaseAddress;
-    RootBridgeInfoHob->Entry[Count].Resource[BarType - 1].ResLength = Root->PciBar[Index].Length;
-  }
-  RootBridgeInfoHob->Count++;
-
-  return EFI_SUCCESS;
-}
-
-/**
-  Build PCI Root Bridge Info HOB
+  Build Universal Payload PCI Root Bridge HOB with actual enumeration data
 
   @param [in] RootBridges       A pointer of Root Bridges List
   @param [in] RootBridgeCount   The number of found root bridges
 
   @retval EFI_SUCCESS           Create HOBs successfully
   @retval EFI_OUT_OF_RESOURCES  Out of Hob resource
-  @retval EFI_LOAD_ERROR        Invalid data integrity
 
  **/
 EFI_STATUS
-BuildPciRootBridgeInfoHob (
+BuildUniversalPayloadPciRootBridgeHob (
   IN  CONST PCI_IO_DEVICE   *RootBridges,
   IN        UINT8            RootBridgeCount
   )
 {
-  EFI_STATUS                 Status;
-  LIST_ENTRY                *CurrentLink;
-  PCI_ROOT_BRIDGE_INFO_HOB  *RootBridgeInfoHob;
-  PCI_IO_DEVICE             *Root;
-  UINTN                      Length;
+  UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGES  *UpldRootBridges;
+  LIST_ENTRY                          *CurrentLink;
+  PCI_IO_DEVICE                       *Root;
+  UINTN                               Length;
+  UINT8                               Index;
+  UINT8                               BarIndex;
+  PCI_BAR_TYPE                        BarType;
 
-  Status = EFI_SUCCESS;
+  if (RootBridgeCount == 0) {
+    return EFI_SUCCESS;
+  }
 
-  Length  = sizeof (PCI_ROOT_BRIDGE_INFO_HOB);
-  Length += sizeof (PCI_ROOT_BRIDGE_ENTRY) * RootBridgeCount;
-  RootBridgeInfoHob = BuildGuidHob (&gLoaderPciRootBridgeInfoGuid, Length);
-  if (RootBridgeInfoHob == NULL) {
+  Length = sizeof (UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGES) + sizeof (UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGE) * RootBridgeCount;
+  UpldRootBridges = (UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGES *)BuildGuidHob (&gUniversalPayloadPciRootBridgeInfoGuid, Length);
+  if (UpldRootBridges == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
 
-  ZeroMem (RootBridgeInfoHob, Length);
-  RootBridgeInfoHob->Revision = 1;
-  RootBridgeInfoHob->Count    = 0;
+  ZeroMem (UpldRootBridges, Length);
+  UpldRootBridges->Header.Revision  = UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGES_REVISION;
+  UpldRootBridges->Header.Length    = (UINT16)Length;
+  UpldRootBridges->ResourceAssigned = TRUE;
+  UpldRootBridges->Count = RootBridgeCount;
 
+  Index = 0;
   CurrentLink = RootBridges->ChildList.ForwardLink;
-  while ((CurrentLink != NULL) && (CurrentLink != &RootBridges->ChildList)) {
+  while ((CurrentLink != NULL) && (CurrentLink != &RootBridges->ChildList) && (Index < RootBridgeCount)) {
     Root = PCI_IO_DEVICE_FROM_LINK (CurrentLink);
-    Status = FillPciRootBridgeInfo (Root, RootBridgeInfoHob, RootBridgeCount);
-    if (EFI_ERROR (Status)) {
-      break;
+
+    // Configure root bridge
+    UpldRootBridges->RootBridge[Index].HID = EISA_PNP_ID(0x0A03);
+    UpldRootBridges->RootBridge[Index].UID = Index;
+    UpldRootBridges->RootBridge[Index].Segment   = 0;
+    UpldRootBridges->RootBridge[Index].Supports  = EFI_PCI_ATTRIBUTE_IDE_PRIMARY_IO |
+                                                   EFI_PCI_ATTRIBUTE_IDE_SECONDARY_IO |
+                                                   EFI_PCI_ATTRIBUTE_ISA_IO_16 |
+                                                   EFI_PCI_ATTRIBUTE_ISA_MOTHERBOARD_IO |
+                                                   EFI_PCI_ATTRIBUTE_VGA_MEMORY |
+                                                   EFI_PCI_ATTRIBUTE_VGA_IO_16 |
+                                                   EFI_PCI_ATTRIBUTE_VGA_PALETTE_IO_16;
+    UpldRootBridges->RootBridge[Index].Attributes = UpldRootBridges->RootBridge[Index].Supports;
+    UpldRootBridges->RootBridge[Index].AllocationAttributes = EFI_PCI_HOST_BRIDGE_COMBINE_MEM_PMEM |
+                                                              EFI_PCI_HOST_BRIDGE_MEM64_DECODE;
+
+    // Bus range from enumerated data
+    UpldRootBridges->RootBridge[Index].Bus.Base  = Root->BusNumberRanges.BusBase;
+    UpldRootBridges->RootBridge[Index].Bus.Limit = Root->BusNumberRanges.BusLimit;
+
+    // Initialize resource ranges to invalid values
+    UpldRootBridges->RootBridge[Index].Io.Base = MAX_UINT16;
+    UpldRootBridges->RootBridge[Index].Mem.Base = MAX_UINT32;
+    UpldRootBridges->RootBridge[Index].MemAbove4G.Base = MAX_UINT64;
+    UpldRootBridges->RootBridge[Index].PMem.Base = MAX_UINT32;
+    UpldRootBridges->RootBridge[Index].PMemAbove4G.Base = MAX_UINT64;
+
+    // Fill in actual resource ranges from enumerated data
+    for (BarIndex = 0; BarIndex < PCI_MAX_BAR; BarIndex++) {
+      if (Root->PciBar[BarIndex].Length == 0) {
+        continue;
+      }
+      BarType = Root->PciBar[BarIndex].BarType;
+
+      switch (BarType) {
+        case PciBarTypeIo16:
+          UpldRootBridges->RootBridge[Index].Io.Base  = Root->PciBar[BarIndex].BaseAddress;
+          UpldRootBridges->RootBridge[Index].Io.Limit = Root->PciBar[BarIndex].BaseAddress + Root->PciBar[BarIndex].Length - 1;
+          break;
+        case PciBarTypeMem32:
+          UpldRootBridges->RootBridge[Index].Mem.Base  = Root->PciBar[BarIndex].BaseAddress;
+          UpldRootBridges->RootBridge[Index].Mem.Limit = Root->PciBar[BarIndex].BaseAddress + Root->PciBar[BarIndex].Length - 1;
+          break;
+        case PciBarTypeMem64:
+          UpldRootBridges->RootBridge[Index].MemAbove4G.Base  = Root->PciBar[BarIndex].BaseAddress;
+          UpldRootBridges->RootBridge[Index].MemAbove4G.Limit = Root->PciBar[BarIndex].BaseAddress + Root->PciBar[BarIndex].Length - 1;
+          break;
+        case PciBarTypePMem32:
+          UpldRootBridges->RootBridge[Index].PMem.Base  = Root->PciBar[BarIndex].BaseAddress;
+          UpldRootBridges->RootBridge[Index].PMem.Limit = Root->PciBar[BarIndex].BaseAddress + Root->PciBar[BarIndex].Length - 1;
+          break;
+        case PciBarTypePMem64:
+          UpldRootBridges->RootBridge[Index].PMemAbove4G.Base  = Root->PciBar[BarIndex].BaseAddress;
+          UpldRootBridges->RootBridge[Index].PMemAbove4G.Limit = Root->PciBar[BarIndex].BaseAddress + Root->PciBar[BarIndex].Length - 1;
+          break;
+        default:
+          break;
+      }
     }
 
+    Index++;
     CurrentLink = CurrentLink->ForwardLink;
   }
 
-  if (RootBridgeInfoHob->Count != RootBridgeCount) {
-    Status = EFI_LOAD_ERROR;
-  }
-
-  if (EFI_ERROR (Status)) {
-    RootBridgeInfoHob->Count = 0;
-  }
-  return Status;
+  return EFI_SUCCESS;
 }
 
 /**
@@ -1906,12 +1957,12 @@ PciEnumeration (
 
   PciEnableDevices (RootBridges);
 
-  BuildPciRootBridgeInfoHob (RootBridges, RootBridgeCount);
+  BuildUniversalPayloadPciRootBridgeHob (RootBridges, RootBridgeCount);
 
 #if DEBUG_PCI_ENUM
   DumpPciResAllocTable ();
   DumpPciResources (RootBridges);
-  DumpPciRootBridgeInfoHob ();
+  DumpUniversalPayloadPciRootBridgeHob ();
   DEBUG ((DEBUG_INFO, "MEM Pool Used: 0x%08X\n", (UINT32)(UINTN)GetAllocationPool() - (UINT32)(UINTN)MemPool));
 #endif
 

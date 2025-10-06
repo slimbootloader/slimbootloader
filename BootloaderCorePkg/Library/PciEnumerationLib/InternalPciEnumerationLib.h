@@ -9,7 +9,8 @@
 #define __INTERNAL_PCI_ENUMERTION_LIB_H__
 
 #include <IndustryStandard/Pci.h>
-#include <Guid/PciRootBridgeInfoGuid.h>
+#include <UniversalPayload/PciRootBridges.h>
+#include <Library/PciEnumerationLib.h>
 
 #define EFI_BRIDGE_IO32_DECODE_SUPPORTED      0x0001
 #define EFI_BRIDGE_PMEM32_DECODE_SUPPORTED    0x0002

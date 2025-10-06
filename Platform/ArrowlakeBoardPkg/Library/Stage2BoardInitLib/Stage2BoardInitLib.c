@@ -1884,8 +1884,8 @@ PlatformUpdateAcpiGnvs (
       PlatformNvs->SocBusLimit    = ResAllocTable->ResourceRange[0].BusLimit;
       PlatformNvs->SocIoBase      = (UINT16)ResAllocTable->ResourceRange[0].IoBase;
       PlatformNvs->SocIoLimit     = (UINT16)ResAllocTable->ResourceRange[0].IoLimit;
-      PlatformNvs->SocMem32Base   = ResAllocTable->ResourceRange[0].Mmio32Base;
-      PlatformNvs->SocMem32Limit  = ResAllocTable->ResourceRange[0].Mmio32Limit;
+      PlatformNvs->SocMem32Base   = (UINT32)ResAllocTable->ResourceRange[0].Mmio32Base;
+      PlatformNvs->SocMem32Limit  = (UINT32)ResAllocTable->ResourceRange[0].Mmio32Limit;
       PlatformNvs->SocMem64Base   = ResAllocTable->ResourceRange[0].Mmio64Base;
       PlatformNvs->SocMem64Limit  = ResAllocTable->ResourceRange[0].Mmio64Limit;
 
@@ -1893,8 +1893,8 @@ PlatformUpdateAcpiGnvs (
       PlatformNvs->PchBusLimit    = ResAllocTable->ResourceRange[1].BusLimit;
       PlatformNvs->PchIoBase      = (UINT16)ResAllocTable->ResourceRange[1].IoBase;
       PlatformNvs->PchIoLimit     = (UINT16)ResAllocTable->ResourceRange[1].IoLimit;
-      PlatformNvs->PchMem32Base   = ResAllocTable->ResourceRange[1].Mmio32Base;
-      PlatformNvs->PchMem32Limit  = ResAllocTable->ResourceRange[1].Mmio32Limit;
+      PlatformNvs->PchMem32Base   = (UINT32)ResAllocTable->ResourceRange[1].Mmio32Base;
+      PlatformNvs->PchMem32Limit  = (UINT32)ResAllocTable->ResourceRange[1].Mmio32Limit;
       PlatformNvs->PchMem64Base   = ResAllocTable->ResourceRange[1].Mmio64Base;
       PlatformNvs->PchMem64Limit  = ResAllocTable->ResourceRange[1].Mmio64Limit;
     }
