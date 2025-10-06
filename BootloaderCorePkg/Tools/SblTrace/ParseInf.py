@@ -133,8 +133,3 @@ def PrintDict(Dict, FileName, Console = False):
 
         if Console:
             print((json.dumps(Dict, indent=2)))
-
-
-if __name__ == "__main__":
-    inflist = GetAllInfFileList("../sblplatform")
-    print(json.dumps(FindLibraryDependency(inflist,"SerialPortLib"), indent=2))

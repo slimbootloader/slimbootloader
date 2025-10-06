@@ -1,4 +1,5 @@
-## @ SlimTrace.py
+#!/usr/bin/env python3
+## @ SblTrace.py
 #
 # Copyright (c) 2025, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -480,7 +481,7 @@ def main():
 
     Config = ParseConfig()
 
-    parser = argparse.ArgumentParser(description='SlimTrace - Slim Bootloader Automated Debug and Triage Tool')
+    parser = argparse.ArgumentParser(description='SblTrace - Slim Bootloader Automated Debug and Triage Tool')
 
     # Required arguments
     required_group = parser.add_argument_group('required arguments')
