@@ -1209,8 +1209,8 @@ PlatformUpdateAcpiGnvs (
           AcpiParameter->Io16Length[Index]    = (UINT16) (ResRange->IoLimit - ResRange->IoBase + 1);
         }
         if (ResRange->Mmio32Limit != 0) {
-          AcpiParameter->Mmio32Base[Index]    = ResRange->Mmio32Base;
-          AcpiParameter->Mmio32Length[Index]  = (ResRange->Mmio32Limit - ResRange->Mmio32Base + 1);
+          AcpiParameter->Mmio32Base[Index]    = (UINT32)ResRange->Mmio32Base;
+          AcpiParameter->Mmio32Length[Index]  = (UINT32)(ResRange->Mmio32Limit - ResRange->Mmio32Base + 1);
         }
         if (ResRange->Mmio64Limit != 0) {
           AcpiParameter->Mmio64Base[Index]    = ResRange->Mmio64Base;

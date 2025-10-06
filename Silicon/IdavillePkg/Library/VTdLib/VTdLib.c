@@ -13,7 +13,7 @@
 #include <Library/VTdLib.h>
 #include <Library/DmaRemap.h>
 #include <Library/HobLib.h>
-#include <Guid/PciRootBridgeInfoGuid.h>
+#include <UniversalPayload/PciRootBridges.h>
 #include <Library/PciExpressLib.h>
 #include <PlatformBase.h>
 #include <Library/BootloaderCoreLib.h>
@@ -299,14 +299,14 @@ GetStackForPort (
 
   @retval         EFI_SUCCESS    ,      if DRHD is appended successfully
   @retval         EFI_UNSUPPORTED,      if Bus number is -1
-  @retval         EFI_INVALID_PARAMETER,if CurrentPtr/DrhdLen/RootBridgeInfoHob is NULL
+  @retval         EFI_INVALID_PARAMETER,if CurrentPtr/DrhdLen/UpldRootBridges is NULL
 **/
 EFI_STATUS
 AppendDrhd (
-  IN OUT VOID                 **CurrentPtr,
-  IN     UINT8                  Stack,
-  IN OUT UINT16                *DrhdLen,
-  IN PCI_ROOT_BRIDGE_INFO_HOB  *RootBridgeInfoHob
+  IN OUT VOID                             **CurrentPtr,
+  IN     UINT8                              Stack,
+  IN OUT UINT16                            *DrhdLen,
+  IN UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGES    *UpldRootBridges
   )
 {
   UINT8                       Idx;
@@ -324,7 +324,7 @@ AppendDrhd (
   EFI_ACPI_DMAR_DEVICE_SCOPE_ENTRY_STRUCTURE       *DevScope;
   EFI_ACPI_DMAR_PCI_PATH                           *PciPath;
 
-  if ((*CurrentPtr == NULL) || (DrhdLen == NULL) || (RootBridgeInfoHob == NULL)) {
+  if ((*CurrentPtr == NULL) || (DrhdLen == NULL) || (UpldRootBridges == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -348,12 +348,12 @@ AppendDrhd (
   for (Idx = 0; Idx < MAX_IIO_STACK; Idx++) {
     if (GetChopType(0) == TypeLcc) {
       if (mValidStackLcc[Idx] == Stack) {
-        Bus = RootBridgeInfoHob->Entry[Idx].BusBase;
+        Bus = (UINT8) UpldRootBridges->RootBridge[Idx].Bus.Base;
         break;
       }
     } else {
       if (mValidStackHcc[Idx] == Stack) {
-        Bus = RootBridgeInfoHob->Entry[Idx].BusBase;
+        Bus = (UINT8) UpldRootBridges->RootBridge[Idx].Bus.Base;
         break;
       }
     }
@@ -579,14 +579,14 @@ AppendDrhd (
 
   @retval         EFI_SUCCESS    ,      if ATSR is appended successfully
   @retval         EFI_UNSUPPORTED,      if Bus number is -1
-  @retval         EFI_INVALID_PARAMETER,if CurrentPtr/AtsrLen/RootBridgeInfoHob is NULL
+  @retval         EFI_INVALID_PARAMETER,if CurrentPtr/AtsrLen/UpldRootBridges is NULL
 **/
 EFI_STATUS
 AppendAtsr (
-  IN OUT VOID                 **CurrentPtr,
-  IN     UINT8                  Stack,
-  IN OUT UINT16                *AtsrLen,
-  IN PCI_ROOT_BRIDGE_INFO_HOB  *RootBridgeInfoHob
+  IN OUT VOID                             **CurrentPtr,
+  IN     UINT8                              Stack,
+  IN OUT UINT16                            *AtsrLen,
+  IN UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGES    *UpldRootBridges
   )
 {
   UINT8                       Idx;
@@ -604,7 +604,7 @@ AppendAtsr (
   EFI_ACPI_DMAR_DEVICE_SCOPE_ENTRY_STRUCTURE                 *DevScope;
   EFI_ACPI_DMAR_PCI_PATH                                     *PciPath;
 
-  if ((*CurrentPtr == NULL) || (AtsrLen == NULL) || (RootBridgeInfoHob == NULL)) {
+  if ((*CurrentPtr == NULL) || (AtsrLen == NULL) || (UpldRootBridges == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -627,12 +627,12 @@ AppendAtsr (
   for (Idx = 0; Idx < MAX_IIO_STACK; Idx++) {
     if (GetChopType(0) == TypeLcc) {
       if (mValidStackLcc[Idx] == Stack) {
-        Bus = RootBridgeInfoHob->Entry[Idx].BusBase;
+        Bus = (UINT8) UpldRootBridges->RootBridge[Idx].Bus.Base;
         break;
       }
     } else {
       if (mValidStackHcc[Idx] == Stack) {
-        Bus = RootBridgeInfoHob->Entry[Idx].BusBase;
+        Bus = (UINT8) UpldRootBridges->RootBridge[Idx].Bus.Base;
         break;
       }
     }
@@ -803,7 +803,7 @@ AppendRmrr (
 EFI_STATUS
 UpdateDmarHeader (
   IN OUT EFI_ACPI_DMAR_DESCRIPTION_TABLE   *Dmar,
-  IN PCI_ROOT_BRIDGE_INFO_HOB              *RootBridgeInfoHob
+  IN UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGES    *UpldRootBridges
   )
 {
   UINTN                       VtdBar;
@@ -814,16 +814,16 @@ UpdateDmarHeader (
   Dmar->Flags = EFI_ACPI_DMAR_TABLE_FLAGS_INTR_REMAP_CLEAR;
   Bus = (UINT8) -1;
 
-  if (RootBridgeInfoHob == NULL) {
-    DEBUG ((DEBUG_INFO, "RootBridgeInfoHob not found, returning\n"));
+  if (UpldRootBridges == NULL) {
+    DEBUG ((DEBUG_INFO, "UpldRootBridges not found, returning\n"));
     return EFI_INVALID_PARAMETER;
   }
 
   //
   // Check INTR REMAP capability (on Stack0)
   //
-  if (IIO_STACK0 < RootBridgeInfoHob->Count) {
-    Bus = RootBridgeInfoHob->Entry[IIO_STACK0].BusBase;
+  if (IIO_STACK0 < UpldRootBridges->Count) {
+    Bus = (UINT8) UpldRootBridges->RootBridge[IIO_STACK0].Bus.Base;
   } else {
     return EFI_INVALID_PARAMETER;
   }
@@ -879,13 +879,14 @@ UpdateDmarTable (
   UINT16                                        DrhdLen;
   UINT16                                        AtsrLen;
   UINT16                                        RmrrLen;
-  PCI_ROOT_BRIDGE_INFO_HOB                     *RootBridgeInfoHob;
+  UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGES           *UpldRootBridges;
 
   Status = EFI_SUCCESS;
 
-  RootBridgeInfoHob = (PCI_ROOT_BRIDGE_INFO_HOB *) GetGuidHobData (NULL, NULL, &gLoaderPciRootBridgeInfoGuid);
-  if (RootBridgeInfoHob == NULL) {
-    DEBUG ((DEBUG_INFO, "RootBridgeInfoHob not found, returning\n"));
+  // Try to get Universal Payload PCI Root Bridge HOB
+  UpldRootBridges = (UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGES *) GetGuidHobData (NULL, NULL, &gUniversalPayloadPciRootBridgeInfoGuid);
+  if (UpldRootBridges == NULL) {
+    DEBUG ((DEBUG_INFO, "Universal Payload PCI Root Bridge HOB not found\n"));
     Status = EFI_UNSUPPORTED;
     return Status;
   }
@@ -904,7 +905,7 @@ UpdateDmarTable (
     } else {
       Stack = mValidStackLcc[Idx];
     }
-    Status   = AppendDrhd ((VOID **)&Current, Stack, &DrhdLen, RootBridgeInfoHob);
+    Status   = AppendDrhd ((VOID **)&Current, Stack, &DrhdLen, UpldRootBridges);
     if (EFI_ERROR(Status)) {
       DEBUG ((DEBUG_INFO, "Append DRHD failed, returning\n"));
       return Status;
@@ -922,7 +923,7 @@ UpdateDmarTable (
     } else {
       Stack = mValidStackLcc[Idx];
     }
-    Status   = AppendAtsr ((VOID **)&Current, Stack, &AtsrLen, RootBridgeInfoHob);
+    Status   = AppendAtsr ((VOID **)&Current, Stack, &AtsrLen, UpldRootBridges);
     if (EFI_ERROR(Status)) {
       DEBUG ((DEBUG_INFO, "Append ATSR failed, returning\n"));
       return Status;
@@ -943,7 +944,7 @@ UpdateDmarTable (
   //
   // Update Dmar header fields
   //
-  UpdateDmarHeader (Dmar, RootBridgeInfoHob);
+  UpdateDmarHeader (Dmar, UpldRootBridges);
 
   return Status;
 }

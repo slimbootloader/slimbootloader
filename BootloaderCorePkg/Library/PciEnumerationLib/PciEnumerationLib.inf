@@ -46,7 +46,7 @@
 
 [Guids]
   gFspNonVolatileStorageHobGuid
-  gLoaderPciRootBridgeInfoGuid
+  gUniversalPayloadPciRootBridgeInfoGuid
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress  ## CONSUMES
