@@ -25,7 +25,7 @@
   This function checks whether the contents of a buffer are all zeros. If the
   contents are all zeros, return TRUE. Otherwise, return FALSE.
 
-  If Length > 0 and Buffer is NULL, then ASSERT().
+  If Length = 0 or Buffer is NULL, then ASSERT().
   If Length is greater than (MAX_ADDRESS - Buffer + 1), then ASSERT().
 
   @param  Buffer      The pointer to the buffer to be checked.
@@ -42,7 +42,7 @@ IsZeroBuffer (
   IN UINTN       Length
   )
 {
-  ASSERT (!(Buffer == NULL && Length > 0));
+  ASSERT (!(Buffer == NULL || Length == 0));
   ASSERT ((Length - 1) <= (MAX_ADDRESS - (UINTN)Buffer));
   return InternalMemIsZeroBuffer (Buffer, Length);
 }

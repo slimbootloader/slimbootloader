@@ -1722,7 +1722,9 @@ PlatformUpdateAcpiGnvs (
       }
       PchNvs->UD0[Index] = FspsConfig->SerialIoUartDmaEnable[Index];
       PchNvs->UP0[Index] = FspsConfig->SerialIoUartPowerGating[Index];
-      PchNvs->UI0[Index] = mPchSSerialIoUartMode[Index].SerialIoUARTIrq;
+      if (Index < PCH_MAX_SERIALIO_UART_CONTROLLERS) {
+        PchNvs->UI0[Index] = mPchSSerialIoUartMode[Index].SerialIoUARTIrq;
+      }
     }
   }
   // PCH PCIe RP
