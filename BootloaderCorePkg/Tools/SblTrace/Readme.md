@@ -1,7 +1,7 @@
-# SlimTrace
+# SblTrace
 
 ## Overview
-SlimTrace is designed to simplify the Slim Bootloader debugging process by automatically injecting debug print statements. The tool works with a call graph to help identify the exact point where an error occurs, streamlining the debugging workflow.
+SblTrace is designed to simplify the Slim Bootloader debugging process by automatically injecting debug print statements. The tool works with a call graph to help identify the exact point where an error occurs, streamlining the debugging workflow.
 
 ## How It Works
 1. **File Tracking**: The tool scans and generates a list (cscope.files) of all relevant C source files that need to be tracked.
@@ -14,11 +14,11 @@ SlimTrace is designed to simplify the Slim Bootloader debugging process by autom
 ## Prerequisites
 - Python (to execute the tool).
 - Slim Bootloader code build environment.
-- Cscope and tceetree installed in "SlimTrace/Tools" folder.
+- Cscope and tceetree installed in "SblTrace/Tools" folder.
 
 ## Usage
    ```sh
-   cd SlimTrace
+   cd SblTrace
    ```
 - Update Config.yaml:
 
@@ -32,9 +32,9 @@ Update them accordingly. This list is optional, but you can add entries that are
 
 Run the following command to analyze your firmware code:
 ```sh
-usage: SlimTrace.py [-h] -f FUNCTION_NAME -d SBL_PATH -p PLATFORM_NAME
+usage: SblTrace.py [-h] -f FUNCTION_NAME -d SBL_PATH -p PLATFORM_NAME
 
-SlimTrace - Slim Bootloader Automated Debug and Triage Tool
+SblTrace - Slim Bootloader Automated Debug and Triage Tool
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -51,5 +51,5 @@ required arguments:
 Example (on Windows host):
 ```sh
 
-python.exe .\SlimTrace.py -f PciEnumeration -d ..\..\..\..\slimbootloader\ -p AZB
+python.exe .\SblTrace.py -f PciEnumeration -d ..\..\..\..\slimbootloader\ -p AZB
 ```
