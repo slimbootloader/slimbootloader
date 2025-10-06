@@ -29,6 +29,7 @@ CDATA_FLAG_TYPE_MASK    = (3 << 0)
 CDATA_FLAG_TYPE_NORMAL  = (0 << 0)
 CDATA_FLAG_TYPE_ARRAY   = (1 << 0)
 CDATA_FLAG_TYPE_REFER   = (2 << 0)
+KEY_SEQUENCE_TIMEOUT_MS = 200
 
 class TERM:
     # bit0: GFX   bit1: TXT
@@ -192,6 +193,10 @@ def get_ch_target ():
         return b''
 
     if ch == '\x1b':
+        # On fast systems, the second scancode of an escape sequence won't
+        # be ready immediately and can be misinterpreted as the ESC key
+        #  alone without this wait.
+        utime.sleep_ms (KEY_SEQUENCE_TIMEOUT_MS)
         ch = chr(get_char())
         if ch in '\x00\x1b':
             return b'\x1b'
