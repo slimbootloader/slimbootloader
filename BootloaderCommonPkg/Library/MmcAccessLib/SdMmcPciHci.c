@@ -62,7 +62,7 @@ DumpCapabilityReg (
   DEBUG ((DEBUG_VERBOSE, "   Driver Type D     %a\n", Capability->DriverTypeD ? "TRUE" : "FALSE"));
   DEBUG ((DEBUG_VERBOSE, "   Driver Type 4     %a\n", Capability->DriverType4 ? "TRUE" : "FALSE"));
   if (Capability->TimerCount == 0) {
-    DEBUG ((DEBUG_VERBOSE, "   Retuning TimerCnt Disabled\n", 2 * (Capability->TimerCount - 1)));
+    DEBUG ((DEBUG_VERBOSE, "   Retuning TimerCnt Disabled\n"));
   } else {
     DEBUG ((DEBUG_VERBOSE, "   Retuning TimerCnt %dseconds\n", 2 * (Capability->TimerCount - 1)));
   }

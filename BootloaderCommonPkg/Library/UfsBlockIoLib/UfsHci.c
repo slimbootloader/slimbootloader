@@ -2041,7 +2041,7 @@ UfsPowerModeAndGearSwitch (
       return Status;
     }
     CurrentHsGear[UfsTxLane] = UicCommand.Arg3;
-    if (CurrentHsGear[UfsTxLane] < MaxHsGear[UfsRxLane]) {
+    if (CurrentHsGear[UfsTxLane] < MaxHsGear[UfsTxLane]) {
       DEBUG ((DEBUG_INFO, "CurrentHsGear[UfsTxLane] = %x switching to MaxHsGear[UfsTxLane]=%x \n", CurrentHsGear[UfsTxLane], MaxHsGear[UfsTxLane]));
       UfsFillUicCommand (UfsUicDmeSet, PA_TXGear, 0, 0, MaxHsGear[UfsTxLane], &UicCommand );
       Status = UfsExecUicCommands (Private, &UicCommand);
