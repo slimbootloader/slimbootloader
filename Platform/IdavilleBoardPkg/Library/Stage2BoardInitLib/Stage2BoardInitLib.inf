@@ -71,7 +71,6 @@
 [Guids]
   gOsConfigDataGuid
   gFspVariableNvDataHobGuid
-  gLoaderPciRootBridgeInfoGuid
   gIioUdsHobGuid
   gEfiGlobalVariableGuid
 

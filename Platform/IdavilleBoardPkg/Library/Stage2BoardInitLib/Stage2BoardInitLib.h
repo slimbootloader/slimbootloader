@@ -53,7 +53,7 @@
 #include <Guid/SystemTableInfoGuid.h>
 #include <Guid/OsConfigDataHobGuid.h>
 #include <Guid/SmmInformationGuid.h>
-#include <Guid/PciRootBridgeInfoGuid.h>
+#include <UniversalPayload/PciRootBridges.h>
 #include <Guid/BootLoaderVersionGuid.h>
 #include <IndustryStandard/Acpi.h>
 #include <IndustryStandard/Pci.h>

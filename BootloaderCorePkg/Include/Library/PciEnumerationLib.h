@@ -26,6 +26,44 @@ typedef enum {
   EfiPciBeforeResourceCollection
 } EFI_PCI_CONTROLLER_RESOURCE_ALLOCATION_PHASE;
 
+//
+// PCI BAR definitions
+//
+typedef enum {
+  PciBarTypeUnknown = 0,
+  PciBarTypeIo16,
+  PciBarTypeIo32,
+  PciBarTypeMem32,
+  PciBarTypePMem32,
+  PciBarTypeMem64,
+  PciBarTypePMem64,
+  PciBarTypeMaxType
+} PCI_BAR_TYPE;
+
+//
+// PCI Resource Allocation structures
+//
+typedef struct {
+  UINT8             BusBase;
+  UINT8             BusLimit;
+  UINT16            Reserved;
+  UINT32            IoBase;
+  UINT32            IoLimit;
+  UINT64            Mmio32Base;
+  UINT64            Mmio32Limit;
+  UINT64            Mmio64Base;
+  UINT64            Mmio64Limit;
+} PCI_RES_ALLOC_RANGE;
+
+typedef struct {
+  UINT32                        Signature;
+  UINT16                        Version;
+  UINT16                        Length;
+  UINT8                         NumOfEntries;
+  UINT8                         Reserved[3];
+  PCI_RES_ALLOC_RANGE           ResourceRange[0];
+} PCI_RES_ALLOC_TABLE;
+
 typedef VOID   (EFIAPI *PLATFORM_PCI_ENUM_HOOK_PROC) (UINT8 Bus, UINT8 Dev, UINT8 Fun, EFI_PCI_CONTROLLER_RESOURCE_ALLOCATION_PHASE Phase);
 
 /**

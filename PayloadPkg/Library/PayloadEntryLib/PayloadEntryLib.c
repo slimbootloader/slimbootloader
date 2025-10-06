@@ -26,7 +26,6 @@
 #include <Library/PagingLib.h>
 #include <Guid/BootLoaderVersionGuid.h>
 #include <Guid/LoaderPlatformInfoGuid.h>
-#include <Guid/PciRootBridgeInfoGuid.h>
 
 /**
   Initialize critical payload global data.
