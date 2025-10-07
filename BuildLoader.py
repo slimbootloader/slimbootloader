@@ -227,6 +227,7 @@ class BaseBoard(object):
         self.ENABLE_ELF_SUPPORT    = 1
         self.ENABLE_FV_SUPPORT     = 1
         self.ENABLE_PE32_SUPPORT   = 1
+        self.ENABLE_AB_SLOT_SUPPORT = 1
 
         #     0: Direct access from flash
         # other: Load image into memory address

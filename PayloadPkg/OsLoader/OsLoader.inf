@@ -112,6 +112,7 @@
   gPayloadTokenSpaceGuid.PcdGrubBootCfgEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashMask
   gPayloadTokenSpaceGuid.PcdRtcmRsvdSize
+  gPlatformCommonLibTokenSpaceGuid.PcdAbSlotSupportEnabled
 
 [Depex]
   TRUE
