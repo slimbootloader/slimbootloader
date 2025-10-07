@@ -353,7 +353,7 @@ MpInit (
       InitializeSpinLock (&mMpDataStruct.SpinLock);
 
       //
-      // Allocate 1 K * 16 AP Stack, assume to support max 16 CPUs
+      // Allocate 4K * 16 AP Stack, assume to support max 16 CPUs
       //
       ApStackTop = (EFI_PHYSICAL_ADDRESS) (UINTN)AllocatePages ( \
                    EFI_SIZE_TO_PAGES (PcdGet32 (PcdCpuMaxLogicalProcessorNumber) * AP_STACK_SIZE));

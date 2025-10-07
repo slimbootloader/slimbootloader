@@ -326,7 +326,8 @@ ParseElfImage (
   CurrentLoadAddress           = ElfCt->FileBase + FileOffset;
 
   // check if CurrentLoadAddress meets load alignment requirement.
-  if ( ((UINTN)CurrentLoadAddress & ~(SegAlignment - 1)) != (UINTN)CurrentLoadAddress) {
+  // Only when SegAlignment > 1, perform the alignment check
+  if ((SegAlignment > 1) && ((UINTN)CurrentLoadAddress & ~(SegAlignment - 1)) != (UINTN)CurrentLoadAddress) {
     ElfCt->ReloadRequired = TRUE;
   }
   if (!ElfCt->ReloadRequired) {
