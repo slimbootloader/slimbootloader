@@ -43,7 +43,7 @@ RpmbCalcHmacSha256(
   )
 {
   //TODO: Andriod does HMAC_Update in a loop of BlockCnt. Change this later if we need BlocksCnt > 1
-  return HmacSha256 ((UINT8 *)Frames->Data, HMAC_DATA_LEN, Key, KeySize, Mac, RPMB_MAC_SIZE);
+  return HmacSha256 ((UINT8 *)&Frames->Data, HMAC_DATA_LEN, Key, KeySize, Mac, RPMB_MAC_SIZE);
 }
 
 /**

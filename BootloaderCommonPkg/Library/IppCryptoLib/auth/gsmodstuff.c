@@ -63,7 +63,7 @@ BNU_CHUNK_T gsMontFactor(BNU_CHUNK_T m0)
          y+=x;
       mask += mask + 1;
    }
-   return 0-y;
+   return (BNU_CHUNK_T)(0U - y);
 }
 
 /*
