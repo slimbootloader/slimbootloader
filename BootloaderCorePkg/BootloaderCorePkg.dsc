@@ -331,6 +331,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdMinDecompression    | FALSE
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled | $(HAVE_MEASURED_BOOT)
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled | $(HAVE_VERIFIED_BOOT)
+  gPlatformCommonLibTokenSpaceGuid.PcdAbSlotSupportEnabled| $(ENABLE_AB_SLOT_SUPPORT)
   gPlatformModuleTokenSpaceGuid.PcdIntelGfxEnabled        | $(HAVE_VBT_BIN)
   gPlatformModuleTokenSpaceGuid.PcdAcpiEnabled            | $(HAVE_ACPI_TABLE)
   gPlatformModuleTokenSpaceGuid.PcdSmpEnabled             | $(ENABLE_SMP_INIT)
