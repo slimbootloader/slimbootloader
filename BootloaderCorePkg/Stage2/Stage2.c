@@ -179,7 +179,7 @@ NormalBootPath (
   PldMachine = IS_X64 ? IMAGE_FILE_MACHINE_X64 : IMAGE_FILE_MACHINE_I386;
 
   Status  = EFI_SUCCESS;
-  if (Dst[0] == 0x00005A4D) {
+  if (FeaturePcdGet (PcdPe32SupportEnabled) && (Dst[0] == 0x00005A4D)) {
     // It is a PE format
     DEBUG ((DEBUG_INFO, "PE32 Format Payload\n"));
     Status = PeCoffRelocateImage ((UINT32)(UINTN)Dst);
@@ -209,7 +209,7 @@ NormalBootPath (
     // ASSUME 64bit payload. Need get arch info if need support 32bit payload
     PldMachine = IMAGE_FILE_MACHINE_X64;
     PldEntry   = (PAYLOAD_ENTRY)(UINTN)Context.PayloadEntryPoint;
-  } else if (Dst[10] == EFI_FVH_SIGNATURE) {
+  } else if (FeaturePcdGet (PcdFvSupportEnabled) && (Dst[10] == EFI_FVH_SIGNATURE)) {
     // It is a FV format
     DEBUG ((DEBUG_INFO, "FV Format Payload\n"));
     UefiSig = Dst[0];

@@ -224,6 +224,8 @@ class BaseBoard(object):
         self.PAYLOAD_LOAD_HIGH     = 1
         self.PAYLOAD_EXE_BASE      = 0x00800000
         self.ENABLE_ELF_SUPPORT    = 1
+        self.ENABLE_FV_SUPPORT     = 1
+        self.ENABLE_PE32_SUPPORT   = 1
 
         #     0: Direct access from flash
         # other: Load image into memory address

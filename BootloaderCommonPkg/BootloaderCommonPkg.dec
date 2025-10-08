@@ -353,6 +353,10 @@
   gPlatformCommonLibTokenSpaceGuid.PcdTxtEnabled                  | FALSE  | BOOLEAN | 0x20000229
   # Enable ELF payload support
   gPlatformCommonLibTokenSpaceGuid.PcdElfSupportEnabled           | TRUE   | BOOLEAN | 0x2000022A
+  # Enable FV payload support
+  gPlatformCommonLibTokenSpaceGuid.PcdFvSupportEnabled            | TRUE   | BOOLEAN | 0x2000022B
+  # Enable PE32 payload support
+  gPlatformCommonLibTokenSpaceGuid.PcdPe32SupportEnabled          | TRUE   | BOOLEAN | 0x2000022C
 
 [PcdsFixedAtBuild]
   gPlatformCommonLibTokenSpaceGuid.PcdFipsSupport     | FALSE      | BOOLEAN | 0x20000226
