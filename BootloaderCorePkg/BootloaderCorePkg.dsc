@@ -342,6 +342,8 @@
   gPlatformModuleTokenSpaceGuid.PcdSplashEnabled          | $(ENABLE_SPLASH)
   gPlatformModuleTokenSpaceGuid.PcdFramebufferInitEnabled | $(ENABLE_FRAMEBUFFER_INIT)
   gPlatformCommonLibTokenSpaceGuid.PcdElfSupportEnabled  | $(ENABLE_ELF_SUPPORT)
+  gPlatformCommonLibTokenSpaceGuid.PcdFvSupportEnabled   | $(ENABLE_FV_SUPPORT)
+  gPlatformCommonLibTokenSpaceGuid.PcdPe32SupportEnabled | $(ENABLE_PE32_SUPPORT)
   gPlatformModuleTokenSpaceGuid.PcdVtdEnabled             | $(ENABLE_VTD)
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled         | $(HAVE_PSD_TABLE)
   gPayloadTokenSpaceGuid.PcdGrubBootCfgEnabled            | $(ENABLE_GRUB_CONFIG)

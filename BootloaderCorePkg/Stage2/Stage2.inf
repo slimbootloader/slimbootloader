@@ -163,5 +163,7 @@
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize
   gPlatformCommonLibTokenSpaceGuid.PcdElfSupportEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdFvSupportEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdPe32SupportEnabled
 [Depex]
   TRUE
