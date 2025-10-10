@@ -46,6 +46,7 @@
   gLoaderPlatformDataGuid
   gBootLoaderServiceGuid
   gBootLoaderVersionGuid
+  gUniversalPayloadAcpiTableGuid
 
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdMaxLibraryDataEntry

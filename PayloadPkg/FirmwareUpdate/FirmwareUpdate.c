@@ -10,7 +10,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Uefi/UefiBaseType.h>
 #include <Library/PcdLib.h>
 #include <Library/BaseLib.h>
-#include <Guid/SystemTableInfoGuid.h>
 #include <Guid/BootLoaderVersionGuid.h>
 #include <Library/HobLib.h>
 #include <Library/CryptoLib.h>

@@ -36,6 +36,6 @@
 [Guids]
   gEfiGraphicsInfoHobGuid
   gLoaderMemoryMapInfoGuid
-  gLoaderSystemTableInfoGuid
+  gUniversalPayloadAcpiTableGuid
 
 [Pcd]

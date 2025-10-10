@@ -81,7 +81,6 @@
 [Guids]
   gFspReservedMemoryResourceHobGuid
   gLoaderPlatformDeviceInfoGuid
-  gLoaderSystemTableInfoGuid
   gLoaderPerformanceInfoGuid
   gLoaderLibraryDataGuid
   gLoaderMemoryMapInfoGuid

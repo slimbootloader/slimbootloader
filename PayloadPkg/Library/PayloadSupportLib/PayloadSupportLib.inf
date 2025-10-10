@@ -39,7 +39,6 @@
   gLoaderMemoryMapInfoGuid
   gLoaderFspInfoGuid
   gLoaderPlatformInfoGuid
-  gLoaderSystemTableInfoGuid
   gLoaderPerformanceInfoGuid
 
 [Pcd]

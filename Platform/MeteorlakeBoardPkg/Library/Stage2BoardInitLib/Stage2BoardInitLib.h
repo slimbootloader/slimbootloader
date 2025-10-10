@@ -36,7 +36,6 @@
 #include <Library/SmbiosInitLib.h>
 #include <Library/BdatLib.h>
 #include <Guid/GraphicsInfoHob.h>
-#include <Guid/SystemTableInfoGuid.h>
 #include <Guid/OsConfigDataHobGuid.h>
 #include <Guid/SmmInformationGuid.h>
 #include <IndustryStandard/Acpi.h>

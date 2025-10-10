@@ -298,7 +298,7 @@ AcpiTableUpdate (
   AcpiPlatformChecksum ((UINT8 *)Xsdt, Xsdt->Length);
 
   //
-  // Update AcpiTop for gLoaderSystemTableInfoGuid
+  // Update AcpiTop for S3 resume
   //
   S3Data->AcpiTop = (UINT32)(UINTN)Current;
 

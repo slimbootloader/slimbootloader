@@ -50,7 +50,6 @@
 #include <MkhiMsgs.h>
 #include <GpioPinsCdf.h>
 #include <Guid/GraphicsInfoHob.h>
-#include <Guid/SystemTableInfoGuid.h>
 #include <Guid/OsConfigDataHobGuid.h>
 #include <Guid/SmmInformationGuid.h>
 #include <UniversalPayload/PciRootBridges.h>

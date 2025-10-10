@@ -24,7 +24,6 @@
 #include <Library/DebugPrintErrorLevelLib.h>
 #include <Library/FspSupportLib.h>
 #include <Guid/GraphicsInfoHob.h>
-#include <Guid/SystemTableInfoGuid.h>
 #include <Pi/PiBootMode.h>
 #include <Library/BootloaderCoreLib.h>
 #include <Library/HeciLib.h>
