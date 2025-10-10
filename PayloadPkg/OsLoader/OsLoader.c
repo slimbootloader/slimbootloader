@@ -1260,7 +1260,7 @@ BootOsImage (
     //
     // Parse A/B Slot Info
     //
-    if (!EFI_ERROR (Status)) {
+    if (!EFI_ERROR (Status) && FeaturePcdGet (PcdAbSlotSupportEnabled)) {
       Status = ParseAbSlot (OsBootOption, HwPartHandle);
       if (EFI_ERROR (Status)) {
         DEBUG ((DEBUG_INFO, "Failed to Parse A/B Slot info %r\n", Status));
