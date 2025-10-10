@@ -8,7 +8,6 @@
 #ifndef _BOARD_INIT_LIB_H_
 
 #include <Guid/GraphicsInfoHob.h>
-#include <Guid/SystemTableInfoGuid.h>
 #include <UniversalPayload/SerialPortInfo.h>
 #include <Guid/LoaderFspInfoGuid.h>
 #include <Guid/MemoryMapInfoGuid.h>

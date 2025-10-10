@@ -20,7 +20,6 @@
 #include <Library/VariableLib.h>
 #include <Library/ContainerLib.h>
 #include <Guid/GraphicsInfoHob.h>
-#include <Guid/SystemTableInfoGuid.h>
 #include <FspsUpd.h>
 #include <GlobalNvsAreaDef.h>
 #include <ConfigDataDefs.h>

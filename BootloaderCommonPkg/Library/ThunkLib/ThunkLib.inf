@@ -38,6 +38,5 @@
 [Guids]
   gEfiGraphicsInfoHobGuid
   gLoaderMemoryMapInfoGuid
-  gLoaderSystemTableInfoGuid
 
 [Pcd]

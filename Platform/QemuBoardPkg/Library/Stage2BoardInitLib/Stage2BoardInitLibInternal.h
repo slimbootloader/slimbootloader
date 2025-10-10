@@ -32,7 +32,6 @@
 #include <Library/SmbiosInitLib.h>
 #include <Library/PrintLib.h>
 #include <Guid/GraphicsInfoHob.h>
-#include <Guid/SystemTableInfoGuid.h>
 #include <Guid/SmmInformationGuid.h>
 #include <FspsUpd.h>
 #include <BlCommon.h>

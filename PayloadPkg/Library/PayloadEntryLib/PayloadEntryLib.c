@@ -26,6 +26,7 @@
 #include <Library/PagingLib.h>
 #include <Guid/BootLoaderVersionGuid.h>
 #include <Guid/LoaderPlatformInfoGuid.h>
+#include <UniversalPayload/AcpiTable.h>
 
 /**
   Initialize critical payload global data.
@@ -177,7 +178,7 @@ SecStartup (
   )
 {
   PAYLOAD_GLOBAL_DATA       *GlobalDataPtr;
-  SYSTEM_TABLE_INFO         *SystemTableInfo;
+  UNIVERSAL_PAYLOAD_ACPI_TABLE *AcpiTable;
   UINT64                    TimeStamp;
   RETURN_STATUS             Status;
   EFI_HOB_GUID_TYPE         *GuidHob;
@@ -270,9 +271,12 @@ SecStartup (
   AddMeasurePointTimestamp (0x4000, TimeStamp);
 
   // ACPI table
-  SystemTableInfo = GetSystemTableInfo ();
-  if ((SystemTableInfo != NULL) && (SystemTableInfo->AcpiTableBase != 0)) {
-    ParseAcpiTableInfo ((UINT32)SystemTableInfo->AcpiTableBase);
+  GuidHob = GetNextGuidHob (&gUniversalPayloadAcpiTableGuid, (VOID *)(UINTN)PcdGet32 (PcdPayloadHobList));
+  if (GuidHob != NULL) {
+    AcpiTable = (UNIVERSAL_PAYLOAD_ACPI_TABLE *)GET_GUID_HOB_DATA (GuidHob);
+    if ((AcpiTable != NULL) && (AcpiTable->Rsdp != 0)) {
+      ParseAcpiTableInfo ((UINT32)(UINTN)AcpiTable->Rsdp);
+    }
   }
 
   DEBUG_CODE_BEGIN ();
