@@ -177,6 +177,7 @@ class BaseBoard(object):
         self.ENABLE_MULTI_USB_BOOT_DEV = 1
         self.ENABLE_SBL_SETUP      = 0
         self.ENABLE_PAYLOD_MODULE  = 0
+        self.ENABLE_EPLD_FROM_PDR  = 0
         self.ENABLE_FAST_BOOT      = 0
         self.ENABLE_LEGACY_EF_SEG  = 1
         # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)

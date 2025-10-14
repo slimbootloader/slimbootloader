@@ -6,6 +6,7 @@
 **/
 
 #include "Stage2.h"
+#include <Service/SpiFlashService.h>
 
 /**
   Callback function to add performance measure point during component loading.
@@ -63,7 +64,7 @@ PreparePayload (
   IN STAGE2_PARAM   *Stage2Param
   )
 {
-  EFI_STATUS                     Status;
+  EFI_STATUS                     Status = EFI_NOT_STARTED;  // Initialize status to indicate PDR loading not attempted;
   UINT32                         Dst;
   UINT32                         DstLen;
   VOID                          *DstAdr;
@@ -108,8 +109,72 @@ PreparePayload (
   AddMeasurePoint (0x3100);
   DstLen = 0;
   DstAdr = (VOID *)(UINTN)Dst;
-  Status = LoadComponentWithCallback (ContainerSig, ComponentName,
-                                      &DstAdr, &DstLen, LoadComponentCallback);
+
+  // PDR loading for EPAYLOAD with container parsing
+  if (FeaturePcdGet (PcdPayloadLoadFromPDR) && (ContainerSig == FLASH_MAP_SIG_EPAYLOAD)) {
+    DEBUG ((DEBUG_INFO, "Alternate Loading payload from PDR region !\n"));
+
+    SPI_FLASH_SERVICE *SpiFlashService;
+    SpiFlashService = (SPI_FLASH_SERVICE *) GetServiceBySignature (SPI_FLASH_SERVICE_SIGNATURE);
+
+    if (SpiFlashService != NULL) {
+      UINT32 PdrBaseAddress = 0;
+      UINT32 PdrSize = 0;
+
+      // Get PDR region info
+      Status = SpiFlashService->SpiGetRegion (FlashRegionPlatformData, &PdrBaseAddress, &PdrSize);
+      if (!EFI_ERROR (Status)) {
+        UINT8 *PdrBuffer = NULL;
+
+        // Allocate buffer to read container from PDR (kept persistent for container access)
+        PdrBuffer = (UINT8 *) AllocateTemporaryMemory (PdrSize);
+        if (PdrBuffer != NULL) {
+          // Read container from PDR. The Payload container is assumed to be placed at offset 0 in PDR.
+          Status = SpiFlashService->SpiRead (FlashRegionPlatformData, 0, PdrSize, PdrBuffer);
+          if (!EFI_ERROR (Status)) {
+            // Register the container from PDR data (keep registered for CMDL/INRD loading)
+            Status = RegisterContainer ((UINT32)(UINTN)PdrBuffer, LoadComponentCallback);
+            if (!EFI_ERROR (Status)) {
+              DEBUG ((DEBUG_INFO, "PDR container registered successfully\n"));
+
+              // Use normal component loading to load payload component
+              Status = LoadComponentWithCallback (FLASH_MAP_SIG_EPAYLOAD, ComponentName,
+                                                  &DstAdr, &DstLen, LoadComponentCallback);
+              if (!EFI_ERROR (Status)) {
+                DEBUG ((DEBUG_INFO, "PDR EPAYLOAD component loaded at 0x%08X, size 0x%08X\n", DstAdr, DstLen));
+              } else {
+                DEBUG ((DEBUG_ERROR, "Failed to load EPAYLOAD component from PDR container, Status = %r\n", Status));
+                UnregisterContainer (FLASH_MAP_SIG_EPAYLOAD);
+                FreeTemporaryMemory (PdrBuffer);
+              }
+            } else {
+              DEBUG ((DEBUG_ERROR, "Failed to register PDR container, Status = %r\n", Status));
+              FreeTemporaryMemory (PdrBuffer);
+            }
+          } else {
+            DEBUG ((DEBUG_ERROR, "Failed to read from PDR region, Status = %r\n", Status));
+            FreeTemporaryMemory (PdrBuffer);
+          }
+        } else {
+          Status = EFI_OUT_OF_RESOURCES;
+          DEBUG ((DEBUG_ERROR, "Failed to allocate buffer for PDR container\n"));
+        }
+      } else {
+        DEBUG ((DEBUG_ERROR, "Failed to get PDR region info, Status = %r\n", Status));
+      }
+    } else {
+      Status = EFI_DEVICE_ERROR;
+      DEBUG ((DEBUG_ERROR, "SPI Flash Service not available\n"));
+    }
+  }
+
+  // If PDR loading is disabled or failed or not EPAYLOAD, fall back to normal container loading
+  if (!FeaturePcdGet (PcdPayloadLoadFromPDR) || EFI_ERROR (Status) || (ContainerSig != FLASH_MAP_SIG_EPAYLOAD)) {
+    DEBUG((DEBUG_INFO, "Using normal container loading\n"));
+    Status = LoadComponentWithCallback (ContainerSig, ComponentName,
+                                        &DstAdr, &DstLen, LoadComponentCallback);
+  }
+
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Loading payload error - %r !", Status));
     return 0;

@@ -157,6 +157,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdBootPerformanceMask
   gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled
   gPlatformModuleTokenSpaceGuid.PcdEnableFwuNotify
+  gPlatformModuleTokenSpaceGuid.PcdPayloadLoadFromPDR
   gPlatformCommonLibTokenSpaceGuid.PcdEnableCryptoPerfTest
   gPlatformCommonLibTokenSpaceGuid.PcdHandOffFdtEnable
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase
