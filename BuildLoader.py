@@ -228,6 +228,8 @@ class BaseBoard(object):
         self.ENABLE_FV_SUPPORT     = 1
         self.ENABLE_PE32_SUPPORT   = 1
         self.ENABLE_AB_SLOT_SUPPORT = 1
+        self.ENABLE_MULTIBOOT_SUPPORT  = 1
+        self.ENABLE_MULTIBOOT2_SUPPORT = 1
 
         #     0: Direct access from flash
         # other: Load image into memory address

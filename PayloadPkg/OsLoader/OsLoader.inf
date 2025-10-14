@@ -113,6 +113,8 @@
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashMask
   gPayloadTokenSpaceGuid.PcdRtcmRsvdSize
   gPlatformCommonLibTokenSpaceGuid.PcdAbSlotSupportEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdMultibootSupportEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdMultiboot2SupportEnabled
 
 [Depex]
   TRUE

@@ -229,10 +229,10 @@ UpdateLoadedImage (
     // Files: cmdline1, elf1, cmdline2, elf2, ...
     // Container can contain additional ACPI binary blobs
     // Assume the first elf file is the one to boot
-    if (IsMultiboot (File[1].Addr)) {
+    if (FeaturePcdGet (PcdMultibootSupportEnabled) && IsMultiboot (File[1].Addr)) {
       LoadedImage->Flags |= LOADED_IMAGE_MULTIBOOT;
       TypeStr = "Multiboot";
-    } else if (IsMultiboot2 (File[1].Addr)) {
+    } else if (FeaturePcdGet (PcdMultiboot2SupportEnabled) && IsMultiboot2 (File[1].Addr)) {
       LoadedImage->Flags |= LOADED_IMAGE_MULTIBOOT2;
       TypeStr = "Multiboot-2";
     } else {
@@ -495,13 +495,13 @@ SetupBootImage (
     Status = LoadElfPayload (BootFile->Addr, &PayloadInfo);
     if (!EFI_ERROR (Status)) {
       EntryPoint = PayloadInfo.EntryPoint;
-      if (IsMultiboot (BootFile->Addr)) {
+      if (FeaturePcdGet (PcdMultibootSupportEnabled) && IsMultiboot (BootFile->Addr)) {
         DEBUG ((DEBUG_INFO, "and Image is Multiboot format\n"));
         Status = CheckAndAlignMultibootModules (MultiBoot);
         if (!EFI_ERROR (Status)) {
           SetupMultibootInfo (MultiBoot);
         }
-      } else if (IsMultiboot2 (BootFile->Addr)) {
+      } else if (FeaturePcdGet (PcdMultiboot2SupportEnabled) && IsMultiboot2 (BootFile->Addr)) {
         DEBUG ((DEBUG_INFO, "and Image is Multiboot-2 format\n"));
         Status = CheckAndAlignMultiboot2Modules (MultiBoot);
         if (!EFI_ERROR (Status)) {
@@ -510,10 +510,10 @@ SetupBootImage (
       }
       MultiBoot->BootState.EntryPoint = (UINT32)(UINTN)EntryPoint;
     }
-  } else if (IsMultiboot (BootFile->Addr)) {
+  } else if (FeaturePcdGet (PcdMultibootSupportEnabled) && IsMultiboot (BootFile->Addr)) {
     DEBUG ((DEBUG_INFO, "Boot image is Multiboot format...\n"));
     Status = SetupMultibootImage (MultiBoot);
-  } else if (IsMultiboot2 (BootFile->Addr)) {
+  } else if (FeaturePcdGet (PcdMultiboot2SupportEnabled) && IsMultiboot2 (BootFile->Addr)) {
     DEBUG ((DEBUG_INFO, "Boot image is Multiboot-2 format...\n"));
     Status = SetupMultiboot2Image (MultiBoot);
   } else if ((LoadedImage->Flags & LOADED_IMAGE_PE) != 0) {
@@ -755,7 +755,8 @@ StartBooting (
     MultiBoot  = &LoadedImage->Image.MultiBoot;
     EntryPoint = (PRE_OS_ENTRYPOINT)(UINTN)MultiBoot->BootState.EntryPoint;
     EntryPoint((VOID *)(UINTN)PcdGet32(PcdPayloadHobList));
-  } else if ((LoadedImage->Flags & LOADED_IMAGE_MULTIBOOT) != 0) {
+  } else if (FeaturePcdGet (PcdMultibootSupportEnabled) &&
+             (LoadedImage->Flags & LOADED_IMAGE_MULTIBOOT) != 0) {
     DEBUG ((DEBUG_INIT, "Jumping Multiboot image entry point...\n"));
     MultiBoot = &LoadedImage->Image.MultiBoot;
     if (MultiBoot->BootState.EntryPoint == 0) {
@@ -767,7 +768,8 @@ StartBooting (
     JumpToMultibootOs((IA32_BOOT_STATE*)&MultiBoot->BootState);
     Status = EFI_DEVICE_ERROR;
 
-  } else if ((LoadedImage->Flags & LOADED_IMAGE_MULTIBOOT2) != 0) {
+  } else if (FeaturePcdGet (PcdMultiboot2SupportEnabled) &&
+             (LoadedImage->Flags & LOADED_IMAGE_MULTIBOOT2) != 0) {
     DEBUG ((DEBUG_INIT, "Jumping Multiboot-2 image entry point...\n"));
     MultiBoot = &LoadedImage->Image.MultiBoot;
     if (MultiBoot->BootState.EntryPoint == 0) {

@@ -356,6 +356,8 @@
   # Enable PE32 payload support
   gPlatformCommonLibTokenSpaceGuid.PcdPe32SupportEnabled          | TRUE   | BOOLEAN | 0x2000022C
   gPlatformCommonLibTokenSpaceGuid.PcdAbSlotSupportEnabled        | TRUE   | BOOLEAN | 0x2000022D
+  gPlatformCommonLibTokenSpaceGuid.PcdMultibootSupportEnabled     | TRUE   | BOOLEAN | 0x2000022E
+  gPlatformCommonLibTokenSpaceGuid.PcdMultiboot2SupportEnabled    | TRUE   | BOOLEAN | 0x2000022F
 
 [PcdsFixedAtBuild]
   gPlatformCommonLibTokenSpaceGuid.PcdFipsSupport     | FALSE      | BOOLEAN | 0x20000226
