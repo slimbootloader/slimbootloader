@@ -233,12 +233,12 @@ class Board(BaseBoard):
                     FusaConfig = open (os.path.join(brd_cfg2_src_dir, 'CfgData_Fusa_Feature.dlt')).readlines()
 
             for line in FusaConfig:
-                if (re.search("TCC_CFG_DATA\.TccEnable\s+\|\s*1",line) != None or
-                    re.search("TCC_CFG_DATA\.TccEnable\s+\|\s*0x0*1",line) != None):
+                if (re.search(r"TCC_CFG_DATA\.TccEnable\s+\|\s*1",line) != None or
+                    re.search(r"TCC_CFG_DATA\.TccEnable\s+\|\s*0x0*1",line) != None):
                     # use setattr() to avoid matching release.py regex
                     setattr(self, 'ENABLE_TCC', 1)
-                elif (re.search("SILICON_CFG_DATA\.PchTsnEnable\s+\|\s*1",line) != None or
-                    re.search("SILICON_CFG_DATA\.PchTsnEnable\s+\|\s*0x0*1",line) != None):
+                elif (re.search(r"SILICON_CFG_DATA\.PchTsnEnable\s+\|\s*1",line) != None or
+                    re.search(r"SILICON_CFG_DATA\.PchTsnEnable\s+\|\s*0x0*1",line) != None):
                     # use setattr() to avoid matching release.py regex
                     setattr(self, 'ENABLE_TSN', 1)
 
@@ -331,7 +331,7 @@ class Board(BaseBoard):
                     else:
                         lines += open (os.path.join(brd_cfg_src_dir, 'CfgData_Fusa_Feature.dlt')).read()
                     # remove the TCC_CFG_DATA.TccEnable line to avoid its presence in final dlt files
-                    lines = re.sub("TCC_CFG_DATA\.TccEnable\s+\|[^\n]+","",lines)
+                    lines = re.sub(r"TCC_CFG_DATA\.TccEnable\s+\|[^\n]+","",lines)
                     if self.ENABLE_PRE_OS_CHECKER:
                         if os.path.exists(os.path.join(brd_cfg2_src_dir, 'CfgData_Posc_Feature.dlt')):
                             lines += open (os.path.join(brd_cfg2_src_dir, 'CfgData_Posc_Feature.dlt')).read()
