@@ -284,9 +284,9 @@ def single_sign_gen_pub_key (in_key, pub_key_file = None):
 
     # Extract the modulus
     if is_prv_key:
-        match = re.search('modulus(.*)publicExponent:\s+(\d+)\s+', data)
+        match = re.search(r'modulus(.*)publicExponent:\s+(\d+)\s+', data)
     else:
-        match = re.search('Modulus(?:.*?):(.*)Exponent:\s+(\d+)\s+', data)
+        match = re.search(r'Modulus(?:.*?):(.*)Exponent:\s+(\d+)\s+', data)
     if not match:
         raise Exception('Public key not found!')
     modulus  = match.group(1).replace(':', '')
