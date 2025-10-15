@@ -158,6 +158,9 @@ class ExpressionEval(ast.NodeVisitor):
     def visit_Num(self, node):
         return node.n
 
+    def visit_Constant(self, node):
+        return node.value
+
     def visit_NameConstant(self, node):
         return node.value
 
@@ -177,7 +180,7 @@ class ExpressionEval(ast.NodeVisitor):
 
     def visit_UnaryOp(self, node):
         val = self.visit(node.operand)
-        return operators[type(node.op)](val)
+        return ExpressionEval.operators[type(node.op)](val)
 
     def visit_BinOp(self, node):
         lhs = self.visit(node.left)
