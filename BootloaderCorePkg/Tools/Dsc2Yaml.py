@@ -31,8 +31,8 @@ class dsc_to_yaml ():
         self._Hdr_key_list  = ['EMBED', 'STRUCT']
         self._Bsf_key_list  = ['NAME','HELP','TYPE','PAGE', 'PAGES', 'OPTION','CONDITION','ORDER', 'MARKER', 'SUBT', 'FIELD']
         self.gen_cfg_data = None
-        self.cfg_reg_exp  = re.compile("^([_a-zA-Z0-9$\(\)]+)\s*\|\s*(0x[0-9A-F]+|\*)\s*\|\s*(\d+|0x[0-9a-fA-F]+)\s*\|\s*(.+)")
-        self.bsf_reg_exp  = re.compile("(%s):{(.+?)}(?:$|\s+)" % '|'.join(self._Bsf_key_list))
+        self.cfg_reg_exp  = re.compile(r"^([_a-zA-Z0-9$\(\)]+)\s*\|\s*(0x[0-9A-F]+|\*)\s*\|\s*(\d+|0x[0-9a-fA-F]+)\s*\|\s*(.+)")
+        self.bsf_reg_exp  = re.compile(r"(%s):{(.+?)}(?:$|\s+)" % '|'.join(self._Bsf_key_list))
         self.hdr_reg_exp  = re.compile("(%s):{(.+?)}" % '|'.join(self._Hdr_key_list))
         self.prefix       = ''
         self.unused_idx   = 0
@@ -105,7 +105,7 @@ class dsc_to_yaml ():
                 self.offset = offset + int (length, 0)
             return True
 
-        match = re.match("^\s*#\s+!([<>])\s+include\s+(.+)", dsc_line)
+        match = re.match(r"^\s*#\s+!([<>])\s+include\s+(.+)", dsc_line)
         if match and len(config_dict) == 0:
             # !include should not be inside a config field
             # if so, do not convert include into YAML
@@ -118,7 +118,7 @@ class dsc_to_yaml ():
                 config_dict['include'] = ''
             return True
 
-        match = re.match("^\s*#\s+(!BSF|!HDR)\s+(.+)", dsc_line)
+        match = re.match(r"^\s*#\s+(!BSF|!HDR)\s+(.+)", dsc_line)
         if not match:
             return False
 
