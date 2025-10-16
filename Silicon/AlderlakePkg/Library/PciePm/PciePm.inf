@@ -32,5 +32,5 @@
 [Packages]
   MdePkg/MdePkg.dec
   IntelFsp2Pkg/IntelFsp2Pkg.dec
-  Silicon/CommonSocPkg/CommonSocPkg.dec
   Silicon/AlderlakePkg/AlderlakePkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
