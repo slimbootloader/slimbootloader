@@ -345,6 +345,8 @@
   gPlatformCommonLibTokenSpaceGuid.PcdElfSupportEnabled  | $(ENABLE_ELF_SUPPORT)
   gPlatformCommonLibTokenSpaceGuid.PcdFvSupportEnabled   | $(ENABLE_FV_SUPPORT)
   gPlatformCommonLibTokenSpaceGuid.PcdPe32SupportEnabled | $(ENABLE_PE32_SUPPORT)
+  gPlatformCommonLibTokenSpaceGuid.PcdMultibootSupportEnabled  | $(ENABLE_MULTIBOOT_SUPPORT)
+  gPlatformCommonLibTokenSpaceGuid.PcdMultiboot2SupportEnabled | $(ENABLE_MULTIBOOT2_SUPPORT)
   gPlatformModuleTokenSpaceGuid.PcdVtdEnabled             | $(ENABLE_VTD)
   gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled         | $(HAVE_PSD_TABLE)
   gPayloadTokenSpaceGuid.PcdGrubBootCfgEnabled            | $(ENABLE_GRUB_CONFIG)
