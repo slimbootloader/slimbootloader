@@ -421,7 +421,12 @@ jobs:
         Build.Arch:   ""
         Build.Target: "-r"
   pool:
-    vmImage: 'windows-2019'
+    name: 'CustomWindowsScaleSet'  # Scale set with your custom image
+    demands:
+      - Agent.OS -equals Windows_NT
+      - vs2019-community  # Specifically require VS 2019 Community
+      - msbuild
+      - visualstudio
 
   steps:
   - checkout: self
@@ -431,6 +436,29 @@ jobs:
       versionSpec: '3.8.x'
       architecture: 'x64'
     displayName: Set Python version
+
+  - powershell: |
+      # Verify VS 2019 Community Edition is installed
+      $vs2019CommunityPath = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2019\Community"
+      if (Test-Path $vs2019CommunityPath) {
+        echo "✓ Found Visual Studio 2019 Community at: $vs2019CommunityPath"
+        $env:VS2019INSTALLDIR = $vs2019CommunityPath
+        echo "##vso[task.setvariable variable=VS2019INSTALLDIR;]$vs2019CommunityPath"
+        
+        # Verify it's Community edition (not Enterprise)
+        $vswhereOutput = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -products Microsoft.VisualStudio.Product.Community -version "[16.0,17.0)" -property displayName 2>$null
+        if ($vswhereOutput -like "*Community*") {
+          echo "✓ Confirmed: Visual Studio 2019 Community Edition"
+        } else {
+          echo "⚠️ Warning: VS 2019 found but edition unclear"
+        }
+      } else {
+        echo "❌ Visual Studio 2019 Community not found!"
+        echo "Available VS 2019 installations:"
+        Get-ChildItem "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2019\" -ErrorAction SilentlyContinue | Select-Object Name
+        exit 1
+      }
+    displayName: Verify VS 2019 Community Edition
 
   - powershell: |
       [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -447,14 +475,24 @@ jobs:
       "@
       echo "Create a new object"
       [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
-      echo "Download nasm"
-      Invoke-WebRequest -Uri https://www.nasm.us/pub/nasm/releasebuilds/2.14.02/win64/nasm-2.14.02-win64.zip -OutFile nasm.zip
-      echo "Expand nasm"
-      Expand-Archive .\nasm.zip C:\
+      # Check if tools are pre-installed, otherwise download
+      if (-not (Test-Path "C:\nasm-2.14.02\nasm.exe")) {
+        echo "Downloading nasm..."
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        Invoke-WebRequest -Uri https://www.nasm.us/pub/nasm/releasebuilds/2.14.02/win64/nasm-2.14.02-win64.zip -OutFile nasm.zip
+        echo "Expand nasm"
+        Expand-Archive .\nasm.zip C:\
+      } else {
+        echo "Using pre-installed nasm"
+      }
 
-      echo "Download iasl"
-      Invoke-WebRequest -Uri https://cdrdv2.intel.com/v1/dl/getContent/774881 -OutFile iasl.zip
-      Expand-Archive .\iasl.zip C:\iasl
+      if (-not (Test-Path "C:\iasl\iasl.exe")) {
+        echo "Downloading iasl..."
+        Invoke-WebRequest -Uri https://cdrdv2.intel.com/v1/dl/getContent/774881 -OutFile iasl.zip
+        Expand-Archive .\iasl.zip C:\iasl
+      } else {
+        echo "Using pre-installed iasl"
+      }
       echo "##vso[task.setvariable variable=nasm_prefix;]C:\nasm-2.14.02\"
       echo "##vso[task.setvariable variable=iasl_prefix;]C:\iasl\"
       echo "##vso[task.setvariable variable=openssl_path;]C:\Program Files\OpenSSL\bin\"
