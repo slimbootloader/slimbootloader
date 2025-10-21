@@ -1,0 +1,46 @@
+## @file
+#
+#  Copyright (c) 2025, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = DmarLib
+  FILE_GUID                      = f56d7f0d-68ec-4560-a848-01456335cd53
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = DmarLib
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC ARM
+#
+
+[Sources]
+  DmarLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  IoLib
+  PcdLib
+  DebugLib
+  HobLib
+  MemoryAllocationLib
+  PciSegmentLib
+
+[Pcd]
+  gPlatformModuleTokenSpaceGuid.PcdAcpiGnvsAddress
+  gPlatformModuleTokenSpaceGuid.PcdVtdEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultOemId
+  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultOemTableId
+  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultOemRevision
+  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultCreatorId
+  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultCreatorRevision
