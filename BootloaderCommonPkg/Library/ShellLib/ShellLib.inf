@@ -52,6 +52,7 @@
   Shell.c
   CmdAcpi.c
   CmdSetup.c
+  CmdFlashmap.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -99,3 +100,4 @@
   gOsBootOptionGuid
   gLoaderFspInfoGuid
   gUniversalPayloadAcpiTableGuid
+  gFlashMapInfoGuid
