@@ -264,6 +264,7 @@ class Board(BaseBoard):
             'HeciLib|Silicon/CommonSocPkg/Library/HeciLib/HeciLib.inf',
             'MeChipsetLib|Silicon/$(SILICON_PKG_NAME)/Library/MeChipsetLib/MeChipsetLib.inf',
             'VtdLib|Silicon/$(SILICON_PKG_NAME)/Library/VTdLib/VTdLib.inf',
+            'DmarLib|Silicon/CommonSocPkg/Library/DmarLib/DmarLib.inf',
             'PsdLib|Silicon/$(SILICON_PKG_NAME)/Library/PsdLib/PsdLib.inf',
             'SerialIoI2cLib|Silicon/$(SILICON_PKG_NAME)/Library/BaseSerialIoI2cLib/BaseSerialIoI2cLib.inf',
             'HeciMeExtLib|Silicon/$(SILICON_PKG_NAME)/Library/HeciMeExtLib/HeciMeExtLib.inf',

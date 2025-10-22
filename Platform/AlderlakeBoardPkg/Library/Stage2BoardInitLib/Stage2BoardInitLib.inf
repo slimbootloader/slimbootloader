@@ -76,6 +76,7 @@
   FusaConfigLib
   PciSegmentLib
   MediaAccessLib
+  DmarLib
 
 [Guids]
   gOsConfigDataGuid
@@ -119,6 +120,7 @@
   gPlatformModuleTokenSpaceGuid.PcdFlashBaseAddress
   gPlatformModuleTokenSpaceGuid.PcdFlashSize
   gPlatformModuleTokenSpaceGuid.PcdIgdOpRegionAddress
+  gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr
 
 [FixedPcd]
   gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport

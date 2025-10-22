@@ -24,7 +24,6 @@
   AcpiTablePlatform.h
   Facs/Facs.h
   Madt/Madt.h
-  Dmar/Dmar.h
   Hpet/Hpet.h
   Fadt/Fadt6.3.h
   Dsdt/Dsdt.asl
@@ -57,7 +56,6 @@
   Ecdt/Ecdt.act
   Fwst/Fwst.aslc
   Platform/CommonBoardPkg/AcpiTables/Dsdt/AslInc.h
-  Dmar/Dmar.aslc
   Psd/Psd.aslc
   Rtct/Rtct.act
   Lpit/Lpit.act

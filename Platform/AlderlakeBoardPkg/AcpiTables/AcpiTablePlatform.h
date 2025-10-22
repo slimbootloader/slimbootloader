@@ -14,6 +14,7 @@
 #include <IndustryStandard/HighPrecisionEventTimerTable.h>
 #include <PlatformBase.h>
 #include <Mcfg.h>
+#include <Acpi/AcpiCommon.h>
 
 //
 // ACPI table information used to initialize tables.
@@ -27,7 +28,5 @@
 
 #define MAX_THREAD                  2
 #define MAX_CORE                    12 // 24
-
-#define ICH_IOAPIC_ID                           0x02
 
 #endif

@@ -12,7 +12,7 @@
 
 #include <IndustryStandard/Acpi30.h>
 #include <IndustryStandard/HighPrecisionEventTimerTable.h>
-
+#include <Acpi/AcpiCommon.h>
 
 #define EFI_ACPI_OEM_HPET_REVISION                      0x00000001
 
@@ -26,8 +26,6 @@
 #define EFI_ACPI_EVENT_TIMER_BLOCK_BIT_OFFSET           0x00
 #define EFI_ACPI_EVENT_TIMER_ACCESS_SIZE                0x00
 #define EFI_ACPI_EVENT_TIMER_BLOCK_ADDRESS              0x00000000FED00000
-
-#define EFI_ACPI_HPET_NUMBER                            0x00
 
 #define EFI_ACPI_MIN_CLOCK_TICK                         0x0080
 
