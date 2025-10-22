@@ -181,7 +181,7 @@ class Board(BaseBoard):
         if self._SMBIOS_YAML_FILE:
             self.SIIPFW_SIZE += 0x1000
 
-        self.OS_LOADER_FD_SIZE                = 0x58000
+        self.OS_LOADER_FD_SIZE                = 0x60000
         self.OS_LOADER_FD_NUMBLK              = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         self.NON_REDUNDANT_SIZE               = 0x3BF000 + self.SIIPFW_SIZE
