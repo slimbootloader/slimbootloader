@@ -9,7 +9,7 @@
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = VtdLib
-  FILE_GUID                          = f56d7f0d-68ec-4560-a848-01456335cd53
+  FILE_GUID                      = f56d7f0d-68ec-4560-a848-01456335cd53
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = VtdLib
@@ -29,15 +29,10 @@
   Silicon/AlderlakePkg/AlderlakePkg.dec
   Platform/AlderlakeBoardPkg/AlderlakeBoardPkg.dec
   Platform/CommonBoardPkg/CommonBoardPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+
 [LibraryClasses]
   BaseLib
   IoLib
   PcdLib
   DebugLib
-  HobLib
-  MemoryAllocationLib
-  #ItbtPcieRpLib
-
-[Pcd]
-  gPlatformModuleTokenSpaceGuid.PcdAcpiGnvsAddress
-  gPlatformModuleTokenSpaceGuid.PcdVtdEnabled

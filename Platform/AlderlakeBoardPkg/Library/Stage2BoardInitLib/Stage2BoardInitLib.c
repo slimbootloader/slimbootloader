@@ -33,6 +33,13 @@ STATIC S3_SAVE_REG mS3SaveReg = {
   { { REG_TYPE_IO, WIDE32, { 0, 0}, (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN), 0x00000000 } }
 };
 
+extern EFI_ACPI_DMAR_HEADER mAcpiDmarTableTemplate;
+STATIC
+CONST EFI_ACPI_COMMON_HEADER *mPlatformAcpiTables[] = {
+  (EFI_ACPI_COMMON_HEADER *)&mAcpiDmarTableTemplate,
+  NULL
+};
+
 /**
   Platform specific initialization for PCI Enum.
   Logs Device addresses of NVME controllers to boot options.
@@ -578,6 +585,10 @@ BoardInit (
     break;
   case PrePciEnumeration:
     (VOID) PcdSet32S (PcdPciEnumHookProc, (UINT32)(UINTN) PlatformPciEnumHookProc);
+    if (FeaturePcdGet (PcdVtdEnabled)) {
+      // Prepare platform ACPI tables
+      Status = PcdSet32S (PcdAcpiTableTemplatePtr, (UINT32)(UINTN)mPlatformAcpiTables);
+    }
     break;
   case PostPciEnumeration:
     if (FeaturePcdGet (PcdEnablePciePm)) {

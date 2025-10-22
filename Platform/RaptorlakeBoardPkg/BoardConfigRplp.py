@@ -369,6 +369,7 @@ class Board(BaseBoard):
             'HeciLib|Silicon/CommonSocPkg/Library/HeciLib/HeciLib.inf',
             'MeChipsetLib|Silicon/$(SILICON_PKG_NAME)/Library/MeChipsetLib/MeChipsetLib.inf',
             'VtdLib|Silicon/$(SILICON_PKG_NAME)/Library/VTdLib/VTdLib.inf',
+            'DmarLib|Silicon/CommonSocPkg/Library/DmarLib/DmarLib.inf',
             'PsdLib|Silicon/$(SILICON_PKG_NAME)/Library/PsdLib/PsdLib.inf',
             'HeciMeExtLib|Silicon/$(SILICON_PKG_NAME)/Library/HeciMeExtLib/HeciMeExtLib.inf',
             'MeExtMeasurementLib|Silicon/$(SILICON_PKG_NAME)/Library/MeExtMeasurementLib/MeExtMeasurementLib.inf',
