@@ -48,6 +48,7 @@
   SpiFlashLib
   TpmLib
   VtdLib
+  DmarLib
   ConfigDataLib
   RleCompressLib
   SeedListInfoLib
@@ -107,3 +108,4 @@
   gPlatformCommonLibTokenSpaceGuid.PcdDmaBufferSize
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcHs400SupportEnabled
   gPlatformModuleTokenSpaceGuid.PcdIgdOpRegionAddress
+  gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr
