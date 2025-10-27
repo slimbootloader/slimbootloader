@@ -70,6 +70,7 @@
 #include <Register/PchRegsPcr.h>
 #include <Register/PchRegsLpc.h>
 #include <Register/SpiRegs.h>
+#include <Register/P2sbRegs.h>
 #include <PchLimits.h>
 #include <Library/S3SaveRestoreLib.h>
 #include <Library/IgdOpRegionLib.h>
@@ -78,7 +79,6 @@
 #include <CpuPowerMgmt.h>
 #include <Library/MpInitLib.h>
 #include <Library/HeciLib.h>
-#include <Library/DmaRemappingTable.h>
 #include <Library/VTdLib.h>
 #include <Library/CpuPcieHsPhyInitLib.h>
 #include <Include/TccConfigSubRegions.h>

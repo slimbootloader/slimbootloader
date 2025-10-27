@@ -24,7 +24,6 @@
   AcpiTablePlatform.h
   Facs/Facs.h
   Madt/Madt.h
-  Dmar/Dmar.h
   Hpet/Hpet.h
   Fadt/Fadt6.3.h
   Facs/Facs.act
@@ -60,7 +59,6 @@
   Lpit/Lpit.act
   EcSsdt/EcSsdt.asl
   Ecdt/Ecdt.act
-  Dmar/DmarVer2.aslc
 
 [Binaries.IA32]
   BIN|Dsdt/NhltConf2DmicX4.bin

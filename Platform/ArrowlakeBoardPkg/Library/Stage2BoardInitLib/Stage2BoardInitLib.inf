@@ -69,6 +69,7 @@
   MtlPchPcieRpLib
   PciePm
   P2sbLib
+  DmarLib
 
 [Guids]
   gOsConfigDataGuid
@@ -113,3 +114,4 @@
   gPlatformModuleTokenSpaceGuid.PcdIgdOpRegionAddress
   gPlatformModuleTokenSpaceGuid.PcdPciResAllocTableBase
   gPlatformModuleTokenSpaceGuid.PcdEnablePciePm
+  gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr

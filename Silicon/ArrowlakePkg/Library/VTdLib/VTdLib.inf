@@ -29,6 +29,8 @@
   Silicon/ArrowlakePkg/ArrowlakePkg.dec
   Platform/ArrowlakeBoardPkg/ArrowlakeBoardPkg.dec
   Platform/CommonBoardPkg/CommonBoardPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+
 [LibraryClasses]
   BaseLib
   IoLib
