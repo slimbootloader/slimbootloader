@@ -24,7 +24,6 @@
   AcpiTablePlatform.h
   Facs/Facs.h
   Madt/Madt.h
-  Dmar/Dmar.h
   Hpet/Hpet.h
   Fadt/Fadt6.3.h
   Facs/Facs.act

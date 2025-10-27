@@ -21,6 +21,7 @@
 #include <Library/P2sbLib.h>
 #include <Guids/FspPchConfigHob.h>
 #include <Library/MtlSocPcieRpLib.h>
+#include <Library/DmarLib.h>
 
 STATIC CONST UINT32 NhltSignaturesTable[] = {
   SIGNATURE_32 ('N', 'H', 'L', 'T'),
@@ -59,6 +60,12 @@ GLOBAL_REMOVE_IF_UNREFERENCED SERIAL_IO_CONTROLLER_DESCRIPTOR mMtlPchLpssUartFix
   { 0x12000,  0x13000}
 };
 
+extern EFI_ACPI_DMAR_HEADER mAcpiDmarTableTemplate;
+STATIC
+CONST EFI_ACPI_COMMON_HEADER *mPlatformAcpiTables[] = {
+  (EFI_ACPI_COMMON_HEADER *)&mAcpiDmarTableTemplate,
+  NULL
+};
 
 
 /**
@@ -378,6 +385,10 @@ BoardInit (
     break;
   case PrePciEnumeration:
     PlatformPrePciEnumeration();
+    if (FeaturePcdGet (PcdVtdEnabled)) {
+      // Prepare platform ACPI tables
+      Status = PcdSet32S (PcdAcpiTableTemplatePtr, (UINT32)(UINTN)mPlatformAcpiTables);
+    }
     break;
   case PostPciEnumeration:
     if (FeaturePcdGet (PcdEnablePciePm)) {
@@ -974,6 +985,77 @@ MtlPchGetLpssUartFixedPciCfgOffset (
 }
 
 /**
+  Update the DMAR table
+
+  @param[in, out] TableHeader         - The table to be set
+**/
+VOID
+DmarTableUpdate (
+  IN OUT   EFI_ACPI_DESCRIPTION_HEADER       *AcpiHeader
+  )
+{
+  EFI_STATUS                                 Status;
+  MEMORY_CFG_DATA                            *MemCfgData;
+  SILICON_CFG_DATA                           *SiCfgData;
+  UINT8                                      Flags;
+  UINT64                                     BaseAddress;
+  EFI_ACPI_DMAR_STRUCTURE_HEADER             *DmarHdr;
+
+  Flags = 0;
+  SiCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
+  if ((SiCfgData != NULL) && (SiCfgData->InterruptRemappingSupport != 0)) {
+    Flags |= BIT0;
+  }
+
+  MemCfgData = (MEMORY_CFG_DATA *)FindConfigDataByTag (CDATA_MEMORY_TAG);
+  if (MemCfgData != NULL) {
+    if (MemCfgData->X2ApicOptOut == 1) {
+      Flags |= BIT1;
+    } else {
+      Flags &= 0xFD;
+    }
+    /// Set DMA_CONTROL_GUARANTEE bit (BIT 2) if Dma Control Guarantee is supported
+    if (MemCfgData->DmaControlGuarantee == 1) {
+      Flags |= BIT2;
+    }
+  }
+
+  Status = AddAcpiDmarHdr (AcpiHeader, Flags);
+  if (EFI_ERROR (Status)) {
+    return ;
+  }
+
+  BaseAddress = ReadVtdBaseAddress(IGD_VTD);
+  Flags   = 0;
+  DmarHdr = AddDrhdHdr (AcpiHeader, Flags, SIZE_64KB, 0, BaseAddress);
+  ASSERT (DmarHdr != NULL);
+
+  AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0, 0, 0, IGD_DEV_NUM, IGD_FUN_NUM);
+
+  BaseAddress = ReadVtdBaseAddress(IOP_VTD);
+  DmarHdr = AddDrhdHdr (AcpiHeader, Flags, SIZE_64KB, 0, BaseAddress);
+  ASSERT (DmarHdr != NULL);
+  AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_IOAPIC, 0, 2, V_P2SB_CFG_IBDF_BUS, V_P2SB_CFG_IBDF_DEV, V_P2SB_CFG_IBDF_FUNC);
+  AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_MSI_CAPABLE_HPET, 0, 0, V_P2SB_CFG_HBDF_BUS, V_P2SB_CFG_HBDF_DEV, V_P2SB_CFG_HBDF_FUNC);
+
+  DmarHdr = AddSatcHdr (AcpiHeader, 1, 0);
+  ASSERT (DmarHdr != NULL);
+  AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0, 0, 0, 2, 0);
+  AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0, 0, 0, 5, 0);
+  AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0, 0, 0, 0xB, 0);
+
+  DmarHdr = AddSidpHdr (AcpiHeader, 0);
+  ASSERT (DmarHdr != NULL);
+  AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0x1F, 0, 0, 2, 0);
+  AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0x1F, 0, 0, 5, 0);
+  AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0x1C, 0, 0, 0xB, 0);
+
+  // Calculate DMAR table check sum
+  AcpiHeader->Checksum = CalculateCheckSum8 ((UINT8 *)AcpiHeader, AcpiHeader->Length);
+}
+
+
+/**
   Update PCH NVS and SA NVS area address and size in ACPI table.
 
   @param[in] Current    Pointer to ACPI description header
@@ -1158,6 +1240,12 @@ PlatformUpdateAcpiTable (
         FadtPointer->Flags &= ~(EFI_ACPI_6_3_PWR_BUTTON); // clear indicates the power button is handled as a fixed feature programming model
       }
     }
+  } else if (FeaturePcdGet (PcdVtdEnabled) && Table->Signature == EFI_ACPI_6_4_DMA_REMAPPING_TABLE_SIGNATURE) {
+    DEBUG ((DEBUG_INFO, "Updated DMAR Table entries\n"));
+    PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
+    if ((PlatformData != NULL) && (PlatformData->PlatformFeatures.VtdEnable == 1)) {
+      DmarTableUpdate (Table);
+    }
   }
 
   if (MEASURED_BOOT_ENABLED()) {
@@ -1168,16 +1256,6 @@ PlatformUpdateAcpiTable (
     }
   }
 
-  if (FeaturePcdGet (PcdVtdEnabled)) {
-    PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
-    if (PlatformData != NULL) {
-      if (PlatformData->PlatformFeatures.VtdEnable == 1) {
-        if (Table->Signature == EFI_ACPI_VTD_DMAR_TABLE_SIGNATURE) {
-          UpdateDmarAcpi(Table);
-        }
-      }
-    }
-  }
 
   //
   // Updating the ACPI table for PSD.
