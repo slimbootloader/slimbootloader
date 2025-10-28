@@ -76,6 +76,7 @@ ShellCommandSetupFunc (
     if (AsciiStrCmp ((CHAR8*)BootOptionList->OsBootOption[BootOptionIndex].Image[0].FileImage.FileName, "!SETP/MPYM:STPY") == 0) {
       // Found setup boot option. Set this as current boot and exit.
       BootOptionList->CurrentBoot = BootOptionIndex;
+      BootOptionList->BootOptionReset = 1;
       Shell->ShouldExit = TRUE;
       break;
     }
@@ -89,6 +90,7 @@ ShellCommandSetupFunc (
       BootOptionList->OsBootOption[BootOptionIndex].FsType = EnumFileSystemTypeAuto;
       AsciiStrCpyS ((CHAR8*)BootOptionList->OsBootOption[BootOptionIndex].Image[0].FileImage.FileName, MAX_FILE_PATH_LEN, "!SETP/MPYM:STPY");
       BootOptionList->CurrentBoot = BootOptionIndex;
+      BootOptionList->BootOptionReset = 1;
       BootOptionList->OsBootOptionCount++;
       Shell->ShouldExit = TRUE;
     } else {
