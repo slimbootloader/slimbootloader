@@ -14,6 +14,7 @@
 #
 try:
     from   ucollections import OrderedDict
+    import utime
     is_micro_py = True
 except:
     import sys
