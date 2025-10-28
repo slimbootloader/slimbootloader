@@ -752,4 +752,53 @@ Scope(\_SB)
     // Set RxEvCfg
     Store(Arg1, RCFG)
   }
+
+  //
+  // Get Gpio Lock Config register value
+  //
+  Method(GLOC, 0x2, Serialized)
+  {
+    //
+    // Arg0 - GPIO pad
+    //
+    // Local0 - GPIO group index
+    Store (GGRP(Arg0), Local0)
+    // Local1 - GPIO pad number
+    Store (GNMB(Arg0), Local1)
+
+    // Local1 = (GpioCommunityAddress + PadLockCfgOffset)
+    Store(GET_LOCK_CONFIG_REG_ADDRESS(Local0), Local2)
+    OperationRegion(PREG, SystemMemory, Local2, 4)
+    Field(PREG, AnyAcc, NoLock, Preserve) {
+      Offset(0x0),
+        TEMP,32
+    }
+    // Gpio Lock Configuration = (TEMP >> Local1) & 0x1
+    Return( And( ShiftRight(TEMP,Local1),0x1))
+  }
+
+  //
+  // Get Gpio Lock Tx register value
+  //
+  Method(GLOT, 0x2, Serialized)
+  {
+    //
+    // Arg0 - GPIO pad
+    //
+    // Local0 - GPIO group index
+    Store (GGRP(Arg0), Local0)
+    // Local1 - GPIO pad number
+    Store (GNMB(Arg0), Local1)
+
+    // Local1 = (GpioCommunityAddress + PadLockCfgOffset)
+    Store(GET_LOCK_TX_REG_ADDRESS(Local0), Local2)
+    OperationRegion(PREG, SystemMemory, Local2, 4)
+    Field(PREG, AnyAcc, NoLock, Preserve) {
+      Offset(0x0),
+        TEMP,32
+    }
+    // Gpio Lock Configuration = (TEMP >> Local1) & 0x1
+    Return( And( ShiftRight(TEMP,Local1),0x1))
+  }
+
 }

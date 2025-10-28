@@ -40,7 +40,9 @@ Scope(\_SB)
   //   Field3 - HOSTSW_OWN register offset
   //   Field4 - PAD_OWN register offset
   //   Field5 - GPI_GPE_STS register offset
-  //   Field6 - Gpio base number for GPIO OS Driver usage
+  //   Field6 - PADLOCK register offset
+  //   Field7 - PADLOCKTX register offset
+  //   Field8 - Gpio base number for GPIO OS Driver usage
   //            GpioIo and GpioInt number is created in following way:
   //              GpioAcpiPinNumber = GpioHwBankIndex * 32 + GpioPadNumber
   //
