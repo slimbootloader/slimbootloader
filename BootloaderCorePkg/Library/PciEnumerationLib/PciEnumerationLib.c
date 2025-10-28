@@ -367,6 +367,13 @@ PciParseBar (
     }
   }
 
+#if DEBUG_PCI_ENUM
+  DEBUG((DEBUG_INFO, "    Bar: %d BarType: %d Size: 0x%llx\n",
+    BarIndex,
+    PciIoDevice->PciBar[BarIndex].BarType,
+    PciIoDevice->PciBar[BarIndex].Length));
+#endif
+
   //
   // Check the length again so as to keep compatible with some special bars
   //
@@ -532,6 +539,11 @@ GatherDeviceInfo (
       }
     }
   }
+
+#if DEBUG_PCI_ENUM
+  DEBUG((DEBUG_INFO, "    VID|DID: %4X|%4X\n",
+    PciExpressRead16(PciIoDevice->Address), PciExpressRead16(PciIoDevice->Address + 2)));
+#endif
 
   //
   // Start to parse the bars
