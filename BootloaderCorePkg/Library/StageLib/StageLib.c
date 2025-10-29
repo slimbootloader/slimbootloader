@@ -119,7 +119,9 @@ RemapStage (
     PageBuffer  = (VOID *)ALIGN_UP((UINTN)PageBuffer, EFI_PAGE_SIZE);
   }
   DEBUG ((DEBUG_INFO, "Load page table from memory @ 0x%08X\n", (UINT32)(UINTN)PageBuffer));
-  Status = Create4GbPageTables (PageBuffer, Is64Bit);
+
+  // Use 512GB identity mapping to cover all high MMIO regions
+  Status = Create512GbPageTables (PageBuffer, Is64Bit);
 
   if (!EFI_ERROR(Status) && FeaturePcdGet (PcdRemapStage1B)) {
     // Copy stage1B to pool because all temporary memory will be free at start of stage2.

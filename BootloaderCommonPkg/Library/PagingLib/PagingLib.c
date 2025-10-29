@@ -292,6 +292,71 @@ Create4GbPageTables (
 
 /**
   Allocates and fills in the Page Directory and Page Table Entries to
+  establish a 1:1 Virtual to Physical mapping for 512GB address space.
+
+  @param[in] PageBuffer    Page table root pointer. The buffer size needs
+                           to be at least GetPageTablesMemorySize().
+  @param[in] IsX64Mode     Determine to build page table for x64 mode or not.
+
+  @retval    EFI_SUCCESS            Page table was created successfully.
+  @retval    EFI_INVALID_PARAMETER  Invalid PageBuffer.
+  @retval    EFI_UNSUPPORTED        1GB pages not supported on this CPU.
+
+**/
+EFI_STATUS
+EFIAPI
+Create512GbPageTables (
+  IN VOID       *PageBuffer,
+  IN BOOLEAN     IsX64Mode
+  )
+{
+  UINT32         PageLen;
+  UINT32         Attribute;
+  UINT64        *Page64;
+  UINTN          Idx;
+  UINT64         Address;
+
+  if (PageBuffer == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  PageLen = GetPageTablesMemorySize (IsX64Mode);
+  ZeroMem (PageBuffer, PageLen);
+
+  Address   = 0;
+  Attribute = IA32_PG_P | IA32_PG_RW | IA32_PG_AC;
+
+  if (IsX64Mode) {
+    // Check if 1GB pages are supported
+    if (!IsPage1GSupport ()) {
+      DEBUG ((DEBUG_WARN, "1GB pages not supported, falling back to 4GB mapping\n"));
+      return Create4GbPageTables (PageBuffer, IsX64Mode);
+    }
+
+    // PML4 - Set up first entry to point to PDP table
+    Page64    = (UINT64 *)PageBuffer;
+    Page64[0] = (UINTN)Page64 + EFI_PAGE_SIZE * 1 + Attribute;
+
+    // PDP - Set up 512 entries for 1GB pages (0-512GB identity mapping)
+    Page64 = (UINT64 *)((UINTN)PageBuffer + EFI_PAGE_SIZE * 1);
+    for (Idx = 0; Idx < 512; Idx++) {
+      // Use 1GB page entries (IA32_PG_PD bit for large pages)
+      Page64[Idx] = Address + (Attribute | IA32_PG_PD);
+      Address += 0x40000000ULL;  // 1GB increment
+    }
+
+    DEBUG ((DEBUG_INFO, "Created 512GB identity mapping using 1GB pages (0x0 - 0x%016lx)\n", Address - 0x40000000ULL));
+  } else {
+    // For 32-bit mode, fall back to original 4GB mapping
+    DEBUG ((DEBUG_INFO, "32-bit mode: using 4GB mapping\n"));
+    return Create4GbPageTables (PageBuffer, IsX64Mode);
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Allocates and fills in the Page Directory and Page Table Entries to
   establish a 1:1 Virtual to Physical mapping.
 
   @param[in] RequestedAddressBits   If RequestedAddressBits is in valid range
