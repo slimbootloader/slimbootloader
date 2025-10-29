@@ -1,7 +1,7 @@
 /** @file
   MKHI Messages
 
-  Copyright (c) 2018 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -23,6 +23,8 @@
 //
 #define FWCAPS_GET_RULE_CMD                 0x02
 #define FWCAPS_SET_RULE_CMD                 0x03
+#define RULE_DATA_LENGTH                    0x04
+
 //
 // Defines for GEN_GROUP Command
 //
@@ -164,6 +166,27 @@ typedef struct {
   MKHI_MESSAGE_HEADER           MKHIHeader;
   GEN_GET_FW_CAPS_SKU_ACK_DATA  Data;
 } GEN_GET_FW_CAPS_SKU_ACK;
+
+typedef struct {
+  UINT32              RuleID;
+  UINT8               RuleDataLen;
+  UINT32              RuleData;
+} GEN_SET_FW_CAPSKU_DATA;
+
+typedef struct {
+  MKHI_MESSAGE_HEADER    MkhiHeader;
+  GEN_SET_FW_CAPSKU_DATA Data;
+} GEN_SET_FW_CAPSKU;
+
+typedef struct {
+  UINT32  RuleId;
+} SET_RULE_DATA;
+
+typedef struct {
+  MKHI_MESSAGE_HEADER MkhiHeader;
+  SET_RULE_DATA       Data;
+} GEN_SET_FW_CAPSKU_ACK;
+
 
 //
 // Get FW Version

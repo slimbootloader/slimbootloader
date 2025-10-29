@@ -1,7 +1,7 @@
 /** @file
   Heci driver core, determines the HECI device and initializes it.
 
-  Copyright (c) 2017 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -220,6 +220,222 @@ HeciGetFwCapsSkuMsg (
 
   return EFI_SUCCESS;
 }
+
+/**
+  Send Get Firmware SKU all caps Request
+
+  @param[out] MsgGetFwCapsAck     Return message for Get Firmware Capability SKU ACK
+
+  @exception EFI_UNSUPPORTED      Current Sec mode doesn't support this function
+  @retval EFI_SUCCESS             Command succeeded
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+  @retval EFI_TIMEOUT             HECI does not return the buffer before timeout
+  @retval EFI_BUFFER_TOO_SMALL    Message Buffer is too smallfor the Acknowledge
+ **/
+EFI_STATUS
+EFIAPI
+HeciGetFwAllCapsSkuMsg (
+  OUT UINT8                      *MsgGetFwCapsAck
+  )
+{
+  EFI_STATUS                      Status;
+  UINT32                          Length;
+  GEN_GET_FW_CAPSKU               MsgGenGetFwCapsSku;
+  GEN_GET_FW_CAPS_SKU_ACK         *MsgGenGetFwCapsSkuAck;
+
+  if (MsgGetFwCapsAck == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  MsgGenGetFwCapsSkuAck = (GEN_GET_FW_CAPS_SKU_ACK *)MsgGetFwCapsAck;
+
+  //
+  // Allocate MsgGenGetFwVersion data structure.
+  //
+  MsgGenGetFwCapsSku.MkhiHeader.Data               = 0;
+  MsgGenGetFwCapsSku.MkhiHeader.Fields.GroupId     = MKHI_FWCAPS_GROUP_ID;
+  MsgGenGetFwCapsSku.MkhiHeader.Fields.Command     = FWCAPS_GET_RULE_CMD;
+  MsgGenGetFwCapsSku.MkhiHeader.Fields.IsResponse  = 0x0;
+  MsgGenGetFwCapsSku.Data.RuleId                   = 0x21;
+
+  //
+  // Send Get FW SKU Request to SEC
+  //
+  Length = sizeof (GEN_GET_FW_CAPSKU);
+  Status = HeciSend (HECI1_DEVICE, (UINT32 *)&MsgGenGetFwCapsSku, Length,
+                     BIOS_FIXED_HOST_ADDR, HECI_MKHI_MESSAGE_ADDR);
+  if (EFI_ERROR(Status)) {
+    DEBUG ((DEBUG_ERROR, "[HECI] HeciGetFwCapsSkuMsg failed on send - %r\n", Status));
+    return Status;
+  }
+
+  Length = sizeof (GEN_GET_FW_CAPS_SKU_ACK);
+  Status = HeciReceive (HECI1_DEVICE, HECI_BLOCKING_MSG,
+                        (UINT32 *)MsgGenGetFwCapsSkuAck, &Length);
+  if (EFI_ERROR(Status)) {
+    DEBUG ((DEBUG_ERROR, "[HECI] HeciGetFwCapsSkuMsg failed on read - %r\n", Status));
+    return Status;
+  }
+  return EFI_SUCCESS;
+}
+
+/**
+  Send Set FW Enabled Features Request to CSME for firmware all caps
+
+  @param[in]   RuleData           Pointer to new rule data.
+
+  @retval EFI_UNSUPPORTED         Current ME mode doesn't support this function
+  @retval EFI_SUCCESS             Command succeeded
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+  @retval EFI_TIMEOUT             HECI does not return the buffer before timeout
+  @retval EFI_BUFFER_TOO_SMALL    Message Buffer is too small for the Acknowledge
+**/
+EFI_STATUS
+EFIAPI
+HeciSetFwAllCapsSkuMsg (
+  IN  UINT32                      RuleData
+  )
+{
+  EFI_STATUS          Status;
+  UINT32                          Length;
+  GEN_SET_FW_CAPSKU               MsgGenSetFwCapsSku;
+  GEN_SET_FW_CAPSKU_ACK           MsgGenSetFwCapsSkuAck;
+
+  MsgGenSetFwCapsSku.MkhiHeader.Data           = 0;
+  MsgGenSetFwCapsSku.MkhiHeader.Fields.GroupId = MKHI_FWCAPS_GROUP_ID;
+  MsgGenSetFwCapsSku.MkhiHeader.Fields.Command = FWCAPS_SET_RULE_CMD;
+  MsgGenSetFwCapsSku.Data.RuleID                    = 0x21;
+  MsgGenSetFwCapsSku.Data.RuleDataLen               = RULE_DATA_LENGTH;
+  MsgGenSetFwCapsSku.Data.RuleData                  = RuleData;
+
+  Length = sizeof (GEN_SET_FW_CAPSKU);
+  Status = HeciSend (HECI1_DEVICE, (UINT32 *)&MsgGenSetFwCapsSku, Length,
+                     BIOS_FIXED_HOST_ADDR, HECI_MKHI_MESSAGE_ADDR);
+  if (EFI_ERROR(Status)) {
+    DEBUG ((DEBUG_ERROR, "[HECI] HeciSetUserCapsSkuMsg failed on send - %r\n", Status));
+    return Status;
+  }
+
+  Length = sizeof (GEN_SET_FW_CAPSKU_ACK);
+  Status = HeciReceive (HECI1_DEVICE, HECI_BLOCKING_MSG,
+                        (UINT32 *)&MsgGenSetFwCapsSkuAck, &Length);
+  if (EFI_ERROR(Status)) {
+    DEBUG ((DEBUG_ERROR, "[HECI] HeciSetUserCapsSkuMsg failed on read - %r\n", Status));
+    return Status;
+  }
+
+  return Status;
+}
+
+
+/**
+  Send Get user caps Request
+
+  @param[out] MsgGetFwCapsAck     Return message for Get Firmware Capability SKU ACK
+
+  @exception EFI_UNSUPPORTED      Current Sec mode doesn't support this function
+  @retval EFI_SUCCESS             Command succeeded
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+  @retval EFI_TIMEOUT             HECI does not return the buffer before timeout
+  @retval EFI_BUFFER_TOO_SMALL    Message Buffer is too smallfor the Acknowledge
+ **/
+EFI_STATUS
+EFIAPI
+HeciGetUserCapsSkuMsg (
+  OUT UINT8                      *MsgGetFwCapsAck
+  )
+{
+  EFI_STATUS                      Status;
+  UINT32                          Length;
+  GEN_GET_FW_CAPSKU               MsgGenGetFwCapsSku;
+  GEN_GET_FW_CAPS_SKU_ACK         *MsgGenGetFwCapsSkuAck;
+
+  if (MsgGetFwCapsAck == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  MsgGenGetFwCapsSkuAck = (GEN_GET_FW_CAPS_SKU_ACK *)MsgGetFwCapsAck;
+
+  //
+  // Allocate MsgGenGetFwVersion data structure.
+  //
+  MsgGenGetFwCapsSku.MkhiHeader.Data               = 0;
+  MsgGenGetFwCapsSku.MkhiHeader.Fields.GroupId     = MKHI_FWCAPS_GROUP_ID;
+  MsgGenGetFwCapsSku.MkhiHeader.Fields.Command     = FWCAPS_GET_RULE_CMD;
+  MsgGenGetFwCapsSku.MkhiHeader.Fields.IsResponse  = 0x0;
+  MsgGenGetFwCapsSku.Data.RuleId                   = 0x9;
+
+  //
+  // Send Get FW SKU Request to SEC
+  //
+  Length = sizeof (GEN_GET_FW_CAPSKU);
+  Status = HeciSend (HECI1_DEVICE, (UINT32 *)&MsgGenGetFwCapsSku, Length,
+                     BIOS_FIXED_HOST_ADDR, HECI_MKHI_MESSAGE_ADDR);
+  if (EFI_ERROR(Status)) {
+    DEBUG ((DEBUG_ERROR, "[HECI] HeciGetFwCapsSkuMsg failed on send - %r\n", Status));
+    return Status;
+  }
+
+  Length = sizeof (GEN_GET_FW_CAPS_SKU_ACK);
+  Status = HeciReceive (HECI1_DEVICE, HECI_BLOCKING_MSG,
+                        (UINT32 *)MsgGenGetFwCapsSkuAck, &Length);
+  if (EFI_ERROR(Status)) {
+    DEBUG ((DEBUG_ERROR, "[HECI] HeciGetFwCapsSkuMsg failed on read - %r\n", Status));
+    return Status;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Send Set User Capabilities State Request to ME
+
+  @param[in]   RuleData           Pointer to new rule data.
+
+  @retval EFI_UNSUPPORTED         Current ME mode doesn't support this function
+  @retval EFI_SUCCESS             Command succeeded
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+  @retval EFI_TIMEOUT             HECI does not return the buffer before timeout
+  @retval EFI_BUFFER_TOO_SMALL    Message Buffer is too small for the Acknowledge
+**/
+EFI_STATUS
+EFIAPI
+HeciSetUserCapsSkuMsg (
+  IN  UINT32                      RuleData
+  )
+{
+  EFI_STATUS          Status;
+  UINT32                          Length;
+  GEN_SET_FW_CAPSKU               MsgGenSetFwCapsSku;
+  GEN_SET_FW_CAPSKU_ACK           MsgGenSetFwCapsSkuAck;
+
+  MsgGenSetFwCapsSku.MkhiHeader.Data           = 0;
+  MsgGenSetFwCapsSku.MkhiHeader.Fields.GroupId = MKHI_FWCAPS_GROUP_ID;
+  MsgGenSetFwCapsSku.MkhiHeader.Fields.Command = FWCAPS_SET_RULE_CMD;
+  MsgGenSetFwCapsSku.Data.RuleID                    = 0x9;
+  MsgGenSetFwCapsSku.Data.RuleDataLen               = RULE_DATA_LENGTH;
+  MsgGenSetFwCapsSku.Data.RuleData                  = RuleData;
+
+  Length = sizeof (GEN_SET_FW_CAPSKU);
+  Status = HeciSend (HECI1_DEVICE, (UINT32 *)&MsgGenSetFwCapsSku, Length,
+                     BIOS_FIXED_HOST_ADDR, HECI_MKHI_MESSAGE_ADDR);
+  if (EFI_ERROR(Status)) {
+    DEBUG ((DEBUG_ERROR, "[HECI] HeciSetUserCapsSkuMsg failed on send - %r\n", Status));
+    return Status;
+  }
+
+  Length = sizeof (GEN_SET_FW_CAPSKU_ACK);
+  Status = HeciReceive (HECI1_DEVICE, HECI_BLOCKING_MSG,
+                        (UINT32 *)&MsgGenSetFwCapsSkuAck, &Length);
+  if (EFI_ERROR(Status)) {
+    DEBUG ((DEBUG_ERROR, "[HECI] HeciSetUserCapsSkuMsg failed on read - %r\n", Status));
+    return Status;
+  }
+  DEBUG ((DEBUG_INFO, "MsgGenSetUserCapsSkuAck = %x, Length = %d\n", MsgGenSetFwCapsSkuAck, Length));
+
+  return Status;
+}
+
 
 /**
   This function gets CSME boot time data from CSME.
