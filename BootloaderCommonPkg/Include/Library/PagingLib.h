@@ -70,6 +70,30 @@ Create4GbPageTables (
   );
 
 /**
+  Allocates and fills in the Page Directory and Page Table Entries to
+  establish a 1:1 Virtual to Physical mapping for 512GB address space.
+
+  This function creates identity mapping for 0-512GB using 1GB pages for
+  x64 mode, providing complete coverage for high MMIO regions.
+
+  @param[in] PageBuffer    Page table root pointer. The buffer size needs
+                           to be at least GetPageTablesMemorySize().
+  @param[in] IsX64Mode     Determine to build page table for x64 mode or not.
+                           For 32-bit mode, falls back to 4GB mapping.
+
+  @retval    EFI_SUCCESS            Page table was created successfully.
+  @retval    EFI_INVALID_PARAMETER  Invalid PageBuffer.
+  @retval    EFI_UNSUPPORTED        1GB pages not supported on this CPU.
+
+**/
+EFI_STATUS
+EFIAPI
+Create512GbPageTables (
+  IN VOID       *PageBuffer,
+  IN BOOLEAN     IsX64Mode
+  );
+
+/**
   Map a memory range from the current paging table.
 
   @param[in] Ranges        Memory range info to map.
