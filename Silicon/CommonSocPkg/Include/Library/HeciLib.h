@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2018 - 2020, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -284,6 +284,78 @@ EFIAPI
 HeciGetFwCapsSkuMsg (
   OUT UINT8                      *MsgGetFwCapsAck
   );
+
+ /**
+  Send Get user caps Request
+
+  @param[out] MsgGetFwCapsAck     Return message for Get Firmware Capability SKU ACK
+
+  @exception EFI_UNSUPPORTED      Current Sec mode doesn't support this function
+  @retval EFI_SUCCESS             Command succeeded
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+  @retval EFI_TIMEOUT             HECI does not return the buffer before timeout
+  @retval EFI_BUFFER_TOO_SMALL    Message Buffer is too smallfor the Acknowledge
+ **/
+EFI_STATUS
+EFIAPI
+HeciGetUserCapsSkuMsg (
+  OUT UINT8                      *MsgGetFwCapsAck
+  );
+
+
+
+  /**
+  Send Set User Capabilities State Request to ME
+
+  @param[in]   RuleData           Pointer to new rule data.
+
+  @retval EFI_UNSUPPORTED         Current ME mode doesn't support this function
+  @retval EFI_SUCCESS             Command succeeded
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+  @retval EFI_TIMEOUT             HECI does not return the buffer before timeout
+  @retval EFI_BUFFER_TOO_SMALL    Message Buffer is too small for the Acknowledge
+**/
+EFI_STATUS
+EFIAPI
+HeciSetUserCapsSkuMsg (
+  IN  UINT32                      RuleData
+  );
+
+  /**
+  Send Get Firmware SKU all caps Request
+
+  @param[out] MsgGetFwCapsAck     Return message for Get Firmware Capability SKU ACK
+
+  @exception EFI_UNSUPPORTED      Current Sec mode doesn't support this function
+  @retval EFI_SUCCESS             Command succeeded
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+  @retval EFI_TIMEOUT             HECI does not return the buffer before timeout
+  @retval EFI_BUFFER_TOO_SMALL    Message Buffer is too smallfor the Acknowledge
+ **/
+EFI_STATUS
+EFIAPI
+HeciGetFwAllCapsSkuMsg (
+  OUT UINT8                      *MsgGetFwCapsAck
+  );
+
+
+/**
+  Send Set FW Enabled Features Request to CSME for firmware all caps
+
+  @param[in]   RuleData           Pointer to new rule data.
+
+  @retval EFI_UNSUPPORTED         Current ME mode doesn't support this function
+  @retval EFI_SUCCESS             Command succeeded
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+  @retval EFI_TIMEOUT             HECI does not return the buffer before timeout
+  @retval EFI_BUFFER_TOO_SMALL    Message Buffer is too small for the Acknowledge
+**/
+EFI_STATUS
+EFIAPI
+HeciSetFwAllCapsSkuMsg (
+  IN  UINT32                      RuleData
+  );
+
 
 /**
   Register HECI service
