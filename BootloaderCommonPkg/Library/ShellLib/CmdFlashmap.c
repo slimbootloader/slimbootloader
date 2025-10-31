@@ -57,12 +57,13 @@ GetComponentDescription (
     case FLASH_MAP_SIG_MRCDATA:      return "Memory training data";
     case FLASH_MAP_SIG_VARIABLE:     return "Variable storage";
     case FLASH_MAP_SIG_UEFIVARIABLE: return "UEFI variable storage";
-    case FLASH_MAP_SIG_PAYLOAD:      return "OS loader payload";
+    case FLASH_MAP_SIG_PAYLOAD:      return "OsLoader payload";
     case FLASH_MAP_SIG_EPAYLOAD:     return "Extended payload";
-    case FLASH_MAP_SIG_FWUPDATE:     return "Firmware update";
+    case FLASH_MAP_SIG_FWUPDATE:     return "Firmware update payload";
     case FLASH_MAP_SIG_CFGDATA:      return "Configuration data";
     case FLASH_MAP_SIG_BLRESERVED:   return "Bootloader reserved";
     case FLASH_MAP_SIG_BPM:          return "Boot Policy Manifest";
+    case FLASH_MAP_SIG_EMPTY:        return "Empty region";
     default:                         return "Unknown component";
   }
 }
@@ -221,8 +222,8 @@ ShellCommandFlashmapFunc (
 
   // Display table header - different format for verbose vs normal mode
   if (Verbose) {
-    ShellPrint (L"Idx  Sign  Offset     Flash Addr Size       Flags      Description\n");
-    ShellPrint (L"---- ----  ---------- ---------- ---------- ---------- -----------\n");
+    ShellPrint (L"Idx  Sign  Offset     Flash Addr Size       Flags        Description\n");
+    ShellPrint (L"---- ----  ---------- ---------- ---------- ------------ -----------\n");
   } else {
     ShellPrint (L"Idx  Sign  Offset     Flash Addr Size       Flags\n");
     ShellPrint (L"---- ----  ---------- ---------- ---------- ----------\n");
@@ -240,7 +241,7 @@ ShellCommandFlashmapFunc (
     FlashAddress = FlashBase + FlashMapDesc[Index].Offset;
 
     if (Verbose) {
-      ShellPrint (L"%4d %-4a  0x%08X 0x%08X 0x%08X %-10a %a\n",
+      ShellPrint (L"%4d %-4a  0x%08X 0x%08X 0x%08X %-12a %a\n",
                   Index,
                   SigStr,
                   FlashMapDesc[Index].Offset,
@@ -261,7 +262,7 @@ ShellCommandFlashmapFunc (
   }
 
   if (Verbose) {
-    ShellPrint (L"---- ----  ---------- ---------- ---------- ---------- -----------\n");
+    ShellPrint (L"---- ----  ---------- ---------- ---------- ------------ -----------\n");
   } else {
     ShellPrint (L"---- ----  ---------- ---------- ---------- ----------\n");
   }
