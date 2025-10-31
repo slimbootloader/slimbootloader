@@ -31,8 +31,6 @@
   Mcfg/Mcfg.aslc
   Hpet/Hpet.aslc
   Madt/Madt30.aslc
-  Dmar/Dmar.aslc
-  Dmar/Dmar.h
   Platform/CommonBoardPkg/AcpiTables/Tpm/Tpm2.aslc
   Platform/CommonBoardPkg/AcpiTables/Tpm/TpmSsdt.asl
   Platform/CommonBoardPkg/AcpiTables/Fpdt/Fpdt.aslc

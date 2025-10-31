@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2024, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2025, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -8,27 +8,23 @@
 
 [Defines]
   INF_VERSION                    = 0x00010005
-  BASE_NAME                      = VtdLib
-  FILE_GUID                          = f56d7f0d-68ec-4560-a848-01456335cd53
+  BASE_NAME                      = DmarLib
+  FILE_GUID                      = f56d7f0d-68ec-4560-a848-01456335cd53
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = VtdLib
+  LIBRARY_CLASS                  = DmarLib
 
 #
 #  VALID_ARCHITECTURES           = IA32 X64 IPF EBC ARM
 #
 
 [Sources]
-  VTdLib.c
+  DmarLib.c
 
 [Packages]
   MdePkg/MdePkg.dec
-  IntelFsp2Pkg/IntelFsp2Pkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
-  Silicon/ArrowlakePkg/ArrowlakePkg.dec
-  Platform/ArrowlakeBoardPkg/ArrowlakeBoardPkg.dec
-  Platform/CommonBoardPkg/CommonBoardPkg.dec
   Silicon/CommonSocPkg/CommonSocPkg.dec
 
 [LibraryClasses]
@@ -43,6 +39,8 @@
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdAcpiGnvsAddress
   gPlatformModuleTokenSpaceGuid.PcdVtdEnabled
-
-[FixedPcd]
-  gPlatformArrowLakeTokenSpaceGuid.PcdMtlSSupport
+  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultOemId
+  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultOemTableId
+  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultOemRevision
+  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultCreatorId
+  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultCreatorRevision
