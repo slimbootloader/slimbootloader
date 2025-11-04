@@ -22,6 +22,7 @@
 #include <Register/Intel/Cpuid.h>
 #include "TxtCtx.h"
 #include <Library/MpInitLib.h>
+#include <FirmwareInterfaceTable.h>
 
 GLOBAL_REMOVE_IF_UNREFERENCED TXT_LIB_CONTEXT mTxtLibCtx;
 
@@ -755,6 +756,177 @@ InitTxt(
     Status = ResetTpmAux (&mTxtLibCtx);
     ASSERT_EFI_ERROR (Status);
   }
+
+  return EFI_SUCCESS;
+}
+
+// FIT Table Types required to get ACM base address for TXT upds
+#define FIT_TABLE_TYPE_STARTUP_ACM           0x2
+#define FIT_TABLE_TYPE_HEADER                0x0
+
+/**
+  Finds the BIOS ACM (Authenticated Code Module) address in the FIT table.
+
+  @retval Pointer to BIOS ACM address, or NULL if not found
+**/
+VOID *
+FindBiosAcm ()
+{
+  FIRMWARE_INTERFACE_TABLE_ENTRY *FitEntry;
+  UINT32                         EntryNum;
+  UINT64                         FitTableOffset;
+  UINT32                         Index;
+  FitTableOffset = *(UINT64 *)(UINTN)(BASE_4GB - 0x40);
+  FitEntry = (FIRMWARE_INTERFACE_TABLE_ENTRY *)(UINTN)FitTableOffset;
+  if (FitEntry != NULL) {
+    if (FitEntry[0].Address != *(UINT64 *)"_FIT_   ") {
+      return NULL;
+    }
+    if (FitEntry[0].Type != FIT_TABLE_TYPE_HEADER) {
+      return NULL;
+    }
+    EntryNum = *(UINT32 *)(&FitEntry[0].Size[0]) & 0xFFFFFF;
+    for (Index = 0; Index < EntryNum; Index++) {
+      if (FitEntry[Index].Type == FIT_TABLE_TYPE_STARTUP_ACM) {
+        DEBUG ((DEBUG_INFO, "BiosAcm Location : 0x%X\n", (VOID *)(UINTN)FitEntry[Index].Address));
+        return (VOID *)(UINTN)FitEntry[Index].Address;
+      }
+    }
+  }
+  return NULL;
+}
+
+/**
+  Restores TXT Device Memory registers (HEAP and SINIT) during S3 resume.
+  This function restores register state without touching actual memory content,
+  which must be preserved across S3 for TBOOT/MLE.
+
+  @param[in] TxtLibCtx - A pointer to an initialized TXT DXE Context data structure
+
+  @retval EFI_SUCCESS     - TXT Device memory registers restored successfully.
+  @retval EFI_UNSUPPORTED - Required TXT info not available.
+**/
+EFI_STATUS
+RestoreTxtDeviceMemoryRegisters (
+  IN TXT_LIB_CONTEXT *TxtLibCtx
+  )
+{
+  UINT64        *Ptr64;
+  UINT64        TxtHeapMemoryBase;
+  UINT64        TxtSinitMemoryBase;
+  EFI_PHYSICAL_ADDRESS TopAddr;
+  TXT_INFO_DATA *TxtInfoData;
+
+  TxtInfoData = TxtLibCtx->TxtInfoData;
+
+  if ((TxtInfoData == 0) ||
+      (TxtInfoData->TxtDprMemoryBase == 0) ||
+      (TxtInfoData->TxtDprMemorySize == 0) ||
+      (TxtInfoData->TxtHeapMemorySize == 0) ||
+      (TxtInfoData->SinitMemorySize == 0)
+      ) {
+    return EFI_UNSUPPORTED;
+  }
+
+  ///
+  /// Calculate addresses using same formulas as SetupTxtDeviceMemory
+  ///
+  TopAddr = TxtInfoData->TxtDprMemoryBase + TxtInfoData->TxtDprMemorySize;
+  TxtHeapMemoryBase = (UINT64)(TopAddr - TxtInfoData->TxtHeapMemorySize);
+  TxtSinitMemoryBase = TxtHeapMemoryBase - TxtInfoData->SinitMemorySize;
+
+  ///
+  /// Restore HEAP registers
+  ///
+  Ptr64 = (UINT64 *)(UINTN)(TXT_PUBLIC_BASE + TXT_HEAP_SIZE_REG_OFF);
+  *Ptr64 = TxtInfoData->TxtHeapMemorySize;
+
+  Ptr64 = (UINT64 *)(UINTN)(TXT_PUBLIC_BASE + TXT_HEAP_BASE_REG_OFF);
+  *Ptr64 = TxtHeapMemoryBase;
+
+  ///
+  /// Restore SINIT registers
+  ///
+  Ptr64 = (UINT64 *)(UINTN)(TXT_PUBLIC_BASE + TXT_SINIT_SIZE_REG_OFF);
+  *Ptr64 = TxtInfoData->SinitMemorySize;
+
+  Ptr64 = (UINT64 *)(UINTN)(TXT_PUBLIC_BASE + TXT_SINIT_BASE_REG_OFF);
+  *Ptr64 = TxtSinitMemoryBase;
+
+  DEBUG ((DEBUG_INFO, "TxtLib: S3 Restore - HEAP_BASE=%lx, HEAP_SIZE=%lx\n",
+          TxtHeapMemoryBase, TxtInfoData->TxtHeapMemorySize));
+  DEBUG ((DEBUG_INFO, "TxtLib: S3 Restore - SINIT_BASE=%lx, SINIT_SIZE=%lx\n",
+          TxtSinitMemoryBase, TxtInfoData->SinitMemorySize));
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Restores Intel TXT device memory registers (HEAP and SINIT) for S3 resume.
+  This function restores the TXT register state without touching actual memory
+  content, which must be preserved across S3 for TBOOT/MLE operation.
+
+  @retval EFI_SUCCESS     - TXT registers restored successfully
+  @retval EFI_UNSUPPORTED - Required TXT information not available
+  @retval Other           - Error during initialization
+**/
+EFI_STATUS
+EFIAPI
+TxtS3Restore()
+{
+  EFI_STATUS Status;
+
+  ///
+  /// Initialize the platform specific code
+  ///
+  Status = InitializeTxtLib (&mTxtLibCtx);
+  ///
+  /// If failure - assume TXT is not enabled
+  ///
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "TxtLib::InitializeTxtLib failed.... Unloading\n"));
+    return Status;
+  }
+
+  ///
+  /// Restore TXT device memory registers (HEAP and SINIT)
+  /// Note: Does not touch actual memory content - preserved for TBOOT/MLE
+  ///
+  Status = RestoreTxtDeviceMemoryRegisters (&mTxtLibCtx);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "TxtLib::RestoreTxtDeviceMemoryRegisters failed\n"));
+    return Status;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Initializes Intel TXT for S3 resume by launching BIOS ACM.
+  This function finds the BIOS ACM and launches it with SCHECK function
+  to complete TXT initialization after S3 resume.
+
+  @retval EFI_SUCCESS   - BIOS ACM launched successfully for S3 resume
+**/
+EFI_STATUS
+EFIAPI
+TxtS3Resume()
+{
+  EFI_PHYSICAL_ADDRESS        AlignedAddr = 0;
+
+  AlignedAddr = (EFI_PHYSICAL_ADDRESS)(UINTN)FindBiosAcm();
+  ///
+  /// Launch the BIOS ACM to run the requested function
+  ///
+  DEBUG ((DEBUG_INFO, "TxtLib::Running of LaunchBiosAcm in S3\n"));
+#if TXT_ARCH_IA32
+  _asm {
+    mov     ax,  0xAAAA
+    out     0x80, ax
+  }
+#endif
+
+  LaunchBiosAcm (AlignedAddr, TXT_LAUNCH_SCHECK);
 
   return EFI_SUCCESS;
 }
