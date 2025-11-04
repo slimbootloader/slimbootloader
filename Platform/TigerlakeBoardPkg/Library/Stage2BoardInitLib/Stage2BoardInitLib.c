@@ -908,7 +908,10 @@ BoardInit (
     if (FeaturePcdGet (PcdTxtEnabled)) {
       FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
       if (FeaturesCfgData->Features.TxtEnabled == 1) {
+        if (GetBootMode() != BOOT_ON_S3_RESUME)
           InitTxt();
+        else
+          TxtS3Restore();
       }
     }
     break;
@@ -967,6 +970,13 @@ BoardInit (
     break;
 
   case ReadyToBoot:
+    if (FeaturePcdGet (PcdTxtEnabled) && GetBootMode() == BOOT_ON_S3_RESUME) {
+      FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
+      if (FeaturesCfgData->Features.TxtEnabled == 1) {
+          TxtS3Resume();
+      }
+    }
+
     if ((GetBootMode() != BOOT_ON_FLASH_UPDATE) && (GetPayloadId() == 0)) {
       ProgramSecuritySetting ();
 
