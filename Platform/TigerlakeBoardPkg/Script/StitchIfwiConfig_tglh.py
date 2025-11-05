@@ -4,6 +4,8 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
+# Global variable to control TXT inclusion - can be overridden by check_parameter()
+g_txt_enabled = False
 
 extra_usage_txt = \
 """This is an IFWI stitch config script for Slim Bootloader For the FIT tool and
@@ -42,8 +44,10 @@ stitching ingredients listed in step 2 below, please contact your Intel represen
 """
 
 def get_bpmgen2_params_change_list ():
+    global g_txt_enabled
     params_change_list = []
-    params_change_list.append ([
+    # Base parameters
+    base_params = [
       # variable                | value |
       # ===================================
       ('PlatformRules',         'TGL Client'),
@@ -55,14 +59,30 @@ def get_bpmgen2_params_change_list ():
       ('AcpiBase',              '0x1800'),
       ('IbbFlags',              '0x2'),
       ('IbbHashAlgID',          '0x0C:SHA384'),
-      ('TxtInclude',            'FALSE'),
       ('PcdInclude',            'TRUE'),
       ('BpmSigScheme',          '0x16:RSAPSS'),
       ('BpmSigPubKey',          r'BpmGen2/keys/bpm_pubkey_3072.pem'),
       ('BpmSigPrivKey',         r'BpmGen2/keys/bpm_privkey_3072.pem'),
       ('BpmKeySizeBits',        '3072'),
       ('BpmSigHashAlgID',       '0x0C:SHA384'),
-      ])
+    ]
+
+    if g_txt_enabled == True:
+        txt_params = [
+            ('TxtInclude',            'TRUE'),
+            ('PdSeconds',             '10'),
+            ('PttCmosOffset0',        '0xFE'),
+            ('PttCmosOffset1',        '0xFF'),
+            ('CmosIndexOffset',       '255'),
+        ]
+    else:
+        txt_params = [
+            ('TxtInclude',            'False'),
+        ]
+
+    # Combine all parameters
+    all_params = base_params + txt_params
+    params_change_list.append(all_params)
     return params_change_list
 
 def get_platform_sku():
@@ -89,6 +109,7 @@ def check_parameter(para_list):
         'dbg'     : {},
         'tsn'     : {},
         '32MB'   : {},
+        'txt'    : {},
         'spi'    : {'25MHz', '50MHz'},
         'cfg3'   : {}
         }
@@ -103,6 +124,7 @@ def check_parameter(para_list):
                    Note: Certain options will do not work when the descriptor
                    is locked (See FW Bring-up Guide for setting details)."
         '32MB' -- Stitch image set to 32MB, by default use 16MB.
+        'txt'  -- Enable Intel TXT support.
         'spi'  -- Set SPI frequency to be 25MHz, 50MHz
         'cfg3' -- Stitch image to boot on Config 3 TGL-H RVP board.
         """
@@ -172,9 +194,9 @@ def get_xml_change_list (platform, plt_params_list):
         ('./IntegratedSensorHub/IshPowerUpState',                                    'Enabled'),
         ('./IntegratedSensorHub/IshImage/InputFile',                                 '$SourceDir\IshImage.bin'),
         ('./IntegratedSensorHub/IshData/PdtBinary',                                  '$SourceDir\PdtBinary.bin'),
-        ('./Debug/DelayedAuthenticationModeConfiguration/DelayedAuthMode',           'Yes'),
+        ('./Debug/DelayedAuthenticationModeConfiguration/DelayedAuthMode',           'No'),
         ('./Debug/IntelMeFirmwareDebuggingOverrides/DbgOverridePreProdSi',           '0x00000007'),
-        ('./Debug/DirectConnectInterfaceConfiguration/DciDbcEnable',                 'Yes'),
+        ('./Debug/DirectConnectInterfaceConfiguration/DciDbcEnable',                 'No'),
         ('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort2',               'SATA'),
         ('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort3',               'SATA'),
         ('./FlexIO/Usb2PortConfiguration/USB2Prt14ConTypeSel',                       'Type A / Type C'),
@@ -244,5 +266,14 @@ def get_xml_change_list (platform, plt_params_list):
         xml_change_list.append ([
             ('./Gpio/GpioVccioVoltageControl/GppG4voltSelect',                           '3.3Volts'),
             ])
+
+    if 'txt' in plt_params_list:
+        print ("Applying changes to enable TXT support")
+        global g_txt_enabled
+        g_txt_enabled = True
+        xml_change_list.append ([
+            ('./PlatformProtection/TxtConfiguration/TxtSupported',                        'Yes'),
+            ])
+
     return xml_change_list
 
