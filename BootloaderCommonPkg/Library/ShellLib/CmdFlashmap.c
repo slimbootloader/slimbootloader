@@ -186,11 +186,6 @@ ShellCommandFlashmapFunc (
   }
 
   FlashMap = (FLASH_MAP *)GET_GUID_HOB_DATA (GuidHob);
-  if (FlashMap == NULL) {
-    ShellPrint (L"Error: Invalid Flash Map data\n");
-    return EFI_INVALID_PARAMETER;
-  }
-
   // Validate flash map header
   if (FlashMap->Signature != FLASH_MAP_SIG_HEADER) {
     ShellPrint (L"Error: Invalid Flash Map signature\n");
