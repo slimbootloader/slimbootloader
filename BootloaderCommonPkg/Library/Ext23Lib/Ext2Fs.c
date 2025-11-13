@@ -862,6 +862,11 @@ Ext2fsOpen (
   //
   // read group descriptor blocks
   //
+  // Invalid Ext2FsNumCylinder could overflow UINTN
+  if ((UINT32)(FileSystem->Ext2FsNumCylinder) >= (MAX_UINTN/sizeof(EXT2GD))) {
+    Status = EFI_DEVICE_ERROR;
+    goto out;
+  }
   FileSystem->Ext2FsGrpDes = AllocatePool (sizeof(EXT2GD) * FileSystem->Ext2FsNumCylinder);
   Status = ReadGDBlock (File, FileSystem);
   if (RETURN_ERROR (Status)) {
