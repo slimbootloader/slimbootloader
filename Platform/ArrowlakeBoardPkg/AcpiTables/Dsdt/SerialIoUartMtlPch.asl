@@ -51,7 +51,7 @@ Scope (\_SB) {
   If (LOr (LEqual (UART_DEVICE_MODE, SERIAL_IO_UART_HIDDEN), LEqual (UART_DEVICE_MODE, SERIAL_IO_UART_COM))) {
     Device (PUA0) {
       Name (_DDN, "MtlPchSerialIoUart0")
-      Name (_UID, "MtlPchSerialIoUart0")
+      Name (_UID, 0x60)
       Include ("SerialIoUartHiddenDevice.asl")
     }
   }
@@ -82,7 +82,7 @@ Scope (\_SB) {
   If (LOr (LEqual (UART_DEVICE_MODE, SERIAL_IO_UART_HIDDEN), LEqual (UART_DEVICE_MODE, SERIAL_IO_UART_COM))) {
     Device (PUA1) {
       Name (_DDN, "MtlPchSerialIoUart1")
-      Name (_UID, "MtlPchSerialIoUart1")
+      Name (_UID, 0x61)
       Include ("SerialIoUartHiddenDevice.asl")
     }
   }
@@ -113,7 +113,7 @@ Scope (\_SB) {
   If (LOr (LEqual (UART_DEVICE_MODE, SERIAL_IO_UART_HIDDEN), LEqual (UART_DEVICE_MODE, SERIAL_IO_UART_COM))) {
     Device (PUA2) {
       Name (_DDN, "MtlPchSerialIoUart2")
-      Name (_UID, "MtlPchSerialIoUart2")
+      Name (_UID, 0x62)
       Include ("SerialIoUartHiddenDevice.asl")
     }
   }
@@ -144,7 +144,7 @@ Scope (\_SB) {
   If (LOr (LEqual (UART_DEVICE_MODE, SERIAL_IO_UART_HIDDEN), LEqual (UART_DEVICE_MODE, SERIAL_IO_UART_COM))) {
     Device (PUA3) {
       Name (_DDN, "MtlPchSerialIoUart3")
-      Name (_UID, "MtlPchSerialIoUart3")
+      Name (_UID, 0x63)
       Include ("SerialIoUartHiddenDevice.asl")
     }
   }

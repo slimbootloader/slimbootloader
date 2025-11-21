@@ -46,6 +46,8 @@
 #define UART5_PG          UP05
 #define UART6_PG          UP06
 
+#define UART_UID_BASE     0x50
+
 Scope(\_SB.URSC) {
     Method (_CRS, 0x0, Serialized) {
       Store (UARB (UART0_MODE, UART0_PCIE_BASE), Local0)
@@ -72,6 +74,7 @@ Scope(\_SB.URSC) {
 #define UART_DEVICE_DMA       UART0_DMA
 #define UART_DEVICE_HIDDEN    UAH0
 #define UART_DEVICE_DDN       "SerialIoUart0"
+#define UART_DEVICE_UID       UART_UID_BASE
 #define UART_DEVICE_IRQ       UART0_IRQ
 #define UART_DEVICE_PG        UART0_PG
 Scope(\_SB.PC00) {
@@ -86,6 +89,7 @@ Include ("SerialIoUartHiddenController.asl")
 #undef UART_DEVICE_DMA
 #undef UART_DEVICE_HIDDEN
 #undef UART_DEVICE_DDN
+#undef UART_DEVICE_UID
 #undef UART_DEVICE_IRQ
 #undef UART_DEVICE_PG
 #define UART_DEVICE_ADR       SERIAL_IO_UART1_ADR
@@ -94,6 +98,7 @@ Include ("SerialIoUartHiddenController.asl")
 #define UART_DEVICE_DMA       UART1_DMA
 #define UART_DEVICE_HIDDEN    UAH1
 #define UART_DEVICE_DDN       "SerialIoUart1"
+#define UART_DEVICE_UID       UART_UID_BASE + 1
 #define UART_DEVICE_IRQ       UART1_IRQ
 #define UART_DEVICE_PG        UART1_PG
 Scope(\_SB.PC00) {
@@ -108,6 +113,7 @@ Include ("SerialIoUartHiddenController.asl")
 #undef UART_DEVICE_DMA
 #undef UART_DEVICE_HIDDEN
 #undef UART_DEVICE_DDN
+#undef UART_DEVICE_UID
 #undef UART_DEVICE_IRQ
 #undef UART_DEVICE_PG
 #define UART_DEVICE_ADR       SERIAL_IO_UART2_ADR
@@ -116,6 +122,7 @@ Include ("SerialIoUartHiddenController.asl")
 #define UART_DEVICE_DMA       UART2_DMA
 #define UART_DEVICE_HIDDEN    UAH2
 #define UART_DEVICE_DDN       "SerialIoUart2"
+#define UART_DEVICE_UID       UART_UID_BASE + 2
 #define UART_DEVICE_IRQ       UART2_IRQ
 #define UART_DEVICE_PG        UART2_PG
 Scope(\_SB.PC00) {
@@ -130,6 +137,7 @@ Include ("SerialIoUartHiddenController.asl")
 #undef UART_DEVICE_DMA
 #undef UART_DEVICE_HIDDEN
 #undef UART_DEVICE_DDN
+#undef UART_DEVICE_UID
 #undef UART_DEVICE_IRQ
 #undef UART_DEVICE_PG
 #define UART_DEVICE_ADR       SERIAL_IO_UART3_ADR
@@ -138,6 +146,7 @@ Include ("SerialIoUartHiddenController.asl")
 #define UART_DEVICE_DMA       UART3_DMA
 #define UART_DEVICE_HIDDEN    UAH3
 #define UART_DEVICE_DDN       "SerialIoUart3"
+#define UART_DEVICE_UID       UART_UID_BASE + 3
 #define UART_DEVICE_IRQ       UART3_IRQ
 #define UART_DEVICE_PG        UART3_PG
 Scope(\_SB.PC00) {
@@ -152,6 +161,7 @@ Include ("SerialIoUartHiddenController.asl")
 #undef UART_DEVICE_DMA
 #undef UART_DEVICE_HIDDEN
 #undef UART_DEVICE_DDN
+#undef UART_DEVICE_UID
 #undef UART_DEVICE_IRQ
 #undef UART_DEVICE_PG
 #define UART_DEVICE_ADR       SERIAL_IO_UART4_ADR
@@ -160,6 +170,7 @@ Include ("SerialIoUartHiddenController.asl")
 #define UART_DEVICE_DMA       UART4_DMA
 #define UART_DEVICE_HIDDEN    UAH4
 #define UART_DEVICE_DDN       "SerialIoUart4"
+#define UART_DEVICE_UID       UART_UID_BASE + 4
 #define UART_DEVICE_IRQ       UART4_IRQ
 #define UART_DEVICE_PG        UART4_PG
 Scope(\_SB.PC00) {
@@ -174,6 +185,7 @@ Include ("SerialIoUartHiddenController.asl")
 #undef UART_DEVICE_DMA
 #undef UART_DEVICE_HIDDEN
 #undef UART_DEVICE_DDN
+#undef UART_DEVICE_UID
 #undef UART_DEVICE_IRQ
 #undef UART_DEVICE_PG
 #define UART_DEVICE_ADR       SERIAL_IO_UART5_ADR
@@ -182,6 +194,7 @@ Include ("SerialIoUartHiddenController.asl")
 #define UART_DEVICE_DMA       UART5_DMA
 #define UART_DEVICE_HIDDEN    UAH5
 #define UART_DEVICE_DDN       "SerialIoUart5"
+#define UART_DEVICE_UID       UART_UID_BASE + 5
 #define UART_DEVICE_IRQ       UART5_IRQ
 #define UART_DEVICE_PG        UART5_PG
 Scope(\_SB.PC00) {
@@ -196,6 +209,7 @@ Include ("SerialIoUartHiddenController.asl")
 #undef UART_DEVICE_DMA
 #undef UART_DEVICE_HIDDEN
 #undef UART_DEVICE_DDN
+#undef UART_DEVICE_UID
 #undef UART_DEVICE_IRQ
 #undef UART_DEVICE_PG
 #define UART_DEVICE_ADR       SERIAL_IO_UART6_ADR
@@ -204,6 +218,7 @@ Include ("SerialIoUartHiddenController.asl")
 #define UART_DEVICE_DMA       UART6_DMA
 #define UART_DEVICE_HIDDEN    UAH6
 #define UART_DEVICE_DDN       "SerialIoUart6"
+#define UART_DEVICE_UID       UART_UID_BASE + 6
 #define UART_DEVICE_IRQ       UART6_IRQ
 #define UART_DEVICE_PG        UART6_PG
 Scope(\_SB.PC00) {

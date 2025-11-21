@@ -2,7 +2,7 @@
 
   Serial IO UART Controllers ACPI definitions
 
-  Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -338,7 +338,7 @@ Scope(\_SB) {
   If (LOr (LEqual(UART0_MODE, SERIAL_IO_UART_HIDDEN), LEqual (UART0_MODE, SERIAL_IO_UART_COM))) {
     Device (UAH0) {
       Name (_DDN, "SerialIoUart0")
-      Name (_UID, "SerialIoUart0")
+      Name (_UID, 0x50)
       Method (_HID) { Return (UHID (UART0_MODE)) }
       Method (_CRS) { Return (UARH (UART0_PCIE_BASE, UART0_IRQ)) }
       Method (_STA) {
@@ -361,7 +361,7 @@ Scope(\_SB) {
   If (LOr (LEqual(UART1_MODE, SERIAL_IO_UART_HIDDEN), LEqual (UART1_MODE, SERIAL_IO_UART_COM))) {
     Device (UAH1) {
       Name (_DDN, "SerialIoUart1")
-      Name (_UID, "SerialIoUart1")
+      Name (_UID, 0x51)
       Method (_HID) { Return (UHID (UART1_MODE)) }
       Method (_CRS) { Return (UARH (UART1_PCIE_BASE, UART1_IRQ)) }
       Method (_STA) {
@@ -384,7 +384,7 @@ Scope(\_SB) {
   If (LOr (LEqual(UART2_MODE, SERIAL_IO_UART_HIDDEN), LEqual (UART2_MODE, SERIAL_IO_UART_COM))) {
     Device (UAH2) {
       Name (_DDN, "SerialIoUart2")
-      Name (_UID, "SerialIoUart2")
+      Name (_UID, 0x52)
       Method (_HID) { Return (UHID (UART2_MODE)) }
       Method (_CRS) { Return (UARH (UART2_PCIE_BASE, UART2_IRQ)) }
       Method (_STA) {
@@ -407,7 +407,7 @@ Scope(\_SB) {
   If (LOr (LEqual(UART3_MODE, SERIAL_IO_UART_HIDDEN), LEqual (UART3_MODE, SERIAL_IO_UART_COM))) {
     Device (UAH3) {
       Name (_DDN, "SerialIoUART3")
-      Name (_UID, "SerialIoUART3")
+      Name (_UID, 0x53)
       Method (_HID) { Return (UHID (UART3_MODE)) }
       Method (_CRS) { Return (UARH (UART3_PCIE_BASE, UART3_IRQ)) }
       Method (_STA) {
@@ -430,7 +430,7 @@ Scope(\_SB) {
   If (LOr (LEqual(UART4_MODE, SERIAL_IO_UART_HIDDEN), LEqual (UART4_MODE, SERIAL_IO_UART_COM))) {
     Device (UAH4) {
       Name (_DDN, "SerialIoUART4")
-      Name (_UID, "SerialIoUART4")
+      Name (_UID, 0x54)
       Method (_HID) { Return (UHID (UART4_MODE)) }
       Method (_CRS) { Return (UARH (UART4_PCIE_BASE, UART4_IRQ)) }
       Method (_STA) {
@@ -453,7 +453,7 @@ Scope(\_SB) {
   If (LOr (LEqual(UART5_MODE, SERIAL_IO_UART_HIDDEN), LEqual (UART5_MODE, SERIAL_IO_UART_COM))) {
     Device (UAH5) {
       Name (_DDN, "SerialIoUART5")
-      Name (_UID, "SerialIoUART5")
+      Name (_UID, 0x55)
       Method (_HID) { Return (UHID (UART5_MODE)) }
       Method (_CRS) { Return (UARH (UART5_PCIE_BASE, UART5_IRQ)) }
       Method (_STA) {
@@ -476,7 +476,7 @@ Scope(\_SB) {
   If (LOr (LEqual(UART6_MODE, SERIAL_IO_UART_HIDDEN), LEqual (UART6_MODE, SERIAL_IO_UART_COM))) {
     Device (UAH6) {
       Name (_DDN, "SerialIoUART6")
-      Name (_UID, "SerialIoUART6")
+      Name (_UID, 0x56)
       Method (_HID) { Return (UHID (UART6_MODE)) }
       Method (_CRS) { Return (UARH (UART6_PCIE_BASE, UART6_IRQ)) }
       Method (_STA) {
