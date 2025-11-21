@@ -1,6 +1,6 @@
 /**@file
 
-  Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -486,7 +486,7 @@ Scope(\_SB.PCI0) {
         If(LEqual(SERIAL_IO_UART0_DEVICE_MODE,SERIAL_IO_HIDDEN)) { Return (EISAID("PNP0C02")) }
         Else { Return (SERIAL_IO_UART0_HID) }
       }
-      Name (_UID, "SerialIoUart0")
+      Name (_UID, 0x50)
       Name (_DDN, "SerialIoUart0")
       Method (_HRV) { Return (LHRV(SERIAL_IO_UART0_BAR1)) }
       Method (_CRS) { Return (LCRS(SERIAL_IO_UART0_DEVICE_MODE,SERIAL_IO_UART0_BAR0,SERIAL_IO_UART0_IRQ_NUMBER)) }
@@ -522,7 +522,7 @@ Scope(\_SB.PCI0) {
         If(LEqual(SERIAL_IO_UART1_DEVICE_MODE,SERIAL_IO_HIDDEN)) { Return (EISAID("PNP0C02")) }
         Else { Return (SERIAL_IO_UART1_HID) }
       }
-      Name (_UID, "SerialIoUart1")
+      Name (_UID, 0x51)
       Name (_DDN, "SerialIoUart1")
       Method (_HRV) { Return (LHRV(SERIAL_IO_UART1_BAR1)) }
       Method (_CRS) { Return (LCRS(SERIAL_IO_UART1_DEVICE_MODE,SERIAL_IO_UART1_BAR0,SERIAL_IO_UART1_IRQ_NUMBER)) }
@@ -558,7 +558,7 @@ Scope(\_SB.PCI0) {
         If(LEqual(SERIAL_IO_UART2_DEVICE_MODE,SERIAL_IO_HIDDEN)) { Return (EISAID("PNP0C02")) }
         Else { Return (SERIAL_IO_UART2_HID) }
       }
-      Name (_UID, "SerialIoUart2")
+      Name (_UID, 0x52)
       Name (_DDN, "SerialIoUart2")
       Method (_HRV) { Return (LHRV(SERIAL_IO_UART2_BAR1)) }
       Method (_CRS) { Return (LCRS(SERIAL_IO_UART2_DEVICE_MODE,SERIAL_IO_UART2_BAR0,SERIAL_IO_UART2_IRQ_NUMBER)) }

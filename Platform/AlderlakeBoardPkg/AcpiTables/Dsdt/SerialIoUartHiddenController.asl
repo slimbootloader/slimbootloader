@@ -10,7 +10,7 @@ Scope(\_SB) {
   If (LOr (LEqual(UART_DEVICE_MODE, SERIAL_IO_UART_HIDDEN), LEqual (UART_DEVICE_MODE, SERIAL_IO_UART_COM))) {
     Device (UART_DEVICE_HIDDEN) {
       Name (_DDN, UART_DEVICE_DDN)
-      Name (_UID, UART_DEVICE_DDN)
+      Name (_UID, UART_DEVICE_UID)
       Method (_HID) { Return (UHID (UART_DEVICE_MODE)) }
       Method (_CRS) { Return (UARH (UART_DEVICE_PCI_BASE, UART_DEVICE_IRQ)) }
       Method (_STA) {
