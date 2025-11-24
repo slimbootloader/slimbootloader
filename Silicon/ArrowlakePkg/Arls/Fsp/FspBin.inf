@@ -11,16 +11,16 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = 7c4aaf2266e82bfa3c3c984038514d6a0a85e6be
+  COMMIT  = 8701f48b18f041b41a49e8ca43c8a2942ce011a3
 
 [UserExtensions.SBL."CopyList"]
-  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Fsp.fd                 : Silicon/ArrowlakePkg/Arls/Fsp/FspRel.bin
-  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Fsp.fd                 : Silicon/ArrowlakePkg/Arls/Fsp/FspDbg.bin
-  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Fsp.bsf                : Silicon/ArrowlakePkg/Arls/Fsp/Fsp.bsf
-  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Include/FspUpd.h       : Silicon/ArrowlakePkg/Arls/Fsp/FspUpd.h
-  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Include/FsptUpd.h      : Silicon/ArrowlakePkg/Arls/Fsp/FsptUpd.h
-  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Include/FspmUpd.h      : Silicon/ArrowlakePkg/Arls/Fsp/FspmUpd.h
-  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Include/FspsUpd.h      : Silicon/ArrowlakePkg/Arls/Fsp/FspsUpd.h
-  ArrowLakeFspBinPkg/IoT/ArrowLakeS/Include/MemInfoHob.h : Silicon/ArrowlakePkg/Arls/Fsp/MemInfoHob.h
+  ArrowLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/ArrowLakeS/Fsp.fd                 : Silicon/ArrowlakePkg/Arls/Fsp/FspRel.bin
+  ArrowLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/ArrowLakeS/Fsp.fd                 : Silicon/ArrowlakePkg/Arls/Fsp/FspDbg.bin
+  ArrowLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/ArrowLakeS/Fsp.bsf                : Silicon/ArrowlakePkg/Arls/Fsp/Fsp.bsf
+  ArrowLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/ArrowLakeS/Include/FspUpd.h       : Silicon/ArrowlakePkg/Arls/Fsp/FspUpd.h
+  ArrowLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/ArrowLakeS/Include/FsptUpd.h      : Silicon/ArrowlakePkg/Arls/Fsp/FsptUpd.h
+  ArrowLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/ArrowLakeS/Include/FspmUpd.h      : Silicon/ArrowlakePkg/Arls/Fsp/FspmUpd.h
+  ArrowLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/ArrowLakeS/Include/FspsUpd.h      : Silicon/ArrowlakePkg/Arls/Fsp/FspsUpd.h
+  ArrowLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/ArrowLakeS/Include/MemInfoHob.h : Silicon/ArrowlakePkg/Arls/Fsp/MemInfoHob.h
   FSP_License.pdf                                          : Silicon/ArrowlakePkg/Arls/Fsp/FSP_License.pdf
-  ArrowLakeFspBinPkg/IoT/ArrowLakeS/VbtBin/Vbt_MTL.json    : Platform/ArrowlakeBoardPkg/VbtBin/Vbt_arls.json
+  ArrowLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/ArrowLakeS/VbtBin/Vbt_MTL.json    : Platform/ArrowlakeBoardPkg/VbtBin/Vbt_arls.json
