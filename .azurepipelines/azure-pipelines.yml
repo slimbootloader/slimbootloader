@@ -421,7 +421,7 @@ jobs:
         Build.Arch:   ""
         Build.Target: "-r"
   pool:
-    vmImage: 'windows-2019'
+    vmImage: 'windows-2022'
 
   steps:
   - checkout: self
@@ -466,5 +466,5 @@ jobs:
     displayName: Environment configuration
 
   - script: |
-      python BuildLoader.py build $(Build.Name) $(Build.Arch) $(Build.Target) -t vs2019 -k
+      python BuildLoader.py build $(Build.Name) $(Build.Arch) $(Build.Target) -t vs2022 -k
     displayName: 'Run $(Build.Name) build'

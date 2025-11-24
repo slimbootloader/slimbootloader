@@ -2055,7 +2055,7 @@ UpdateCpuNvs (
   CpuConfigData = (CPU_CONFIG_DATA *)(UINTN)CpuInitDataHob->CpuConfigData;
   CpuSku = GetCpuSku();
 
-  CpuNvs->Cpuid = GetCpuFamily() | GetCpuStepping();
+  CpuNvs->Cpuid = (UINT32)GetCpuFamily() | (UINT32)GetCpuStepping();
   CpuNvs->Revision = CPU_NVS_AREA_REVISION;
   ///
   /// Calculate the number of Oc bins supported. Read in MSR 194h FLEX_RATIO bits (19:17)
