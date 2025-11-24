@@ -132,8 +132,14 @@ SplitMemroyMap (
 
   // Add a flash map entry
   if (NewIdx < PcdGet32 (PcdMemoryMapEntryNumber)) {
-    MemoryMapInfo->Entry[NewIdx].Base = PcdGet32(PcdFlashBaseAddress);
-    MemoryMapInfo->Entry[NewIdx].Size = PcdGet32(PcdFlashSize);
+    if (PcdGet32(PcdFlashSize) < SIZE_16MB){
+      MemoryMapInfo->Entry[NewIdx].Base = PcdGet32(PcdFlashBaseAddress);
+      MemoryMapInfo->Entry[NewIdx].Size = PcdGet32(PcdFlashSize);
+    } else {
+      // Limit flash map entry to 16MB
+      MemoryMapInfo->Entry[NewIdx].Base = (UINT32)(~SIZE_16MB + 1);
+      MemoryMapInfo->Entry[NewIdx].Size = SIZE_16MB;
+    }
     MemoryMapInfo->Entry[NewIdx].Type = MEM_MAP_TYPE_RESERVED;
     MemoryMapInfo->Entry[NewIdx].Flag = 0;
     NewIdx++;
