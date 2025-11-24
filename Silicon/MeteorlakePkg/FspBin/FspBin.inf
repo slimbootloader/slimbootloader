@@ -11,16 +11,16 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = 570ac0f5fa03a5ac273783c614948c63243f0728
+  COMMIT  = 48af2c8e8a273da1a2846f4e4dd6e358431cc265
 
 [UserExtensions.SBL."CopyList"]
-  MeteorLakeFspBinPkg/IoT/MeteorLake/Fsp.fd                 : Silicon/MeteorlakePkg/FspBin/FspRel.bin
-  MeteorLakeFspBinPkg/IoT/MeteorLake/Fsp.fd                 : Silicon/MeteorlakePkg/FspBin/FspDbg.bin
-  MeteorLakeFspBinPkg/IoT/MeteorLake/Fsp.bsf                : Silicon/MeteorlakePkg/FspBin/Fsp.bsf
-  MeteorLakeFspBinPkg/IoT/MeteorLake/Include/FspUpd.h       : Silicon/MeteorlakePkg/Include/FspUpd.h
-  MeteorLakeFspBinPkg/IoT/MeteorLake/Include/FsptUpd.h      : Silicon/MeteorlakePkg/Include/FsptUpd.h
-  MeteorLakeFspBinPkg/IoT/MeteorLake/Include/FspmUpd.h      : Silicon/MeteorlakePkg/Include/FspmUpd.h
-  MeteorLakeFspBinPkg/IoT/MeteorLake/Include/FspsUpd.h      : Silicon/MeteorlakePkg/Include/FspsUpd.h
-  MeteorLakeFspBinPkg/IoT/MeteorLake/Include/MemInfoHob.h   : Silicon/MeteorlakePkg/Include/MemInfoHob.h
-  MeteorLakeFspBinPkg/IoT/MeteorLake/VbtBin/Vbt_MTL.json    : Platform/MeteorlakeBoardPkg/VbtBin/VbtMtl.json
-  FSP_License.pdf                                           : Silicon/MeteorlakePkg/FspBin/FSP_License.pdf
+  MeteorLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/MeteorLake/Fsp.fd                 : Silicon/MeteorlakePkg/FspBin/FspRel.bin
+  MeteorLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/MeteorLake/Fsp.fd                 : Silicon/MeteorlakePkg/FspBin/FspDbg.bin
+  MeteorLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/MeteorLake/Fsp.bsf                : Silicon/MeteorlakePkg/FspBin/Fsp.bsf
+  MeteorLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/MeteorLake/Include/FspUpd.h       : Silicon/MeteorlakePkg/Include/FspUpd.h
+  MeteorLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/MeteorLake/Include/FsptUpd.h      : Silicon/MeteorlakePkg/Include/FsptUpd.h
+  MeteorLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/MeteorLake/Include/FspmUpd.h      : Silicon/MeteorlakePkg/Include/FspmUpd.h
+  MeteorLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/MeteorLake/Include/FspsUpd.h      : Silicon/MeteorlakePkg/Include/FspsUpd.h
+  MeteorLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/MeteorLake/Include/MemInfoHob.h   : Silicon/MeteorlakePkg/Include/MemInfoHob.h
+  MeteorLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/MeteorLake/VbtBin/Vbt_MTL.json    : Platform/MeteorlakeBoardPkg/VbtBin/VbtMtl.json
+  FSP_License.pdf                                                                              : Silicon/MeteorlakePkg/FspBin/FSP_License.pdf
