@@ -92,7 +92,6 @@ def check_parameter(para_list):
     print (para_list)
     para_supported = {
         'crb'    : {},
-        'rvp_ddr5' : {},
         'quad'   : {},
         'debug'  : {},
         'tsn'    : {}
@@ -101,7 +100,6 @@ def check_parameter(para_list):
     para_help = \
         """
         'crb'    -- Stitch for CRB board
-        'rvp_ddr5' -- Stitch for RVP DDR5 board
         'quad'   -- Stitch IFWI with SPI QUAD mode
         'debug'  -- Enable DAM and DCI configuration (Only use for debug purpose but not for final production!)
         'tsn'    -- Stitch sample Tsn Mac address binary along with TSN AIC softstraps
@@ -218,63 +216,6 @@ def get_xml_change_list (platform, plt_params_list):
           ('./FlexIO/PcieLaneReversalConfiguration/PCIeCtrl3LnReversal',               'No'),
           ('./FlexIO/Type-CSubsystemConfiguration/XdciSplitDieConfig',                 'xDCI Split Die Enabled'),
           ('./FlexIO/Type-CSubsystemConfiguration/TcssPortEnMask',                     '0x3'),
-        ])
-
-    if 'rvp_ddr5' in plt_params_list:
-        print ("Applying changes to enable rvp ddr5 board")
-        xml_change_list.append ([
-          ('./BuildSettings/HarnessGlobalData/HarnessLabel',                           'v0.4 ADP-P w/TWL and ADL-N CPU'),
-          ('./BuildSettings/HarnessGlobalData/HarnessRevision',                        '#25'),
-          ('./BuildSettings/HarnessGlobalData/SelectedRvp',                            'TWL / ADL-N DDR5 (ADP-P + ADL-N / TWL)'),
-          ('./FlashLayout/EcRegion/Enabled',                                           'Enabled'),
-          ('./FlashLayout/EcRegion/InputFile',                                         '$SourceDir\EcRegion.bin'),
-          ('./FlashLayout/EcRegion/EcRegionPointer',                                   '$SourceDir\EcRegionPointer.bin'),
-          ('./FlashSettings/FlashConfiguration/SpiDualIoReadEnable',                   'Yes'),
-          ('./FlashSettings/FlashConfiguration/SpiDualOutReadEnable',                  'Yes'),
-          ('./IntelMeKernel/IntelMeFirmwareUpdate/HmrfpoEnable',                       'Yes'),
-          ('./CpuStraps/CpuStraps/Mipi124RailSrcPlat',                                 'No'),
-          ('./CpuStraps/CpuStraps/VccanaVrLocation',                                   'VCCANA is CPU FIVR'),
-          ('./Icc/IccPolicies/Profiles/Profile/ClockOutputConfiguration/ClkoutSRC1',   'Disabled'),
-          ('./InternalPchBuses/EspiConfiguration/EspiEcSlave1DeviceEn',                'No'),
-          ('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort0',               'PCIe'),
-          ('./FlexIO/SataPcieComboPortConfiguration/SataPCIeComboPort1',               'PCIe'),
-          ('./FlexIO/Usb3PortConfiguration/USB3Port4SpdCap',                           'USB 3.1 Gen2'),
-          ('./FlexIO/Usb3PortConfiguration/USB3PCIeComboPort3',                        'PCIe'),
-          ('./FlexIO/Usb2PortConfiguration/USB2Prt2ConTypeSel',                        'Type C'),
-          ('./FlexIO/Usb2PortConfiguration/USB2Prt3ConTypeSel',                        'Express Card / M.2 S2'),
-          ('./FlexIO/Usb2PortConfiguration/USB2Prt4ConTypeSel',                        'Express Card / M.2 S2'),
-          ('./FlexIO/Usb2PortConfiguration/USB2Prt5ConTypeSel',                        'Type A / Type C'),
-          ('./FlexIO/Type-CSubsystemConfiguration/TypeCPort2Config',                   'No Thunderbolt'),
-          ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort1RetimerEnabled','Yes'),
-          ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort1RetimerConfig', 'Yes'),
-          ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort1SmbusAddr',     '0x50'),
-          ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort2Mode',          'Yes'),
-          ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort2SMBusAddr',     '0x51'),
-          ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort2RetimerEnabled','Yes'),
-          ('./FlexIO/PowerDelivery_PdControllerConfiguration/TypeCPort2RetimerConfig', 'Yes'),
-          ('./Gpio/GpioVccioVoltageControl/GppD9voltSelect',                           '3.3Volts'),
-          ('./Gpio/GpioVccioVoltageControl/GppD11voltSelect',                          '3.3Volts'),
-          ('./Gpio/GpioVccioVoltageControl/GppD15voltSelect',                          '3.3Volts'),
-          ('./Gpio/GpioVccioVoltageControl/GppH8voltSelect',                           '1.8Volts'),
-          ('./Gpio/GpioVccioVoltageControl/GppH9voltSelect',                           '1.8Volts'),
-          ('./Gpio/GpioVccioVoltageControl/GppH19voltSelect',                          '3.3Volts'),
-          ('./Gpio/GpioVccioVoltageControl/GppH23voltSelect',                          '1.8Volts'),
-          ('./Gpio/GpioVccioVoltageControl/GppA11voltSelect',                          '3.3Volts'),
-          ('./Gpio/GpioVccioVoltageControl/GppA20voltSelect',                          '3.3Volts'),
-          ('./Gpio/GpioVccioVoltageControl/GppA21voltSelect',                          '1.8Volts'),
-          ('./Gpio/GpioVccioVoltageControl/GppA22voltSelect',                          '1.8Volts'),
-          ('./Gpio/GpioVccioVoltageControl/GppB0voltSelect',                           '1.8Volts'),
-          ('./Gpio/GpioVccioVoltageControl/GppB1voltSelect',                           '1.8Volts'),
-          ('./Gpio/GpioVccioVoltageControl/GppF13voltSelect',                          '1.8Volts'),
-          ('./NetworkingConnectivity/TimeSensitiveNetworkingConfiguration/TsnEnabled', 'Disabled'),
-          ('./FlexIO/PciePortConfiguration/PCIeController3Config',                     '1x4'),
-          ('./FlexIO/PcieLaneReversalConfiguration/PCIeCtrl3LnReversal',               'Yes'),
-          ('./FlexIO/Type-CSubsystemConfiguration/XdciSplitDieConfig',                 'xDCI Split Die Enabled'),
-          ('./FlexIO/Type-CSubsystemConfiguration/TcssPortEnMask',                     '0x3'),
-          ('./IntegratedSensorHub/IshImage/Length',                                    '0x58000'),
-          ('./PlatformProtection/TpmOverSpiBusConfiguration/SpiOverTpmBusEnable',      'Yes'),
-          ('./Debug/IntelMeFirmwareDebuggingOverrides/DbgOverridePreProdSi',           '0x0'),
-          ('./Debug/DirectConnectInterfaceConfiguration/Usb2DciOobEnable',             'No'),
         ])
 
     if 'tsn' in plt_params_list:
