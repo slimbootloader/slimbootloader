@@ -38,7 +38,7 @@ class Board(AlderlakeBoardConfig.Board):
         self._MULTI_VBT_FILE      = {1:'VbtRplPsRvp.dat', 2:'VbtRplPsCrb.dat'}
         self._LP_SUPPORT          = True
         self.EPAYLOAD_SIZE        = 0x240000
-        self.OS_LOADER_FD_SIZE    = 0x00059000
+        self.OS_LOADER_FD_SIZE    = 0x0005B000
         self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
         # 0 - PCH UART0, 1 - PCH UART1, 2 - PCH UART2, 0xFF - EC UART 0x3F8
         self.DEBUG_PORT_NUMBER = 0x0
