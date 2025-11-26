@@ -122,7 +122,7 @@ class Board(BaseBoard):
         self.STAGE2_FD_BASE       = 0x01000000
         self.STAGE2_FD_SIZE       = 0x001F0000
 
-        self.PAYLOAD_SIZE         = 0x0002E000
+        self.PAYLOAD_SIZE         = 0x0002F000
         self.EPAYLOAD_SIZE        = 0x00240000
 
         self.ENABLE_FAST_BOOT = 0

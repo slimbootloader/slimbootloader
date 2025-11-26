@@ -119,7 +119,7 @@ class Board(BaseBoard):
 
         self.PAYLOAD_SIZE         = 0x00032000
         self.EPAYLOAD_SIZE        = 0x00240000
-        self.OS_LOADER_FD_SIZE    = 0x0005A000
+        self.OS_LOADER_FD_SIZE    = 0x0005B000
         self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         self.ENABLE_FAST_BOOT = 0
