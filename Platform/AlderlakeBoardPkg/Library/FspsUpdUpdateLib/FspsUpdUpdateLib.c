@@ -782,6 +782,15 @@ UpdateFspConfig (
 
   // Disable IEH
   FspsConfig->IehMode = 0x0;
+
+  if (FeaturePcdGet (PcdTxtEnabled)) {
+    FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
+    if (FeaturesCfgData->Features.TxtEnabled == 1) {
+      DEBUG((DEBUG_INFO, "Enabling TXT in FSP-S UPD's\n"));
+      FspsConfig->TxtEnable = 0x1;
+    }
+  }
+
   FspsConfig->PchCrid = 0x0;
   if (GetBootMode() == BOOT_ON_FLASH_UPDATE) {
     //
