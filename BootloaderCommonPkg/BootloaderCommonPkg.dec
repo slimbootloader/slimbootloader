@@ -318,6 +318,40 @@
   #-  PcdHandOffFdtEnable is FALSE, HandOffData is HOB
   gPlatformCommonLibTokenSpaceGuid.PcdHandOffFdtEnable|FALSE|BOOLEAN|0x00010093
 
+  ## Default OEM ID for ACPI table creation, its length must be 0x6 bytes to follow ACPI specification.
+  # @Prompt Default OEM ID for ACPI table creation.
+  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultOemId|"INTEL "|VOID*|0x00010094
+
+  ## Default OEM Table ID for ACPI table creation, it is "OEMTABLE".
+  #  According to ACPI specification, this field is particularly useful when
+  #  defining a definition block to distinguish definition block functions.
+  #  The OEM assigns each dissimilar table a new OEM Table ID.
+  #  This PCD is ignored for definition block.
+  # @Prompt Default OEM Table ID for ACPI table creation.
+  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultOemTableId|0x454C4241544D454F|UINT64|0x00010095
+
+  ## Default OEM Revision for ACPI table creation.
+  #  According to ACPI specification, for LoadTable() opcode, the OS can also
+  #  check the OEM Table ID and Revision ID against a database for a newer
+  #  revision Definition Block of the same OEM Table ID and load it instead.
+  #  This PCD is ignored for definition block.
+  # @Prompt Default OEM Revision for ACPI table creation.
+  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultOemRevision|0x00000005|UINT32|0x00010096
+
+  ## Default Creator ID for ACPI table creation, it is "CREA"
+  #  According to ACPI specification, for tables containing Definition Blocks,
+  #  this is the ID for the ASL Compiler.
+  #  This PCD is ignored for definition block.
+  # @Prompt Default Creator ID for ACPI table creation.
+  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultCreatorId|0x41455243|UINT32|0x00010097
+
+  ## Default Creator Revision for ACPI table creation.
+  #  According to ACPI specification, for tables containing Definition Blocks,
+  #  this is the revision for the ASL Compiler.
+  #  This PCD is ignored for definition block.
+  # @Prompt Default Creator Revision for ACPI table creation.
+  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultCreatorRevision|0x01000013|UINT32|0x00010098
+
 [PcdsDynamic]
   ## This PCD indicates the PCR bank to be enabled/supported by Slim Bootloader for measured boot
   #  Based on the value set, PCR bank world be enabled and extended
