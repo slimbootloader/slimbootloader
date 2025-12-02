@@ -380,7 +380,7 @@ RunShellCommand (
   UINTN               Index, Count, BufRemaining;
   EFI_STATUS          Status;
   CONST SHELL_COMMAND *Cmd;
-  CHAR16              *Argv[8]; // FIXME: Use allocator once that's available
+  CHAR16              *Argv[15];
 
   // Parse the command line parameters
   BufRemaining = Shell->CommandLineMaxLen * sizeof(CHAR16);
