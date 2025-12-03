@@ -13,7 +13,6 @@
 #define CPU_ICL                 0
 
 
-#define ACPI_MMIO_BASE_ADDRESS       0xD0000000
 #define ACPI_BASE_ADDRESS            0x1800
 
 #define SPI_TEMP_MEM_BASE_ADDRESS    0xF0000000

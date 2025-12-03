@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017-2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017-2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -1848,7 +1848,12 @@ PlatformUpdateAcpiGnvs (
   }
 
   Pnvs->Mmio32Base   = PcdGet32 (PcdPciResourceMem32Base);
-  Pnvs->Mmio32Length = 0xD0000000 - Pnvs->Mmio32Base;
+  // SC_PCR_BASE_ADDRESS: 0xD000_0000 and PcdPciExpressBaseAddress: 0xE000_0000
+  if (Pnvs->Mmio32Length < SC_PCR_BASE_ADDRESS) {
+    Pnvs->Mmio32Length = SC_PCR_BASE_ADDRESS - Pnvs->Mmio32Base;
+  } else {
+    DEBUG((DEBUG_INFO, "acpi: Unable to configure M32L with M32B=0x%08X\n", Pnvs->Mmio32Base));
+  }
 
   HdaCfgData = (HDA_CFG_DATA *) FindConfigDataByTag (CDATA_HDA_TAG);
   if ((HdaCfgData != NULL) && (HdaCfgData->DspEnable == TRUE)) {

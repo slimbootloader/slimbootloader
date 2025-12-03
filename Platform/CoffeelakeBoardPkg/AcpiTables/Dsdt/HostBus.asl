@@ -5,7 +5,7 @@
   which will be used to dynamically produce all resources in the Host Bus.
   @note This ASL file needs to be included as part of platform ACPI DSDT table.
 
-  Copyright (c) 2018 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -236,7 +236,7 @@ Name(BUF0,ResourceTemplate()
 //    ReadWrite,0x00,0xF00000,0xFFFFFF,0x00,0x100000,,,HOLE)
 
   //
-  // PCI Memory Region ( TOLUD - 0xDFFFFFFF )
+  // PCI Memory Region ( PCI_MEM32_BASE - PCI_EXPRESS_BASE - 1 )
   //
   DWordMemory(ResourceProducer,PosDecode,MinFixed,MaxFixed,NonCacheable,
     ReadWrite,0x00,0x00000000,0xDFFFFFFF,0x00,0xE0000000,,,PM01)

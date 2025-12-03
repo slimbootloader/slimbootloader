@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2016 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2016 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -11,7 +11,6 @@
 
 #define CPU_CFL                             1
 
-#define ACPI_MMIO_BASE_ADDRESS              0xD0000000
 #define TCO_BASE_ADDRESS                    0x400
 #define ACPI_BASE_ADDRESS                   0x1800
 #define HPET_BASE_ADDRESS                   0xFED00000
