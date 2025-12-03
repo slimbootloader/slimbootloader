@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -1543,18 +1543,18 @@ DumpUniversalPayloadPciRootBridgeHob (
         UpldRootBridges->RootBridge[Count].HID,
         UpldRootBridges->RootBridge[Count].UID,
         UpldRootBridges->RootBridge[Count].Segment));
-      DEBUG ((DEBUG_INFO, "  Bus: 0x%02X-0x%02X\n",
+      DEBUG ((DEBUG_INFO, "  Bus: 0x%02lX-0x%02lX\n",
         UpldRootBridges->RootBridge[Count].Bus.Base,
         UpldRootBridges->RootBridge[Count].Bus.Limit));
 
       if (UpldRootBridges->RootBridge[Count].Io.Base != MAX_UINT16) {
-        DEBUG ((DEBUG_INFO, "  I/O: 0x%04X-0x%04X\n",
+        DEBUG ((DEBUG_INFO, "  I/O: 0x%04lX-0x%04lX\n",
           UpldRootBridges->RootBridge[Count].Io.Base,
           UpldRootBridges->RootBridge[Count].Io.Limit));
       }
 
       if (UpldRootBridges->RootBridge[Count].Mem.Base != MAX_UINT32) {
-        DEBUG ((DEBUG_INFO, "  Mem32: 0x%08X-0x%08X\n",
+        DEBUG ((DEBUG_INFO, "  Mem32: 0x%08lX-0x%08lX\n",
           UpldRootBridges->RootBridge[Count].Mem.Base,
           UpldRootBridges->RootBridge[Count].Mem.Limit));
       }
@@ -1566,7 +1566,7 @@ DumpUniversalPayloadPciRootBridgeHob (
       }
 
       if (UpldRootBridges->RootBridge[Count].PMem.Base != MAX_UINT32) {
-        DEBUG ((DEBUG_INFO, "  PMem32: 0x%08X-0x%08X\n",
+        DEBUG ((DEBUG_INFO, "  PMem32: 0x%08lX-0x%08lX\n",
           UpldRootBridges->RootBridge[Count].PMem.Base,
           UpldRootBridges->RootBridge[Count].PMem.Limit));
       }
