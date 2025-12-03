@@ -9,7 +9,6 @@
 #define _PLATFORM_BASE_H_
 #include <IndustryStandard/Pci.h>
 #define CPU_CML                             1
-#define ACPI_MMIO_BASE_ADDRESS       0xD0000000
 #define ACPI_BASE_ADDRESS            0x1800
 #define HPET_BASE_ADDRESS            0xFED00000
 #define IO_APIC_BASE_ADDRESS         0xFEC00000

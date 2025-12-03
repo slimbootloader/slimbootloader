@@ -2177,11 +2177,18 @@ PlatformUpdateAcpiGnvs (
   UpdateCpuNvs (CpuNvs);
 
   //System Agent NVS Init
+  SaNvs->XPcieCfgBaseAddress      = (UINT32)(PcdGet64(PcdPciExpressBaseAddress));
   SaNvs->Mmio64Base               = PcdGet64 (PcdPciResourceMem64Base);
   SaNvs->Mmio64Length             = RShiftU64 (PcdGet64 (PcdPciResourceMem64Base), 1);
   SaNvs->Mmio32Base               = PcdGet32(PcdPciResourceMem32Base);
-  SaNvs->Mmio32Length             = ACPI_MMIO_BASE_ADDRESS - SaNvs->Mmio32Base;
-  SaNvs->XPcieCfgBaseAddress      = (UINT32)(PcdGet64(PcdPciExpressBaseAddress));
+  if (SaNvs->Mmio32Base < SaNvs->XPcieCfgBaseAddress) {
+    SaNvs->Mmio32Length = SaNvs->XPcieCfgBaseAddress - SaNvs->Mmio32Base;
+  } else if (SaNvs->Mmio32Base < PCH_PCR_BASE_ADDRESS) {
+    SaNvs->Mmio32Length = PCH_PCR_BASE_ADDRESS - SaNvs->Mmio32Base;
+  } else {
+    DEBUG((DEBUG_INFO, "acpi: Unable to configure M32L with M32B=0x%08X\n", SaNvs->Mmio32Base));
+  }
+
   SaNvs->SimicsEnvironment = 0;
   SaNvs->AlsEnable = 0;
   SaNvs->IgdState = 1;

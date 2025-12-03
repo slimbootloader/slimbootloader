@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -2290,8 +2290,16 @@ PlatformUpdateAcpiGnvs (
   //
   PlatformNvs->PlatformId = (UINT8) GetPlatformId ();
 
+  SaNvs->XPcieCfgBaseAddress = (UINT32)(PcdGet64(PcdPciExpressBaseAddress));
+
   SaNvs->Mmio32Base   = PcdGet32(PcdPciResourceMem32Base);
-  SaNvs->Mmio32Length = ACPI_MMIO_BASE_ADDRESS - SaNvs->Mmio32Base;
+  // PcdPciExpressBaseAddress is 0xE000_0000
+  if (SaNvs->Mmio32Base < SaNvs->XPcieCfgBaseAddress) {
+    SaNvs->Mmio32Length = SaNvs->XPcieCfgBaseAddress - SaNvs->Mmio32Base;
+  } else {
+    DEBUG((DEBUG_INFO, "acpi: Unable to configure M32L with M32B=0x%08X\n", SaNvs->Mmio32Base));
+  }
+
   SaNvs->Mmio64Base   = PcdGet64(PcdPciResourceMem64Base);
   SaNvs->Mmio64Length = SaNvs->Mmio64Base;
 
