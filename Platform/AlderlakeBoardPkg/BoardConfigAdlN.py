@@ -23,15 +23,15 @@ class Board(BaseBoard):
         super(Board, self).__init__(*args, **kwargs)
 
         self.VERINFO_IMAGE_ID     = 'SB_ASL'
-        self.VERINFO_PROJ_MAJOR_VER = 1
-        self.VERINFO_PROJ_MINOR_VER = 4
+        self.VERINFO_PROJ_MAJOR_VER = 2
+        self.VERINFO_PROJ_MINOR_VER = 5
         self.VERINFO_SVN            = 1
         self.VERINFO_BUILD_DATE     = time.strftime("%m/%d/%Y")
 
         self.BOARD_NAME           = 'adln'
         self.BOARD_PKG_NAME       = 'AlderlakeBoardPkg'
         self.SILICON_PKG_NAME     = 'AlderlakePkg'
-        self.FSP_IMAGE_ID         = '$TWLFSP$'
+        self.FSP_IMAGE_ID         = '$TWLFSPE'
         self._EXTRA_INC_PATH      = ['Silicon/AlderlakePkg/Adln/Include']
         self._FSP_PATH_NAME       = 'Silicon/AlderlakePkg/Adln/FspBin'
         self.MICROCODE_INF_FILE   = 'Silicon/AlderlakePkg/Microcode/Microcode.inf'

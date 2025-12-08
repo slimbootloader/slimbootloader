@@ -11,28 +11,28 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = 5d0424c89ddd4903cdd31eb36bc1c921c15422e3
+  COMMIT  = 4da2c4207396633c84b54bd2dca03fd7ac2f5add
 
 [UserExtensions.SBL."CopyList"]
 # For ADL-PS
-  AlderLakeFspBinPkg/IoT/AlderLakePS/Fsp.fd                               : Silicon/AlderlakePkg/Adlps/FspBin/FspDbg.bin
-  AlderLakeFspBinPkg/IoT/AlderLakePS/Fsp.fd                               : Silicon/AlderlakePkg/Adlps/FspBin/FspRel.bin
-  AlderLakeFspBinPkg/IoT/AlderLakePS/Fsp.bsf                              : Silicon/AlderlakePkg/Adlps/FspBin/Fsp.bsf
-  AlderLakeFspBinPkg/IoT/AlderLakePS/Include/FspUpd.h                     : Silicon/AlderlakePkg/Adlps/Include/FspUpd.h
-  AlderLakeFspBinPkg/IoT/AlderLakePS/Include/FsptUpd.h                    : Silicon/AlderlakePkg/Adlps/Include/FsptUpd.h
-  AlderLakeFspBinPkg/IoT/AlderLakePS/Include/FspmUpd.h                    : Silicon/AlderlakePkg/Adlps/Include/FspmUpd.h
-  AlderLakeFspBinPkg/IoT/AlderLakePS/Include/FspsUpd.h                    : Silicon/AlderlakePkg/Adlps/Include/FspsUpd.h
-  AlderLakeFspBinPkg/IoT/AlderLakePS/Include/MemInfoHob.h                 : Silicon/AlderlakePkg/Adlps/Include/MemInfoHob.h
+  AlderLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/AlderLakePS/Fsp.fd                               : Silicon/AlderlakePkg/Adlps/FspBin/FspDbg.bin
+  AlderLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/AlderLakePS/Fsp.fd                               : Silicon/AlderlakePkg/Adlps/FspBin/FspRel.bin
+  AlderLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/AlderLakePS/Fsp.bsf                              : Silicon/AlderlakePkg/Adlps/FspBin/Fsp.bsf
+  AlderLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/AlderLakePS/Include/FspUpd.h                     : Silicon/AlderlakePkg/Adlps/Include/FspUpd.h
+  AlderLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/AlderLakePS/Include/FsptUpd.h                    : Silicon/AlderlakePkg/Adlps/Include/FsptUpd.h
+  AlderLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/AlderLakePS/Include/FspmUpd.h                    : Silicon/AlderlakePkg/Adlps/Include/FspmUpd.h
+  AlderLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/AlderLakePS/Include/FspsUpd.h                    : Silicon/AlderlakePkg/Adlps/Include/FspsUpd.h
+  AlderLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/AlderLakePS/Include/MemInfoHob.h                 : Silicon/AlderlakePkg/Adlps/Include/MemInfoHob.h
   FSP_License.pdf                                                         : Silicon/AlderlakePkg/Adlps/FspBin/FSP_License.pdf
-  AlderLakeFspBinPkg/IoT/AlderLakePS/Vbt/Vbt_ADLP.json                    : Platform/AlderlakeBoardPkg/VbtBin/VbtAdlPs.json
+  AlderLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/AlderLakePS/Vbt/Vbt_ADLP.json                    : Platform/AlderlakeBoardPkg/VbtBin/VbtAdlPs.json
 # For ADL-N
-  AlderLakeFspBinPkg/IoT/AlderLakeN/Fsp.fd                               : Silicon/AlderlakePkg/Adln/FspBin/FspDbg.bin
-  AlderLakeFspBinPkg/IoT/AlderLakeN/Fsp.fd                               : Silicon/AlderlakePkg/Adln/FspBin/FspRel.bin
-  AlderLakeFspBinPkg/IoT/AlderLakeN/Fsp.bsf                              : Silicon/AlderlakePkg/Adln/FspBin/Fsp.bsf
-  AlderLakeFspBinPkg/IoT/AlderLakeN/Include/FspUpd.h                     : Silicon/AlderlakePkg/Adln/Include/FspUpd.h
-  AlderLakeFspBinPkg/IoT/AlderLakeN/Include/FsptUpd.h                    : Silicon/AlderlakePkg/Adln/Include/FsptUpd.h
-  AlderLakeFspBinPkg/IoT/AlderLakeN/Include/FspmUpd.h                    : Silicon/AlderlakePkg/Adln/Include/FspmUpd.h
-  AlderLakeFspBinPkg/IoT/AlderLakeN/Include/FspsUpd.h                    : Silicon/AlderlakePkg/Adln/Include/FspsUpd.h
-  AlderLakeFspBinPkg/IoT/AlderLakeN/Include/MemInfoHob.h                 : Silicon/AlderlakePkg/Adln/Include/MemInfoHob.h
+  AlderLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/AlderLakeN/Fsp.fd                               : Silicon/AlderlakePkg/Adln/FspBin/FspDbg.bin
+  AlderLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/AlderLakeN/Fsp.fd                               : Silicon/AlderlakePkg/Adln/FspBin/FspRel.bin
+  AlderLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/AlderLakeN/Fsp.bsf                              : Silicon/AlderlakePkg/Adln/FspBin/Fsp.bsf
+  AlderLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/AlderLakeN/Include/FspUpd.h                     : Silicon/AlderlakePkg/Adln/Include/FspUpd.h
+  AlderLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/AlderLakeN/Include/FsptUpd.h                    : Silicon/AlderlakePkg/Adln/Include/FsptUpd.h
+  AlderLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/AlderLakeN/Include/FspmUpd.h                    : Silicon/AlderlakePkg/Adln/Include/FspmUpd.h
+  AlderLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/AlderLakeN/Include/FspsUpd.h                    : Silicon/AlderlakePkg/Adln/Include/FspsUpd.h
+  AlderLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/AlderLakeN/Include/MemInfoHob.h                 : Silicon/AlderlakePkg/Adln/Include/MemInfoHob.h
   FSP_License.pdf                                                        : Silicon/AlderlakePkg/Adln/FspBin/FSP_License.pdf
-  AlderLakeFspBinPkg/IoT/AlderLakeN/Vbt/Vbt_ADLP.json                    : Platform/AlderlakeBoardPkg/VbtBin/VbtAdlN.json
+  AlderLakeFspBinPkg/Edge Platforms (Formerly known as IoT)/AlderLakeN/Vbt/Vbt_ADLP.json                    : Platform/AlderlakeBoardPkg/VbtBin/VbtAdlN.json

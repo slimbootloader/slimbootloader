@@ -22,7 +22,7 @@ class Board(AlderlakeBoardConfig.Board):
 
         self.VERINFO_IMAGE_ID     = 'SB_ADLN'
         self.BOARD_NAME           = 'adln50'
-        self.FSP_IMAGE_ID         = '$TWLFSP$'
+        self.FSP_IMAGE_ID         = '$TWLFSPE'
         self._EXTRA_INC_PATH      = ['Silicon/AlderlakePkg/Adln/Include']
         self._FSP_PATH_NAME       = 'Silicon/AlderlakePkg/Adln/FspBin'
         self.MICROCODE_INF_FILE   = 'Silicon/AlderlakePkg/Microcode/Microcode.inf'
