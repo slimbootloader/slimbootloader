@@ -565,7 +565,14 @@ ContinueFunc (
   // Print FSP version
   FspInfoHdr = (FSP_INFO_HEADER *)(UINTN)(PcdGet32 (PcdFSPTBase) + FSP_INFO_HEADER_OFF);
   CopyMem (ImageId, &FspInfoHdr->ImageId, sizeof (UINT64));
-  DEBUG ((DEBUG_INFO, "FSPV: ID(%a) REV(%08X)\n", ImageId, FspInfoHdr->ImageRevision));
+  if (FspInfoHdr->HeaderRevision <= 5) {
+    DEBUG ((DEBUG_INFO, "FSPV: ID(%a) REV(%08X)\n", ImageId, FspInfoHdr->ImageRevision));
+  } else {
+    DEBUG ((DEBUG_INFO, "FSPV: ID(%a) REV(%04X%04X%04X)\n", ImageId, \
+            ((FspInfoHdr->ImageRevision & 0xFFFF0000) >> 16), \
+            ((FspInfoHdr->ExtendedImageRevision & 0xFF00) | ((FspInfoHdr->ImageRevision & 0xFF00) >> 8)), \
+            (((FspInfoHdr->ExtendedImageRevision & 0x00FF) << 8) | (FspInfoHdr->ImageRevision & 0x00FF))));
+  }
 
   AsmCpuid (1, &CpuSig, NULL, NULL, NULL);
   DEBUG ((DEBUG_INFO, "CPUV: ID(%x) UCODE(%x)\n", CpuSig, \
