@@ -30,7 +30,7 @@ Conventions:
   - RegisterName:
     Full register name.
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 #ifndef _GPIO_REGS_VER2_H_
@@ -115,8 +115,8 @@ Conventions:
 #define V_GPIO_VER2_PCH_LP_GPIO_PCR_MISCCFG_GPE0_GPP_D     0x7
 #define V_GPIO_VER2_PCH_LP_GPIO_PCR_MISCCFG_GPE0_GPP_U     0x8
 #define V_GPIO_VER2_PCH_LP_GPIO_PCR_MISCCFG_GPE0_VGPIO     0x9
-#define V_GPIO_VER2_PCH_LP_GPIO_PCR_MISCCFG_GPE0_GPP_C     0xA
-#define V_GPIO_VER2_PCH_LP_GPIO_PCR_MISCCFG_GPE0_GPP_F     0xB
+#define V_GPIO_VER2_PCH_LP_GPIO_PCR_MISCCFG_GPE0_GPP_C     0xB
+#define V_GPIO_VER2_PCH_LP_GPIO_PCR_MISCCFG_GPE0_GPP_F     0xA
 #define V_GPIO_VER2_PCH_LP_GPIO_PCR_MISCCFG_GPE0_GPP_E     0xC
 
 
