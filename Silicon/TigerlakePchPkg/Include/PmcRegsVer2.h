@@ -30,7 +30,7 @@
   - RegisterName:
     Full register name.
 
-  Copyright (c) 2017 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 #ifndef _PCH_REGS_PMC_TGL_H_
@@ -49,8 +49,8 @@
 #define V_TGL_PCH_LP_PMC_PWRM_GPIO_CFG_GPP_D     0x7
 #define V_TGL_PCH_LP_PMC_PWRM_GPIO_CFG_GPP_U     0x8
 #define V_TGL_PCH_LP_PMC_PWRM_GPIO_CFG_VGPIO     0x9
-#define V_TGL_PCH_LP_PMC_PWRM_GPIO_CFG_GPP_C     0xA
-#define V_TGL_PCH_LP_PMC_PWRM_GPIO_CFG_GPP_F     0xB
+#define V_TGL_PCH_LP_PMC_PWRM_GPIO_CFG_GPP_C     0xB
+#define V_TGL_PCH_LP_PMC_PWRM_GPIO_CFG_GPP_F     0xA
 #define V_TGL_PCH_LP_PMC_PWRM_GPIO_CFG_GPP_E     0xC
 
 #define V_TGL_PCH_H_PMC_PWRM_GPIO_CFG_GPD        0x0
