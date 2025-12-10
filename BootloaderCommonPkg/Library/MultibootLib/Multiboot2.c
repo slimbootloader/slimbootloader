@@ -1,7 +1,7 @@
 /** @file
   This file Multiboot-2 specification (implementation).
 
-  Copyright (c) 2014 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2014 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -399,18 +399,19 @@ ParseMultiboot2Header (
       break;
 
     case MULTIBOOT2_HEADER_TAG_END:                   // 0
+    case MULTIBOOT2_HEADER_TAG_CONSOLE_FLAGS:         // 4
     case MULTIBOOT2_HEADER_TAG_FRAMEBUFFER:           // 5
+    case MULTIBOOT2_HEADER_TAG_EFI_BS:                // 7
       // noted, ignore the tag.
       break;
 
 //  case MULTIBOOT2_HEADER_TAG_INFORMATION_REQUEST:   // 1
-//  case MULTIBOOT2_HEADER_TAG_CONSOLE_FLAGS:         // 4
-//  case MULTIBOOT2_HEADER_TAG_EFI_BS:                // 7
 //  case MULTIBOOT2_HEADER_TAG_ENTRY_ADDRESS_EFI32:   // 8
 //  case MULTIBOOT2_HEADER_TAG_ENTRY_ADDRESS_EFI64:   // 9
 //  case MULTIBOOT2_HEADER_TAG_RELOCATABLE:           // 10
     default:
       // unsupported or unknown tag, failure!
+      DEBUG((DEBUG_INFO, "mb contains unsupported tag\n"));
       return RETURN_UNSUPPORTED;
     }
 
@@ -568,7 +569,7 @@ DumpMb2Header (CONST struct multiboot2_header *Mh)
     case MULTIBOOT2_HEADER_TAG_ADDRESS:               // 2
     {
       const struct multiboot2_header_tag_address *tag = (void *) ((char *) Mh + off);
-      DEBUG ((DEBUG_INFO, "header @%#x, load to %#x-%#x, bss-end @%#x",
+      DEBUG ((DEBUG_INFO, "header @%x, load to %x-%x, bss-end @%x",
               tag->header_addr,
               tag->load_addr,
               tag->load_end_addr,
@@ -578,7 +579,7 @@ DumpMb2Header (CONST struct multiboot2_header *Mh)
     case MULTIBOOT2_HEADER_TAG_ENTRY_ADDRESS:         // 3
     {
       const struct multiboot2_header_tag_entry_address *tag = (void *) ((char *) Mh + off);
-      DEBUG ((DEBUG_INFO, "entry point: %#x", tag->entry_addr));
+      DEBUG ((DEBUG_INFO, "entry point: %x", tag->entry_addr));
     }
     break;
     case MULTIBOOT2_HEADER_TAG_MODULE_ALIGN:          // 6
@@ -591,16 +592,26 @@ DumpMb2Header (CONST struct multiboot2_header *Mh)
               t5->width, t5->height, t5->depth));
     }
     break;
+    case MULTIBOOT2_HEADER_TAG_CONSOLE_FLAGS:         // 4
+    case MULTIBOOT2_HEADER_TAG_EFI_BS:                // 7
+      DEBUG ((DEBUG_INFO, "unsupported and ignored tag."));
+      break;
 
-//  case MULTIBOOT2_HEADER_TAG_INFORMATION_REQUEST:   // 1
-//  case MULTIBOOT2_HEADER_TAG_CONSOLE_FLAGS:         // 4
-//  case MULTIBOOT2_HEADER_TAG_EFI_BS:                // 7
-//  case MULTIBOOT2_HEADER_TAG_ENTRY_ADDRESS_EFI32:   // 8
-//  case MULTIBOOT2_HEADER_TAG_ENTRY_ADDRESS_EFI64:   // 9
-//  case MULTIBOOT2_HEADER_TAG_RELOCATABLE:           // 10
+    case MULTIBOOT2_HEADER_TAG_INFORMATION_REQUEST:   // 1
+      // mb2 spec: If the bootloader does not understand the meaning
+      //           of the requested tag it must fail with an error.
+    case MULTIBOOT2_HEADER_TAG_ENTRY_ADDRESS_EFI32:   // 8
+    case MULTIBOOT2_HEADER_TAG_ENTRY_ADDRESS_EFI64:   // 9
+      // mb2 spec: the two tags are taken into account ... only when Multiboot2
+      //           image header contains EFI boot services tag. Then entry point
+      //           specified in ELF header and the entry address tag of Multiboot2
+      //           header are ignored.
+    case MULTIBOOT2_HEADER_TAG_RELOCATABLE:           // 10
+      DEBUG ((DEBUG_INFO, "unsupported but critical tag."));
+      break;
 
     default:
-      DEBUG ((DEBUG_INFO, "??"));
+      DEBUG ((DEBUG_INFO, "unsupported tag."));
       break;
     }
     DEBUG ((DEBUG_INFO, "\n"));
