@@ -8,10 +8,9 @@
 
 **/
 
-//
-// Statements that include other files
-//
-#include <Acpi/Ecdt.h>
+#include <IndustryStandard/Acpi.h>
+
+#define EFI_ACPI_OEM_ECDT_REVISION      0x00000001
 
 //
 // Embedded Controller Boot Resources Table Structure

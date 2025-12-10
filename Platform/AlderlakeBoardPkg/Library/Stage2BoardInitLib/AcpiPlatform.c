@@ -258,6 +258,102 @@ VOID UpdLpiStat (
 }
 
 /**
+  Update the DMAR table
+
+  @param[in, out] AcpiHeader         - The DMAR table header to update
+**/
+VOID
+DmarTableUpdate (
+  IN OUT EFI_ACPI_DESCRIPTION_HEADER *AcpiHeader
+  )
+{
+  EFI_STATUS                         Status;
+  MEMORY_CFG_DATA                    *MemCfgData;
+  SILICON_CFG_DATA                   *SiCfgData;
+  UINT8                              Flags;
+  UINT64                             BaseAddress;
+  EFI_ACPI_DMAR_STRUCTURE_HEADER     *DmarHdr;
+  UINT16                             IgdMode;
+  UINT16                             GttMode;
+  UINT32                             IgdMemSize;
+  UINT32                             GttMemSize;
+  UINT64                             RmrrLimit;
+
+  Flags = 0;
+  IgdMemSize = 0;
+  GttMemSize = 0;
+
+  // Set DMAR Flags based on config data
+  SiCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
+  if (SiCfgData && SiCfgData->InterruptRemappingSupport) {
+    Flags |= BIT0;
+  }
+
+  MemCfgData = (MEMORY_CFG_DATA *)FindConfigDataByTag (CDATA_MEMORY_TAG);
+  if (MemCfgData) {
+    if (MemCfgData->X2ApicOptOut) {
+      Flags |= BIT1;
+    }
+    if (MemCfgData->DmaControlGuarantee) {
+      Flags |= BIT2;
+    }
+  }
+
+  // Initialize DMAR table header
+  Status = AddAcpiDmarHdr (AcpiHeader, Flags);
+  if (EFI_ERROR (Status)) {
+    return;
+  }
+
+  // Add DRHD for IGD VT-d
+  BaseAddress = ReadVtdBaseAddress(IGD_VTD);
+  DmarHdr = AddDrhdHdr (AcpiHeader, 0, SIZE_4KB, 0, BaseAddress);
+  if (DmarHdr != NULL) {
+    if (PciRead32 (PCI_LIB_ADDRESS (0, IGD_DEV_NUM, IGD_FUN_NUM, 0x00)) != 0xFFFFFFFF) {
+      AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0, 0, 0, IGD_DEV_NUM, IGD_FUN_NUM);
+    }
+  }
+
+  // Add DRHD for IOP VT-d
+  BaseAddress = ReadVtdBaseAddress(IOP_VTD);
+  DmarHdr = AddDrhdHdr (AcpiHeader, 0, SIZE_4KB, 0, BaseAddress);
+  if (DmarHdr != NULL) {
+    AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0, 0, 0, 5, 0);
+  }
+
+  // Add DRHD for third VT-d engine
+  BaseAddress = ReadVtdBaseAddress(2); // Engine index 2
+  DmarHdr = AddDrhdHdr (AcpiHeader, EFI_ACPI_DMAR_DRHD_FLAGS_INCLUDE_PCI_ALL, SIZE_4KB, 0, BaseAddress);
+  if (DmarHdr != NULL) {
+    AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_IOAPIC, 0, ICH_IOAPIC_ID, 0, 0x1E, 7);
+    AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_MSI_CAPABLE_HPET, 0, EFI_ACPI_HPET_NUMBER, 0, 0x1E, 6);
+  }
+
+  // Add RMRR for IGD
+  BaseAddress = PCI_LIB_ADDRESS (SA_MC_BUS, 0, 0, 0);
+  IgdMode = ((PciRead16 ((UINTN)BaseAddress + R_SA_GGC) & B_SA_GGC_GMS_MASK) >> N_SA_GGC_GMS_OFFSET) & 0xFF;
+  if (IgdMode < 0xF0) {
+    IgdMemSize = IgdMode * 32 * 1024 * 1024;
+  } else {
+    IgdMemSize = 4 * (IgdMode - 0xF0 + 1) * 1024 * 1024;
+  }
+  GttMode = (PciRead16 ((UINTN)BaseAddress + R_SA_GGC) & B_SA_GGC_GGMS_MASK) >> N_SA_GGC_GGMS_OFFSET;
+  if (GttMode <= V_SA_GGC_GGMS_8MB) {
+    GttMemSize = (1 << GttMode) * 1024 * 1024;
+  }
+  BaseAddress = (PciRead32 ((UINTN)BaseAddress + R_SA_BGSM) & ~(0x01));
+  RmrrLimit   = BaseAddress + IgdMemSize + GttMemSize - 1;
+  DmarHdr     = AddRmrrHdr (AcpiHeader, 0, BaseAddress, RmrrLimit);
+  if (DmarHdr != NULL) {
+    AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0, 0, 0, IGD_DEV_NUM, IGD_FUN_NUM);
+  }
+
+  // Calculate DMAR table checksum
+  AcpiHeader->Checksum = CalculateCheckSum8 ((UINT8 *)AcpiHeader, AcpiHeader->Length);
+}
+
+
+/**
   Update PCH NVS and SA NVS area address and size in ACPI table.
 
   @param[in] Current    Pointer to ACPI description header
@@ -464,6 +560,12 @@ PlatformUpdateAcpiTable (
       DEBUG ((DEBUG_INFO, "Board SsdtRtd3 Table: %x\n", Table->OemTableId));
     }
     return Status;
+  } else if (FeaturePcdGet (PcdVtdEnabled) && (Table->Signature == EFI_ACPI_6_4_DMA_REMAPPING_TABLE_SIGNATURE)) {
+    DEBUG ((DEBUG_INFO, "Updated DMAR Table entries\n"));
+    PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
+    if ((PlatformData != NULL) && (PlatformData->PlatformFeatures.VtdEnable == 1)) {
+      DmarTableUpdate (Table);
+    }
   }
 
   if (MEASURED_BOOT_ENABLED()) {
@@ -471,17 +573,6 @@ PlatformUpdateAcpiTable (
         (Table->OemTableId == ACPI_SSDT_TPM2_DEVICE_OEM_TABLE_ID)) {
       Status = UpdateTpm2AcpiTable(Table);
       ASSERT_EFI_ERROR (Status);
-    }
-  }
-
-  if (FeaturePcdGet (PcdVtdEnabled)) {
-    PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
-    if (PlatformData != NULL) {
-      if (PlatformData->PlatformFeatures.VtdEnable == 1) {
-        if (Table->Signature == EFI_ACPI_VTD_DMAR_TABLE_SIGNATURE) {
-          UpdateDmarAcpi(Table);
-        }
-      }
     }
   }
 
