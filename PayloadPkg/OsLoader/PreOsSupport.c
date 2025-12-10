@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2019 - 2021, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -52,7 +52,8 @@ GetNormalOsInfo (
     UpdateLinuxBootParams (OsBootParam);
     PreOsParams->OsBootState.Esi     = (UINT32)(UINTN)OsBootParam;
     PreOsParams->OsBootState.Eip     = OsBootParam->Hdr.Code32Start;
-  } else if ((LoadedImage->Flags & LOADED_IMAGE_MULTIBOOT) != 0) {
+  } else if ((LoadedImage->Flags & (LOADED_IMAGE_ELF | LOADED_IMAGE_MULTIBOOT)) != 0) {
+    DEBUG((DEBUG_INFO, "POSC to boot %a\n", (LoadedImage->Flags & LOADED_IMAGE_ELF)?"elf":"mb"));
     BootState = &LoadedImage->Image.MultiBoot.BootState;
     PreOsParams->OsBootState.Eax     = BootState->Eax;
     PreOsParams->OsBootState.Ebx     = BootState->Ebx;
