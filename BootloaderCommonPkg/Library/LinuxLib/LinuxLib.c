@@ -301,6 +301,7 @@ UpdateLinuxBootParams (
       Bp->ScreenInfo.Capabilities   |= VIDEO_CAPABILITY_64BIT_BASE;
       Bp->ScreenInfo.LfbWidth        = (UINT16)GfxMode->HorizontalResolution;
       Bp->ScreenInfo.LfbHeight       = (UINT16)GfxMode->VerticalResolution;
+      Bp->ScreenInfo.LfbSize         = (UINT32)(GfxMode->HorizontalResolution * GfxMode->VerticalResolution * 4);
       Bp->ScreenInfo.Pages           = 1;
       Bp->ScreenInfo.RedSize         = 8;
       Bp->ScreenInfo.GreenSize       = 8;
