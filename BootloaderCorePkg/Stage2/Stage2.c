@@ -179,7 +179,7 @@ NormalBootPath (
   PldMachine = IS_X64 ? IMAGE_FILE_MACHINE_X64 : IMAGE_FILE_MACHINE_I386;
 
   Status  = EFI_SUCCESS;
-  if (FeaturePcdGet (PcdPe32SupportEnabled) && (Dst[0] == 0x00005A4D)) {
+  if (FeaturePcdGet (PcdPe32SupportEnabled) && !FeaturePcdGet (PcdLinuxPayloadEnabled) && (Dst[0] == 0x00005A4D)) {
     // It is a PE format
     DEBUG ((DEBUG_INFO, "PE32 Format Payload\n"));
     Status = PeCoffRelocateImage ((UINT32)(UINTN)Dst);
