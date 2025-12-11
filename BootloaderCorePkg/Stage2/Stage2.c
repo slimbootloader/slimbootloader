@@ -123,6 +123,59 @@ PreparePayload (
   return Dst;
 }
 
+/**
+  Load Linux kernel with command line and InitRD support.
+
+  @param[in]  Dst           Pointer to the Linux kernel image
+  @param[out] PldEntry      Pointer to store the payload entry point
+
+  @retval EFI_SUCCESS       Linux kernel loaded successfully
+  @retval Others            Error loading Linux kernel components
+
+**/
+EFI_STATUS
+LoadLinuxKernel (
+  IN  UINT32         *Dst,
+  OUT PAYLOAD_ENTRY  *PldEntry
+  )
+{
+  EFI_STATUS  Status;
+  VOID       *InitRd;
+  UINT32      InitRdLen;
+  UINT8      *CmdLine;
+  UINT32      CmdLineLen;
+
+  DEBUG ((DEBUG_INFO, "BzImage Format Payload\n"));
+
+  InitRd     = NULL;
+  InitRdLen  = 0;
+  CmdLine    = NULL;
+  CmdLineLen = 0;
+
+  Status = LoadComponent (FLASH_MAP_SIG_EPAYLOAD, SIGNATURE_32 ('C', 'M', 'D', 'L'),
+                          (VOID **)&CmdLine, &CmdLineLen);
+  if (!EFI_ERROR (Status)) {
+    // Limit max command line length
+    if (CmdLineLen > CMDLINE_LENGTH_MAX - 1) {
+      CmdLineLen = CMDLINE_LENGTH_MAX - 1;
+    }
+    CmdLine[CmdLineLen] = 0;
+    DEBUG ((DEBUG_INFO, "Kernel command line: \n%a\n", CmdLine));
+  }
+
+  // Try to load InitRd if it exists. If loading fails, continue booting
+  Status = LoadComponent (FLASH_MAP_SIG_EPAYLOAD, SIGNATURE_32 ('I', 'N', 'R', 'D'),
+                          (VOID **)&InitRd, &InitRdLen);
+  if (!EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "InitRD is loaded at 0x%x:0x%x\n", InitRd, InitRdLen));
+  }
+
+  *PldEntry = (PAYLOAD_ENTRY)(UINTN)LinuxBoot;
+  Status    = LoadBzImage (Dst, InitRd, InitRdLen, CmdLine, CmdLineLen);
+
+  return Status;
+}
+
 
 /**
   Normal boot flow.
@@ -143,10 +196,6 @@ NormalBootPath (
   EFI_STATUS                      Status;
   BOOLEAN                         CallBoardNotify;
   UINT32                          PayloadId;
-  VOID                           *InitRd;
-  UINT32                          InitRdLen;
-  UINT8                          *CmdLine;
-  UINT32                          CmdLineLen;
   UINT32                          UefiSig;
   UINT32                          HobSize;
   UINT16                          PldMachine;
@@ -180,13 +229,19 @@ NormalBootPath (
 
   Status  = EFI_SUCCESS;
   if (FeaturePcdGet (PcdPe32SupportEnabled) && (Dst[0] == 0x00005A4D)) {
-    // It is a PE format
-    DEBUG ((DEBUG_INFO, "PE32 Format Payload\n"));
-    Status = PeCoffRelocateImage ((UINT32)(UINTN)Dst);
-    if (!EFI_ERROR(Status)) {
-      Status = PeCoffLoaderGetMachine (Dst, &PldMachine);
+    // Check if this is actually a Linux kernel that happens to have PE32 signature
+    if (FeaturePcdGet (PcdLinuxPayloadEnabled) && IsBzImage (Dst)) {
+      DEBUG ((DEBUG_INFO, "Detected Linux kernel with PE32 signature - loading as Linux kernel\n"));
+      Status = LoadLinuxKernel (Dst, &PldEntry);
+    } else {
+      // It is a PE format
+      DEBUG ((DEBUG_INFO, "PE32 Format Payload\n"));
+      Status = PeCoffRelocateImage ((UINT32)(UINTN)Dst);
       if (!EFI_ERROR(Status)) {
-        Status = PeCoffLoaderGetEntryPoint (Dst, (VOID *)&PldEntry);
+        Status = PeCoffLoaderGetMachine (Dst, &PldMachine);
+        if (!EFI_ERROR(Status)) {
+          Status = PeCoffLoaderGetEntryPoint (Dst, (VOID *)&PldEntry);
+        }
       }
     }
   } else if (IsFitImage (Dst, &Context)) {
@@ -238,31 +293,7 @@ NormalBootPath (
   } else {
     if (FeaturePcdGet (PcdLinuxPayloadEnabled)) {
       if (IsBzImage (Dst)) {
-        // It is a Linux kernel image
-        DEBUG ((DEBUG_INFO, "BzImage Format Payload\n"));
-        InitRd     = NULL;
-        InitRdLen  = 0;
-        CmdLine    = NULL;
-        CmdLineLen = 0;
-        Status = LoadComponent (FLASH_MAP_SIG_EPAYLOAD, SIGNATURE_32 ('C', 'M', 'D', 'L'),
-                                (VOID **)&CmdLine, &CmdLineLen);
-        if (!EFI_ERROR (Status)) {
-          // Limit max command line length
-          if (CmdLineLen > CMDLINE_LENGTH_MAX - 1) {
-            CmdLineLen = CMDLINE_LENGTH_MAX - 1;
-          }
-          CmdLine[CmdLineLen] = 0;
-          DEBUG ((DEBUG_INFO, "Kernel command line: \n%a\n", CmdLine));
-        }
-
-        // Try to load InitRd if it exists. If loading fails, continue booting
-        Status = LoadComponent (FLASH_MAP_SIG_EPAYLOAD, SIGNATURE_32 ('I', 'N', 'R', 'D'),
-                                (VOID **)&InitRd, &InitRdLen);
-        if (!EFI_ERROR (Status)) {
-          DEBUG ((DEBUG_INFO, "InitRD is loaded at 0x%x:0x%x\n", InitRd, InitRdLen));
-        }
-        PldEntry = (PAYLOAD_ENTRY)(UINTN)LinuxBoot;
-        Status   = LoadBzImage (Dst, InitRd, InitRdLen, CmdLine, CmdLineLen);
+        Status = LoadLinuxKernel (Dst, &PldEntry);
       }
     }
 
