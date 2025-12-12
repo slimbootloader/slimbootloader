@@ -27,4 +27,28 @@ EFI_STATUS
 EFIAPI
 InitTxt();
 
+/**
+  Initializes Intel TXT for S3 resume by launching BIOS ACM.
+  This function finds the BIOS ACM and launches it with SCHECK function
+  to complete TXT initialization after S3 resume.
+
+  @retval EFI_SUCCESS   - BIOS ACM launched successfully for S3 resume
+**/
+EFI_STATUS
+EFIAPI
+TxtS3Resume();
+
+/**
+  Restores Intel TXT device memory registers (HEAP and SINIT) for S3 resume.
+  This function restores the TXT register state without touching actual memory
+  content, which must be preserved across S3 for TBOOT/MLE operation.
+
+  @retval EFI_SUCCESS     - TXT registers restored successfully
+  @retval EFI_UNSUPPORTED - Required TXT information not available
+  @retval Other           - Error during initialization
+**/
+EFI_STATUS
+EFIAPI
+TxtS3Restore();
+
 #endif
