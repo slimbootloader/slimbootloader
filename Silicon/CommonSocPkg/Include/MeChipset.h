@@ -20,6 +20,27 @@ typedef enum {
   ISH_HECI     = 8
 } HECI_DEVICE;
 
+typedef enum {
+  CSME     = 0,
+  CSMEIOE  = 3
+} SECURITY_ENGINE;
+
+typedef struct {
+  UINT8    HeciDevice;
+  UINT8    SecurityEngine;
+  UINT16   Reserved;
+} HECI_DEVICES;
+
+#define HECI1_DEVICES ((HECI_DEVICES){ .HeciDevice = HECI1_DEVICE, .SecurityEngine = CSME, .Reserved = 0 })
+#define HECI2_DEVICES ((HECI_DEVICES){ .HeciDevice = HECI2_DEVICE, .SecurityEngine = CSME, .Reserved = 0 })
+#define HECI3_DEVICES ((HECI_DEVICES){ .HeciDevice = HECI3_DEVICE, .SecurityEngine = CSME, .Reserved = 0 })
+#define HECI4_DEVICES ((HECI_DEVICES){ .HeciDevice = HECI4_DEVICE, .SecurityEngine = CSME, .Reserved = 0 })
+
+#define HECI1_CSME2   ((HECI_DEVICES){ .HeciDevice = HECI1_DEVICE, .SecurityEngine = CSMEIOE, .Reserved = 0 })
+#define HECI2_CSME2   ((HECI_DEVICES){ .HeciDevice = HECI2_DEVICE, .SecurityEngine = CSMEIOE, .Reserved = 0 })
+#define HECI3_CSME2   ((HECI_DEVICES){ .HeciDevice = HECI3_DEVICE, .SecurityEngine = CSMEIOE, .Reserved = 0 })
+#define HECI4_CSME2   ((HECI_DEVICES){ .HeciDevice = HECI4_DEVICE, .SecurityEngine = CSMEIOE, .Reserved = 0 })
+
 #define R_ME_GS_SHDW                      0x48
 #define R_ME_HFS                          0x40
 #define R_ME_HFS_2                        0x48
