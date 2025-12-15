@@ -22,7 +22,7 @@ import datetime
 import zipfile
 import ntpath
 from   CommonUtility import *
-from   IfwiUtility   import FLASH_MAP, FLASH_MAP_DESC, FIT_ENTRY, UCODE_HEADER
+from   IfwiUtility   import FLASH_MAP, FLASH_MAP_DESC, FIT_ENTRY, UCODE_HEADER, FIT_ENTRY_V200
 from SingleSign import MESSAGE_SBL_KEY_DIR
 
 sys.dont_write_bytecode = True
