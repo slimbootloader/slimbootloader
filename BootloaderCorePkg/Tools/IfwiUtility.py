@@ -48,6 +48,23 @@ class FIT_ENTRY(Structure):
         self.type     = _type
         self.checksum = _checksum
 
+class FIT_ENTRY_V200(Structure):
+    # Support FIT entry version 0x200 structure
+    _pack_ = 1
+    _fields_ = [
+        ('address',  c_uint64),
+        ('fms',      c_uint32),
+        ('version',  c_uint16),
+        ('type',     c_uint8), # Bit[7] = C_V
+        ('ext_fms',  c_uint8),
+        ]
+
+    def set_values(self, _address, _fms, _version, _type, _ext_fms):
+        self.address  = _address
+        self.fms      = _fms
+        self.version  = _version
+        self.type     = _type
+        self.ext_fms   = _ext_fms
 
 class BPDT_ENTRY_TYPE(Structure):
     _pack_ = 1
