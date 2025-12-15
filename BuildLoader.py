@@ -287,6 +287,7 @@ class BaseBoard(object):
         self.BUILD_IDENTICAL_TS    = 0
         self.ENABLE_SBL_RESILIENCY = 0
         self._ACM_CPU_FMS          = []
+        self._DACM_CPU_FMS         = 0
         self._ACM_CPU_EXT_FM_FM_MASK = 0xF0
 
         self.RTCM_RSVD_SIZE        = 0xFF000
@@ -412,14 +413,14 @@ class Build(object):
             if self._board.ACM_FIT_VERISON == 0x100:
                 fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
                 fit_entry.set_values(self._board.ACM_BASE, 0, self._board.ACM_FIT_VERISON, 0x2, 0)
-                print ('  Patching entry %d with 0x%08X:0x%08X - ACM' % (num_fit_entries, fit_entry.address, fit_entry.size))
+                print ('  Patching entry %d with 0x%08X:0x%08X - ACM' % (num_fit_entries, fit_entry.address, fit_entry.size_fms))
                 num_fit_entries     += 1
             # Add all the CPUIDs for ACM FIT Version 0x200
             if self._board.ACM_FIT_VERISON == 0x200:
                 for CPU_FMS in self._board._ACM_CPU_FMS :
                     fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
                     fit_entry.set_values(self._board.ACM_BASE, CPU_FMS, self._board.ACM_FIT_VERISON, 0x2, self._board._ACM_CPU_EXT_FM_FM_MASK)
-                    print ('  Patching entry %d with 0x%08X:0x%08X - ACM' % (num_fit_entries, fit_entry.address, fit_entry.size))
+                    print ('  Patching entry %d with 0x%08X:0x%08X - ACM' % (num_fit_entries, fit_entry.address, fit_entry.size_fms))
                     num_fit_entries     += 1
 
             # Diagnostic ACM Fit entry should be in sequential order with/without BTG enabled
@@ -432,7 +433,7 @@ class Build(object):
             if self._board.HAVE_FIT4_ENTRY:
                 fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
                 fit_entry.set_values(self._board.BOOT_POLICY_ADDRESS, self._board.BOOT_POLICY_SIZE, 0x100, 0x4, 0)
-                print ('  Patching entry %d with 0x%08X:0x%08X - Platform Boot Policy' % (num_fit_entries, fit_entry.address, fit_entry.size))
+                print ('  Patching entry %d with 0x%08X:0x%08X - Platform Boot Policy' % (num_fit_entries, fit_entry.address, fit_entry.size_fms))
                 num_fit_entries += 1
 
             # BIOS Module (IBB segment 0): from FIT table end to 4GB
@@ -445,7 +446,7 @@ class Build(object):
             module_size =  (fit_address.value - addr) >> 4
             fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
             fit_entry.set_values(addr, module_size, 0x100, 0x7, 0)
-            print ('  Patching entry %d with 0x%08X:0x%08X - BIOS Module(Stage1A base to FIT table start)' % (num_fit_entries, fit_entry.address, fit_entry.size))
+            print ('  Patching entry %d with 0x%08X:0x%08X - BIOS Module(Stage1A base to FIT table start)' % (num_fit_entries, fit_entry.address, fit_entry.size_fms))
             num_fit_entries     += 1
 
             # BIOS Module (IBB segment 2): full Stage1B
@@ -453,7 +454,7 @@ class Build(object):
             module_size = self._board.STAGE1B_SIZE >> 4
             fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
             fit_entry.set_values(addr, module_size, 0x100, 0x7, 0)
-            print ('  Patching entry %d with 0x%08X:0x%08X - BIOS Module(Stage1B)' % (num_fit_entries, fit_entry.address, fit_entry.size))
+            print ('  Patching entry %d with 0x%08X:0x%08X - BIOS Module(Stage1B)' % (num_fit_entries, fit_entry.address, fit_entry.size_fms))
             num_fit_entries     += 1
 
             # TXT POLICY
@@ -466,21 +467,21 @@ class Build(object):
                 addr = IndexPort + (DataPort << 16) + (Width << 32) + (Bit << 40) + (Index << 48)
                 fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
                 fit_entry.set_values(addr, 0, 0, 0xa, 0)
-                print ('  Patching entry %d with 0x%08X:0x%08X - BIOS Module(Stage1B)' % (num_fit_entries, fit_entry.address, fit_entry.size))
+                print ('  Patching entry %d with 0x%08X:0x%08X - BIOS Module(Stage1B)' % (num_fit_entries, fit_entry.address, fit_entry.size_fms))
                 num_fit_entries     += 1
 
             # KM
             addr = self._board.ACM_BASE + self._board.ACM_SIZE - (self._board.KM_SIZE + self._board.BPM_SIZE)
             fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
             fit_entry.set_values(addr, self._board.KM_SIZE, 0x100, 0xb, 0)
-            print ('  Patching entry %d with 0x%08X:0x%08X - KM' % (num_fit_entries, fit_entry.address, fit_entry.size))
+            print ('  Patching entry %d with 0x%08X:0x%08X - KM' % (num_fit_entries, fit_entry.address, fit_entry.size_fms))
             num_fit_entries     += 1
 
             # BPM
             addr = self._board.ACM_BASE + self._board.ACM_SIZE - self._board.BPM_SIZE
             fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
             fit_entry.set_values(addr, self._board.BPM_SIZE, 0x100, 0xc, 0)
-            print ('  Patching entry %d with 0x%08X:0x%08X - BPM' % (num_fit_entries, fit_entry.address, fit_entry.size))
+            print ('  Patching entry %d with 0x%08X:0x%08X - BPM' % (num_fit_entries, fit_entry.address, fit_entry.size_fms))
             num_fit_entries     += 1
 
             # Patch the entry 'FIT table end to 4GB' since FIT table size is known now
@@ -491,7 +492,7 @@ class Build(object):
             module_size = (0x100000000 - addr) >> 4
             fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (patch_entry+1)*16)
             fit_entry.set_values(addr, module_size, 0x100, 0x7, 0)
-            print ('  Patching entry %d with 0x%08X:0x%08X - BIOS Module(FIT table end to 4GB)' % (patch_entry, fit_entry.address, fit_entry.size))
+            print ('  Patching entry %d with 0x%08X:0x%08X - BIOS Module(FIT table end to 4GB)' % (patch_entry, fit_entry.address, fit_entry.size_fms))
 
         else :
             if self._board.DIAGNOSTICACM_SIZE > 0:
@@ -503,11 +504,14 @@ class Build(object):
         # Add Diagnostic ACM with the reserved fit entry saved
         if self._board.DIAGNOSTICACM_SIZE > 0:
             fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (diagnosticacm_index+1)*16)
-            fit_entry.set_values(self._board.DIAGNOSTICACM_BASE, self._board.DIAGNOSTICACM_SIZE, 0x100, 0x3, 0)
-            print('  Patching entry %d with 0x%08X:0x%08X - Diagnostic ACM' % (diagnosticacm_index, fit_entry.address, fit_entry.size))
+            if self._board.ACM_FIT_VERISON == 0x200:
+                fit_entry.set_values(self._board.DIAGNOSTICACM_BASE, self._board._DACM_CPU_FMS, self._board.ACM_FIT_VERISON, 0x3, 0)
+            else:
+                fit_entry.set_values(self._board.DIAGNOSTICACM_BASE, self._board.DIAGNOSTICACM_SIZE, self._board.ACM_FIT_VERISON, 0x3, 0)
+            print('  Patching entry %d with 0x%08X:0x%08X - Diagnostic ACM' % (diagnosticacm_index, fit_entry.address, fit_entry.size_fms))
 
         # Check FIT length
-        spaceleft = addr - (fit_address.value + fit_header.size)
+        spaceleft = addr - (fit_address.value + fit_header.size_fms)
         if spaceleft > 0:
                 raise Exception('  Insufficient FIT entries in FIT table, need %d more entries !' %  ((spaceleft + 15) // 16))
 
@@ -515,13 +519,13 @@ class Build(object):
 
         # Update FIT checksum
         print('  Updating Checksum')
-        fit_header.size      = num_fit_entries + 1
+        fit_header.size_fms  = num_fit_entries + 1
         fit_header.type      = 0x80 # Valid checksum
         fit_header.version   = 0x0100
         fit_header.checksum  = 0
-        fit_sum = sum(rom[fit_offset:fit_offset+fit_header.size*16])
+        fit_sum = sum(rom[fit_offset:fit_offset+fit_header.size_fms*16])
         fit_header.checksum = (0 - fit_sum) & 0xff
-        fit_data = rom[fit_offset:fit_offset+fit_header.size*16]
+        fit_data = rom[fit_offset:fit_offset+fit_header.size_fms*16]
 
         fo  = open(img_file,'r+b')
 
@@ -532,16 +536,16 @@ class Build(object):
             # Update FIT table in STAGE1A_B
             print('Updating FIT in STAGE1A_B')
             fit_offset -= self._board.TOP_SWAP_SIZE
-            rom[fit_offset:fit_offset+fit_header.size*16] = fit_data
+            rom[fit_offset:fit_offset+fit_header.size_fms*16] = fit_data
 
             # Update components base in Fit table.
-            fit_data = rom[fit_offset:fit_offset+fit_header.size*16]
+            fit_data = rom[fit_offset:fit_offset+fit_header.size_fms*16]
             for i in range(0, num_fit_entries):
                 fit_entry = FIT_ENTRY.from_buffer(fit_data, (i+1)*16)
                 if (0x100000000 - fit_entry.address) > self._board.TOP_SWAP_SIZE * 2:
                     fit_entry.address  -= self._board.REDUNDANT_SIZE
                     print('  Patching entry %d from 0x%08X with 0x%08X size:0x%08X ' %
-                        (i, fit_entry.address + self._board.REDUNDANT_SIZE, fit_entry.address, fit_entry.size))
+                        (i, fit_entry.address + self._board.REDUNDANT_SIZE, fit_entry.address, fit_entry.size_fms))
             fit_header = FIT_ENTRY.from_buffer(fit_data)
             fit_header.checksum  = 0
             fit_sum = sum(fit_data)

@@ -35,15 +35,15 @@ class FIT_ENTRY(Structure):
     _pack_ = 1
     _fields_ = [
         ('address',  c_uint64),
-        ('size',     c_uint32), # Bits[31:24] Reserved
+        ('size_fms', c_uint32), # Bits[31:24] Reserved for size
         ('version',  c_uint16),
         ('type',     c_uint8), # Bit[7] = C_V
         ('checksum', c_uint8),
         ]
 
-    def set_values(self, _address, _size, _version, _type, _checksum):
+    def set_values(self, _address, _size_fms, _version, _type, _checksum):
         self.address  = _address
-        self.size     = _size
+        self.size_fms = _size_fms
         self.version  = _version
         self.type     = _type
         self.checksum = _checksum
