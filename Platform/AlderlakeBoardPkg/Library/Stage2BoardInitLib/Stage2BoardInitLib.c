@@ -457,14 +457,21 @@ BoardInit (
 
   switch (InitPhase) {
   case PreSiliconInit:
+    DEBUG((DEBUG_INFO,"Entering PreSiliconInit ... Success\n"));
     EnableLegacyRegions ();
+    DEBUG((DEBUG_INFO,"DRAM memory legacy region enabled ... Success\n"));
     ConfigureGpio (CDATA_GPIO_TAG, 0, NULL);
+    DEBUG((DEBUG_INFO,"Configure GPIO ... Success\n")); //not entering configureGpio
     switch (GetPlatformId ()) {
       case PLATFORM_ID_ADL_N_LPDDR5_RVP:
+      case PLATFORM_ID_ADL_N_UP2PTWL:
+        DEBUG((DEBUG_INFO,"PlatformId get -> moving to TSN GPIO table\n"));
+        break;
       case PLATFORM_ID_ADL_N_UP7EN50:
         ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePostMemAdlNLpddr5Rvp) / sizeof (mGpioTablePostMemAdlNLpddr5Rvp[0]), (UINT8*)mGpioTablePostMemAdlNLpddr5Rvp);
         break;
       default:
+        DEBUG((DEBUG_INFO,"PreSiliconInit -> goto default -> getPlatformId failed"));
         break;
     }
     if (GetBootMode() != BOOT_ON_FLASH_UPDATE) {
@@ -496,6 +503,9 @@ BoardInit (
             break;
           case PLATFORM_ID_ADL_N_DDR5_CRB:
           case PLATFORM_ID_ADL_N_LPDDR5_RVP:
+          case PLATFORM_ID_ADL_N_UP2PTWL:
+            DEBUG((DEBUG_INFO,"TSN enabled -> Configure TSN GPIO table\n"));
+            break;
           case PLATFORM_ID_ADL_N_UP7EN50:
             ConfigureGpio (CDATA_NO_TAG, sizeof (mAdlNTsnDeviceGpioTable) / sizeof (mAdlNTsnDeviceGpioTable[0]), (UINT8*)mAdlNTsnDeviceGpioTable);
             break;

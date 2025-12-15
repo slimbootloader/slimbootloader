@@ -1076,6 +1076,7 @@ UpdateFspConfig (
         CopyMem (FspsConfig->AtomTurboRatioLimitNumCore, PowerCfgData->AtomTurboRatioLimitNumCore, sizeof(PowerCfgData->AtomTurboRatioLimitNumCore));
         break;
       case PLATFORM_ID_ADL_N_LPDDR5_RVP:
+      case PLATFORM_ID_ADL_N_UP2PTWL:
       case PLATFORM_ID_ADL_N_UP7EN50:
         FspsConfig->PchLanEnable = 0x0;
         FspsConfig->PchPmVrAlert = 0x1;

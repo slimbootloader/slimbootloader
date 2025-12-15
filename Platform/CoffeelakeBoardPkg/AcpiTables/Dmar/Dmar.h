@@ -17,6 +17,7 @@
 #pragma pack(1)
 
 #define EFI_ACPI_DMAR_OEM_TABLE_ID    0x746F6F626D696C53  ///< "Slimboot"
+// #define EFI_ACPI_DMAR_OEM_TABLE_ID    0x20202020324B4445
 #define EFI_ACPI_DMAR_OEM_CREATOR_ID  0x4C544E49  ///< "INTL"
 #pragma pack()
 

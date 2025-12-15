@@ -82,6 +82,11 @@ GpioIsPadValid (
   if (PadNumber >= GpioGroupInfo[GroupIndex].PadPerGroup) {
     DEBUG ((GPIO_DEBUG_ERROR, "GPIO ERROR: Pin number (%d) exceeds possible range for this group\n", PadNumber));
     goto Error;
+<<<<<<< Updated upstream
+=======
+  }else{
+    return TRUE;
+>>>>>>> Stashed changes
   }
 
   return TRUE;
@@ -131,7 +136,10 @@ GpioIsGroupAndDwNumValid (
   if (DwNum > GPIO_GET_DW_NUM (GpioGroupInfo[GroupIndex].PadPerGroup - 1)){
     goto Error;
   }
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
   return TRUE;
 Error:
   ASSERT (FALSE);
@@ -631,6 +639,11 @@ GpioPadRstCfgFromResetConfig (
 
   Group = GpioGetGroupFromGpioPad (GpioPad);
 
+<<<<<<< Updated upstream
+=======
+
+
+>>>>>>> Stashed changes
   switch (GpioResetConfig) {
     case GpioResetDefault:
       *PadRstCfg = 0x0;
@@ -656,10 +669,16 @@ GpioPadRstCfgFromResetConfig (
         goto Error;
       }
       break;
+    case 9:
+      DEBUG((DEBUG_INFO,"reach case 9\n"));
+      break;
     default:
       goto Error;
   }
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
   return EFI_SUCCESS;
 Error:
   ASSERT (FALSE);
@@ -737,6 +756,10 @@ GpioConfigFromPadCfgRegValue (
   // Get GPIO termination (Term)
   //
   GpioConfig->ElectricalConfig = ((PadCfgDwReg[1] & B_GPIO_PCR_TERM) >> (N_GPIO_PCR_TERM - (N_GPIO_ELECTRICAL_CONFIG_TERMINATION_BIT_POS + 1))) | (0x1 << N_GPIO_ELECTRICAL_CONFIG_TERMINATION_BIT_POS);
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 }
 
 /**
@@ -925,6 +948,10 @@ GpioPadCfgRegValueFromGpioConfig (
   PadCfgDwRegMask[1] |= ((((GpioConfig->ElectricalConfig & B_GPIO_ELECTRICAL_CONFIG_TERMINATION_MASK) >> N_GPIO_ELECTRICAL_CONFIG_TERMINATION_BIT_POS) == GpioHardwareDefault) ? 0x0 : B_GPIO_PCR_TERM);
   PadCfgDwReg[1] |= (((GpioConfig->ElectricalConfig & B_GPIO_ELECTRICAL_CONFIG_TERMINATION_MASK) >> (N_GPIO_ELECTRICAL_CONFIG_TERMINATION_BIT_POS + 1)) << N_GPIO_PCR_TERM);
 
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
   return EFI_SUCCESS;
 }
 
@@ -1337,6 +1364,10 @@ GpioSetPadResetConfig (
   UINT32      PadRstCfg;
   EFI_STATUS  Status;
 
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
   if (!GpioIsPadValid (GpioPad)) {
     return EFI_INVALID_PARAMETER;
   }
@@ -1404,6 +1435,10 @@ GpioGetPadResetConfig (
   //
   PadRstCfg = (PadCfgDw0Reg & B_GPIO_PCR_RST_CONF) >> N_GPIO_PCR_RST_CONF;
 
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
   *Value = GpioResetConfigFromPadRstCfg (
              GpioPad,
              PadRstCfg
