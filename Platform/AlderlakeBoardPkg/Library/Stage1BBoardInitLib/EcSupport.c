@@ -690,6 +690,9 @@ GetBoardId (
     case BoardIdAdlNUp7000EdgeN50:
       *PlatformId = PLATFORM_ID_ADL_N_UP7EN50;
       break;
+    case BoardIdAdlNUp2ProTWL:
+      *PlatformId = PLATFORM_ID_ADL_N_UP2PTWL;
+      break;
     default:
       DEBUG((DEBUG_INFO, "Unsupported board Id %x .....\n", *PlatformId));
       break;

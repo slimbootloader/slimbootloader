@@ -21,6 +21,9 @@ Defines Platform BoardIds
 #define BoardIdAdlNUp7000EdgeN50                      0x06
 #define PLATFORM_ID_ADL_N_UP7EN50                     0x06
 
+#define BoardIdAdlNUp2ProTWL                          0x1E
+#define PLATFORM_ID_ADL_N_UP2PTWL                     0x1E
+
 #define BoardIdAdlNLp5Rvp                             0x07
 #define PLATFORM_ID_ADL_N_LPDDR5_RVP                  0x07
 
