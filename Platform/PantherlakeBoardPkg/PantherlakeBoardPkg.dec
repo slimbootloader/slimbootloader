@@ -1,0 +1,23 @@
+#/** @file
+# Platform Package
+#
+# This package provides platform specific modules.
+# Copyright (c) 2025, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = PantherlakeBoardPkg
+  PACKAGE_GUID                   = 2EB1C44E-3205-478D-8520-A7219F5541E1
+  PACKAGE_VERSION                = 0.1
+
+[Includes]
+  Include
+
+[Guids]
+  gCpuInitDataHobGuid       = { 0x266e31cc, 0x13c5, 0x4807, { 0xb9, 0xdc, 0x39, 0xa6, 0xba, 0x88, 0xff, 0x1a } }
+  gCpuPowerManagementDataHobGuid  = {0x266e31cc, 0x13c5, 0x4807, {0xb9, 0xdc, 0x39, 0xa6, 0xba, 0x88, 0xff, 0x1a}}
+  gTccRtctHobGuid           = { 0xce32d75a, 0xde10, 0x4af7, { 0xa7, 0xd4, 0xb2, 0x83, 0xbf, 0x7b, 0x66, 0x4a } }
+  gPlatformPantherLakeTokenSpaceGuid = { 0x1742bf30, 0x9d88, 0x40fe, {0x9e, 0x1f, 0x40, 0x0a, 0x00, 0xf6, 0x60, 0x02}}
+[PcdsFixedAtBuild]
