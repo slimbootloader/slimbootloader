@@ -669,7 +669,7 @@ UpdateFspConfig (
     FspsConfig->CpuPciePowerGating[1] = SiCfgData->CpuPciePowerGating;
     FspsConfig->CpuPciePowerGating[2] = SiCfgData->CpuPciePowerGating;
     FspsConfig->CpuPciePowerGating[3] = SiCfgData->CpuPciePowerGating;
-#if !defined(PLATFORM_ADLN) && !defined(PLATFORM_ADLN50)
+#if !defined(PLATFORM_ADLN) && !defined(PLATFORM_ADLN50) && !defined(PLATFORM_UPTWL)
     FspsConfig->L2QosEnumerationEn = SiCfgData->L2QosEnumerationEn;
 #endif
   }
@@ -1076,6 +1076,7 @@ UpdateFspConfig (
         CopyMem (FspsConfig->AtomTurboRatioLimitNumCore, PowerCfgData->AtomTurboRatioLimitNumCore, sizeof(PowerCfgData->AtomTurboRatioLimitNumCore));
         break;
       case PLATFORM_ID_ADL_N_LPDDR5_RVP:
+      case PLATFORM_ID_ADL_N_UP2PTWL:
       case PLATFORM_ID_ADL_N_UP7EN50:
         FspsConfig->PchLanEnable = 0x0;
         FspsConfig->PchPmVrAlert = 0x1;

@@ -796,6 +796,7 @@ DEBUG_CODE_END();
       ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePreMemAdlNDdr5Crb) / sizeof (mGpioTablePreMemAdlNDdr5Crb[0]), (UINT8*)mGpioTablePreMemAdlNDdr5Crb);
       break;
     case PLATFORM_ID_ADL_N_LPDDR5_RVP:
+    case PLATFORM_ID_ADL_N_UP2PTWL:
     case PLATFORM_ID_ADL_N_UP7EN50:
       ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePreMemAdlNLpddr5Rvp) / sizeof (mGpioTablePreMemAdlNLpddr5Rvp[0]), (UINT8*)mGpioTablePreMemAdlNLpddr5Rvp);
       break;
@@ -932,4 +933,5 @@ LoadExternalConfigData (
 {
   return SpiLoadExternalConfigData (Dst, Src, Len);
 }
+
 
