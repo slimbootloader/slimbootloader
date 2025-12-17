@@ -464,6 +464,7 @@ BoardInit (
       case PLATFORM_ID_ADL_N_UP7EN50:
         ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePostMemAdlNLpddr5Rvp) / sizeof (mGpioTablePostMemAdlNLpddr5Rvp[0]), (UINT8*)mGpioTablePostMemAdlNLpddr5Rvp);
         break;
+      case PLATFORM_ID_ADL_N_UP2PTWL:
       default:
         break;
     }
@@ -499,6 +500,7 @@ BoardInit (
           case PLATFORM_ID_ADL_N_UP7EN50:
             ConfigureGpio (CDATA_NO_TAG, sizeof (mAdlNTsnDeviceGpioTable) / sizeof (mAdlNTsnDeviceGpioTable[0]), (UINT8*)mAdlNTsnDeviceGpioTable);
             break;
+          case PLATFORM_ID_ADL_N_UP2PTWL:
           default:
             DEBUG ((DEBUG_WARN, "TSN GPIO: Unrecognized BoardId 0x%X\n", GetPlatformId ()));
             break;
@@ -956,4 +958,3 @@ PlatformUpdateHobInfo (
     UpdateCsmeBootPerfHob (HobInfo);
   }
 }
-
