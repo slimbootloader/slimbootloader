@@ -5,7 +5,7 @@
 #  All .asi files tagged with "ToolCode="DUMMY"" in following file list are device description and are included
 #  by top level ASL file which will be dealed with by asl.exe application.
 #
-# Copyright (c)  1999  - 2019, Intel Corporation. All rights reserved
+# Copyright (c)  1999  - 2025, Intel Corporation. All rights reserved
 #
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -40,9 +40,7 @@
   #Ssdt/SegSsdt.asl
   SaSsdt/SaSsdt.asl
   SaSsdt/Thermal.asl
-  Dmar/Dmar.aslc
   Fwst/Fwst.aslc
-  Dmar/Dmar.h
   CpuSsdt/Cpu0Cst.asl
   CpuSsdt/Cpu0Ist.asl
   CpuSsdt/Cpu0Tst.asl

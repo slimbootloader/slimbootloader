@@ -7,7 +7,8 @@
 #ifndef _COMMON_VT_D_LIB_H_
 #define _COMMON_VT_D_LIB_H_
 
-#define VTD_ENGINE_NUMBER         2
+#define VTD_ENGINE_NUMBER     2
+#define SA_VTD_ENGINE_NUMBER  7
 
 typedef enum {
   IGD_VTD = 0, // Individual VT-d for GFX device

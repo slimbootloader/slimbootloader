@@ -39,7 +39,7 @@
 #include <Guid/OsConfigDataHobGuid.h>
 #include <Library/HobLib.h>
 #include <Library/PcdLib.h>
-#include <Library/DmaRemappingTable.h>
+#include <Library/DmarLib.h>
 #include <Library/VTdLib.h>
 #include <Library/MpInitLib.h>
 #include <Library/HeciInitLib.h>
@@ -99,6 +99,150 @@
 // Data read from the EC data port is valid only when OBF=1.
 //
 #define EC_C_ACPI_ENABLE      0xAA    // Enable ACPI mode
+
+extern EFI_ACPI_DMAR_HEADER mAcpiDmarTableTemplate;
+STATIC
+CONST EFI_ACPI_COMMON_HEADER *mPlatformAcpiTables[] = {
+  (EFI_ACPI_COMMON_HEADER *)&mAcpiDmarTableTemplate,
+  NULL
+};
+
+/**
+  Update the DMAR table
+
+  @param[in, out] AcpiHeader         - The DMAR table header to update
+**/
+VOID
+DmarTableUpdate (
+  IN OUT EFI_ACPI_DESCRIPTION_HEADER *AcpiHeader
+  )
+{
+  EFI_STATUS                         Status;
+  MEMORY_CFG_DATA                    *MemCfgData;
+  SILICON_CFG_DATA                   *SiCfgData;
+  UINT8                              Flags;
+  UINT64                             BaseAddress;
+  EFI_ACPI_DMAR_STRUCTURE_HEADER     *DmarHdr;
+  UINT16                             IgdMode;
+  UINT16                             GttMode;
+  UINT32                             IgdMemSize;
+  UINT32                             GttMemSize;
+  UINT64                             RmrrLimit;
+
+  Flags = 0;
+  IgdMemSize = 0;
+  GttMemSize = 0;
+
+  // Set DMAR Flags based on config data
+  SiCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
+  if (SiCfgData && SiCfgData->InterruptRemappingSupport) {
+    Flags |= BIT0;
+  }
+
+  MemCfgData = (MEMORY_CFG_DATA *)FindConfigDataByTag (CDATA_MEMORY_TAG);
+  if (MemCfgData) {
+    if (MemCfgData->X2ApicOptOut) {
+      Flags |= BIT1;
+    }
+    if (MemCfgData->DmaControlGuarantee) {
+      Flags |= BIT2;
+    }
+  }
+
+  // Initialize DMAR table header
+  Status = AddAcpiDmarHdr (AcpiHeader, Flags);
+  if (EFI_ERROR (Status)) {
+    return;
+  }
+
+  // Add DRHD for VTD Engine 1
+  BaseAddress = ReadVtdBaseAddress(0);
+  if (BaseAddress != 0) {
+    DmarHdr = AddDrhdHdr (AcpiHeader, 0, SIZE_4KB, 0, BaseAddress);
+    if (DmarHdr != NULL) {
+      AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0, 0, 0, 2, 0);
+    }
+  }
+
+  // Add DRHD for VTD Engine 2
+  BaseAddress = ReadVtdBaseAddress(1);
+  if (BaseAddress != 0) {
+    DmarHdr = AddDrhdHdr (AcpiHeader, 0, SIZE_4KB, 0, BaseAddress);
+    if (DmarHdr != NULL) {
+      AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0, 0, 0, 5, 0);
+    }
+  }
+
+  // Add DRHD for VTd Engine 4 (iTBT PCIE 0)
+  BaseAddress = ReadVtdBaseAddress(3);
+  if (BaseAddress != 0) {
+    DmarHdr = AddDrhdHdr (AcpiHeader, 0, SIZE_4KB, 0, BaseAddress);
+    if (DmarHdr != NULL) {
+      AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_BRIDGE, 0, 0, 0, 7, 0);
+    }
+  }
+
+  // Add DRHD for VTD Engine 5 (iTBT PCIE 1)
+  BaseAddress = ReadVtdBaseAddress(4);
+  if (BaseAddress != 0) {
+    DmarHdr = AddDrhdHdr (AcpiHeader, 0, SIZE_4KB, 0, BaseAddress);
+    if (DmarHdr != NULL) {
+      AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_BRIDGE, 0, 0, 0, 7, 1);
+    }
+  }
+
+  // Add DRHD for VTD Engine 6 (iTBT PCIE 2)
+  BaseAddress = ReadVtdBaseAddress(5);
+  if (BaseAddress != 0) {
+    DmarHdr = AddDrhdHdr (AcpiHeader, 0, SIZE_4KB, 0, BaseAddress);
+    if (DmarHdr != NULL) {
+      AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_BRIDGE, 0, 0, 0, 7, 2);
+    }
+  }
+
+  // Add DRHD for VTD Engine 7 (iTBT PCIE 3)
+  BaseAddress = ReadVtdBaseAddress(6);
+  if (BaseAddress != 0) {
+    DmarHdr = AddDrhdHdr (AcpiHeader, 0, SIZE_4KB, 0, BaseAddress);
+    if (DmarHdr != NULL) {
+      AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_BRIDGE, 0, 0, 0, 7, 3);
+    }
+  }
+
+  // Add DRHD for VTd Engine 3
+  BaseAddress = ReadVtdBaseAddress(2);
+  if (BaseAddress != 0) {
+  DmarHdr = AddDrhdHdr (AcpiHeader, 0, SIZE_4KB, 0, BaseAddress);
+    if (DmarHdr != NULL) {
+      // Add IOAPIC scope
+      AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_IOAPIC, 0, 2, 0, 0x1E, 7);
+      // Add HPET scope
+      AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_MSI_CAPABLE_HPET, 0, 0, 0, 0x1E, 6);
+    }
+  }
+
+  // Add RMRR for IGD
+  BaseAddress = PCI_LIB_ADDRESS (SA_MC_BUS, 0, 0, 0);
+  IgdMode = ((PciRead16 ((UINTN)BaseAddress + R_SA_GGC) & B_SA_GGC_GMS_MASK) >> N_SA_GGC_GMS_OFFSET) & 0xFF;
+  if (IgdMode < 0xF0) {
+    IgdMemSize = IgdMode * 32 * 1024 * 1024;
+  } else {
+    IgdMemSize = 4 * (IgdMode - 0xF0 + 1) * 1024 * 1024;
+  }
+  GttMode = (PciRead16 ((UINTN)BaseAddress + R_SA_GGC) & B_SA_GGC_GGMS_MASK) >> N_SA_GGC_GGMS_OFFSET;
+  if (GttMode <= V_SA_GGC_GGMS_8MB) {
+    GttMemSize = (1 << GttMode) * 1024 * 1024;
+  }
+  BaseAddress = (PciRead32 ((UINTN)BaseAddress + R_SA_BGSM) & ~(0x01));
+  RmrrLimit   = BaseAddress + IgdMemSize + GttMemSize - 1;
+  DmarHdr     = AddRmrrHdr (AcpiHeader, 0, BaseAddress, RmrrLimit);
+  if (DmarHdr != NULL) {
+    AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0, 0, 0, 2, 0);
+  }
+
+  // Calculate DMAR table checksum
+  AcpiHeader->Checksum = CalculateCheckSum8 ((UINT8 *)AcpiHeader, AcpiHeader->Length);
+}
 
 //
 // GPIO_PAD Fileds
@@ -299,11 +443,6 @@ STATIC SMMBASE_INFO mSmmBaseInfo = {
 STATIC S3_SAVE_REG mS3SaveReg = {
   { BL_PLD_COMM_SIG, S3_SAVE_REG_COMM_ID, 1, 0 },
   { { REG_TYPE_IO, WIDE32, { 0, 0}, (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN), 0x00000000 } }
-};
-
-STATIC
-CONST EFI_ACPI_COMMON_HEADER *mPlatformAcpiTables[] = {
-  NULL
 };
 
 VOID
@@ -720,6 +859,11 @@ BoardInit (
       if (FeaturePcdGet (PcdEnableDts)) {
         ReadCpuDts ();
       }
+    }
+    break;
+  case PrePciEnumeration:
+    if (FeaturePcdGet (PcdVtdEnabled)) {
+      Status = PcdSet32S (PcdAcpiTableTemplatePtr, (UINT32)(UINTN)mPlatformAcpiTables);
     }
     break;
   case PostPciEnumeration:
@@ -1856,8 +2000,6 @@ PlatformUpdateAcpiTable (
   EFI_STATUS                   Status;
   PLATFORM_DATA               *PlatformData;
   SILICON_CFG_DATA            *SiCfgData;
-  MEMORY_CFG_DATA             *MemCfgData;
-  UINTN                       DmarTableFlags;
   VOID                        *FspHobList;
 
   GlobalNvs  = (GLOBAL_NVS_AREA *)(UINTN) PcdGet32 (PcdAcpiGnvsAddress);
@@ -1925,62 +2067,40 @@ PlatformUpdateAcpiTable (
       UpdateBdatAcpiTable (Table, FspHobList);
       DEBUG ((DEBUG_INFO, "Updated BDAT Table in AcpiTable Entries\n"));
     }
-  }else if (Table->Signature == EFI_ACPI_6_1_LOW_POWER_IDLE_TABLE_STRUCTURE_SIGNATURE){
-      UINT8                                  LpitStateEntries = 0;
-      EFI_ACPI_6_1_GENERIC_ADDRESS_STRUCTURE SetResidencyCounter[3] = { ACPI_LPI_RES_SLP_S0_COUNTER, ACPI_LPI_RES_C10_COUNTER, ACPI_LPI_RES_PS_ON_COUNTER };
-      UINT64                                 ResidencyCounterFrequency = 0;
-      LpitStateEntries = (UINT8)(((EFI_ACPI_DESCRIPTION_HEADER *)Table)->Length - sizeof(EFI_ACPI_DESCRIPTION_HEADER)) / sizeof(ACPI_LPI_NATIVE_CSTATE_DESCRIPTOR);
-      if (LpitStateEntries != 0) {
+  } else if (Table->Signature == EFI_ACPI_6_1_LOW_POWER_IDLE_TABLE_STRUCTURE_SIGNATURE){
+    UINT8                                  LpitStateEntries = 0;
+    EFI_ACPI_6_1_GENERIC_ADDRESS_STRUCTURE SetResidencyCounter[3] = { ACPI_LPI_RES_SLP_S0_COUNTER, ACPI_LPI_RES_C10_COUNTER, ACPI_LPI_RES_PS_ON_COUNTER };
+    UINT64                                 ResidencyCounterFrequency = 0;
+    LpitStateEntries = (UINT8)(((EFI_ACPI_DESCRIPTION_HEADER *)Table)->Length - sizeof(EFI_ACPI_DESCRIPTION_HEADER)) / sizeof(ACPI_LPI_NATIVE_CSTATE_DESCRIPTOR);
+    if (LpitStateEntries != 0) {
+      //
+      // LpitResidencyCounter : 0 - SLP_S0 Based, 1 - C10 Counter, 2 - ATX Shutdown/PS_ON
+      //
         //
-        // LpitResidencyCounter : 0 - SLP_S0 Based, 1 - C10 Counter, 2 - ATX Shutdown/PS_ON
+        // Read PWRM Base Address to fill in Residency counter Address Space
         //
-          //
-          // Read PWRM Base Address to fill in Residency counter Address Space
-          //
-          SetResidencyCounter[0].Address = (UINT64)PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_SLP_S0_RESIDENCY_COUNTER;
-          ResidencyCounterFrequency = 10000; //Counter runs at 100us granularity which implies 10KHz frequency (10000Hz)
-          if (IsPchLp ()) {
-            ResidencyCounterFrequency = 8197;  //Counter runs at 122us granularity which implies 10KHz frequency (8197Hz)
-          }
-        (((ACPI_LOW_POWER_IDLE_TABLE *)Table)->LpiStates[LpitStateEntries - 1].ResidencyCounter) = SetResidencyCounter[0];
-        (((ACPI_LOW_POWER_IDLE_TABLE *)Table)->LpiStates[LpitStateEntries - 1].ResidencyCounterFrequency) = ResidencyCounterFrequency;
-      }
-    }
-    else if (Table->Signature == EFI_ACPI_5_0_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE) {
-      if (S0IX_STATUS() == 1) {
-        EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE  *FadtTable;
-        DEBUG ((DEBUG_INFO, "Update FADT ACPI table\n"));
-        FadtTable = (EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE*) Table;
-        FadtTable->Flags |= (EFI_ACPI_6_1_PCI_EXP_WAK);
-        FadtTable->Flags |= (EFI_ACPI_6_1_LOW_POWER_S0_IDLE_CAPABLE);
-        FadtTable->Flags |= (EFI_ACPI_6_1_PWR_BUTTON);
-      }
-    }
-
-
-  if (FeaturePcdGet (PcdVtdEnabled)) {
-    PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
-    if (PlatformData != NULL) {
-      if (PlatformData->PlatformFeatures.VtdEnable == 1) {
-        if (Table->Signature == EFI_ACPI_VTD_DMAR_TABLE_SIGNATURE) {
-          DEBUG ((DEBUG_INFO, "Updated DMAR Table in AcpiTable Entries\n"));
-          SiCfgData  = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
-          MemCfgData = (MEMORY_CFG_DATA *)FindConfigDataByTag (CDATA_MEMORY_TAG);
-          DmarTableFlags = 0;
-          if (MemCfgData != NULL) {
-            if (MemCfgData->X2ApicOptOut == 1) {
-              DmarTableFlags  |= DMAR_TABLE_FLAGS_X2APIC_OPT_OUT;
-            }
-            if (MemCfgData->DmaControlGuarantee == 1) {
-              DmarTableFlags  |= DMAR_TABLE_FLAGS_DMA_CONTROL_GUARANTEE;
-            }
-          }
-          if ((SiCfgData != NULL) && SiCfgData->InterruptRemappingSupport != 0) {
-            DmarTableFlags  |= DMAR_TABLE_FLAGS_INT_REMAPPING_SUPPORT;
-          }
-          UpdateDmarAcpi(Table, DmarTableFlags);
+        SetResidencyCounter[0].Address = (UINT64)PCH_PWRM_BASE_ADDRESS + R_PMC_PWRM_SLP_S0_RESIDENCY_COUNTER;
+        ResidencyCounterFrequency = 10000; //Counter runs at 100us granularity which implies 10KHz frequency (10000Hz)
+        if (IsPchLp ()) {
+          ResidencyCounterFrequency = 8197;  //Counter runs at 122us granularity which implies 10KHz frequency (8197Hz)
         }
-      }
+      (((ACPI_LOW_POWER_IDLE_TABLE *)Table)->LpiStates[LpitStateEntries - 1].ResidencyCounter) = SetResidencyCounter[0];
+      (((ACPI_LOW_POWER_IDLE_TABLE *)Table)->LpiStates[LpitStateEntries - 1].ResidencyCounterFrequency) = ResidencyCounterFrequency;
+    }
+  } else if (Table->Signature == EFI_ACPI_5_0_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE) {
+    if (S0IX_STATUS() == 1) {
+      EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE  *FadtTable;
+      DEBUG ((DEBUG_INFO, "Update FADT ACPI table\n"));
+      FadtTable = (EFI_ACPI_6_1_FIXED_ACPI_DESCRIPTION_TABLE*) Table;
+      FadtTable->Flags |= (EFI_ACPI_6_1_PCI_EXP_WAK);
+      FadtTable->Flags |= (EFI_ACPI_6_1_LOW_POWER_S0_IDLE_CAPABLE);
+      FadtTable->Flags |= (EFI_ACPI_6_1_PWR_BUTTON);
+    }
+  } else if (FeaturePcdGet (PcdVtdEnabled) && (Table->Signature == EFI_ACPI_6_4_DMA_REMAPPING_TABLE_SIGNATURE)) {
+    DEBUG ((DEBUG_INFO, "Updated DMAR Table entries\n"));
+    PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
+    if ((PlatformData != NULL) && (PlatformData->PlatformFeatures.VtdEnable == 1)) {
+      DmarTableUpdate (Table);
     }
   }
 

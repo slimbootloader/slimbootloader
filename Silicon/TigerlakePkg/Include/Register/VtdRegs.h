@@ -7,13 +7,12 @@
     - Definitions beginning with "V_" are meaningful values of bits within the registers
     - Definitions beginning with "S_" are register sizes
     - Definitions beginning with "N_" are the bit position
-  Copyright (c) 2016 - 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2016 - 2025, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 #ifndef _VTD_REGS_H_
 #define _VTD_REGS_H_
 
-#define VTD_ENGINE_NUMBER                       7
 #define R_VTD_ECAP_OFFSET                       0x10
 #define B_VTD_ECAP_REG_IR                       BIT3
 
