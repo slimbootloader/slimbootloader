@@ -278,6 +278,7 @@ class Board(BaseBoard):
             'PchSpiLib|Silicon/CommonSocPkg/Library/PchSpiLib/PchSpiLib.inf',
             'SpiFlashLib|Silicon/CommonSocPkg/Library/SpiFlashLib/SpiFlashLib.inf',
             'VtdLib|Silicon/$(SILICON_PKG_NAME)/Library/VTdLib/VTdLib.inf',
+            'DmarLib|Silicon/CommonSocPkg/Library/DmarLib/DmarLib.inf',
             'ShellExtensionLib|Platform/$(BOARD_PKG_NAME)/Library/ShellExtensionLib/ShellExtensionLib.inf',
             'IgdOpRegionLib|Silicon/CommonSocPkg/Library/IgdOpRegionLib/IgdOpRegionLib.inf',
             'HeciInitLib|Silicon/$(PCH_PKG_NAME)/Library/HeciInitLib/HeciInitLib.inf',

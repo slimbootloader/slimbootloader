@@ -1,6 +1,6 @@
 #/*++
 #
-#  Copyright (c) 1999 - 2018, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 1999 - 2025, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 #
@@ -34,6 +34,7 @@
   IntelFsp2Pkg/IntelFsp2Pkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
   Silicon/TigerlakePchPkg/TigerlakePchPkg.dec
   Silicon/TigerlakePkg/TigerlakePkg.dec
 
@@ -42,10 +43,4 @@
   IoLib
   PcdLib
   DebugLib
-  HobLib
-  MemoryAllocationLib
-  ItbtPcieRpLib
 
-[Pcd]
-  gPlatformModuleTokenSpaceGuid.PcdAcpiGnvsAddress
-  gPlatformModuleTokenSpaceGuid.PcdVtdEnabled
