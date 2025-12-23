@@ -41,6 +41,7 @@
   gPlatformModuleTokenSpaceGuid.PcdFSPT64Bit              | FALSE      | BOOLEAN | 0x20000013
   gPlatformModuleTokenSpaceGuid.PcdFSPM64Bit              | FALSE      | BOOLEAN | 0x20000014
   gPlatformModuleTokenSpaceGuid.PcdFSPS64Bit              | FALSE      | BOOLEAN | 0x20000015
+  gPlatformModuleTokenSpaceGuid.PcdEnableFspSFvRebase     | FALSE      | BOOLEAN | 0x20000016
 
   # PcdStageBase:     Flash address to the stage binary (Could be compressed binary)
   # PcdStageSize:     Flash size occupied by the stage binary (Could be compressed binary)

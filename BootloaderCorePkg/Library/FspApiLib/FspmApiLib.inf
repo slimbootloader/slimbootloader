@@ -32,6 +32,7 @@
   FspMemoryInit.c
   FspMisc.c
   FspVariableServices.c
+  FspRebase.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -48,6 +49,8 @@
   PcdLib
   BootloaderLib
   VariableLib
+  LiteFvLib
+  LitePeCoffLib
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdFSPMBase
@@ -57,3 +60,4 @@
 
 [FixedPcd]
   gPlatformModuleTokenSpaceGuid.PcdFSPM64Bit
+  gPlatformModuleTokenSpaceGuid.PcdEnableFspSFvRebase
