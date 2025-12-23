@@ -229,6 +229,7 @@
   gPlatformModuleTokenSpaceGuid.PcdFSPSUpdSize            | $(FSP_S_UPD_SIZE)
   gPlatformModuleTokenSpaceGuid.PcdFSPS64Bit              | $(FSP_S_64_BIT)
   gPlatformModuleTokenSpaceGuid.PcdFSPMStackTop           | $(FSP_M_STACK_TOP)
+  gPlatformModuleTokenSpaceGuid.PcdEnableFspSFvRebase     | $(ENABLE_FSP_S_FV_REBASE)
 
   gPlatformModuleTokenSpaceGuid.PcdMemoryMapEntryNumber   | $(MAX_MEMORY_MAP_ENTRY_NUM)
 
