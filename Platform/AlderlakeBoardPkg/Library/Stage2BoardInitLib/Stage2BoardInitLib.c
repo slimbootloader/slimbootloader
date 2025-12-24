@@ -258,12 +258,15 @@ ClearSmi (
       B_ACPI_IO_SMI_STS_BIOS
     );
 
+  // Preserve PWRBTN_STS and WAK_STS for OS to handle wake events
+  if (GetBootMode() == BOOT_ON_S3_RESUME) {
+    Pm1Sts &= ~(B_ACPI_IO_PM1_STS_PWRBTN | B_ACPI_IO_PM1_STS_WAK);
+  }
+
   Pm1Sts |=
     (
-      B_ACPI_IO_PM1_STS_WAK |
       B_ACPI_IO_PM1_STS_PRBTNOR |
       B_ACPI_IO_PM1_STS_RTC |
-      B_ACPI_IO_PM1_STS_PWRBTN |
       B_ACPI_IO_PM1_STS_GBL |
       B_ACPI_IO_PM1_STS_TMROF
       );

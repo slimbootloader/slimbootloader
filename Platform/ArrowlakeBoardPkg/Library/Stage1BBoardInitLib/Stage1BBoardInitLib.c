@@ -593,9 +593,9 @@ GetPlatformPowerState (
       IoAndThenOr16 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_CNT, (UINT16) ~B_ACPI_IO_PM1_CNT_SLP_TYP, V_ACPI_IO_PM1_CNT_S0);
     }
     //
-    // Clear WAK STS. Clear the PWRBTN_EN, it causes SMI# otherwise (SCI_EN is 0).
+    // Clear the PWRBTN_EN, it causes SMI# otherwise (SCI_EN is 0).
     //
-    IoAndThenOr32 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_STS, (UINT32)~B_ACPI_IO_PM1_EN_PWRBTN, B_ACPI_IO_PM1_STS_WAK);
+    IoAnd16 (ACPI_BASE_ADDRESS + R_ACPI_IO_PM1_EN, (UINT16)~B_ACPI_IO_PM1_EN_PWRBTN);
   }
 
   ///
