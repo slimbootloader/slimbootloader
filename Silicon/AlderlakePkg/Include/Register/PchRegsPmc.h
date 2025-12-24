@@ -56,7 +56,7 @@
 //
 #define R_ACPI_IO_PM1_STS                        0x00
 #define S_ACPI_IO_PM1_STS                        2
-#define B_ACPI_IO_PM1_EN_PWRBTN_EN               BIT24
+#define B_ACPI_IO_PM1_STS_PWRBTN_EN              BIT24
 #define B_ACPI_IO_PM1_STS_WAK                    BIT15
 #define B_ACPI_IO_PM1_STS_PCIEXP_WAKE_STS        BIT14
 #define B_ACPI_IO_PM1_STS_PRBTNOR                BIT11

@@ -132,6 +132,8 @@ Scope(\) {
   Field(PMIO, ByteAcc, NoLock, Preserve) {
           ,  8,
       PBSS,  1,       // Power Button Status
+          ,  15,
+      PBEN,  1,       // Power Button Enable
     Offset(R_ACPI_IO_GPE_CTRL),            // 0x40, General Purpose Event Control
           ,  17,
       GPEC,  1,       // Software GPE Control

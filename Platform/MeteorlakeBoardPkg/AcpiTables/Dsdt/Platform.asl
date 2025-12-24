@@ -252,6 +252,10 @@ Method(_WAK,1,Serialized)
 
   If(LOr(LEqual(Arg0,3), LEqual(Arg0,4)))  // If S3 or S4 Resume
   {
+    // PWRBTN_EN is cleared in Stage1B, set it if the wake source is power button
+    If (PBSS) {
+      Store (1, PBEN)
+    }
 
     //
     // Check to send Convertible/Dock state changes upon resume from Sx.
