@@ -288,6 +288,8 @@ class BaseBoard(object):
         self.ENABLE_SBL_RESILIENCY = 0
         self._ACM_CPU_FMS          = []
         self._ACM_CPU_EXT_FM_FM_MASK = 0xF0
+        self._DACM_CPU_FMS         = 0
+        self._DACM_CPU_EXT_FM_FM_MASK = 0x0
 
         self.RTCM_RSVD_SIZE        = 0xFF000
 
@@ -408,19 +410,19 @@ class Build(object):
 
         # ACM
         if self._board.ACM_SIZE > 0:
-            # Add default enrty for ACM FIT Version 0x100
-            if self._board.ACM_FIT_VERISON == 0x100:
+            if self._board.ACM_FIT_VERISON == 0x200:
+                # Add all the CPUIDs for ACM FIT Version 0x200
+                for CPU_FMS in self._board._ACM_CPU_FMS :
+                    fit_entry = FIT_ENTRY_V200.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
+                    fit_entry.set_values(self._board.ACM_BASE, CPU_FMS, self._board.ACM_FIT_VERISON, 0x2, self._board._ACM_CPU_EXT_FM_FM_MASK)
+                    print ('  Patching entry %d with 0x%08X:0x%08X - ACM' % (num_fit_entries, fit_entry.address, fit_entry.fms))
+                    num_fit_entries += 1
+            else:
+                # Add default enrty for ACM FIT Version 0x100
                 fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
                 fit_entry.set_values(self._board.ACM_BASE, 0, self._board.ACM_FIT_VERISON, 0x2, 0)
                 print ('  Patching entry %d with 0x%08X:0x%08X - ACM' % (num_fit_entries, fit_entry.address, fit_entry.size))
-                num_fit_entries     += 1
-            # Add all the CPUIDs for ACM FIT Version 0x200
-            if self._board.ACM_FIT_VERISON == 0x200:
-                for CPU_FMS in self._board._ACM_CPU_FMS :
-                    fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
-                    fit_entry.set_values(self._board.ACM_BASE, CPU_FMS, self._board.ACM_FIT_VERISON, 0x2, self._board._ACM_CPU_EXT_FM_FM_MASK)
-                    print ('  Patching entry %d with 0x%08X:0x%08X - ACM' % (num_fit_entries, fit_entry.address, fit_entry.size))
-                    num_fit_entries     += 1
+                num_fit_entries += 1
 
             # Diagnostic ACM Fit entry should be in sequential order with/without BTG enabled
             # Save the next FIT entry for Diagnostic ACM here and set it later below
@@ -502,9 +504,14 @@ class Build(object):
 
         # Add Diagnostic ACM with the reserved fit entry saved
         if self._board.DIAGNOSTICACM_SIZE > 0:
-            fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (diagnosticacm_index+1)*16)
-            fit_entry.set_values(self._board.DIAGNOSTICACM_BASE, self._board.DIAGNOSTICACM_SIZE, 0x100, 0x3, 0)
-            print('  Patching entry %d with 0x%08X:0x%08X - Diagnostic ACM' % (diagnosticacm_index, fit_entry.address, fit_entry.size))
+            if self._board.ACM_FIT_VERISON == 0x200:
+                fit_entry = FIT_ENTRY_V200.from_buffer(rom, fit_offset + (diagnosticacm_index+1)*16)
+                fit_entry.set_values(self._board.DIAGNOSTICACM_BASE, self._board._DACM_CPU_FMS, self._board.ACM_FIT_VERISON, 0x3, self._board._DACM_CPU_EXT_FM_FM_MASK)
+                print('  Patching entry %d with 0x%08X:0x%08X - Diagnostic ACM' % (diagnosticacm_index, fit_entry.address, fit_entry.fms))
+            else:
+                fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (diagnosticacm_index+1)*16)
+                fit_entry.set_values(self._board.DIAGNOSTICACM_BASE, self._board.DIAGNOSTICACM_SIZE, self._board.ACM_FIT_VERISON, 0x3, 0)
+                print('  Patching entry %d with 0x%08X:0x%08X - Diagnostic ACM' % (diagnosticacm_index, fit_entry.address, fit_entry.size))
 
         # Check FIT length
         spaceleft = addr - (fit_address.value + fit_header.size)
