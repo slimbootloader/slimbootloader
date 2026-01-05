@@ -31,7 +31,7 @@ class Board(BaseBoard):
         self.BOARD_NAME           = 'uptwl'
         self.BOARD_PKG_NAME       = 'AlderlakeBoardPkg'
         self.SILICON_PKG_NAME     = 'AlderlakePkg'
-        self.FSP_IMAGE_ID         = '$TWLFSP$'
+        self.FSP_IMAGE_ID         = '$TWLFSPE'
         self._EXTRA_INC_PATH      = ['Silicon/AlderlakePkg/Adln/Include']
         self._FSP_PATH_NAME       = 'Silicon/AlderlakePkg/Adln/FspBin'
         self.MICROCODE_INF_FILE   = 'Silicon/AlderlakePkg/Microcode/Microcode.inf'
@@ -285,6 +285,7 @@ class Board(BaseBoard):
             'HeciLib|Silicon/CommonSocPkg/Library/HeciLib/HeciLib.inf',
             'MeChipsetLib|Silicon/$(SILICON_PKG_NAME)/Library/MeChipsetLib/MeChipsetLib.inf',
             'VtdLib|Silicon/$(SILICON_PKG_NAME)/Library/VTdLib/VTdLib.inf',
+            'DmarLib|Silicon/CommonSocPkg/Library/DmarLib/DmarLib.inf',
             'PsdLib|Silicon/$(SILICON_PKG_NAME)/Library/PsdLib/PsdLib.inf',
             'HeciMeExtLib|Silicon/$(SILICON_PKG_NAME)/Library/HeciMeExtLib/HeciMeExtLib.inf',
             'MeExtMeasurementLib|Silicon/$(SILICON_PKG_NAME)/Library/MeExtMeasurementLib/MeExtMeasurementLib.inf',
