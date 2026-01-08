@@ -21,7 +21,7 @@
 #define HECI_CB_OVERFLOW          0xFFFFFFFF  // Circular buffer overflow
 
 #define HECI_WAIT_DELAY           1000        // 1ms timeout for IO delay
-#define HECI_READ_TIMEOUT         5000000     // 5sec timeout in microseconds
+#define HECI_READ_TIMEOUT         10000000    // 10sec timeout in microseconds
 #define HECI_SEND_TIMEOUT         5000000     // 5sec timeout in microseconds
 #define HECI_INIT_TIMEOUT         15000000    // 15sec timeout in microseconds
 #define HECI_TIMEOUT_COUNT(t)     (((t) + HECI_WAIT_DELAY - 1) / HECI_WAIT_DELAY)
