@@ -14,7 +14,7 @@
 #
 PLATFORMID_CFG_DATA.PlatformId           | 0x014
 PLAT_NAME_CFG_DATA.PlatformName          | 'UPXi12Rp'
-GEN_CFG_DATA.PayloadId                   | ''
+GEN_CFG_DATA.PayloadId                   | 'UEFI'
 FEATURES_CFG_DATA.Features.S0ix          | 0x0
 GEN_CFG_DATA.BootToShell                 | 1
 

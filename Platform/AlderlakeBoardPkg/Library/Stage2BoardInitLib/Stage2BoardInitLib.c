@@ -19,6 +19,7 @@
 #include <Library/FusaConfigLib.h>
 #include <Library/MediaAccessLib.h>
 #include "SioChip.h"
+#include <Library/TxtLib.h>
 
 GLOBAL_REMOVE_IF_UNREFERENCED UINT8    mBigCoreCount;
 GLOBAL_REMOVE_IF_UNREFERENCED UINT8    mSmallCoreCount;
@@ -462,6 +463,7 @@ BoardInit (
   BL_SW_SMI_INFO            *BlSwSmiInfo;
   FEATURES_DATA             *FeatureCfgData;
   UINT32                    Data;
+  FEATURES_CFG_DATA         *FeaturesCfgData;
 
   SiCfgData = NULL;
 
@@ -619,6 +621,25 @@ BoardInit (
         TriggerPayloadSwSmi (BlSwSmiInfo->BlSwSmiHandlerInput);
       }
     }
+
+    DEBUG ((DEBUG_INFO, "TXT: Checking TXT Enabled State\n"));
+    if (FeaturePcdGet (PcdTxtEnabled)) {
+      ///
+      /// Initialize TXT Before ACPI initialization.
+      /// This will update the correct TXT enabled state in ACPI table.
+      ///
+      FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
+      if (FeaturesCfgData->Features.TxtEnabled == 1) {
+        if (GetBootMode() != BOOT_ON_S3_RESUME) {
+          DEBUG ((DEBUG_INFO, "TXT: Calling InitTxt\n"));
+          InitTxt();
+        } else {
+          DEBUG ((DEBUG_INFO, "TXT: Calling TxtS3Restore\n"));
+          TxtS3Restore();
+        }
+      }
+    }
+
     break;
   case PrePayloadLoading:
     Status = FixUpFlashMapEntry();
@@ -684,6 +705,15 @@ BoardInit (
     }
     break;
   case ReadyToBoot:
+    if (FeaturePcdGet (PcdTxtEnabled)) {
+      FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
+      if ((FeaturesCfgData->Features.TxtEnabled == 1)
+                  && (GetBootMode() == BOOT_ON_S3_RESUME)) {
+          DEBUG ((DEBUG_INFO, "TXT: Calling TxtS3Resume\n"));
+          TxtS3Resume();
+      }
+    }
+
     if ((GetBootMode() != BOOT_ON_FLASH_UPDATE) && (GetPayloadId() == 0)) {
       ProgramSecuritySetting ();
       //
