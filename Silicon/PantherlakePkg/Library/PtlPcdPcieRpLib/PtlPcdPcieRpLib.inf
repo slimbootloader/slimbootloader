@@ -1,0 +1,44 @@
+## @file
+# PCIe RP PTL PCH library
+#
+# All function in this library is available for PEI, DXE, and SMM,
+# But do not support UEFI RUNTIME environment call.
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#  Unless otherwise agreed by Intel in writing, you may not remove or alter
+#  this notice or any other notice embedded in Materials by Intel or
+#  Intel's suppliers or licensors in any way.
+#
+#  This file contains an 'Intel Peripheral Driver' and is uniquely identified as
+#  "Intel Reference Module" and is licensed for Intel CPUs and chipsets under
+#  the terms of your license agreement with Intel or your vendor. This file may
+#  be modified by the user, subject to additional terms of the license agreement.
+#
+#
+##
+
+[Defines]
+INF_VERSION = 0x00010017
+BASE_NAME = PtlPcdPcieRpLib
+FILE_GUID = C45BEF2A-AAA4-48F4-8FB1-564BE2793995
+VERSION_STRING = 1.0
+MODULE_TYPE = BASE
+LIBRARY_CLASS = PtlPcdPcieRpLib
+
+
+[Sources]
+PtlPcdPcieRpLib.c
+
+[Packages]
+MdePkg/MdePkg.dec
+BootloaderCorePkg/BootloaderCorePkg.dec
+BootloaderCommonPkg/BootloaderCommonPkg.dec
+Silicon/CommonSocPkg/CommonSocPkg.dec
+Silicon/PantherlakePkg/PantherlakePkg.dec
+
+[Pcd]
+
+[LibraryClasses]
+P2sbLib
