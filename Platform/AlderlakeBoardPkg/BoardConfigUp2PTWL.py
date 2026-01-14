@@ -31,7 +31,7 @@ class Board(BaseBoard):
         self.BOARD_NAME           = 'uptwl'
         self.BOARD_PKG_NAME       = 'AlderlakeBoardPkg'
         self.SILICON_PKG_NAME     = 'AlderlakePkg'
-        self.FSP_IMAGE_ID         = '$TWLFSP$'
+        self.FSP_IMAGE_ID         = '$TWLFSPE$'
         self._EXTRA_INC_PATH      = ['Silicon/AlderlakePkg/Adln/Include']
         self._FSP_PATH_NAME       = 'Silicon/AlderlakePkg/Adln/FspBin'
         self.MICROCODE_INF_FILE   = 'Silicon/AlderlakePkg/Microcode/Microcode.inf'
