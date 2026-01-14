@@ -114,6 +114,18 @@ class Board(RaptorlakeBoardConfig.Board):
 
         self.FSP_M_STACK_TOP      = 0xFEFDFF00
 
+
         # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
         # 3: Enable NOSMRR (for edk2-stable202411 and newer UEFI payload)  4: Auto NOSMRR
         self.ENABLE_SMM_REBASE    = 4
+
+    def GetDscLibraryClasses (self, dsc):
+        # Call parent to get base library classes from BoardConfigRpls
+        dsc = super().GetDscLibraryClasses(dsc)
+        # Replace TxtLib with TxtLibNull for BTLS
+        lib_classes = dsc['LibraryClasses.%s' % self.BUILD_ARCH]
+        dsc['LibraryClasses.%s' % self.BUILD_ARCH] = [
+            'TxtLib|Silicon/CommonSocPkg/Library/TxtLib/TxtLibNull.inf' if 'TxtLib' in lib else lib
+            for lib in lib_classes
+        ]
+        return dsc

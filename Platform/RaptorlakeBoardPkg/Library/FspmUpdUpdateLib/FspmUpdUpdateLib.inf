@@ -49,6 +49,9 @@
   gPlatformModuleTokenSpaceGuid.PcdStage1StackSize
   gPlatformModuleTokenSpaceGuid.PcdStage1DataSize
 
+[FeaturePcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdTxtEnabled
+
 [FixedPcd]
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
   gPlatformModuleTokenSpaceGuid.PcdFusaSupport
