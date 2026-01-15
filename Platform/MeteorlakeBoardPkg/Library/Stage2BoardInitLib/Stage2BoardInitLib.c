@@ -15,6 +15,7 @@
 #include <Library/GpioV2Lib.h>
 #include <Library/PchInfoLib.h>
 #include <Register/PchRegsLpc.h>
+#include <Library/DmarLib.h>
 
 STATIC CONST UINT32 NhltSignaturesTable[] = {
   SIGNATURE_32 ('N', 'H', 'L', 'T')
@@ -55,8 +56,12 @@ STATIC S3_SAVE_REG mS3SaveReg = {
   { { REG_TYPE_IO, WIDE32, { 0, 0}, (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN), 0x00000000 } }
 };
 
-
-
+extern EFI_ACPI_DMAR_HEADER mAcpiDmarTableTemplate;
+STATIC
+CONST EFI_ACPI_COMMON_HEADER *mPlatformAcpiTables[] = {
+  (EFI_ACPI_COMMON_HEADER *)&mAcpiDmarTableTemplate,
+  NULL
+};
 
 
 /**
@@ -357,6 +362,11 @@ BoardInit (
       }
     }
 
+    break;
+  case PrePciEnumeration:
+    if (FeaturePcdGet (PcdVtdEnabled)) {
+      Status = PcdSet32S (PcdAcpiTableTemplatePtr, (UINT32)(UINTN)mPlatformAcpiTables);
+    }
     break;
   case PostPciEnumeration:
     Status = SetFrameBufferWriteCombining (0, MAX_UINT32);
@@ -937,6 +947,125 @@ VOID UpdLpiStat (
 }
 
 /**
+  Update the DMAR table
+
+  @param[in, out] TableHeader         - The table to be set
+**/
+VOID
+DmarTableUpdate (
+  IN OUT   EFI_ACPI_DESCRIPTION_HEADER       *AcpiHeader
+  )
+{
+  EFI_STATUS                                 Status;
+  MEMORY_CFG_DATA                            *MemCfgData;
+  SILICON_CFG_DATA                           *SiCfgData;
+  UINT8                                      Flags;
+  UINT32                                     GttMmAdr;
+  UINT16                                     GttMode;
+  UINT32                                     GttMemSize;
+  UINT16                                     IgdMode;
+  UINT32                                     IgdMemSize;
+  UINT64                                     BaseAddress;
+  UINT64                                     McD0BaseAddress;
+  UINT64                                     McD2BaseAddress;
+  UINT64                                     ReservedMemoryRegionBaseAddress;
+  UINT64                                     ReservedMemoryRegionLimitAddress;
+  EFI_ACPI_DMAR_STRUCTURE_HEADER             *DmarHdr;
+
+  // Initialize variables
+  IgdMemSize  = 0;
+  GttMemSize  = 0;
+  ReservedMemoryRegionBaseAddress  = 0;
+  ReservedMemoryRegionLimitAddress = 0;
+
+  Flags = 0;
+  SiCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);
+  if ((SiCfgData != NULL) && (SiCfgData->InterruptRemappingSupport != 0)) {
+    Flags |= BIT0;
+  }
+
+  MemCfgData = (MEMORY_CFG_DATA *)FindConfigDataByTag (CDATA_MEMORY_TAG);
+  if (MemCfgData != NULL) {
+    if (MemCfgData->X2ApicOptOut == 1) {
+      Flags |= BIT1;
+    } else {
+      Flags &= 0xFD;
+    }
+    /// Set DMA_CONTROL_GUARANTEE bit (BIT 2) if Dma Control Guarantee is supported
+    if (MemCfgData->DmaControlGuarantee == 1) {
+      Flags |= BIT2;
+    }
+  }
+  DEBUG ((DEBUG_INFO, "DMAR table update - DmaControlGuarantee flag: 0x%x\n", Flags));
+  ///
+  /// Calculate IGD memsize
+  ///
+  McD0BaseAddress = PCI_LIB_ADDRESS (SA_MC_BUS, 0, 0, 0);
+  IgdMode         = ((PciRead16 ((UINTN)McD0BaseAddress + R_SA_GGC) & B_SA_GGC_GMS_MASK) >> N_SA_GGC_GMS_OFFSET) & 0xFF;
+
+  DEBUG ((DEBUG_INFO, "McD0BaseAddress 0x%08X, IgdMode 0x%04X\n", McD0BaseAddress, IgdMode));
+
+  if (IgdMode < 0xF0) {
+    IgdMemSize = IgdMode * 32 * (1024) * (1024);
+  } else {
+    IgdMemSize = 4 * (IgdMode - 0xF0 + 1) * (1024) * (1024);
+  }
+  ///
+  /// Calculate GTT mem size
+  ///
+  GttMemSize = 0;
+  GttMode = (PciRead16 ((UINTN)McD0BaseAddress + R_SA_GGC) & B_SA_GGC_GGMS_MASK) >> N_SA_GGC_GGMS_OFFSET;
+  if (GttMode <= V_SA_GGC_GGMS_8MB) {
+    GttMemSize = (1 << GttMode) * (1024) * (1024);
+  }
+  McD2BaseAddress = PCI_LIB_ADDRESS ( IGD_BUS_NUM, IGD_DEV_NUM, IGD_FUN_NUM, 0);
+  GttMmAdr = (PciRead32 ((UINTN)McD2BaseAddress + R_SA_IGD_GTTMMADR)) & 0xFFFFFFF0;
+  DEBUG ((DEBUG_INFO, "GttMode 0x%04X, GttMmAdr  0x%08X, GttMemSize 0x%08X\n", GttMode, GttMmAdr, GttMemSize));
+
+  ReservedMemoryRegionBaseAddress   = (PciRead32 ((UINTN)McD0BaseAddress + R_SA_BGSM) & ~(0x01));
+  ReservedMemoryRegionLimitAddress  = ReservedMemoryRegionBaseAddress + IgdMemSize + GttMemSize - 1;
+  DEBUG ((DEBUG_INFO, "RMRR Base  address IGD %016lX\n", ReservedMemoryRegionBaseAddress));
+  DEBUG ((DEBUG_INFO, "RMRR Limit address IGD %016lX\n", ReservedMemoryRegionLimitAddress));
+
+  Status = AddAcpiDmarHdr (AcpiHeader, Flags);
+  if (EFI_ERROR (Status)) {
+    return ;
+  }
+
+  BaseAddress = ReadVtdBaseAddress(0);
+  Flags   = 0;
+  DmarHdr = AddDrhdHdr (AcpiHeader, Flags, SIZE_64KB, 0, BaseAddress);
+  ASSERT (DmarHdr != NULL);
+
+  AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0, 0, 0, IGD_DEV_NUM, IGD_FUN_NUM);
+
+  BaseAddress = ReadVtdBaseAddress(2);
+  DmarHdr = AddDrhdHdr (AcpiHeader, Flags, SIZE_64KB, 0, BaseAddress);
+  ASSERT (DmarHdr != NULL);
+  AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_IOAPIC, 0, 2, V_P2SB_CFG_IBDF_BUS, V_P2SB_CFG_IBDF_DEV, V_P2SB_CFG_IBDF_FUNC);
+  AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_MSI_CAPABLE_HPET, 0, 0, V_P2SB_CFG_HBDF_BUS, V_P2SB_CFG_HBDF_DEV, V_P2SB_CFG_HBDF_FUNC);
+
+  DmarHdr = AddRmrrHdr(AcpiHeader, 0 , ReservedMemoryRegionBaseAddress , ReservedMemoryRegionLimitAddress);
+  ASSERT (DmarHdr != NULL);
+  AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0, 0, 0, 2, 0);
+
+  DmarHdr = AddSatcHdr (AcpiHeader, 1, 0);
+  ASSERT (DmarHdr != NULL);
+  AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0, 0, 0, 2, 0);
+  AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0, 0, 0, 5, 0);
+  AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0, 0, 0, 0xB, 0);
+
+  DmarHdr = AddSidpHdr (AcpiHeader, 0);
+  ASSERT (DmarHdr != NULL);
+  AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0x1F, 0, 0, 2, 0);
+  AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0x1F, 0, 0, 5, 0);
+  AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0x1C, 0, 0, 0xB, 0);
+
+  // Calculate DMAR table check sum
+  AcpiHeader->Checksum = CalculateCheckSum8 ((UINT8 *)AcpiHeader, AcpiHeader->Length);
+}
+
+/**
   Update PCH NVS and SA NVS area address and size in ACPI table.
 
   @param[in] Current    Pointer to ACPI description header
@@ -1082,6 +1211,12 @@ PlatformUpdateAcpiTable (
         FadtPointer->Flags &= ~(EFI_ACPI_6_3_PWR_BUTTON); // clear indicates the power button is handled as a fixed feature programming model
       }
     }
+  } else if (FeaturePcdGet (PcdVtdEnabled) && Table->Signature == EFI_ACPI_6_4_DMA_REMAPPING_TABLE_SIGNATURE) {
+    DEBUG ((DEBUG_INFO, "Updated DMAR Table entries\n"));
+    PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
+    if ((PlatformData != NULL) && (PlatformData->PlatformFeatures.VtdEnable == 1)) {
+      DmarTableUpdate (Table);
+    }
   }
 
   if (MEASURED_BOOT_ENABLED()) {
@@ -1089,17 +1224,6 @@ PlatformUpdateAcpiTable (
         (Table->OemTableId == ACPI_SSDT_TPM2_DEVICE_OEM_TABLE_ID)) {
       Status = UpdateTpm2AcpiTable(Table);
       ASSERT_EFI_ERROR (Status);
-    }
-  }
-
-  if (FeaturePcdGet (PcdVtdEnabled)) {
-    PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
-    if (PlatformData != NULL) {
-      if (PlatformData->PlatformFeatures.VtdEnable == 1) {
-        if (Table->Signature == EFI_ACPI_VTD_DMAR_TABLE_SIGNATURE) {
-          UpdateDmarAcpi(Table);
-        }
-      }
     }
   }
 
