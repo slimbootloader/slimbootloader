@@ -1178,6 +1178,10 @@ ConfigurePad (
   UINT32                          RegOffset;
   UINT32                          RegisterValue;
 
+  if (GpioPad == GPIOV2_PAD_NONE) {
+    return EFI_SUCCESS;
+  }
+
   Status = SetPadMode (GpioPad, PadConfig->PadMode);
   if (EFI_ERROR (Status)) {
     return Status;
