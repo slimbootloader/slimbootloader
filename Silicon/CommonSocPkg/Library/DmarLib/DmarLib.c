@@ -226,9 +226,6 @@ AddSatcHdr (
   EFI_ACPI_DMAR_SATC_HEADER             *SatcHeader;
 
   SatcHeader = (EFI_ACPI_DMAR_SATC_HEADER *) ((UINT8 *)AcpiHeader + AcpiHeader->Length);
-  if (SatcHeader == NULL) {
-    return NULL;
-  }
 
   // Initialize the SATC structure.
   SatcHeader->Header.Type   = EFI_ACPI_DMAR_TYPE_SATC;
@@ -269,9 +266,6 @@ AddSidpHdr (
   EFI_ACPI_DMAR_SIDP_HEADER           *SidpHeader;
 
   SidpHeader = (EFI_ACPI_DMAR_SIDP_HEADER *) ((UINT8 *)AcpiHeader + AcpiHeader->Length);
-  if (SidpHeader == NULL) {
-    return NULL;
-  }
 
   // Initialize the SIDP structure.
   SidpHeader->Header.Type   = EFI_ACPI_DMAR_TYPE_SIDP;
@@ -322,9 +316,6 @@ AddScopeData (
   UINT16                                      ScopeSize;
 
   ScopeHeader = (EFI_ACPI_DMAR_DEVICE_SCOPE_STRUCTURE_HEADER *) ((UINT8 *)AcpiHeader + AcpiHeader->Length);
-  if (ScopeHeader == NULL) {
-    return EFI_INVALID_PARAMETER;
-  }
 
   if ((ScopeType == EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT) ||
       (ScopeType == EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_BRIDGE)) {
