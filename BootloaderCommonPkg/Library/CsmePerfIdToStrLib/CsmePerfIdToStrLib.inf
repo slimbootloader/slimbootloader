@@ -1,0 +1,13 @@
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = CsmePerfIdToStrLib
+  FILE_GUID                      = AAAABBBB-1234-1234-1234-CCCCDDDDEEE
+  MODULE_TYPE                    = PEIM
+  LIBRARY_CLASS                  = CsmePerfIdToStrLib
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+
+[Sources]
+  CsmePerfIdToStrLib.c
