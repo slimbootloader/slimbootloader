@@ -67,6 +67,7 @@
   HobLib|BootloaderCommonPkg/Library/HobLib/HobLib.inf
   HobBuildLib|BootloaderCorePkg/Library/HobBuildLib/HobBuildLib.inf
   LiteFvLib|BootloaderCommonPkg/Library/LiteFvLib/LiteFvLib.inf
+  CsmePerfIdToStrLib|BootloaderCommonPkg/Library/CsmePerfIdToStrLib/CsmePerfIdToStrLib.inf
   LoaderPerformanceLib|BootloaderCommonPkg/Library/LoaderPerformanceLib/LoaderPerformanceLib.inf
   MemoryAllocationLib|BootloaderCorePkg/Library/MemoryAllocationLib/MemoryAllocationLib.inf
   MpInitLib|BootloaderCorePkg/Library/MpInitLib/MpInitLib.inf
