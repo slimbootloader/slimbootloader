@@ -58,6 +58,7 @@ PlatformGetCapsuleImage (
 
 **/
 VOID *
+EFIAPI
 InitCsmeUpdInputData (
   VOID
   )
@@ -293,6 +294,7 @@ PrepareRegionsUpdate (
   @retval  others             Error happening.
 **/
 EFI_STATUS
+EFIAPI
 SetBootPartition (
   IN BOOT_PARTITION  Partition
   )

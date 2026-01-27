@@ -248,6 +248,7 @@ GetSvn (
   @retval  others             There is error happening.
 **/
 EFI_STATUS
+EFIAPI
 GetVersionfromFv (
   IN  UINT32              Stage1ABase,
   IN  BOOLEAN             IsFd,

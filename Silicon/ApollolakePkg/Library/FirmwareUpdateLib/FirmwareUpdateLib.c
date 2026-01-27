@@ -48,6 +48,7 @@
 
 **/
 VOID *
+EFIAPI
 InitCsmeUpdInputData (
   VOID
   )
@@ -298,6 +299,7 @@ GetFirmwareUpdateInfo (
   @retval  others             Error happening.
 **/
 EFI_STATUS
+EFIAPI
 SetBootPartition (
   IN BOOT_PARTITION  Partition
   )

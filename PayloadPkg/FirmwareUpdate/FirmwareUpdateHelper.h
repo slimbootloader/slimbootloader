@@ -368,4 +368,44 @@ IsRedundantComponent (
   IN  UINT64    Signature
   );
 
+/**
+  Perform csme Firmware update.
+
+  This function based on the image type id guid from the image header will
+  call the respective functions to perform capsule update.
+
+  @param[in] CapImage       The pointer to the firmware update capsule image.
+  @param[in] CapImageSize   The size of capsule image in bytes.
+  @param[in] CsmeUpdInputData   pointer to input data structure for CSME update
+  @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
+
+  @retval  EFI_SUCCESS      Update successful.
+  @retval  other            error status from the update routine
+**/
+EFI_STATUS
+UpdateCsme (
+  IN  UINT8                         *CapImage,
+  IN  UINT32                        CapImageSize,
+  IN  VOID                          *CsmeUpdInputData,
+  IN  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  );
+
+/**
+  This function will be called after the firmware update is complete.
+  This function will update firmware update status structure in reserved region
+
+  @param[in] Signature          Signature of component to update.
+  @param[in] LastAttemptVersion Version of last firmware update attempted.
+  @param[in] LastAttemptStatus  Status of last firmware update attempted.
+
+  @retval  EFI_SUCCESS        The operation completed successfully.
+  @retval  others             There is error happening.
+**/
+EFI_STATUS
+UpdateStatus (
+  IN UINT64                   Signature,
+  IN UINT16                   LastAttemptVersion,
+  IN EFI_STATUS               LastAttemptStatus
+ );
+
 #endif

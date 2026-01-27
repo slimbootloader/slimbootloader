@@ -275,6 +275,7 @@ GetSvn (
   @retval  others             There is error happening.
 **/
 EFI_STATUS
+EFIAPI
 GetVersionfromFv (
   IN  UINT32              Stage1ABase,
   IN  BOOLEAN             IsFd,
@@ -384,6 +385,7 @@ BootMediaErase (
   only in silicon driver, this init is done in silicon package.
 **/
 VOID *
+EFIAPI
 InitCsmeUpdInputData (
   VOID
   );
@@ -439,24 +441,6 @@ GetRegionInfo (
   );
 
 /**
-  Get region size from flash map.
-
-  This function will get topswap, redundant and non redundant region sizes from
-  flash map.
-
-  @param[in] FlashMap         The boot media address to be update.
-  @param[in] RegionFlag       The source buffer to write to the boot media.
-
-  @retval  EFI_SUCCESS        Update successfully.
-  @retval  others             Error happening when updating.
-**/
-UINT32
-GetRegionSize (
-  IN FLASH_MAP     *FlashMap,
-  IN UINT8          RegionFlag
-  );
-
-/**
   Gets component information from the flash map by partition.
 
   This function will look for the component matching the input signature
@@ -494,6 +478,7 @@ FirmwareUpdateGetComponentInfo (
 
 **/
 VOID
+EFIAPI
 GetStateMachineFlag (
   IN OUT UINT8    *StateMachine
   );
@@ -510,48 +495,9 @@ GetStateMachineFlag (
   @retval  others             Error happening.
 **/
 EFI_STATUS
+EFIAPI
 SetBootPartition (
   IN BOOT_PARTITION  Partition
-  );
-
-/**
-  This function will be called after the firmware update is complete.
-  This function will update firmware update status structure in reserved region
-
-  @param[in] Signature          Signature of component to update.
-  @param[in] LastAttemptVersion Version of last firmware update attempted.
-  @param[in] LastAttemptStatus  Status of last firmware update attempted.
-
-  @retval  EFI_SUCCESS        The operation completed successfully.
-  @retval  others             There is error happening.
-**/
-EFI_STATUS
-UpdateStatus (
-  IN UINT64     Signature,
-  IN UINT16     LastAttemptVersion,
-  IN EFI_STATUS LastAttemptStatus
- );
-
-/**
-  Perform csme Firmware update.
-
-  This function based on the image type id guid from the image header will
-  call the respective functions to perform capsule update.
-
-  @param[in] CapImage           The pointer to the firmware update capsule image.
-  @param[in] CapImageSize       The size of capsule image in bytes.
-  @param[in] CsmeUpdInputData   pointer to input data structure for CSME update
-  @param[in] ImageHdr           Pointer to fw mgmt capsule Image header
-
-  @retval  EFI_SUCCESS      Update successful.
-  @retval  other            error status from the update routine
-**/
-EFI_STATUS
-UpdateCsme (
-  IN  UINT8                         *CapImage,
-  IN  UINT32                        CapImageSize,
-  IN  VOID                          *CsmeUpdInputData,
-  IN  EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
   );
 
 /**
