@@ -67,6 +67,7 @@
   HeciMeExtLib
   GpioV2Lib
   P2sbLib
+  DmarLib
 
 [Guids]
   gOsConfigDataGuid
@@ -106,3 +107,4 @@
   gPlatformModuleTokenSpaceGuid.PcdFastBootEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
   gPlatformModuleTokenSpaceGuid.PcdIgdOpRegionAddress
+  gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr
