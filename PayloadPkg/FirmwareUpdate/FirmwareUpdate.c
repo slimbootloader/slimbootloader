@@ -319,6 +319,7 @@ ValidThenDecFwuRetryCount (
 
 **/
 VOID
+EFIAPI
 GetStateMachineFlag (
   IN OUT UINT8    *StateMachine
 )

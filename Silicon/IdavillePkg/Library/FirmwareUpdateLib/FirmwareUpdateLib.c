@@ -45,6 +45,7 @@
 
 **/
 VOID *
+EFIAPI
 InitCsmeUpdInputData (
   VOID
   )
@@ -95,6 +96,7 @@ InitCsmeUpdInputData (
   @retval  others             Error happening.
 **/
 EFI_STATUS
+EFIAPI
 SetBootPartition (
   IN BOOT_PARTITION  Partition
   )
