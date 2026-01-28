@@ -65,7 +65,7 @@ CallFspMemoryInit (
 
   FspmUpdCommon = (FSPM_UPD_COMMON *)FspmUpdPtr;
   /* Update architectural UPD fields */
-  if (FspmUpdCommon->FspUpdHeader.Revision < FSP_HEADER_REVISION_3) {
+  if (FspmUpdCommon->FspmArchUpd.Revision < FSP_HEADER_REVISION_3) {
     FspmUpdCommon->FspmArchUpd.BootLoaderTolumSize  = 0;
     FspmUpdCommon->FspmArchUpd.BootMode             = (UINT32)GetBootMode();
     FspmUpdCommon->FspmArchUpd.NvsBufferPtr         = (UINT32)(UINTN)FindNvsData();
