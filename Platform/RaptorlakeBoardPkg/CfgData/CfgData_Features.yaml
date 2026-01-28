@@ -2,7 +2,7 @@
 #
 #  Slim Bootloader CFGDATA Option File.
 #
-#  Copyright (c) 2022, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2022 - 2026, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -55,9 +55,17 @@
         help         : >
                        Enable/Disable ME FIPS Mode. 1:Enabled, 0:Disabled
         length       : 1b
+    - TxtEnabled   :
+        name         : TXT Enabled
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable Trusted Execution Technology (TXT) feature. 1:TXT Enabled, 0:TXT Disabled
+        length       : 1b
+        value        : 0
     - Rsvd         :
         name         : Reserved
         type         : Reserved
         help         : >
                        reserved bits
-        length       : 27b
+        length       : 26b
