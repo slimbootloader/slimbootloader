@@ -18,6 +18,9 @@
 #define CMD_LINE_STATUS_UPDATE_3        2
 #define CMD_LINE_STATUS_UPDATE_4        3
 
+#define FWU_TARGET_CSE                  1
+#define FWU_TARGET_IOE_CSE              2
+
 typedef struct
 {
   VOID     *AllocatePool;
@@ -134,6 +137,18 @@ UINT32
   OUT UINT8       *VdvVersion
   );
 
+//
+// Set the target for the next FWU operations.
+//
+//  @param[in]  target   The target for the next operations. Options are:
+//                       FWU_TARGET_CSE = 1, FWU_TARGET_IOE_CSE = 2
+//
+typedef
+UINT32
+(EFIAPI *FWU_SET_TARGET) (
+  IN  UINT32       Target
+  );
+
 typedef struct {
   FWU_FULL_UPDATE_FROM_BUFFER         FwuFullUpdateFromBuffer;
   FWU_PARTIAL_UPDATE_FROM_BUFFER      FwuPartialUpdateFromBuffer;
@@ -148,6 +163,7 @@ typedef struct {
   FWU_SAVERESTORE_POINT_TO_BUFFER     FwuSaveRestorePointToBuffer;
   FWU_SET_ISH_CONFIG                  FwuSetIshConfig;
   FWU_GET_ISH_PDT_VERSION             FwuGetIshPdtVersion;
+  FWU_SET_TARGET                      FwuSetTarget;
 } CSME_UPDATE_DRIVER_OUTPUT;
 
 typedef struct {

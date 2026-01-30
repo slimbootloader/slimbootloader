@@ -411,6 +411,8 @@ UpdateCsme (
   CSME_UPDATE_DRIVER_OUTPUT     *CsmeUpdateApi;
   CSME_UPDATE_DRIVER_PARAMS     DriverParams;
   EFI_FW_MGMT_CAP_IMAGE_HEADER  *CsmeDriverImageHdr;
+  UINT32                        Signature;
+  UINT32                        UpdateStatus;
 
   DriverPtr           = NULL;
   CsmeUpdateApi       = NULL;
@@ -452,6 +454,19 @@ UpdateCsme (
   if ( CsmeUpdateApi == NULL ) {
     DEBUG((DEBUG_ERROR, "Unable to initialize update routines for CSME update \n"));
     return EFI_UNSUPPORTED;
+  }
+
+  if (FeaturePcdGet(PcdIoeCsmeUpdateEnabled)) {
+    Signature    = (UINT32)ImageHdr->UpdateHardwareInstance;
+    UpdateStatus = SUCCESS;
+    if (Signature == FW_UPDATE_COMP_CSME_REGION) {
+      UpdateStatus = CsmeUpdateApi->FwuSetTarget(FWU_TARGET_CSE);
+    } else if (Signature == FW_UPDATE_COMP_CIOE_REGION) {
+      UpdateStatus = CsmeUpdateApi->FwuSetTarget(FWU_TARGET_IOE_CSE);
+    }
+    if (UpdateStatus != SUCCESS) {
+      return EFI_DEVICE_ERROR;
+    }
   }
 
   DEBUG((DEBUG_ERROR, "--------------------------------------------------------\n"));
