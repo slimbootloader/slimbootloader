@@ -779,7 +779,7 @@ GetFwImageOrder (
 {
   UINT32 ImageOrder;
 
-  if (HardwareInstance == FW_UPDATE_COMP_CSME_REGION) {
+  if ((HardwareInstance == FW_UPDATE_COMP_CSME_REGION) || (HardwareInstance == FW_UPDATE_COMP_CIOE_REGION)) {
     ImageOrder = FW_UPDATE_COMP_CSME_REGION_ORDER;
   } else if (HardwareInstance == FW_UPDATE_COMP_CSME_DRIVER) {
     ImageOrder = FW_UPDATE_COMP_CSME_DRIVER_ORDER;
@@ -909,6 +909,7 @@ IsCritCompUpdateFailed (
 {
   switch (Signature) {
   case FW_UPDATE_COMP_CSME_REGION:
+  case FW_UPDATE_COMP_CIOE_REGION:
   case FW_UPDATE_COMP_BIOS_REGION:
     return EFI_ERROR (LastAttemptStatus);
   }
@@ -1295,6 +1296,7 @@ ApplyFwImage (
     *ResetRequired = TRUE;
     break;
   case FW_UPDATE_COMP_CSME_REGION:
+  case FW_UPDATE_COMP_CIOE_REGION:
     Status = EFI_UNSUPPORTED;
     if (FeaturePcdGet(PcdCsmeUpdateEnabled) == 1) {
       //

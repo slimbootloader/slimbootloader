@@ -73,6 +73,7 @@
   gPayloadTokenSpaceGuid.PcdFwUpdStatusBase
   gPlatformCommonLibTokenSpaceGuid.PcdLowestSupportedFwVer
   gPayloadTokenSpaceGuid.PcdCsmeUpdateEnabled
+  gPayloadTokenSpaceGuid.PcdIoeCsmeUpdateEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleOutDeviceMask
   gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleWidth
