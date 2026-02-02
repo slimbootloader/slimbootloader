@@ -125,10 +125,12 @@ def UpdateFunctionFileMap(RootFunction, FileName, Index):
 
 
 def ReIterateSubGraph(RootFunction, Index):
+    # Sanitize RootFunction to prevent path traversal
+    SafeRootFunction = "".join(x for x in RootFunction if x.isalnum() or x in "._-")
     CscopeOut = "cscope.out"
-    tceetree_out_file_name = f"{TCEETREE_DIR}/{RootFunction}_tceetree.out"
+    tceetree_out_file_name = f"{TCEETREE_DIR}/{SafeRootFunction}_tceetree.out"
 
-    resp = subprocess.run(f"{TCEETREE_BIN} -i {CscopeOut} -f -F -c 0 -C 0 -r {RootFunction} -o {tceetree_out_file_name}", shell=True)
+    resp = subprocess.run([TCEETREE_BIN, "-i", CscopeOut, "-f", "-F", "-c", "0", "-C", "0", "-r", RootFunction, "-o", tceetree_out_file_name])
     if not resp.returncode:
         with open(tceetree_out_file_name, "r") as readdata:
             lines = readdata.readlines()
@@ -329,12 +331,12 @@ def GenerateDotFile(RootFunction):
         return -1
 
     os.replace('cscope_write.files', 'cscope.files')
-    resp = subprocess.run(f"{CSCOPE_BIN} -b -c -R -i cscope.files", shell = True)
+    resp = subprocess.run([CSCOPE_BIN, "-b", "-c", "-R", "-i", "cscope.files"])
     if resp.returncode != 0:
         print("Error in creating cscope.files file")
         return resp.returncode
 
-    resp = subprocess.run(f"{TCEETREE_BIN} -i cscope.out -f -F -r {RootFunction}", shell = True)
+    resp = subprocess.run([TCEETREE_BIN, "-i", "cscope.out", "-f", "-F", "-r", RootFunction])
     if resp.returncode != 0:
         print("Error in creating cscope.out file")
         return resp.returncode
@@ -461,7 +463,7 @@ def CheckToolAvailability(Tool):
         else:
             print(f"{Tool} found at: {os.path.abspath(Tool)}")
     elif os.name == "posix":
-        result = subprocess.run(f"which {Tool}", shell=True, capture_output=True, text=True)
+        result = subprocess.run(["which", Tool], capture_output=True, text=True)
         if result.returncode != 0:
             print(f"ERROR: {Tool} Not Found!!!")
             exit()
@@ -494,20 +496,23 @@ def main():
     print("SBL Path is: " + args.DirectoryPath)
     WorkSpacePath = args.DirectoryPath
 
+    if not os.path.exists(WorkSpacePath):
+        print(f"Error: Directory '{WorkSpacePath}' does not exist.")
+        return -1
+
     CleanupWorkspace()
     CheckToolAvailability(CSCOPE_BIN)
     CheckToolAvailability(TCEETREE_BIN)
 
-    if os.name == "nt":
-        print("Execute for Windows")
-        resp = subprocess.run(f"dir /B /S {args.DirectoryPath}\*.c > cscope.files", shell=True)
-    elif os.name == "posix":
-        print("Execute for Linux")
-        resp = subprocess.run(f"find {args.DirectoryPath} -name '*.c' > cscope.files", shell=True)
-
-    if resp.returncode != 0:
-        print("Error in cscope.out file creation")
-        return resp.returncode
+    try:
+        with open("cscope.files", "w") as f:
+            for root, dirs, files in os.walk(args.DirectoryPath):
+                for file in files:
+                    if file.endswith(".c"):
+                        f.write(os.path.join(root, file) + "\n")
+    except Exception as e:
+        print(f"Error in cscope.files creation: {e}")
+        return -1
 
 
     ParseIgnoreConfigList()
