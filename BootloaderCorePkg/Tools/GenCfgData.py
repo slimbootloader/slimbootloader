@@ -1249,7 +1249,7 @@ class CGenCfgData:
         cfg_hdr_yaml_vals = strip_delimiter(cfg_hdr['value'],'{}').split(',')
         cfg_id_str = cfg_hdr_yaml_vals[-1]
         tag_id_str = cfg_id_str.strip().split(':')[0]
-        tag_id = eval(tag_id_str)
+        tag_id = self.eval(tag_id_str)
         return tag_id
 
     def build_cfg_list (self, cfg_name ='', top = None, path = [], info = {'offset': 0}):

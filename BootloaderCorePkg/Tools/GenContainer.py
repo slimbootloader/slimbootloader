@@ -9,6 +9,7 @@
 import sys
 import argparse
 import re
+import ast
 sys.dont_write_bytecode = True
 from   ctypes import *
 from   CommonUtility import *
@@ -751,7 +752,7 @@ def create_container (args):
         if not key_file:
             raise Exception ("key_path expects a key file path !")
         layout = gen_layout (args.comp_list, args.img_type, args.auth, args.svn, out_file, key_dir, key_file)
-    container_list = eval ('[[%s]]' % layout.replace('\\', '/'))
+    container_list = ast.literal_eval ('[[%s]]' % layout.replace('\\', '/'))
 
     comp_dir = os.path.abspath(args.comp_dir)
     if not os.path.isdir(comp_dir):
