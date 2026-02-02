@@ -10,7 +10,7 @@
 
 #include <Uefi/UefiBaseType.h>
 
-#define HSPHY_PAYLOAD_SIZE                          32 * 1024; // For ADL allocate 32KB of memory for Hsphy
+#define HSPHY_PAYLOAD_SIZE                          32 * 1024 // For ADL allocate 32KB of memory for Hsphy
 #define CPU_SB_PID_PCIE_PHYX16_BROADCAST            0x55
 
 typedef struct {
