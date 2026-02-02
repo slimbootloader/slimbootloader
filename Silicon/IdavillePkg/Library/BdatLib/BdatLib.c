@@ -185,10 +185,13 @@ UpdateBdatAcpiTable (
   // 2. Allocate Memory for BDAT, and populate BDAT header
   //
   BdatHeaderSize  = sizeof (BDAT_STRUCTURE) + (SchemaCount * sizeof (UINT32));
+  if (MAX_UINT32 - BdatHeaderSize < EwlSchemaSize || MAX_UINT32 - (BdatHeaderSize + EwlSchemaSize) < MemTrainSchemaSize) {
+    return EFI_OUT_OF_RESOURCES;
+  }
   BufferSize      = BdatHeaderSize + EwlSchemaSize + MemTrainSchemaSize;
   Buffer          = AllocatePages (EFI_SIZE_TO_PAGES (BufferSize));
   if (Buffer == NULL) {
-    Status = EFI_OUT_OF_RESOURCES;
+    return EFI_OUT_OF_RESOURCES;
   }
   ZeroMem (Buffer, BufferSize);
   Bdat   = (BDAT_STRUCTURE *) Buffer;
@@ -240,6 +243,12 @@ UpdateBdatAcpiTable (
       }
       MemTrainingDataHob = GET_GUID_HOB_DATA (MemTrainGuidHob);
       MemTrainDataLen     = MemTrainingDataHob->Size - sizeof (MEM_TRAINING_DATA_HOB_HEADER);
+
+      // Check if the next HOB data fits in the remaining BDAT buffer
+      if (MemTrainDataLen > MemTrainRestDataLen) {
+        return EFI_BUFFER_TOO_SMALL;
+      }
+
       CopyMem ((VOID *) Address, (VOID *) ((UINTN) MemTrainingDataHob + sizeof(MEM_TRAINING_DATA_HOB_HEADER)), MemTrainDataLen);
       Address += MemTrainDataLen;
       MemTrainRestDataLen -= MemTrainDataLen;

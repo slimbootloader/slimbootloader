@@ -51,17 +51,28 @@ PushHsPhyFirmware (
 )
 {
   IP_PUSH_MODEL           *IpPushModel;
-  UINT16                  Index;
+  UINT32                  Index;
   UINT32                  MemoryIndex;
 
   MemoryIndex = 0;
   IpPushModel = (IP_PUSH_MODEL *)(UINTN *)MemoryBuffer;
 
   while (MemoryIndex < MemorySize) {
-    MemoryIndex += sizeof (IP_PUSH_MODEL);
+    if (MemoryIndex + sizeof (IP_PUSH_MODEL) > MemorySize) {
+      return EFI_BUFFER_TOO_SMALL;
+    }
+
     if ((IpPushModel->Mode.Type == 0) && (IpPushModel->Count == 0)) {
         break; // Check for EOF(End of File)
     }
+
+    // Check if the data blob fits in the remaining memory
+    if (IpPushModel->Count > (MemorySize - MemoryIndex - sizeof (IP_PUSH_MODEL)) / sizeof (UINT32)) {
+      return EFI_BUFFER_TOO_SMALL;
+    }
+
+    MemoryIndex += sizeof (IP_PUSH_MODEL);
+
     for (Index = 0; Index < IpPushModel->Count; Index++) {
       MmioWrite32 (CPU_REGBAR_ADDRESS (CPU_SB_PID_PCIE_PHYX16_BROADCAST, IpPushModel->Mode.Address), IpPushModel->DataBlob[Index]);
       MemoryIndex += sizeof (UINT32);
@@ -182,7 +193,8 @@ HsPhyLoadAndInit (
   UINT32        BufferSize;
   UINT8         HashAlg;
   UINT8         *Hash;
-  UINT32        *BufferAddressHigh;
+  UINT32        BufferAddressLow;
+  UINT32        BufferAddressHigh;
   UINT32        HeciDev;
   UINT32        *CurrBottom;
   UINT16        Data16;
@@ -236,11 +248,18 @@ HsPhyLoadAndInit (
   //
   // Send Heci for Load PCIe GEN5 request
   //
+  BufferAddressLow = (UINT32)(UINTN)Buffer;
   BufferAddressHigh = 0;
   HashAlg = 0;
-  Status = PeiHeciGetFwPayload (HsPhyFwLoad, (UINT32)(UINTN)Buffer, (UINT32)(UINTN)BufferAddressHigh, &BufferSize, &HashAlg, Hash);
+  Status = PeiHeciGetFwPayload (HsPhyFwLoad, BufferAddressLow, BufferAddressHigh, &BufferSize, &HashAlg, Hash);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "PeiHeciGetFwPayload failed %r\n", Status));
+    goto HsPhyEnd;
+  }
+
+  if (BufferSize > HSPHY_PAYLOAD_SIZE) {
+    DEBUG ((DEBUG_ERROR, "HsPhy payload size 0x%x too large\n", BufferSize));
+    Status = EFI_OUT_OF_RESOURCES;
     goto HsPhyEnd;
   }
 
@@ -271,7 +290,11 @@ HsPhyLoadAndInit (
   }
 
   DEBUG ((DEBUG_INFO, "Push HsPhy firmware\n"));
-  PushHsPhyFirmware ((UINTN)Buffer, BufferSize);
+  Status = PushHsPhyFirmware ((UINTN)Buffer, BufferSize);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "PushHsPhyFirmware Failed %r\n", Status));
+    goto HsPhyEnd;
+  }
 
   //
   // Clear BME and MSE of Heci1

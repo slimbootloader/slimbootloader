@@ -149,6 +149,7 @@ UpdateBdatAcpiTable (
     BufferSize  = 0;
     SchemaCount = 0;
     ASSERT (BdatSchemaListHob->SchemaHobCount < MAX_SCHEMA_LIST_LENGTH);
+
     for (SchemaListIndex = 0; SchemaListIndex < BdatSchemaListHob->SchemaHobCount; SchemaListIndex++) {
       Guid = (EFI_GUID *) &(BdatSchemaListHob->SchemaHobGuids[SchemaListIndex]);
 
@@ -164,7 +165,13 @@ UpdateBdatAcpiTable (
           Schema[SchemaListIndex] = (EFI_HOB_GUID_TYPE *)GetNextGuidHob (Guid, HobList);
           DEBUG ((DEBUG_INFO, "Schema HOB pointer: %x\n", (UINT32) (UINTN) Schema[SchemaListIndex]));
           if (Schema[SchemaListIndex] != NULL) {
-            BufferSize += Schema[SchemaListIndex]->Header.HobLength - sizeof (EFI_HOB_GUID_TYPE);
+            DataSize = Schema[SchemaListIndex]->Header.HobLength - sizeof (EFI_HOB_GUID_TYPE);
+            if (MAX_UINT32 - BufferSize < DataSize) {
+              DEBUG ((DEBUG_ERROR, "Bdat buffer size overflow\n"));
+              Status = EFI_OUT_OF_RESOURCES;
+              break;
+            }
+            BufferSize += DataSize;
             DEBUG ((DEBUG_INFO, "HOB Length = %d\n", Schema[SchemaListIndex]->Header.HobLength));
             SchemaCount++;
           }
@@ -174,6 +181,9 @@ UpdateBdatAcpiTable (
           break;
         }
       }
+    }
+    if (EFI_ERROR (Status)) {
+      break;
     }
     DEBUG ((DEBUG_INFO, "BdatSchemaListHob->SchemaHobCount = %d, SchemaCount = %d\n", (UINT32) BdatSchemaListHob->SchemaHobCount, (UINT32) SchemaCount));
 
@@ -191,6 +201,11 @@ UpdateBdatAcpiTable (
     ///
     Buffer         = NULL;
     BdatHeaderSize = sizeof (BDAT_HEADER_STRUCTURE) + sizeof (BDAT_SCHEMA_LIST_STRUCTURE) + (SchemaCount * sizeof (UINT32));
+    if (MAX_UINT32 - BufferSize < BdatHeaderSize) {
+      DEBUG ((DEBUG_ERROR, "Bdat buffer size overflow\n"));
+      Status = EFI_OUT_OF_RESOURCES;
+      break;
+    }
     BufferSize    += BdatHeaderSize;
     DEBUG ((DEBUG_INFO, "BufferSize = %d\n", BufferSize));
     Buffer = AllocatePages (EFI_SIZE_TO_PAGES (BufferSize));
@@ -211,7 +226,7 @@ UpdateBdatAcpiTable (
     SchemaOffsetList = (UINT32*) (((UINTN) Buffer) + sizeof (BDAT_STRUCTURE));
     Status = CreateBdatHeader (SchemaCount, Bdat);
     ASSERT_EFI_ERROR (Status);
-    for (SchemaListIndex = 0; SchemaListIndex < SchemaCount; SchemaListIndex++) {
+    for (SchemaListIndex = 0; SchemaListIndex < BdatSchemaListHob->SchemaHobCount; SchemaListIndex++) {
       if (Schema[SchemaListIndex] != NULL) {
         DataSize = Schema[SchemaListIndex]->Header.HobLength - sizeof (EFI_HOB_GUID_TYPE);
         DEBUG ((DEBUG_INFO, "DataSize = %d\n", DataSize));
