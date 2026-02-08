@@ -304,4 +304,16 @@ FwuGetIshPdtVersion(
   OUT UINT8 *VdvVersion
   );
 
+/**
+  Set the target for the next FWU operations.
+
+  @param[in]  target   The target for the next operations. Options are:
+                       FWU_TARGET_CSE = 1, FWU_TARGET_IOE_CSE = 2
+**/
+UINT32
+EFIAPI
+FwuSetTarget (
+  IN  UINT32       Target
+  );
+
 #endif // __ME_FW_UPDATELIB_H__

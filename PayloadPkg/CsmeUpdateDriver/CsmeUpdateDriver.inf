@@ -32,5 +32,8 @@
   ModuleEntryLib
   MeFwUpdateLib
 
+[Pcd]
+  gPayloadTokenSpaceGuid.PcdIoeCsmeUpdateEnabled
+
 [Depex]
   TRUE
