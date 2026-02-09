@@ -28,6 +28,24 @@ SetBootPartition (
   );
 
 /**
+  Get the address of the top swap register.
+
+  This function gets the address of the top swap register and reports
+  if P2SB was unhidden in the process.
+
+  @param[out] TopSwapBase   The base address of the top swap register.
+  @param[out] P2sbWasHidden If P2SB BAR needed to be unhidden to get
+                            the address.
+  @retval  EFI_SUCCESS      Address successfully found.
+  @retval  others           Error occurred.
+**/
+EFI_STATUS
+GetTopSwapBase (
+  OUT UINT32    *TopSwapBase,
+  OUT BOOLEAN   *P2sbWasHidden
+  );
+
+/**
   Get the current boot partition.
 
   This function will read the top swap register bit for the current partition.

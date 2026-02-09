@@ -1,11 +1,12 @@
 /** @file
 
-  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2026, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
 #include "Stage1BBoardInitLib.h"
+#include <Library/BootPartitionSwitcher.h>
 #include <Library/PciSegmentLib.h>
 
 // X710 X550 Link Degrade WA
@@ -273,8 +274,7 @@ FwuTopSwapSetting (
       if (GetCurrentBootPartition () == PrimaryPartition) {
         if (IsTopSwapTriggered ()) {
           ClearTopSwapTrigger ();
-          SetBootPartition (BackupPartition);
-          ResetSystem (EfiResetCold);
+          BootPartitionSwitcher (BackupPartition);
         }
       } else {
         if (IsTopSwapTriggered ()) {
@@ -296,8 +296,7 @@ FwuTopSwapSetting (
       if (GetCurrentBootPartition () == BackupPartition) {
         if (IsTopSwapTriggered ()) {
           ClearTopSwapTrigger ();
-          SetBootPartition (PrimaryPartition);
-          ResetSystem (EfiResetCold);
+          BootPartitionSwitcher (PrimaryPartition);
         }
       } else {
         if (IsTopSwapTriggered ()) {
@@ -933,5 +932,3 @@ LoadExternalConfigData (
 {
   return SpiLoadExternalConfigData (Dst, Src, Len);
 }
-
-

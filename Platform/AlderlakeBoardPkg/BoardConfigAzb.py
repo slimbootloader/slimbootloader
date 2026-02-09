@@ -271,6 +271,7 @@ class Board(BaseBoard):
             'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf',
             'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
             'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf',
+            'BootPartitionSwitcher|Silicon/$(SILICON_PKG_NAME)/Library/BootPartitionSwitcher/BootPartitionSwitcher.inf',
         ]
 
         if self.BUILD_CSME_UPDATE_DRIVER:

@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2026, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -67,6 +67,7 @@
   FspmUpdUpdateLib
   SmbusLib
   TopSwapLib
+  BootPartitionSwitcher
   CrashLogLib
   SerialIoI2cLib
   PciSegmentLib
