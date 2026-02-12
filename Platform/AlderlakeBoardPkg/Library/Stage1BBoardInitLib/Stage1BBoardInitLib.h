@@ -117,4 +117,14 @@ MaxLedInit (
   VOID
   );
 
+/**
+  Send 4 digit PostCode commands to Max6950 device
+
+  @param[in]  PostCodeValue - 4 digit PostCode value to be displayed
+**/
+EFI_STATUS
+EFIAPI
+DisplayPostCode (
+  IN UINT32 PostCodeValue
+  );
 #endif // __STAGE1B_BOARD_INIT_LIB_H__
