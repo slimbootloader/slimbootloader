@@ -699,6 +699,7 @@ BoardInit (
   MSR_IA32_MTRR_PHYSMASK_REGISTER    MsrMask;
   MSR_IA32_MTRR_PHYSBASE_REGISTER    MsrBase;
   CPUID_VIR_PHY_ADDRESS_SIZE_EAX     VirPhyAddressSize;
+  MEMORY_CFG_DATA    *MemCfgData;
 
   switch (InitPhase) {
   case PreConfigInit:
@@ -794,6 +795,14 @@ DEBUG_CODE_END();
       break;
     case PLATFORM_ID_ADL_N_DDR5_CRB:
       ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePreMemAdlNDdr5Crb) / sizeof (mGpioTablePreMemAdlNDdr5Crb[0]), (UINT8*)mGpioTablePreMemAdlNDdr5Crb);
+      MemCfgData = (MEMORY_CFG_DATA *)FindConfigDataByTag (CDATA_MEMORY_TAG);
+      if (MemCfgData == NULL) {
+        CpuHalt ("Failed to find memory CFGDATA!");
+      } else {
+        if (MemCfgData->I2cPostCode) {
+          MaxLedInit ();
+        }
+      }
       break;
     case PLATFORM_ID_ADL_N_LPDDR5_RVP:
     case PLATFORM_ID_ADL_N_UP2PTWL:

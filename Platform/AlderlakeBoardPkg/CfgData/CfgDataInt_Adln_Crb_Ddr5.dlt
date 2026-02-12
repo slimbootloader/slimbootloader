@@ -94,6 +94,7 @@ MEMORY_CFG_DATA.WdtDisableAndLock          | 0
 MEMORY_CFG_DATA.FirstDimmBitMaskEcc        | 0x0
 MEMORY_CFG_DATA.Lp5BankMode                | 0x0
 MEMORY_CFG_DATA.PrmrrSize                  | 0x200000
+MEMORY_CFG_DATA.I2cPostCode                | 0x1
 # This setting is used for debug purposes
 #MEMORY_CFG_DATA.PlatformDebugConsent       | 0x7
 

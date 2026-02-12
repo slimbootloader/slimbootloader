@@ -313,7 +313,8 @@ class Board(BaseBoard):
         else:
             dsc['LibraryClasses.%s' % self.BUILD_ARCH].append ('PciePm|Silicon/CommonSocPkg/Library/PciePmNull/PciePmNull.inf')
 
-        dsc['PcdsFixedAtBuild'] = ['gPlatformModuleTokenSpaceGuid.PcdAcpiTablesMaxEntry | 40']
+        dsc['PcdsFixedAtBuild'] = ['gPlatformModuleTokenSpaceGuid.PcdAcpiTablesMaxEntry | 40',
+                                   'gPlatformCommonLibTokenSpaceGuid.PcdI2cIoExpanderPortNumber | 5']
 
         if self._LP_SUPPORT:
             dsc['PcdsFixedAtBuild'].append ('gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport | TRUE')
