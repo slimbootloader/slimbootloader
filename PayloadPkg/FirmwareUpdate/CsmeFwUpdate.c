@@ -411,8 +411,10 @@ UpdateCsme (
   CSME_UPDATE_DRIVER_OUTPUT     *CsmeUpdateApi;
   CSME_UPDATE_DRIVER_PARAMS     DriverParams;
   EFI_FW_MGMT_CAP_IMAGE_HEADER  *CsmeDriverImageHdr;
+#if FeaturePcdGet(PcdIoeCsmeUpdateEnabled)
   UINT32                        Signature;
   UINT32                        UpdateStatus;
+#endif
 
   DriverPtr           = NULL;
   CsmeUpdateApi       = NULL;
@@ -456,18 +458,18 @@ UpdateCsme (
     return EFI_UNSUPPORTED;
   }
 
-  if (FeaturePcdGet(PcdIoeCsmeUpdateEnabled)) {
-    Signature    = (UINT32)ImageHdr->UpdateHardwareInstance;
-    UpdateStatus = SUCCESS;
-    if (Signature == FW_UPDATE_COMP_CSME_REGION) {
-      UpdateStatus = CsmeUpdateApi->FwuSetTarget(FWU_TARGET_CSE);
-    } else if (Signature == FW_UPDATE_COMP_CIOE_REGION) {
-      UpdateStatus = CsmeUpdateApi->FwuSetTarget(FWU_TARGET_IOE_CSE);
-    }
-    if (UpdateStatus != SUCCESS) {
-      return EFI_DEVICE_ERROR;
-    }
+#if FeaturePcdGet(PcdIoeCsmeUpdateEnabled)
+  Signature    = (UINT32)ImageHdr->UpdateHardwareInstance;
+  UpdateStatus = SUCCESS;
+  if (Signature == FW_UPDATE_COMP_CSME_REGION) {
+    UpdateStatus = CsmeUpdateApi->FwuSetTarget(FWU_TARGET_CSE);
+  } else if (Signature == FW_UPDATE_COMP_CIOE_REGION) {
+    UpdateStatus = CsmeUpdateApi->FwuSetTarget(FWU_TARGET_IOE_CSE);
   }
+  if (UpdateStatus != SUCCESS) {
+    return EFI_DEVICE_ERROR;
+  }
+#endif
 
   DEBUG((DEBUG_ERROR, "--------------------------------------------------------\n"));
   DEBUG((DEBUG_ERROR, "--------------------CSME FW Update START ---------------\n"));
