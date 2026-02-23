@@ -20,8 +20,8 @@
 /*
  * Define Max value for Coverity check
  */
-#define MAX_ELF_SHNUM           100
-#define MAX_ELF_PHNUM           50
+#define MAX_ELF_SHNUM           0xFF00
+#define MAX_ELF_PHNUM           0xFFFF
 #define NAX_ELF_RELOC_SECT_SIZE 0x10000
 
 typedef struct {
