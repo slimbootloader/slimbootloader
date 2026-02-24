@@ -1,0 +1,74 @@
+## @file
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = CryptoAesLib
+  FILE_GUID                      = 3DCC3E6B-08C8-442B-9580-9B116EDF72FE
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = CryptoAesLib
+  DEFINE IPP_PATH                = BootloaderCommonPkg/Library/IppCrypto2Lib/ipp-crypto
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = X64
+#
+
+[Sources]
+  aes_encrypt_decrypt.c
+  aes_decrypt_cbc.c
+  aes_encrypt_cbc.c
+  $(IPP_PATH)/include/ippcpdefs.h
+  $(IPP_PATH)/sources/include/owndefs.h
+  $(IPP_PATH)/sources/ippcp/owncp.h
+  $(IPP_PATH)/sources/ippcp/pcpbn.h
+  $(IPP_PATH)/sources/ippcp/pcptool.h
+  $(IPP_PATH)/sources/ippcp/pcptool.c
+  $(IPP_PATH)/sources/ippcp/hash/pcphash.h
+
+  $(IPP_PATH)/examples/utils/examples_common.h
+
+   # AES
+  $(IPP_PATH)/sources/ippcp/pcprijencsboxca.c
+  $(IPP_PATH)/sources/ippcp/pcpaesgetsize.c
+  $(IPP_PATH)/sources/ippcp/pcpaesminitca.c
+  $(IPP_PATH)/sources/ippcp/pcprijkeysca.c
+  $(IPP_PATH)/sources/ippcp/pcpaes_internal_func.c
+  $(IPP_PATH)/sources/ippcp/pcprij128safeenc2pxca.c
+  $(IPP_PATH)/sources/ippcp/pcprij128safedec2pxca.c
+  $(IPP_PATH)/sources/ippcp/pcprijdecsboxca.c
+
+  $(IPP_PATH)/sources/ippcp/pcpaes_cbcdecrypt.c
+  $(IPP_PATH)/sources/ippcp/pcpaes_cbc_decrypt.c
+  $(IPP_PATH)/sources/ippcp/pcpaes_cbc_encrypt.c
+  $(IPP_PATH)/sources/ippcp/pcpaes_cbcencrypt.c
+
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  MemoryAllocationLib
+
+[FixedPcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdCryptoShaOptMask
+  gPlatformCommonLibTokenSpaceGuid.PcdIppHashLibSupportedMask
+  gPlatformCommonLibTokenSpaceGuid.PcdCompSignSchemeSupportedMask
+  gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg
+  gPlatformCommonLibTokenSpaceGuid.PcdCompSignType
+
+[BuildOptions]
+  MSFT:*_*_*_CC_FLAGS = -D_ABL_ -D_ARCH_EM64T /GL-
+  GCC:*_*_*_CC_FLAGS  = -D_ABL_ -w -Wformat -Wformat-security
+

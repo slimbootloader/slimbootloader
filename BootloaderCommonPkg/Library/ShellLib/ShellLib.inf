@@ -1,6 +1,6 @@
 ## @file
 #
-#  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2017 - 2026, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -53,6 +53,7 @@
   CmdAcpi.c
   CmdSetup.c
   CmdFlashmap.c
+  CmdAesEncrypt.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -85,6 +86,8 @@
   RngLib
   LoaderPerformanceLib
   IppCryptoPerfLib
+  CryptoLib
+  CryptoAesLib
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
@@ -93,6 +96,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdBootPerformanceMask
   gPlatformCommonLibTokenSpaceGuid.PcdEnableCryptoPerfTest
   gPlatformModuleTokenSpaceGuid.PcdEnableSetup
+  gPlatformCommonLibTokenSpaceGuid.PcdEnableAesEncrypt
 
 [Guids]
   gLoaderPerformanceInfoGuid

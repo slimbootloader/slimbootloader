@@ -1,7 +1,7 @@
 ## @file
 # Provides bootloader driver related package definitions.
 #
-# Copyright (c) 2016 - 2023, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2016 - 2026, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -396,3 +396,4 @@
 [PcdsFixedAtBuild]
   gPlatformCommonLibTokenSpaceGuid.PcdFipsSupport     | FALSE      | BOOLEAN | 0x20000226
   gPlatformCommonLibTokenSpaceGuid.PcdIppcrypto2Lib   | FALSE      | BOOLEAN | 0x20000227
+  gPlatformCommonLibTokenSpaceGuid.PcdEnableAesEncrypt | FALSE      | BOOLEAN | 0x20000231

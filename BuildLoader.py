@@ -2,7 +2,7 @@
 ## @ BuildLoader.py
 # Build bootloader main script
 #
-# Copyright (c) 2016 - 2024, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2016 - 2026, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 
 ##
@@ -182,6 +182,7 @@ class BaseBoard(object):
         # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
         self.ENABLE_SMM_REBASE     = 0
         self.ENABLE_IPP_CRYPTO_PERF = 0
+        self.ENABLE_IPP_AES_ENCRYPT = 0
         self.ENABLE_UPL_HANDOFF_FDT = 0
         self.ENABLE_FIPS_SELFTEST   = 0
         self.ENABLE_FSP_S_FV_REBASE = 0

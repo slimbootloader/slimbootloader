@@ -1,7 +1,7 @@
 ## @file
 # This file is used to provide board specific image information.
 #
-#  Copyright (c) 2020 - 2023 Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2026 Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -110,18 +110,24 @@ class Board(BaseBoard):
             self.ENABLE_GRUB_CONFIG         = 0
 
         # RSA2048 or RSA3072
-        self._RSA_SIGN_TYPE         = 'RSA3072'
+        self._RSA_SIGN_TYPE          = 'RSA3072'
 
         # 'SHA2_256' or 'SHA2_384'
-        self._SIGN_HASH             = 'SHA2_384'
+        self._SIGN_HASH              = 'SHA2_384'
 
         # 0x01 for SHA2_256 or 0x02 for SHA2_384
-        self.SIGN_HASH_TYPE         = HASH_TYPE_VALUE[self._SIGN_HASH]
+        self.SIGN_HASH_TYPE          = HASH_TYPE_VALUE[self._SIGN_HASH]
 
         # 0x0010  for SM3_256 | 0x0008 for SHA2_512 | 0x0004 for SHA2_384 | 0x0002 for SHA2_256 | 0x0001 for SHA1
-        self.IPP_HASH_LIB_SUPPORTED_MASK  = IPP_CRYPTO_ALG_MASK['SHA2_384'] | IPP_CRYPTO_ALG_MASK['SHA2_256']
-        # G9 for 384 | W7 Opt for SHA384| Ni  Opt for SHA256| V8 Opt for SHA256
-        self.ENABLE_CRYPTO_SHA_OPT  = IPP_CRYPTO_OPTIMIZATION_MASK['SHA256_NI'] | IPP_CRYPTO_OPTIMIZATION_MASK['SHA384_W7']
+        self.IPP_HASH_LIB_SUPPORTED_MASK   = IPP_CRYPTO_ALG_MASK['SHA2_384'] | IPP_CRYPTO_ALG_MASK['SHA2_256']
+        # Y8 for SSE4.2 instructions
+        self.ENABLE_CRYPTO_SHA_OPT  = IPP_CRYPTO_OPTIMIZATION_MASK['X64_Y8']
+
+        if self.ENABLE_IPP_CRYPTO_PERF:
+            self.IPP_HASH_LIB_SUPPORTED_MASK |= IPP_CRYPTO_ALG_MASK['SM3_256']
+
+        # 0: Disable 1: Enable AES encrypt/decrypt support in IPP crypto lib
+        self.ENABLE_IPP_AES_ENCRYPT = 0
 
         # Key configuration
         self._MASTER_PRIVATE_KEY    = 'KEY_ID_MASTER' + '_' + self._RSA_SIGN_TYPE
@@ -190,6 +196,20 @@ class Board(BaseBoard):
         self._CFGDATA_INT_FILE = []
         self._CFGDATA_EXT_FILE = ['CfgData_Int_LccRp.dlt', 'CfgData_Int_HccRp.dlt']
 
+    def GetIppCryptoInf(self):
+        ipp_crypto_opt_lvl = 0
+        ipp_crypto_opt_name = None
+        ipp_crypto_inf = ''
+        for k,v in IPP_CRYPTO_OPTIMIZATION_MASK.items():
+            if self.ENABLE_CRYPTO_SHA_OPT & v:
+                if v > ipp_crypto_opt_lvl:
+                    ipp_crypto_opt_lvl = v
+                    ipp_crypto_opt_name = k
+
+        if ipp_crypto_opt_name[-2:]:
+            ipp_crypto_inf = os.path.join('BootloaderCommonPkg', 'Library', 'IppCrypto2Lib', 'IppCrypto2Lib%s.inf' % ipp_crypto_opt_name[-2:])
+        return ipp_crypto_inf
+
     def GetPlatformDsc (self):
         dsc = {}
         # These libraries will be added into the DSC files
@@ -223,12 +243,18 @@ class Board(BaseBoard):
             'PsdLib|Silicon/$(SILICON_PKG_NAME)/Library/PsdLib/PsdLib.inf',
             'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf',
             'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
-            'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf'
+            'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf',
+            'CryptoLib|%s' % self.GetIppCryptoInf()
         ]
         if self.BUILD_CSME_UPDATE_DRIVER:
             common_libs.append ('MeFwUpdateLib|Silicon/$(SILICON_PKG_NAME)/Library/MeFwUpdateLib/MeFwUpdateLib.inf')
 
         dsc['LibraryClasses.%s' % self.BUILD_ARCH] = common_libs
+        dsc['PcdsFixedAtBuild'] = ['gPlatformCommonLibTokenSpaceGuid.PcdIppcrypto2Lib | TRUE']
+
+        if self.ENABLE_IPP_AES_ENCRYPT:
+            dsc['LibraryClasses.%s' % self.BUILD_ARCH].append ('CryptoAesLib|BootloaderCommonPkg/Library/IppCrypto2Lib/IppCrypto2LibAes.inf')
+
         return dsc
 
     def GetOutputImages (self):

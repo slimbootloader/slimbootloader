@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2019 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2026 , Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -33,6 +33,7 @@ extern CONST SHELL_COMMAND ShellCommandCorruptComp;
 extern CONST SHELL_COMMAND ShellCommandAcpi;
 extern CONST SHELL_COMMAND ShellCommandSetup;
 extern CONST SHELL_COMMAND ShellCommandFlashmap;
+extern CONST SHELL_COMMAND ShellCommandEncrypt;
 
 /**
   Load shell commands.

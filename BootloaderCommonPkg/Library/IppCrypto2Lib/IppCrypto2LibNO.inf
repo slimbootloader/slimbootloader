@@ -29,11 +29,16 @@
   sha256.c
   sha384.c
   sm3.c
+  aes_decrypt_cbc.c
+  aes_encrypt_cbc.c
   $(IPP_PATH)/include/ippcpdefs.h
   $(IPP_PATH)/sources/include/owndefs.h
   $(IPP_PATH)/sources/ippcp/owncp.h
   $(IPP_PATH)/sources/ippcp/pcpbn.h
   $(IPP_PATH)/sources/ippcp/pcptool.h
+  $(IPP_PATH)/sources/ippcp/pcptool.c
+
+  $(IPP_PATH)/examples/utils/examples_common.h
 
   # Misc source files
   $(IPP_PATH)/sources/ippcp/pcpmgf1ca_rmf.c
@@ -87,6 +92,26 @@
   $(IPP_PATH)/sources/ippcp/hash/pcphashfinal_rmf.c
   $(IPP_PATH)/sources/ippcp/hash/pcphashca_rmf.c
   $(IPP_PATH)/sources/ippcp/pcprsaverify_pkcs1v15_rmf.c
+  $(IPP_PATH)/sources/ippcp/fips_cert/selftest_hash_msg_upd_sha.c
+  $(IPP_PATH)/sources/ippcp/fips_cert/selftest_aes_upd_hmac.c
+  $(IPP_PATH)/sources/ippcp/fips_cert/selftest_rsa_sign_verify_pss.c
+
+  # AES
+  $(IPP_PATH)/sources/ippcp/pcpaes_ctrdecrypt.c
+  #$(IPP_PATH)/sources/ippcp/pcpaes_ctrencryptr.c
+  $(IPP_PATH)/sources/ippcp/pcprijencsboxca.c
+  $(IPP_PATH)/sources/ippcp/pcpaesgetsize.c
+  $(IPP_PATH)/sources/ippcp/pcpaesminitca.c
+  $(IPP_PATH)/sources/ippcp/pcprijkeysca.c
+  $(IPP_PATH)/sources/ippcp/pcpaes_internal_func.c
+  $(IPP_PATH)/sources/ippcp/pcprij128safeenc2pxca.c
+  $(IPP_PATH)/sources/ippcp/pcprij128safedec2pxca.c
+  $(IPP_PATH)/sources/ippcp/pcprijdecsboxca.c
+
+  $(IPP_PATH)/sources/ippcp/pcpaes_cbcdecrypt.c
+  $(IPP_PATH)/sources/ippcp/pcpaes_cbc_decrypt.c
+  $(IPP_PATH)/sources/ippcp/pcpaes_cbc_encrypt.c
+   $(IPP_PATH)/sources/ippcp/pcpaes_cbcencrypt.c
 
   # HMAC source files
   $(IPP_PATH)/sources/ippcp/pcphmacmessage_rmf.c
@@ -112,6 +137,6 @@
   gPlatformCommonLibTokenSpaceGuid.PcdCompSignType
 
 [BuildOptions]
-  MSFT:*_*_*_CC_FLAGS = -D_ABL_ /GL-
+  MSFT:*_*_*_CC_FLAGS = -D_ABL_ -D_ARCH_EM64T /GL-
   GCC:*_*_*_CC_FLAGS  = -D_ABL_ -w -Wformat -Wformat-security
 

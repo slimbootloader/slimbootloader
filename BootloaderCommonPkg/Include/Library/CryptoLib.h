@@ -1,7 +1,7 @@
 /** @file
   Provides sha256 and RSA2048 verify functions.
 
-Copyright (c) 2017-2020, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2017-2026, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -241,6 +241,36 @@ RsaVerify_PSS (
   IN CONST UINT32             SrcSize
   );
 
+  /**
+    Performs AES decryption using Intel IPP library.
+
+    @param[in]   CipherText      Pointer to the ciphertext data to be decrypted.
+    @param[in]   CipherTextSize  Size of the ciphertext data in bytes.
+    @param[in]   Key             Pointer to the AES decryption key.
+    @param[in]   KeySize         Size of the decryption key in bytes (16, 24, or 32).
+    @param[in]   Iv              Pointer to the initialization vector (16 bytes for AES).
+    @param[in]   Mode            AES decryption mode (CBC, CTR, etc.).
+    @param[out]  PlainText       Pointer to buffer to receive decrypted data.
+    @param[in]   PlainTextSize   Size of the plain text buffer in bytes.
+
+    @retval  RETURN_SUCCESS             Decryption completed successfully.
+    @retval  RETURN_INVALID_PARAMETER   Invalid input parameters.
+    @retval  RETURN_BUFFER_TOO_SMALL    Output buffer too small.
+    @retval  RETURN_SECURITY_VIOLATION  Decryption failed.
+  **/
+  RETURN_STATUS
+  EFIAPI
+  AesDecryptIpp (
+    IN  CONST UINT8     *CipherText,
+    IN        UINT32     CipherTextSize,
+    IN  CONST UINT8     *Key,
+    IN        UINT32     KeySize,
+    IN  CONST UINT8     *Iv,
+    IN        UINT32     Mode,
+    OUT       UINT8     *PlainText,
+    IN        UINT32     PlainTextSize
+    );
+
 
 /**
   Computes the HMAC SHA-256 message digest of a input data buffer.
@@ -468,5 +498,76 @@ EFIAPI
 RunFipsSelftests (
   VOID
 );
+
+
+// AES modes supported by Intel IPP library
+#define AES_MODE_ECB        0x0001
+#define AES_MODE_CBC        0x0002
+#define AES_MODE_CFB        0x0004
+#define AES_MODE_OFB        0x0008
+#define AES_MODE_CTR        0x0010
+#define AES_MODE_GCM        0x0020
+#define AES_MODE_XTS        0x0040
+
+/**
+  Performs AES encryption using Intel IPP library.
+
+  @param[in]   PlainText       Pointer to the plaintext data to be encrypted.
+  @param[in]   PlainTextSize   Size of the plaintext data in bytes.
+  @param[in]   Key             Pointer to the AES encryption key.
+  @param[in]   KeySize         Size of the encryption key in bytes (16, 24, or 32).
+  @param[in]   Iv              Pointer to the initialization vector (16 bytes for AES).
+  @param[in]   Mode            AES encryption mode (CBC, CTR, etc.).
+  @param[out]  CipherText      Pointer to buffer to receive encrypted data.
+  @param[in]   CipherTextSize  Size of the cipher text buffer in bytes.
+
+  @retval  RETURN_SUCCESS             Encryption completed successfully.
+  @retval  RETURN_INVALID_PARAMETER   Invalid input parameters.
+  @retval  RETURN_BUFFER_TOO_SMALL    Output buffer too small.
+  @retval  RETURN_SECURITY_VIOLATION  Encryption failed.
+**/
+RETURN_STATUS
+EFIAPI
+AesEncrypt (
+  IN  CONST UINT8     *PlainText,
+  IN        UINT32     PlainTextSize,
+  IN  CONST UINT8     *Key,
+  IN        UINT32     KeySize,
+  IN  CONST UINT8     *Iv,
+  IN        UINT32     Mode,
+  OUT       UINT8     *CipherText,
+  IN        UINT32     CipherTextSize
+  );
+
+/**
+  Performs AES decryption on input data using specified parameters.
+
+  @param[in]   CipherText      Pointer to the ciphertext data to be decrypted.
+  @param[in]   CipherTextSize  Size of the ciphertext data in bytes.
+  @param[in]   Key             Pointer to the AES decryption key.
+  @param[in]   KeySize         Size of the decryption key in bytes (16, 24, or 32).
+  @param[in]   Iv              Pointer to the initialization vector (16 bytes for AES).
+  @param[in]   Mode            AES decryption mode (AES_DECRYPT_CBC_MODE, AES_DECRYPT_CTR_MODE).
+  @param[out]  PlainText       Pointer to buffer to receive decrypted data.
+  @param[in]   PlainTextSize   Size of the plain text buffer in bytes.
+
+  @retval  RETURN_SUCCESS             Decryption completed successfully.
+  @retval  RETURN_INVALID_PARAMETER   Invalid input parameters.
+  @retval  RETURN_BUFFER_TOO_SMALL    Output buffer too small.
+  @retval  RETURN_SECURITY_VIOLATION  Decryption failed.
+**/
+
+RETURN_STATUS
+EFIAPI
+AesDecrypt (
+  IN  CONST UINT8     *CipherText,
+  IN        UINT32     CipherTextSize,
+  IN  CONST UINT8     *Key,
+  IN        UINT32     KeySize,
+  IN  CONST UINT8     *Iv,
+  IN        UINT32     Mode,
+  OUT       UINT8     *PlainText,
+  IN        UINT32     PlainTextSize
+  );
 #endif
 

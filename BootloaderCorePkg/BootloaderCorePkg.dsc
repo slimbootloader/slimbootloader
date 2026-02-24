@@ -1,7 +1,7 @@
 ## @file
 # Provides driver and definitions to build bootloader.
 #
-# Copyright (c) 2016 - 2024, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2016 - 2026, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -141,6 +141,7 @@
   CrashLogLib|Silicon/CommonSocPkg/Library/CrashLogLibNull/CrashLogLibNull.inf
   FusaConfigLib|Silicon/CommonSocPkg/Library/FusaConfigLibNull/FusaConfigLibNull.inf
   IppCryptoPerfLib|BootloaderCommonPkg/Library/IppCryptoPerfLib/IppCryptoPerfLib.inf
+  CryptoAesLib|BootloaderCommonPkg/Library/IppCrypto2Lib/IppCrypto2LibNullAes.inf
 
 ################################################################################
 #
