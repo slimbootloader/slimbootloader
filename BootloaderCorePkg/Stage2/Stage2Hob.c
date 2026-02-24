@@ -292,7 +292,7 @@ BuildBaseInfoHob (
       if (BlGfxHob != NULL) {
         CopyMem (BlGfxHob, FspGfxHob, sizeof (EFI_PEI_GRAPHICS_INFO_HOB));
         GfxMode = &BlGfxHob->GraphicsMode;
-        DEBUG ((DEBUG_INFO, "Graphics Info: %d x %d x 32 @ 0x%08X\n",GfxMode->HorizontalResolution,\
+        DEBUG ((DEBUG_INFO, "Graphics Info: %d x %d x 32 @ 0x%08lX\n",GfxMode->HorizontalResolution,\
           GfxMode->VerticalResolution, BlGfxHob->FrameBufferBase));
         if ((GfxMode->PixelFormat != PixelRedGreenBlueReserved8BitPerColor) &&
             (GfxMode->PixelFormat != PixelBlueGreenRedReserved8BitPerColor)) {
