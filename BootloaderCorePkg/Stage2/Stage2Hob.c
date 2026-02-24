@@ -886,16 +886,18 @@ BuildExtraInfoHob (
     }
   }
 
-  // Create the Tpm event log for bootloader events.
-  CreateTpmEventLogHob ();
+  if (MEASURED_BOOT_ENABLED()) {
+    // Create the Tpm event log for bootloader events.
+    CreateTpmEventLogHob ();
 
-  // Tpm Event log Buffer Info HOB
-  // This is a addon information
-  TpmEventLogHob = BuildGuidHob (&gTpmEventLogInfoGuid, sizeof (TPM_EVENT_LOG_INFO));
-  if (TpmEventLogHob != NULL) {
-    ZeroMem (TpmEventLogHob, sizeof (TPM_EVENT_LOG_INFO));
-    TpmEventLogHob->Revision  = PAYLOAD_TPM_EVENT_LOG_HOB_REVISION;
-    GetTpmEventLog (&TpmEventLogHob->Tcg2Lasa, &TpmEventLogHob->Tcg2EventSize);
+    // Tpm Event log Buffer Info HOB
+    // This is a addon information
+    TpmEventLogHob = BuildGuidHob (&gTpmEventLogInfoGuid, sizeof (TPM_EVENT_LOG_INFO));
+    if (TpmEventLogHob != NULL) {
+      ZeroMem (TpmEventLogHob, sizeof (TPM_EVENT_LOG_INFO));
+      TpmEventLogHob->Revision  = PAYLOAD_TPM_EVENT_LOG_HOB_REVISION;
+      GetTpmEventLog (&TpmEventLogHob->Tcg2Lasa, &TpmEventLogHob->Tcg2EventSize);
+    }
   }
 
   BuildUniversalPayloadHob ();
