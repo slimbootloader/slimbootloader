@@ -1895,8 +1895,8 @@ class ModuleAutoGen(AutoGen):
         if lines:
             DependencyFileSet.update(lines)
 
-        # Caculate all above dependency files hash
-        # Initialze hash object
+        # Calculate all above dependency files hash
+        # Initialize hash object
         FileList = []
         m = hashlib.md5()
         for File in sorted(DependencyFileSet, key=lambda x: str(x)):
@@ -1950,8 +1950,8 @@ class ModuleAutoGen(AutoGen):
             DependencyFileSet.update(rt)
 
 
-        # Caculate all above dependency files hash
-        # Initialze hash object
+        # Calculate all above dependency files hash
+        # Initialize hash object
         FileList = []
         m = hashlib.md5()
         BuildDirStr = path.abspath(self.BuildDir).lower()

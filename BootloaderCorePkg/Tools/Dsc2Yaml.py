@@ -279,7 +279,7 @@ class dsc_to_yaml ():
 
     def get_fixup_dict (self):
         """
-        Return a dictonary for fix up.
+        Return a dictionary for fix up.
         """
         fix_dict = {
           '$Pcie'                :  '$PCIE_RP_CFG_DATA.Pcie',

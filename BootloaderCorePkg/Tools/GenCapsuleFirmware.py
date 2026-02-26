@@ -582,7 +582,7 @@ def main():
     # Warn the user for "-f" option
     #
     if args.ForceBiosUpdate:
-       print ("\nWAINING: ")
+       print ("\nWARNING: ")
        print (  "  It might be risky to force BIOS region update since any firmware update failure might\n"
                 "  not be recoverable and cause system in a non-bootable state. If it occurs, external \n"
                 "  flash programmer has to be used to reprogram the full IFWI image. This feature is only\n"

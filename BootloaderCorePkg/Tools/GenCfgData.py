@@ -825,7 +825,7 @@ class CGenCfgData:
                     elif ':' in each:
                         match    = re.match("^(.+):(\\d+)([b|B|W|D|Q])$", each)
                         if match is None:
-                            raise SystemExit("Exception: Invald value list format '%s' !" % each)
+                            raise SystemExit("Exception: Invalid value list format '%s' !" % each)
                         if match.group(1) == '0' and match.group(2) == '0':
                             unit_len = CGenCfgData.bits_width[match.group(3)] // 8
                         cur_bit_len = int(match.group(2)) * CGenCfgData.bits_width[match.group(3)]
@@ -2033,7 +2033,7 @@ def main():
         gen_cfg_data.print_cfgs()
 
     else:
-        raise Exception ("Unsuported command '%s' !" % command)
+        raise Exception ("Unsupported command '%s' !" % command)
 
     return 0
 

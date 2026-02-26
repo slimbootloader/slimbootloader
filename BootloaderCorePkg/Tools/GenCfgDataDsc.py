@@ -418,7 +418,7 @@ EndList
                     elif ':' in Each:
                         Match    = re.match("(.+):(\d+)b", Each)
                         if Match is None:
-                            raise Exception("Invald value list format '%s' !" % Each)
+                            raise Exception("Invalid value list format '%s' !" % Each)
                         InBitField = True
                         CurrentBitLen = int(Match.group(2))
                         CurrentValue  = ((self.EvaluateExpress(Match.group(1)) & (1<<CurrentBitLen) - 1)) << BitLen
@@ -429,7 +429,7 @@ EndList
                     BitLen += CurrentBitLen
                 if LastInBitField and ((not InBitField) or (Element == BinList[-1])):
                     if BitLen % 8 != 0:
-                        raise Exception("Invald bit field length!")
+                        raise Exception("Invalid bit field length!")
                     Result.extend(Val2Bytes(Value, BitLen // 8))
                     Value  = 0
                     BitLen = 0
@@ -2085,7 +2085,7 @@ def Main():
             raise Exception (GenCfgData.Error)
 
     else:
-        raise Exception ("Unsuported command '%s' !" % Command)
+        raise Exception ("Unsupported command '%s' !" % Command)
 
     return 0
 

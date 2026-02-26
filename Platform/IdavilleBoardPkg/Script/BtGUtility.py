@@ -407,7 +407,7 @@ def update_tpm_type(tpm_type, tree):
 
     print("[INFO] TPM device type enabled for Measured Boot: %s" % tpm_type)
 
-    # TBD: Move EOM functionality to separatefunction
+    # TBD: Move EOM functionality to separate function
     # Get EOM variable file and set EOM to OFF
     for file in root.findall('./SpsFiles/file'):
         if file.attrib['name'] == 'EOM':
