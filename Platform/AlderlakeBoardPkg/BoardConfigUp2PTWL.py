@@ -31,7 +31,7 @@ class Board(BaseBoard):
         self.BOARD_NAME           = 'uptwl'
         self.BOARD_PKG_NAME       = 'AlderlakeBoardPkg'
         self.SILICON_PKG_NAME     = 'AlderlakePkg'
-        self.FSP_IMAGE_ID         = '$TWLFSPE$'
+        self.FSP_IMAGE_ID         = '$TWLFSPE'
         self._EXTRA_INC_PATH      = ['Silicon/AlderlakePkg/Adln/Include']
         self._FSP_PATH_NAME       = 'Silicon/AlderlakePkg/Adln/FspBin'
         self.MICROCODE_INF_FILE   = 'Silicon/AlderlakePkg/Microcode/Microcode.inf'
@@ -50,8 +50,8 @@ class Board(BaseBoard):
         self.LOADER_ACPI_RECLAIM_MEM_SIZE = 0x000090000
         self.HAVE_FIT_TABLE       = 1
         self.HAVE_VBT_BIN         = 1 # TBD
-        self.HAVE_VERIFIED_BOOT   = 0
-        self.HAVE_MEASURED_BOOT   = 0
+        self.HAVE_VERIFIED_BOOT   = 1
+        self.HAVE_MEASURED_BOOT   = 1
         self.HAVE_FLASH_MAP       = 1
         self.HAVE_ACPI_TABLE      = 1
         self.HAVE_PSD_TABLE       = 1
@@ -112,13 +112,13 @@ class Board(BaseBoard):
         self.STAGE1_STACK_SIZE    = 0x00002000
         self.STAGE1_DATA_SIZE     = 0x00014000
         self.FSP_M_STACK_TOP      = 0xFEF7FF00
-        self.STAGE1B_SIZE         = 0x000DA000
+        self.STAGE1B_SIZE         = 0x000DB000
         self.STAGE2_SIZE          = 0x000A0000
         self.STAGE2_FD_BASE       = 0x000B0000
         self.STAGE2_FD_SIZE       = 0x001F0000
 
         self.EPAYLOAD_SIZE        = 0x00161000
-        self.PAYLOAD_SIZE         = 0x0002B000
+        self.PAYLOAD_SIZE         = 0x0002D000
 
         self.OS_LOADER_FD_SIZE    = 0x0005B000
         self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
@@ -188,7 +188,7 @@ class Board(BaseBoard):
             self.TMAC_SIZE = 0x00001000
             self.SIIPFW_SIZE += self.TMAC_SIZE
 
-        self.NON_REDUNDANT_SIZE   = 0x3BF000 + self.SIIPFW_SIZE
+        self.NON_REDUNDANT_SIZE   = 0x3BD000 + self.SIIPFW_SIZE
         self.NON_VOLATILE_SIZE    = 0x001000
         self.SLIMBOOTLOADER_SIZE  = (self.TOP_SWAP_SIZE + self.REDUNDANT_SIZE) * 2 + \
                                     self.NON_REDUNDANT_SIZE + self.NON_VOLATILE_SIZE
@@ -215,7 +215,7 @@ class Board(BaseBoard):
         #   the ImageId field in the VBT container.
         # VbtFileName is the VBT file name. It needs to be located under platform
         #   VbtBin folder.
-        self._MULTI_VBT_FILE      = {1:'VbtAdlnUpProTwl.dat'} # self._MULTI_VBT_FILE
+        self._MULTI_VBT_FILE      = {1:'VbtAdlnUpProTwl.dat'}
 
         self.CFG_DATABASE_SIZE    = self.CFGDATA_SIZE
         self._generated_cfg_file_prefix = 'Autogen_'
@@ -285,6 +285,7 @@ class Board(BaseBoard):
             'HeciLib|Silicon/CommonSocPkg/Library/HeciLib/HeciLib.inf',
             'MeChipsetLib|Silicon/$(SILICON_PKG_NAME)/Library/MeChipsetLib/MeChipsetLib.inf',
             'VtdLib|Silicon/$(SILICON_PKG_NAME)/Library/VTdLib/VTdLib.inf',
+            'DmarLib|Silicon/CommonSocPkg/Library/DmarLib/DmarLib.inf',
             'PsdLib|Silicon/$(SILICON_PKG_NAME)/Library/PsdLib/PsdLib.inf',
             'HeciMeExtLib|Silicon/$(SILICON_PKG_NAME)/Library/HeciMeExtLib/HeciMeExtLib.inf',
             'MeExtMeasurementLib|Silicon/$(SILICON_PKG_NAME)/Library/MeExtMeasurementLib/MeExtMeasurementLib.inf',
