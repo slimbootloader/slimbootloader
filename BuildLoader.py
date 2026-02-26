@@ -1264,7 +1264,7 @@ class Build(object):
             hash_store_size = sizeof(HashStoreTable) + (sizeof(HashStoreData) + HASH_DIGEST_SIZE[HASH_VAL_STRING[self._board.SIGN_HASH_TYPE]]) * HashStoreTable().HASH_STORE_MAX_IDX_NUM
             gen_file_with_size (os.path.join(self._fv_dir, 'HashStore.bin'), hash_store_size)
 
-            #Intialize with HashStoreTable
+            #Initialize with HashStoreTable
             fo = open(os.path.join(self._fv_dir, 'HashStore.bin'),'r+b')
             hash_store_table = HashStoreTable()
             hash_store_table.TotalLength = hash_store_size
@@ -1567,7 +1567,7 @@ def main():
     buildp.add_argument('-p',  '--payload' , dest='payload', type=str, help='Payload file name', default ='OsLoader.efi')
     buildp.add_argument('board', metavar='board', choices=board_names, help='Board Name (%s)' % ', '.join(board_names))
     buildp.add_argument('-k', '--keygen', action='store_true', help='Generate default keys for signing')
-    buildp.add_argument('-t', '--toolchain', dest='toolchain', type=str, default='', help='Perferred toolchain name')
+    buildp.add_argument('-t', '--toolchain', dest='toolchain', type=str, default='', help='Preferred toolchain name')
     buildp.set_defaults(func=cmd_build)
 
     def cmd_clean(args):
@@ -1690,7 +1690,7 @@ def main():
     build_dscp.add_argument('-a',  '--arch', choices=['ia32', 'x64'], help='Specify the ARCH for build. Default is to build IA32 image.', default ='ia32')
     build_dscp.add_argument('-d',  '--define', action='append', help='Specify macros to be passed into DSC build')
     build_dscp.add_argument('-p',  '--dsc', type=str, required=True, help='Specify a DSC file path to build')
-    build_dscp.add_argument('-t',  '--toolchain', dest='toolchain', type=str, default='', help='Perferred toolchain name')
+    build_dscp.add_argument('-t',  '--toolchain', dest='toolchain', type=str, default='', help='Preferred toolchain name')
     build_dscp.set_defaults(func=cmd_build_dsc)
 
     args = ap.parse_args()

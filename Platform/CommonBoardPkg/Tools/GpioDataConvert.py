@@ -847,7 +847,7 @@ def gpio_convert (args):
                 continue
             convert_from_inp_to_out (args.gpio_tmp_fmt, args.inp_fmt, args.cfg_file, args.out_fmt, parts)
 
-    # Copy the final data to ouput
+    # Copy the final data to output
     sbl_data = ""
     if args.out_fmt == 'yaml':
         for key in sorted(yml_dict):

@@ -291,7 +291,7 @@ class CONTAINER ():
             rsa_sign_file (priv_key, pub_key, CONTAINER._auth_to_hashalg_str[auth_type], CONTAINER._auth_to_signscheme_str[auth_type], file, out_file, False, True)
             auth_data.extend (get_file_data(out_file))
         else:
-            raise Exception ("Unsupport AuthType '%s' !" % auth_type)
+            raise Exception ("Unsupported AuthType '%s' !" % auth_type)
         return hash_data, auth_data
 
 
@@ -353,7 +353,7 @@ class CONTAINER ():
                     key_hash = self.get_pub_key_hash (file_data[offset:])
                     hash_data.extend (key_hash)
                 else:
-                    raise Exception ("Unsupport AuthType '%s' !" % auth_type)
+                    raise Exception ("Unsupported AuthType '%s' !" % auth_type)
         return data, hash_data, auth_data
 
     def adjust_header (self):
@@ -837,7 +837,7 @@ def main():
                                                                                  Use Key Id or key file path when component files with -cl option is specified')
     cmd_display.add_argument('-a',  dest='auth', choices=['SHA2_256', 'SHA2_384', 'RSA2048_PKCS1_SHA2_256',
                     'RSA3072_PKCS1_SHA2_384', 'RSA2048_PSS_SHA2_256', 'RSA3072_PSS_SHA2_384', 'NONE'], default='',  help='authentication algorithm')
-    cmd_display.add_argument('-cd', dest='comp_dir', type=str, default='', help='Componet image input directory')
+    cmd_display.add_argument('-cd', dest='comp_dir', type=str, default='', help='Component image input directory')
     cmd_display.add_argument('-td', dest='tool_dir', type=str, default='', help='Compression tool directory')
     cmd_display.add_argument('-s', dest='svn', type=int, default=0, help='Security version number for Container header')
     cmd_display.set_defaults(func=create_container)
