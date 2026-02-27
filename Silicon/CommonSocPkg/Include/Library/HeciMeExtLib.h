@@ -163,4 +163,79 @@ HeciGetFipsMode (
   OUT GET_FIPS_MODE_DATA  *GetFipsModeData
   );
 
+/**
+  Get EPS (Extended Period State) information
+
+  @param[out]     GetEpsStateInfo   Extended license installation info
+
+  @retval EFI_UNSUPPORTED         Current ME mode doesn't support this function
+  @retval EFI_SUCCESS             Command succeeded
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+  @retval EFI_TIMEOUT             HECI does not return the buffer before timeout
+  @retval EFI_BUFFER_TOO_SMALL    Message Buffer is too small for the Acknowledge
+**/
+EFI_STATUS
+EFIAPI
+HeciGetEpsState (
+  OUT EPS_GET_STATE_INFO  *GetEpsStateInfo
+  );
+
+/**
+  This command is used to indicate to the FW to revoke a OEM key.
+  It should be executed when MBP data indicates that a key is pending for
+  revocation.
+  @retval EFI_SUCCESS             Command succeeded
+  @retval EFI_UNSUPPORTED         Current ME mode doesn't support this function
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+**/
+EFI_STATUS
+EFIAPI
+HeciRevokeOemKey (
+   VOID
+   );
+
+/**
+  This command indicates to the FW that it shall commit ARBSVN to fuse.
+
+  @retval EFI_SUCCESS             Command succeeded
+  @retval EFI_UNSUPPORTED         Current ME mode doesn't support this function
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+**/
+EFI_STATUS
+HeciArbSvnCommitMsg (
+  VOID
+  );
+
+/**
+  Retrieve invocation codes from Firmware.
+
+  @param[out] InvocationCode        Bitmask of invocation codes set by Firmware.
+
+  @retval EFI_UNSUPPORTED           Current ME mode doesn't support this function
+  @retval EFI_SUCCESS               Command succeeded
+  @retval EFI_DEVICE_ERROR          HECI Device error, command aborts abnormally
+  @retval EFI_TIMEOUT               HECI does not return the buffer before timeout
+  @retval EFI_BUFFER_TOO_SMALL      Message Buffer is too small for the Acknowledge
+**/
+EFI_STATUS
+HeciGetInvocationCode (
+  OUT UINT32 *InvocationCode
+  );
+
+/**
+  Clear invocation codes in Firmware.
+
+  @param[in] InvocationCode         Bitmask of invocation codes to be cleared by Firmware.
+
+  @retval EFI_UNSUPPORTED           Current ME mode doesn't support this function
+  @retval EFI_SUCCESS               Command succeeded
+  @retval EFI_DEVICE_ERROR          HECI Device error, command aborts abnormally
+  @retval EFI_TIMEOUT               HECI does not return the buffer before timeout
+  @retval EFI_BUFFER_TOO_SMALL      Message Buffer is too small for the Acknowledge
+**/
+EFI_STATUS
+HeciClearInvocationCode (
+  IN UINT32 InvocationCode
+  );
+
 #endif
