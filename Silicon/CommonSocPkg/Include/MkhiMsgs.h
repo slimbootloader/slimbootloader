@@ -14,6 +14,7 @@
 //
 #define MKHI_FWCAPS_GROUP_ID                0x03
 #define MKHI_GEN_GROUP_ID                   0xFF
+#define MKHI_CBM_GROUP_ID                   0x00
 
 //
 // Defines for Command
@@ -56,6 +57,7 @@
 ///
 #define MCA_REVOKE_OEM_KEY_HASH_CMD       0x2F
 #define MCA_GET_OEM_KEY_STATUS_CMD        0x0D
+#define MCA_ARB_SVN_COMMIT_CMD            0x1B
 
 ///
 /// Defines for FIPS Mode Command
@@ -415,6 +417,118 @@ typedef union {
   EPS_GET_STATE_ACK       Response;
 } EPS_GET_STATE_BUFFER;
 
+//
+// Defines for FWCAPS_GROUP Command
+//
+#define FWCAPS_GET_RULE_CMD                 0x02
+#define FWCAPS_SET_RULE_CMD                 0x03
+#define RULE_DATA_LENGTH                    0x04
+
+///
+/// Defines for CBM_GROUP Command
+///
+#define CBM_RESET_CMD                     0x0B
+#define CBM_GET_INVOCATION_CODE           0x0D
+#define CBM_SET_INVOCATION_CODE           0x0E
+#define CBM_CLR_INVOCATION_CODE           0x0F
+
+///
+/// HW Anti-Rollback Key Usage
+///
+#define ARB_SVN_COMMIT_ALL                      0xFF ///< Value 0xFF refers to committing all pending ARBSVN values.
+
+/// MKHI_CBM_GROUP Definitions
+///
+typedef union {
+  UINT32 Data;
+  struct {
+    UINT32 TableSyncError        : 1;   ///< BIT_0  No longer used
+    UINT32 CpuReplacement        : 1;   ///< BIT_1
+    UINT32 SyncMngState          : 1;   ///< BIT_2
+    UINT32 SolStateChange        : 1;   ///< BIT_3  No longer used
+    UINT32 IderStateChange       : 1;   ///< BIT_4  No longer used
+    UINT32 KvmStateChange        : 1;   ///< BIT_5  No longer used
+    UINT32 SyncRaAvailability    : 1;   ///< BIT_6
+    UINT32 FwUnconfiguration     : 1;   ///< BIT_7
+    UINT32 UserConsentFlow       : 1;   ///< BIT_8
+    UINT32 WlanPowerConfigChange : 1;   ///< BIT_9
+    UINT32 FwUpdate              : 1;   ///< BIT_10 No longer used
+    UINT32 FirstMebxBoot         : 1;   ///< BIT_11
+    UINT32 DataSyncConfirmation  : 1;   ///< BIT_12
+    UINT32 ClsUserInfo           : 1;   ///< BIT_13 No longer used
+    UINT32 Reserved2             : 18;  ///< BIT_14-31
+  } Fields;
+} INVOCATION_CODE_BITS;
+
+
+//
+// Get Invocation Code
+//
+typedef struct {
+  MKHI_MESSAGE_HEADER MkhiHeader;
+} GET_INVOCATION_CODE;
+
+typedef struct {
+  MKHI_MESSAGE_HEADER MkhiHeader;
+  UINT32              InvocationCode;
+} GET_INVOCATION_CODE_ACK;
+
+typedef union {
+  GET_INVOCATION_CODE     Request;
+  GET_INVOCATION_CODE_ACK Response;
+} GET_INVOCATION_CODE_BUFFER;
+
+//
+// Set Invocation Code
+//
+typedef struct {
+  MKHI_MESSAGE_HEADER MkhiHeader;
+  UINT32              InvocationCode;
+} SET_INVOCATION_CODE;
+
+typedef struct {
+  MKHI_MESSAGE_HEADER MkhiHeader;
+} SET_INVOCATION_CODE_ACK;
+
+typedef union {
+  SET_INVOCATION_CODE     Request;
+  SET_INVOCATION_CODE_ACK Response;
+} SET_INVOCATION_CODE_BUFFER;
+
+//
+// Clear Invocation Code
+//
+typedef struct {
+  MKHI_MESSAGE_HEADER MkhiHeader;
+  UINT32              InvocationCode;
+} CLEAR_INVOCATION_CODE;
+
+typedef struct {
+  MKHI_MESSAGE_HEADER MkhiHeader;
+} CLEAR_INVOCATION_CODE_ACK;
+
+typedef union {
+  CLEAR_INVOCATION_CODE     Request;
+  CLEAR_INVOCATION_CODE_ACK Response;
+} CLEAR_INVOCATION_CODE_BUFFER;
+
+///
+/// HW Anti-Rollback (ARB) Security Version Number Commit
+///
+typedef struct {
+  MKHI_MESSAGE_HEADER MkhiHeader;
+  UINT8               UsageId;
+  UINT8               Reserved[3]; ///< Reserved for future use, to allow specifying explicit usage to be committed.
+} ARB_SVN_COMMIT;
+
+typedef struct {
+  MKHI_MESSAGE_HEADER MkhiHeader;
+} ARB_SVN_COMMIT_ACK;
+
+typedef union {
+  ARB_SVN_COMMIT       Request;
+  ARB_SVN_COMMIT_ACK   Response;
+} ARB_SVN_COMMIT_BUFFER;
 #pragma pack()
 
 #endif // _MKHI_MSGS_COMMON_H_
