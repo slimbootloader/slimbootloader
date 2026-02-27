@@ -468,6 +468,49 @@ HeciRevokeOemKey (
 }
 
 /**
+  This command indicates to the FW that it shall commit ARBSVN to fuse.
+
+  @retval EFI_SUCCESS             Command succeeded
+  @retval EFI_UNSUPPORTED         Current ME mode doesn't support this function
+  @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
+**/
+EFI_STATUS
+HeciArbSvnCommitMsg (
+  VOID
+  )
+{
+  EFI_STATUS               Status;
+  UINT32                   Length;
+  UINT32                   RecvLength;
+  ARB_SVN_COMMIT_BUFFER    ArbSvnCommit;
+  UINT32                   MeMode;
+
+  Status = HeciGetMeMode (&MeMode);
+  if (EFI_ERROR (Status) || (MeMode != ME_MODE_NORMAL)) {
+    return EFI_UNSUPPORTED;
+  }
+
+  ZeroMem (&ArbSvnCommit, sizeof (ARB_SVN_COMMIT_BUFFER));
+  ArbSvnCommit.Request.MkhiHeader.Data           = 0;
+  ArbSvnCommit.Request.MkhiHeader.Fields.GroupId = MKHI_MCA_GROUP_ID;
+  ArbSvnCommit.Request.MkhiHeader.Fields.Command = MCA_ARB_SVN_COMMIT_CMD;
+  ArbSvnCommit.Request.UsageId                   = ARB_SVN_COMMIT_ALL;
+  Length                                         = sizeof (ARB_SVN_COMMIT);
+  RecvLength                                     = sizeof (ARB_SVN_COMMIT_ACK);
+
+  Status = HeciSendwAck (
+                   HECI1_DEVICE,
+                   (UINT32 *) &ArbSvnCommit,
+                   Length,
+                   &RecvLength,
+                   BIOS_FIXED_HOST_ADDR,
+                   HECI_MCHI_MESSAGE_ADDR
+                   );
+
+  return Status;
+}
+
+/**
   Send Set FIPS Mode to Enabled or Disabled
 
   @param[in] FipsMode             Enable or disable FIPS Mode
@@ -582,6 +625,105 @@ HeciGetFipsMode (
     *GetFipsModeData = GetFipsMode.Response.Data;
   } else {
     return EFI_DEVICE_ERROR;
+  }
+
+  return Status;
+}
+
+/**
+  Retrieve invocation codes from Firmware.
+
+  @param[out] InvocationCode        Bitmask of invocation codes set by Firmware.
+
+  @retval EFI_UNSUPPORTED           Current ME mode doesn't support this function
+  @retval EFI_SUCCESS               Command succeeded
+  @retval EFI_DEVICE_ERROR          HECI Device error, command aborts abnormally
+  @retval EFI_TIMEOUT               HECI does not return the buffer before timeout
+  @retval EFI_BUFFER_TOO_SMALL      Message Buffer is too small for the Acknowledge
+**/
+EFI_STATUS
+HeciGetInvocationCode (
+  OUT UINT32 *InvocationCode
+  )
+{
+  EFI_STATUS                    Status;
+  GET_INVOCATION_CODE_BUFFER    GetInvocationCode;
+  GET_INVOCATION_CODE_ACK       GetInvocationCodeAck;
+  UINT32                        Length;
+
+  GetInvocationCode.Request.MkhiHeader.Data           = 0;
+  GetInvocationCode.Request.MkhiHeader.Fields.GroupId = MKHI_CBM_GROUP_ID;
+  GetInvocationCode.Request.MkhiHeader.Fields.Command = CBM_GET_INVOCATION_CODE;
+
+  //
+  // Send CBM_CLR_INVOCATION_CODE to SEC
+  //
+  Length = sizeof (CLEAR_INVOCATION_CODE_BUFFER);
+  Status = HeciSend (HECI1_DEVICE, (UINT32 *)&GetInvocationCode, Length,
+                     BIOS_FIXED_HOST_ADDR, HECI_MKHI_MESSAGE_ADDR);
+  if (EFI_ERROR(Status)) {
+    DEBUG ((DEBUG_ERROR, "[HECI] HeciGetInvocationCode failed on send - %r\n", Status));
+    return Status;
+  }
+
+  Length = sizeof (GET_INVOCATION_CODE_ACK);
+  DEBUG ((DEBUG_INFO, " Length = %d\n", Length));
+
+  Status = HeciReceive (HECI1_DEVICE, HECI_BLOCKING_MSG,
+                        (UINT32 *)&GetInvocationCodeAck, &Length);
+  if (EFI_ERROR(Status)) {
+    DEBUG ((DEBUG_ERROR, "[HECI] HeciGetInvocationCode failed on read - %r\n", Status));
+    return Status;
+  }
+
+  *InvocationCode = GetInvocationCodeAck.InvocationCode;
+
+  return Status;
+}
+
+/**
+  Clear invocation codes in Firmware.
+
+  @param[in] InvocationCode         Bitmask of invocation codes to be cleared by Firmware.
+
+  @retval EFI_UNSUPPORTED           Current ME mode doesn't support this function
+  @retval EFI_SUCCESS               Command succeeded
+  @retval EFI_DEVICE_ERROR          HECI Device error, command aborts abnormally
+  @retval EFI_TIMEOUT               HECI does not return the buffer before timeout
+  @retval EFI_BUFFER_TOO_SMALL      Message Buffer is too small for the Acknowledge
+**/
+EFI_STATUS
+HeciClearInvocationCode (
+  IN UINT32 InvocationCode
+  )
+{
+  EFI_STATUS                      Status;
+  CLEAR_INVOCATION_CODE_BUFFER    ClearInvocationCode;
+  CLEAR_INVOCATION_CODE_ACK       ClearInvocationCodeAck;
+  UINT32                          Length;
+
+  ClearInvocationCode.Request.MkhiHeader.Data           = 0;
+  ClearInvocationCode.Request.MkhiHeader.Fields.GroupId = MKHI_CBM_GROUP_ID;
+  ClearInvocationCode.Request.MkhiHeader.Fields.Command = CBM_CLR_INVOCATION_CODE;
+  ClearInvocationCode.Request.InvocationCode            = InvocationCode;
+
+  //
+  // Send CBM_CLR_INVOCATION_CODE to SEC
+  //
+  Length = sizeof (CLEAR_INVOCATION_CODE_BUFFER);
+  Status = HeciSend (HECI1_DEVICE, (UINT32 *)&ClearInvocationCode, Length,
+                     BIOS_FIXED_HOST_ADDR, HECI_MKHI_MESSAGE_ADDR);
+  if (EFI_ERROR(Status)) {
+    DEBUG ((DEBUG_ERROR, "[HECI] HeciClearInvocationCode failed on send - %r\n", Status));
+    return Status;
+  }
+
+  Length = sizeof (CLEAR_INVOCATION_CODE_ACK);
+  Status = HeciReceive (HECI1_DEVICE, HECI_BLOCKING_MSG,
+                        (UINT32 *)&ClearInvocationCodeAck, &Length);
+  if (EFI_ERROR(Status)) {
+    DEBUG ((DEBUG_ERROR, "[HECI] HeciClearInvocationCode failed on read - %r\n", Status));
+    return Status;
   }
 
   return Status;

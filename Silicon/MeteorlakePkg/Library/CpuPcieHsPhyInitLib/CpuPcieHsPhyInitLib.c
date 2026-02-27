@@ -14,7 +14,7 @@
 #include <Library/BlMemoryAllocationLib.h>
 #include <Library/SecureBootLib.h>
 #include <BupMsgs.h>
-#include <MkhiMsgsMtl.h>
+#include <MkhiMsgs.h>
 #include <IndustryStandard/Pci.h>
 #include <Register/PchBdfAssignment.h>
 #include <PchAccess.h>
