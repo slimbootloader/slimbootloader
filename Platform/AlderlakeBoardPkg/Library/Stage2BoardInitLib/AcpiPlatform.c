@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2025, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2026, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -8,6 +8,7 @@
 #include <Library/TpmLib.h>
 #include <PlatformData.h>
 #include <Library/MeExtMeasurementLib.h>
+#include <Library/TxtLib.h>
 #include "Stage2BoardInitLib.h"
 
 #define MWAIT_C6                     0x20
@@ -821,6 +822,23 @@ UpdateCpuNvs (
   CpuNvs->ScalingFactorSmallCore=12;
   CpuNvs->ScalingFactorBigCore=15;
   //DEBUG ((DEBUG_INFO, "BigCore Count %d SmallCore Count %d\n",CpuNvs->BigCoreCount, CpuNvs->SmallCoreCount));
+
+  ///
+  /// Update TXT status for ACPI
+  ///
+  CpuNvs->TxtEnabled = 0;  // Default to disabled
+  if (FeaturePcdGet (PcdTxtEnabled)) {
+    FEATURES_CFG_DATA *FeaturesCfgData;
+    FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
+    if ((FeaturesCfgData != NULL) && (FeaturesCfgData->Features.TxtEnabled == 1)) {
+      if (IsTxtEnabled()) {
+        CpuNvs->TxtEnabled = 1;
+        DEBUG ((DEBUG_INFO, "TXT is enabled in MSR 0x3A, setting TXTE=1\n"));
+      } else {
+        DEBUG ((DEBUG_INFO, "TXT config enabled but MSR 0x3A indicates TXT not enabled.\n"));
+      }
+    }
+  }
 
   DEBUG ((DEBUG_INFO, "Update Cpu Nvs Done\n"));
 }

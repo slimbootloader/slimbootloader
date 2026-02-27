@@ -1,7 +1,7 @@
 ## @file
 # This file is used to provide board specific image information.
 #
-#  Copyright (c) 2024, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2024 - 2026, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -117,3 +117,14 @@ class Board(RaptorlakeBoardConfig.Board):
         # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
         # 3: Enable NOSMRR (for edk2-stable202411 and newer UEFI payload)  4: Auto NOSMRR
         self.ENABLE_SMM_REBASE    = 4
+
+    def GetDscLibraryClasses (self, dsc):
+        # Call parent to get base library classes from BoardConfigRpls
+        dsc = super().GetDscLibraryClasses(dsc)
+        # Replace TxtLib with TxtLibNull for BTLS
+        lib_classes = dsc['LibraryClasses.%s' % self.BUILD_ARCH]
+        dsc['LibraryClasses.%s' % self.BUILD_ARCH] = [
+            'TxtLib|Silicon/CommonSocPkg/Library/TxtLib/TxtLibNull.inf' if 'TxtLib' in lib else lib
+            for lib in lib_classes
+        ]
+        return dsc

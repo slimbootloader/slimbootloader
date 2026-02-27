@@ -1,7 +1,7 @@
 ## @file
 # This file is used to provide board specific image information.
 #
-#  Copyright (c) 2020 - 2025, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2026, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -276,6 +276,12 @@ class Board(BaseBoard):
             'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
             'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf'
         ]
+
+        # TXT Library: Use real implementation if TXT_ENABLED, else use NULL stub
+        if hasattr(self, 'TXT_ENABLED') and self.TXT_ENABLED:
+            dsc['LibraryClasses.%s' % self.BUILD_ARCH].append('TxtLib|Silicon/AlderlakePkg/Library/TxtLib/TxtLib.inf')
+        else:
+            dsc['LibraryClasses.%s' % self.BUILD_ARCH].append('TxtLib|Silicon/CommonSocPkg/Library/TxtLib/TxtLibNull.inf')
 
         if self.BUILD_CSME_UPDATE_DRIVER:
             dsc['LibraryClasses.%s' % self.BUILD_ARCH].append ('MeFwUpdateLib|Silicon/$(SILICON_PKG_NAME)/Library/MeFwUpdateLib/MeFwUpdateLib.inf')

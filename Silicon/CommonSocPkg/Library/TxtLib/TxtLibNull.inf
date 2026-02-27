@@ -1,0 +1,32 @@
+## @file
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+#  Module Name:
+#
+#    TxtLibNull.inf
+#
+#  Abstract:
+#
+#    Component description file for TXT Library Null implementation
+#
+##
+
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = TxtLib
+  FILE_GUID                      = 9dfcc02b-5ee3-4279-af01-5d9d86941449
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = TxtLib
+
+[Packages]
+MdePkg/MdePkg.dec
+BootloaderCorePkg/BootloaderCorePkg.dec
+BootloaderCommonPkg/BootloaderCommonPkg.dec
+
+[Sources]
+TxtLibNull.c

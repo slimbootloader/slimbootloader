@@ -2,7 +2,7 @@
 #
 #  Platform Configuration Delta File.
 #
-#  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2026, Intel Corporation. All rights reserved.<BR>
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 #
@@ -439,3 +439,6 @@ GPIO_CFG_DATA.GpioPinConfig1_GPD09.GPIOSkip_GPD09 | 1
 GPIO_CFG_DATA.GpioPinConfig1_GPD10.GPIOSkip_GPD10 | 1
 GPIO_CFG_DATA.GpioPinConfig1_GPD11.GPIOSkip_GPD11 | 1
 GPIO_CFG_DATA.GpioPinConfig1_GPD12.GPIOSkip_GPD12 | 1
+
+# Set 'TxtEnabled' to '1' for TXT Feature enablement
+FEATURES_CFG_DATA.Features.TxtEnabled                       | 0
