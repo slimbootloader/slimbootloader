@@ -691,7 +691,7 @@ UpdateFspConfig (
 
   Status = FusaConfigPreMem(FspmUpdPtr);
   DEBUG((DEBUG_INFO, "FusaConfigPreMem Status %r\n", Status));
-#if PLATFORM_RPLP | PLATFORM_RPLA
+#if PLATFORM_RPLP | PLATFORM_RPLA | PLATFORM_ADLN
   Fspmcfg->I2cPostCodeEnable = MemCfgData->I2cPostCode;
 #endif
 
