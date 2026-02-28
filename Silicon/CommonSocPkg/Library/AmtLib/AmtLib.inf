@@ -1,0 +1,34 @@
+## @file
+# Component Description File for AMT configuration
+#
+# Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+################################################################################
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = AmtLib
+  FILE_GUID                      = 4730c752-836b-401f-a290-59548b938758
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = AmtLib
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  HobLib
+  HeciLib
+  HeciMeExtLib
+  BootloaderLib
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+
+[Guids]
+  gMeBiosPayloadHobGuid
+
+[Sources]
+  AmtLib.c
