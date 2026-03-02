@@ -413,6 +413,9 @@ SecStartup2 (
     // React to ACM failures here as the correct partition should be
     // swapped to during pre-config init
     CheckForAcmFailures ();
+
+    // Check for ME code corruption
+    CheckForMeCodeFailures (LdrGlobal);
   }
 
   Status = AppendHashStore (LdrGlobal, &Stage1bParam);

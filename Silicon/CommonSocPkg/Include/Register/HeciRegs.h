@@ -10,6 +10,14 @@
 #define HECI_DEV                        22
 #define HECI_FUN                        0
 
+//
+// ME Operational States (HFSTS1.CurrentState)
+//
+#define ME_STATE_RESET                  0x00
+#define ME_STATE_INIT                   0x01
+#define ME_STATE_RECOVERY               0x02
+#define ME_STATE_NORMAL                 0x05
+
 #define R_ME_HFS                           0x40
 #define R_ME_HFS_3                         0x60
 #define R_ME_HFS_4                         0x64

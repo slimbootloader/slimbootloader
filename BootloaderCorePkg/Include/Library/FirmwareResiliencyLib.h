@@ -40,4 +40,18 @@ CheckForTcoTimerFailures (
   IN UINT8 BootFailureThreshold
   );
 
+/**
+  Check for ME firmware code corruption.
+
+  Reads HFSTS1/HFSTS2 registers and detects ME code corruption.
+  If corruption detected, stores info in LdrGlobal and sets recovery mode.
+
+  @param[in,out] LdrGlobal   Pointer to loader global data
+**/
+VOID
+EFIAPI
+CheckForMeCodeFailures (
+  IN OUT VOID  *LdrGlobal
+  );
+
 #endif

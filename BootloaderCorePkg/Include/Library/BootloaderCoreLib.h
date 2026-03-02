@@ -9,6 +9,7 @@
 #define _BOOTLOADER_CORE_LIB_H_
 
 #include <Library/BootloaderCommonLib.h>
+#include <FirmwareUpdateStatus.h>
 
 typedef enum {
   EnumMemInfoTom,     // Total system memory size
@@ -78,6 +79,21 @@ UINT8
 EFIAPI
 GetResetReason (
   VOID
+  );
+
+/**
+  This function retrieves ME recovery information.
+
+  @param[out] MeRecoveryInfo   Pointer to ME_RECOVERY_INFO structure.
+
+  @retval EFI_SUCCESS           ME recovery info retrieved successfully.
+  @retval EFI_INVALID_PARAMETER MeRecoveryInfo is NULL.
+
+**/
+EFI_STATUS
+EFIAPI
+GetMeRecoveryInfo (
+  OUT ME_RECOVERY_INFO  *MeRecoveryInfo
   );
 
 /**

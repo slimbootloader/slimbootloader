@@ -202,6 +202,36 @@ GetResetReason (
 }
 
 /**
+  This function retrieves ME recovery information.
+
+  @param[out] MeRecoveryInfo   Pointer to ME_RECOVERY_INFO structure.
+
+  @retval EFI_SUCCESS           ME recovery info retrieved successfully.
+  @retval EFI_INVALID_PARAMETER MeRecoveryInfo is NULL.
+
+**/
+EFI_STATUS
+EFIAPI
+GetMeRecoveryInfo (
+  OUT ME_RECOVERY_INFO  *MeRecoveryInfo
+  )
+{
+  LOADER_GLOBAL_DATA  *LdrGlobal;
+
+  if (MeRecoveryInfo == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  LdrGlobal = GetLoaderGlobalDataPointer();
+  if (LdrGlobal == NULL) {
+    return EFI_NOT_FOUND;
+  }
+
+  CopyMem (MeRecoveryInfo, &LdrGlobal->MeRecoveryInfo, sizeof(ME_RECOVERY_INFO));
+  return EFI_SUCCESS;
+}
+
+/**
   This function sets reset reason in last boot.
 
   @param[in] ResetReason   The value of last boot reset reason.

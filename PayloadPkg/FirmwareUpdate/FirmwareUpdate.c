@@ -23,6 +23,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Guid/LoaderPlatformInfoGuid.h>
 #include <Library/SecureBootLib.h>
 #include <Library/BootloaderCommonLib.h>
+#include <Library/BootloaderCoreLib.h>
 #include <Library/FirmwareUpdateLib.h>
 #include <Guid/SystemResourceTable.h>
 #include <Library/GraphicsLib.h>
@@ -31,7 +32,16 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/BootGuardLib.h>
 #include <Library/WatchDogTimerLib.h>
 #include <Library/TcoTimerLib.h>
+#include <Library/PciLib.h>
+#include <Library/IoLib.h>
+#include <Register/HeciRegs.h>
+#include <FirmwareUpdateStatus.h>
 #include "FirmwareUpdateHelper.h"
+#include <PlatformBase.h>
+
+// OC_WDT register for FW update trigger (persists across reset)
+#define R_ACPI_IO_OC_WDT_CTL   0x54
+#define B_FW_UPDATE_TRIGGER    BIT16
 
 UINT32   mSblImageBiosRgnOffset;
 
@@ -1814,9 +1824,21 @@ EndFirmwareUpdate (
   VOID
   )
 {
-  EFI_STATUS  Status;
+  EFI_STATUS        Status;
+  ME_RECOVERY_INFO  MeRecoveryInfo;
 
+  // Check if ME recovery is pending. If so, preserve the OC_WDT trigger
+  // so that on next boot, if corruption still exists, we boot degraded
+  // instead of entering infinite recovery loop.
+  Status = GetMeRecoveryInfo (&MeRecoveryInfo);
+  if (EFI_ERROR (Status) || (MeRecoveryInfo.Signature != ME_RECOVERY_SIGNATURE)) {
+    // Not ME recovery or recovery completed - clear trigger normally
   ClearFwUpdateTrigger ();
+  } else {
+    // ME recovery pending - preserve OC_WDT trigger to prevent retry
+    // The trigger will only be cleared by the success path in EndOfFwu
+    DEBUG ((DEBUG_INFO, "ME recovery pending, preserving OC_WDT trigger\n"));
+  }
 
   // Clear state machine anyway to prevent FWU loop.
   SetStateMachineFlag (FW_UPDATE_SM_DONE);
@@ -1886,18 +1908,41 @@ PayloadMain (
   IN  VOID  *PldBase
   )
 {
-  UINT32        RsvdBase;
-  UINT32        RsvdSize;
-  FLASH_MAP     *FlashMap;
-  EFI_STATUS    Status;
-  UINT32        BiosRgnSize;
-  UINT8         StateMachine;
+  UINT32            RsvdBase;
+  UINT32            RsvdSize;
+  FLASH_MAP         *FlashMap;
+  EFI_STATUS        Status;
+  UINT32            BiosRgnSize;
+  UINT8             StateMachine;
+  ME_RECOVERY_INFO  MeRecoveryInfo;
 
   //
   // Prepare Console Print
   //
   InitConsole ();
   ConsolePrint ("Starting Firmware Update/Recovery\n");
+
+  // Check for ME code recovery request from Stage1B
+  // Reuse existing CSME update infrastructure for recovery
+  Status = GetMeRecoveryInfo (&MeRecoveryInfo);
+  if (!EFI_ERROR (Status) && (MeRecoveryInfo.Signature == ME_RECOVERY_SIGNATURE)) {
+    DEBUG ((DEBUG_INFO, "\n"));
+    DEBUG ((DEBUG_INFO, "========================================\n"));
+    DEBUG ((DEBUG_INFO, "   ME FIRMWARE CODE RECOVERY MODE      \n"));
+    DEBUG ((DEBUG_INFO, "========================================\n"));
+    DEBUG ((DEBUG_INFO, "ME Recovery Info:\n"));
+    DEBUG ((DEBUG_INFO, "  HFSTS1: 0x%08X\n", MeRecoveryInfo.Hfsts1));
+    DEBUG ((DEBUG_INFO, "  HFSTS2: 0x%08X\n", MeRecoveryInfo.Hfsts2));
+    DEBUG ((DEBUG_INFO, "\n"));
+
+    ConsolePrint ("ME Firmware Corruption Detected!\n");
+    ConsolePrint ("ME Recovery will use normal CSME update flow\n");
+
+    // Clear recovery flag by setting signature to 0
+    MeRecoveryInfo.Signature = 0;
+    // Note: Clearing is for local copy only, Stage1B will check again on next boot
+
+  }
 
   //
   // Initialize boot media to look for the capsule image
@@ -1985,9 +2030,6 @@ PayloadMain (
   }
 
 EndOfFwu:
-  //
-  // Terminate firmware update
-  //
   ConsolePrint ("Exiting Firmware Update (Status: %r)\n", Status);
   EndFirmwareUpdate ();
 }

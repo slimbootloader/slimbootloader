@@ -39,6 +39,13 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define FW_UPDATE_STATUS_VERSION      0x1
 #define FW_UPDATE_SIG_LENGTH          256
 
+//
+// ME Code Resiliency definitions
+//
+#define ME_RECOVERY_SIGNATURE         SIGNATURE_32 ('M', 'E', 'R', 'C')
+#define ME_CORRUPTION_CODE            0x01
+#define ME_CORRUPTION_DATA            0x02
+
 #pragma pack(push, 1)
 //
 // Firmware Update status structure
@@ -65,6 +72,17 @@ typedef struct {
   UINT8                 UpdatePending;
   UINT8                 Reserved[3];
 } FW_UPDATE_COMP_STATUS;
+
+//
+// ME Recovery Information
+// Passed from Stage1B to FirmwareUpdate payload via LdrGlobal
+//
+typedef struct {
+  UINT32                Signature;        ///< ME_RECOVERY_SIGNATURE
+  UINT32                CorruptionType;   ///< ME_CORRUPTION_CODE or ME_CORRUPTION_DATA
+  UINT32                Hfsts1;           ///< HECI FWSTS1 register value
+  UINT32                Hfsts2;           ///< HECI FWSTS2 register value
+} ME_RECOVERY_INFO;
 
 #pragma pack(pop)
 

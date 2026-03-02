@@ -10,6 +10,7 @@
 #define _BOOTLOADER_CORE_GLOBAL_H_
 
 #include <Library/BootloaderCoreLib.h>
+#include <FirmwareUpdateStatus.h>
 
 #define  MPLD_SIGNATURE               SIGNATURE_32 ('$', 'P', 'L', 'D')
 #define  IS_MULTI_PAYLOAD(x)          (*(UINT32 *)(x) == MPLD_SIGNATURE)
@@ -199,6 +200,7 @@ typedef struct {
   UINT32            CarBase;
   UINT32            CarSize;
   UINT32            MemPoolMaxUsed;
+  ME_RECOVERY_INFO  MeRecoveryInfo;
 } LOADER_GLOBAL_DATA;
 
 /**

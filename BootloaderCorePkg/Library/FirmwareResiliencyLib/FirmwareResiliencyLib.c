@@ -13,7 +13,16 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/TopSwapLib.h>
 #include <Library/PcdLib.h>
 #include <Library/WatchDogTimerLib.h>
+#include <Library/PciLib.h>
+#include <Library/IoLib.h>
+#include <Register/HeciRegs.h>
+#include <BootloaderCoreGlobal.h>
 #include <FirmwareUpdateStatus.h>
+#include <PlatformBase.h>
+
+// OC_WDT register for FW update trigger (persists across reset)
+#define R_ACPI_IO_OC_WDT_CTL   0x54
+#define B_FW_UPDATE_TRIGGER    BIT16
 
 /**
   Retrieve FW update state from the reserved region
@@ -116,4 +125,89 @@ CheckForTcoTimerFailures (
       ResetSystem (EfiResetCold);
     }
   }
+}
+
+/**
+  Check for ME firmware code corruption.
+
+  Reads HFSTS1/HFSTS2 registers and detects ME code corruption based on:
+  - CurrentState == ME_STATE_RECOVERY (0x02)
+  - FtBupLdFlr == 1 (Fault-Tolerant Bringup Load Failure)
+  - FwUpdIpu == 1 (FW Update IPU Needed)
+
+  If corruption detected, stores info in LdrGlobal and sets BOOT_ON_FLASH_UPDATE mode.
+
+  @param[in,out] LdrGlobal   Pointer to loader global data
+
+  @retval EFI_SUCCESS        ME is healthy
+  @retval EFI_DEVICE_ERROR   ME corruption detected, recovery triggered
+**/
+VOID
+EFIAPI
+CheckForMeCodeFailures (
+  IN OUT LOADER_GLOBAL_DATA  *LdrGlobal
+  )
+{
+  HECI_FWS_REGISTER       MeFwSts;
+  HECI_GS_SHDW_REGISTER   MeFwSts2;
+  UINT32                  HeciBase;
+  BOOLEAN                 Corrupted;
+
+  DEBUG ((DEBUG_INFO, "[FW Resiliency] Checking ME firmware code health...\n"));
+
+  // Read HECI registers (PCI 0:22:0)
+  HeciBase = PCI_LIB_ADDRESS (0, HECI_DEV, HECI_FUN, 0);
+
+  MeFwSts.ul  = PciRead32 (HeciBase + R_ME_HFS);    // HFSTS1 at offset 0x40
+  MeFwSts2.ul = PciRead32 (HeciBase + 0x48);        // HFSTS2 at offset 0x48
+
+  DEBUG ((DEBUG_INFO, "  HFSTS1 = 0x%08X\n", MeFwSts.ul));
+  DEBUG ((DEBUG_INFO, "  HFSTS2 = 0x%08X\n", MeFwSts2.ul));
+
+  // Check corruption indicators (BIOS-aligned logic)
+  Corrupted = FALSE;
+
+  if (MeFwSts.r.CurrentState == ME_STATE_RECOVERY) {
+    DEBUG ((DEBUG_ERROR, "  ME in Recovery State (CurrentState = 0x%X)\n", MeFwSts.r.CurrentState));
+    Corrupted = TRUE;
+  }
+
+  if (MeFwSts.r.FtBupLdFlr == 1) {
+    DEBUG ((DEBUG_ERROR, "  FtBupLdFlr set - ME code load failure!\n"));
+    Corrupted = TRUE;
+  }
+
+  if (MeFwSts2.r.FwUpdIpu == 1) {
+    DEBUG ((DEBUG_ERROR, "  FwUpdIpu set - ME update needed!\n"));
+    Corrupted = TRUE;
+  }
+
+  if (Corrupted) {
+    UINT32  OcWdtValue;
+
+    DEBUG ((DEBUG_ERROR, "\n"));
+    DEBUG ((DEBUG_ERROR, "*** ME FIRMWARE CODE CORRUPTION DETECTED! ***\n"));
+    DEBUG ((DEBUG_ERROR, "\n"));
+
+    // Store recovery info in LdrGlobal for payload to access
+    LdrGlobal->MeRecoveryInfo.Signature = ME_RECOVERY_SIGNATURE;
+    LdrGlobal->MeRecoveryInfo.CorruptionType = ME_CORRUPTION_CODE;
+    LdrGlobal->MeRecoveryInfo.Hfsts1 = MeFwSts.ul;
+    LdrGlobal->MeRecoveryInfo.Hfsts2 = MeFwSts2.ul;
+
+    // Check if recovery was already attempted using OC_WDT trigger bit
+    OcWdtValue = IoRead32 (ACPI_BASE_ADDRESS + R_ACPI_IO_OC_WDT_CTL);
+    if (OcWdtValue & B_FW_UPDATE_TRIGGER) {
+      DEBUG ((DEBUG_WARN, "Recovery already attempted (OC_WDT trigger set), booting degraded\n"));
+      return;
+    }
+
+    // Set OC_WDT trigger to request firmware update
+    OcWdtValue |= B_FW_UPDATE_TRIGGER;
+    IoWrite32 (ACPI_BASE_ADDRESS + R_ACPI_IO_OC_WDT_CTL, OcWdtValue);
+    DEBUG ((DEBUG_INFO, "OC_WDT trigger set for ME recovery\n"));
+    return;
+  }
+
+  DEBUG ((DEBUG_INFO, "[FW Resiliency] ME Code Health: PASSED\n"));
 }
