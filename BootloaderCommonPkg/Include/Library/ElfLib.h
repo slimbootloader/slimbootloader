@@ -20,9 +20,10 @@
 /*
  * Define Max value for Coverity check
  */
+#define MAX_ELF_IMAGE_SIZE      0x40000000  ///< 1GB maximum elf image size.
 #define MAX_ELF_SHNUM           0xFF00
 #define MAX_ELF_PHNUM           0xFFFF
-#define NAX_ELF_RELOC_SECT_SIZE 0x10000
+#define MAX_ELF_RELOC_SECT_SIZE 0x10000
 
 typedef struct {
   RETURN_STATUS ParseStatus;             ///< Return the status after ParseElfImage().
@@ -80,6 +81,7 @@ EFI_STATUS
 EFIAPI
 ParseElfImage (
   IN  VOID                 *ImageBase,
+  IN  UINTN                ImageSize,
   OUT ELF_IMAGE_CONTEXT    *ElfCt
   );
 

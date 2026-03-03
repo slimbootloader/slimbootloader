@@ -31,6 +31,7 @@ typedef struct {
   Load universal payload image into memory.
 
   @param[in]   ImageBase    The universal payload image base
+  @param[in]   ImageSize    The universal payload image size
   @param[out]  PayloadInfo  Pointer to receive payload related info
 
   @retval     EFI_SUCCESS      The image was loaded successfully
@@ -42,8 +43,7 @@ EFI_STATUS
 EFIAPI
 LoadElfPayload (
   IN  VOID                     *ImageBase,
+  IN  UINTN                    ImageSize,
   OUT LOADED_PAYLOAD_INFO      *PayloadInfo
 );
-
-
 #endif
