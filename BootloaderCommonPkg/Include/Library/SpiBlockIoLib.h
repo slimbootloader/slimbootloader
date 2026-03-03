@@ -15,7 +15,7 @@
 #include <BlockDevice.h>
 #include <Service/SpiFlashService.h>
 
-#define SPI_BLOCK_SIZE 0x100
+#define SPI_BLOCK_SIZE 0x1
 
 /**
   This function reads blocks from the SPI slave device.
