@@ -74,7 +74,7 @@ SecStartup (
   DriverOutput->FwuSaveRestorePointToBuffer    = FwuSaveRestorePointToBuffer;
   DriverOutput->FwuSetIshConfig                = FwuSetIshConfig;
   DriverOutput->FwuGetIshPdtVersion            = FwuGetIshPdtVersion;
-#if FeaturePcdGet(PcdIoeCsmeUpdateEnabled)
+#if defined(_PCD_VALUE_PcdIoeCsmeUpdateEnabled) && (_PCD_VALUE_PcdIoeCsmeUpdateEnabled == 1)
   DriverOutput->FwuSetTarget                   = FwuSetTarget;
 #endif
 

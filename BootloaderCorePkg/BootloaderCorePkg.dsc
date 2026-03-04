@@ -279,6 +279,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled          | $(ENABLE_TCC)
   gPlatformCommonLibTokenSpaceGuid.PcdEnableCryptoPerfTest      | $(ENABLE_IPP_CRYPTO_PERF)
   gPlatformCommonLibTokenSpaceGuid.PcdHandOffFdtEnable          | $(ENABLE_UPL_HANDOFF_FDT)
+  gPayloadTokenSpaceGuid.PcdIoeCsmeUpdateEnabled                | $(ENABLE_IOE_CSME_UPDATE)
 
 [PcdsPatchableInModule]
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel   | 0x8000004F
@@ -355,7 +356,6 @@
   gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled          | $(ENABLE_SMBIOS)
   gPlatformModuleTokenSpaceGuid.PcdLinuxPayloadEnabled    | $(ENABLE_LINUX_PAYLOAD)
   gPayloadTokenSpaceGuid.PcdCsmeUpdateEnabled             | $(ENABLE_CSME_UPDATE)
-  gPayloadTokenSpaceGuid.PcdIoeCsmeUpdateEnabled          | $(ENABLE_IOE_CSME_UPDATE)
   gPlatformModuleTokenSpaceGuid.PcdLegacyEfSegmentEnabled | $(ENABLE_LEGACY_EF_SEG)
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcHs400SupportEnabled | $(ENABLE_EMMC_HS400)
   gPlatformCommonLibTokenSpaceGuid.PcdDmaProtectionEnabled | $(ENABLE_DMA_PROTECTION)
