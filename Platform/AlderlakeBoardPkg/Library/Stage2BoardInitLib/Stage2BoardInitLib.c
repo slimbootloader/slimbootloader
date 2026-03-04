@@ -684,7 +684,7 @@ BoardInit (
     }
     break;
   case ReadyToBoot:
-    if ((GetBootMode() != BOOT_ON_FLASH_UPDATE) && (GetPayloadId() == 0)) {
+    if (!PcdGetBool(PcdEnableSetup) && (GetBootMode() != BOOT_ON_FLASH_UPDATE) && (GetPayloadId() == 0)) {
       ProgramSecuritySetting ();
       //
       // set SMI LOCK (SMI_LOCK)
@@ -812,6 +812,15 @@ UpdateOsBootMediumInfo (
   )
 {
   FillBootOptionListFromCfgData (OsBootOptionList);
+
+  if ((OsBootOptionList != NULL)
+    && (OsBootOptionList->OsBootOptionCount < PcdGet32(PcdOsBootOptionNumber))
+    && (FeaturePcdGet(PcdEnableSetup))) {
+      OsBootOptionList->OsBootOption[OsBootOptionList->OsBootOptionCount].DevType = OsBootDeviceMemory;
+      OsBootOptionList->OsBootOption[OsBootOptionList->OsBootOptionCount].FsType = EnumFileSystemTypeAuto;
+      AsciiStrCpyS ((CHAR8*)OsBootOptionList->OsBootOption[OsBootOptionList->OsBootOptionCount].Image[0].FileName, MAX_FILE_PATH_LEN, "!SETP/MPYM:STPY");
+      OsBootOptionList->OsBootOptionCount++;
+  }
 }
 
 /**

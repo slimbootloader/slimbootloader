@@ -48,6 +48,7 @@
   gPlatformModuleTokenSpaceGuid.PcdFastBootEnabled
   gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
+  gPlatformModuleTokenSpaceGuid.PcdEnableSetup
 
 [FixedPcd]
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
