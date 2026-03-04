@@ -32,7 +32,7 @@
   ModuleEntryLib
   MeFwUpdateLib
 
-[Pcd]
+[FixedPcd]
   gPayloadTokenSpaceGuid.PcdIoeCsmeUpdateEnabled
 
 [Depex]
