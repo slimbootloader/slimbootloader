@@ -7,10 +7,16 @@
 **/
 
 #include "ElfLibInternal.h"
+#include <Library/MemoryAllocationLib.h>
 
 #define ELF_CR(Record, TYPE, Field)         (((TYPE *) Record)->Field)
 #define ELF_CLASS_CR(Record, TYPE, Field, IsElf64)  \
   IsElf64 ? ELF_CR(Record,Elf64_##TYPE,Field) : ELF_CR(Record,Elf32_##TYPE,Field)
+
+typedef struct {
+  UINTN         MemLen;
+  UINTN         MemAddr;
+} SEGMENT_INFO_LITE;
 
 EFI_STATUS
 GetElfSegmentInfo (
@@ -270,7 +276,7 @@ ParseElfImage (
   UINTN          FileOffset;
   UINTN          SegAlignment;
   UINT8          *CurrentLoadAddress;
-  SEGMENT_INFO   SegInfoArr[MAX_ELF_PHNUM];
+  SEGMENT_INFO_LITE *SegInfoLite;
   UINT32         LoadSegCount;
   UINT32         Index2;
 
@@ -412,11 +418,28 @@ ParseElfImage (
   End  = 0;
   Base = MAX_UINTN;
   LoadSegCount = 0;
+  SegInfoLite = NULL;
 
   ASSERT(ElfCt->PhNum < MAX_ELF_PHNUM);
+
+  //
+  // Use to later in check to detect segment overlap, need to keep track of all loaded segments.
+  // To avoid using stack memory for segment (potentially MAX_ELF_PHNUM running into __chkstk guard issue
+  // on Windows build), allocate buffer to store the loaded segments info if PhNum is larger than 0.
+  //
+  if (ElfCt->PhNum > 0) {
+    SegInfoLite = (SEGMENT_INFO_LITE *) AllocatePool (sizeof (SEGMENT_INFO_LITE) * ElfCt->PhNum);
+    if (SegInfoLite == NULL) {
+      return (ElfCt->ParseStatus = EFI_OUT_OF_RESOURCES);
+    }
+  }
+
   for (Index = 0; Index < ElfCt->PhNum; Index++) {
     Status = GetElfSegmentInfo (ElfCt->FileBase, ElfCt->EiClass, Index, &SegInfo);
-    ASSERT_EFI_ERROR (Status);
+    if (EFI_ERROR (Status)) {
+      ElfCt->ParseStatus = Status;
+      goto Error;
+    }
 
     if (SegInfo.PtType != PT_LOAD) {
       continue;
@@ -427,14 +450,16 @@ ParseElfImage (
     //
     if ((ElfCt->FileSize != MAX_UINTN) &&
         (SegInfo.Offset + SegInfo.Length > ElfCt->FileSize)) {
-      return (ElfCt->ParseStatus = EFI_UNSUPPORTED);
+      ElfCt->ParseStatus = EFI_UNSUPPORTED;
+      goto Error;
     }
 
     //
     // Check if memory size is enough to load the segment
     //
     if (SegInfo.MemLen < SegInfo.Length) {
-      return (ElfCt->ParseStatus = EFI_UNSUPPORTED);
+      ElfCt->ParseStatus = EFI_UNSUPPORTED;
+      goto Error;
     }
 
     if (SegInfo.MemLen != SegInfo.Length) {
@@ -448,19 +473,24 @@ ParseElfImage (
     // Check for integer overflow when calculating End
     //
     if (SegInfo.MemAddr + SegInfo.MemLen < SegInfo.MemAddr) {
-        return (ElfCt->ParseStatus = EFI_UNSUPPORTED);
+        ElfCt->ParseStatus = EFI_UNSUPPORTED;
+        goto Error;
     }
 
     //
     // Check for overlap with previous segments
     //
     for (Index2 = 0; Index2 < LoadSegCount; Index2++) {
-        if (!((SegInfo.MemAddr + SegInfo.MemLen <= SegInfoArr[Index2].MemAddr) ||
-              (SegInfo.MemAddr >= SegInfoArr[Index2].MemAddr + SegInfoArr[Index2].MemLen))) {
-            return (ElfCt->ParseStatus = EFI_UNSUPPORTED);
+        if (!((SegInfo.MemAddr + SegInfo.MemLen <= SegInfoLite[Index2].MemAddr) ||
+              (SegInfo.MemAddr >= SegInfoLite[Index2].MemAddr + SegInfoLite[Index2].MemLen))) {
+            ElfCt->ParseStatus = EFI_UNSUPPORTED;
+            goto Error;
         }
     }
-    CopyMem (&SegInfoArr[LoadSegCount++], &SegInfo, sizeof(SEGMENT_INFO));
+
+    SegInfoLite[LoadSegCount].MemAddr = SegInfo.MemAddr;
+    SegInfoLite[LoadSegCount].MemLen  = SegInfo.MemLen;
+    LoadSegCount++;
 
     if (Base > (SegInfo.MemAddr & ~(SegInfo.Alignment - 1))) {
       Base = SegInfo.MemAddr & ~(SegInfo.Alignment - 1);
@@ -472,7 +502,8 @@ ParseElfImage (
     // Check for integer overflow when calculating End with alignment
     //
     if ((MAX_UINTN - (SegInfo.MemAddr + SegInfo.MemLen)) < (SegInfo.Alignment - 1)) {
-        return (ElfCt->ParseStatus = EFI_UNSUPPORTED);
+        ElfCt->ParseStatus = EFI_UNSUPPORTED;
+        goto Error;
     }
 
     if (End < ALIGN_VALUE (SegInfo.MemAddr + SegInfo.MemLen, SegInfo.Alignment) - 1) {
@@ -493,16 +524,19 @@ ParseElfImage (
   //
   if (ElfCt->ImageSize > MAX_ELF_IMAGE_SIZE) {
     DEBUG ((DEBUG_ERROR, "ELF Image size too large: 0x%lx\n", (UINT64)ElfCt->ImageSize));
-    return (ElfCt->ParseStatus = EFI_UNSUPPORTED);
+    ElfCt->ParseStatus = EFI_UNSUPPORTED;
+    goto Error;
   }
 
-  CurrentLoadAddress           = ElfCt->FileBase + FileOffset;
+  CurrentLoadAddress = ElfCt->FileBase + FileOffset;
 
   // check if CurrentLoadAddress meets load alignment requirement.
   // Only when SegAlignment > 1, perform the alignment check
-  if ((SegAlignment > 1) && ((UINTN)CurrentLoadAddress & ~(SegAlignment - 1)) != (UINTN)CurrentLoadAddress) {
+  if ((SegAlignment > 1) &&
+      ((UINTN)CurrentLoadAddress & ~(SegAlignment - 1)) != (UINTN)CurrentLoadAddress) {
     ElfCt->ReloadRequired = TRUE;
   }
+
   if (!ElfCt->ReloadRequired) {
     // Don't need reload. Relocation will be check later.
     ElfCt->ImageAddress = CurrentLoadAddress;
@@ -512,7 +546,16 @@ ParseElfImage (
   // Updates ElfCt->FileSize to reflect exactly how many bytes are used by the ELF structures.
   CalculateElfFileSize (ElfCt, &ElfCt->FileSize);
 
-  return (ElfCt->ParseStatus = EFI_SUCCESS);;
+  if (SegInfoLite != NULL) {
+    FreePool (SegInfoLite);
+  }
+  return (ElfCt->ParseStatus = EFI_SUCCESS);
+
+Error:
+  if (SegInfoLite != NULL) {
+    FreePool (SegInfoLite);
+  }
+  return ElfCt->ParseStatus;
 }
 
 /**
