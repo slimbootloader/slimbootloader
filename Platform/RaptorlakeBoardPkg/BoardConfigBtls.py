@@ -31,6 +31,7 @@ class Board(RaptorlakeBoardConfig.Board):
         self.VERINFO_BUILD_DATE     = time.strftime("%m/%d/%Y")
 
         self.BOARD_NAME           = 'btls'
+        self.FSP_IMAGE_ID         = '$RPLFSPE'
         self._EXTRA_INC_PATH      = ['Silicon/RaptorlakePkg/Btls/Fsp']
         self._FSP_PATH_NAME       = 'Silicon/RaptorlakePkg/Btls/Fsp'
         self.FSP_INF_FILE         = 'Silicon/RaptorlakePkg/Btls/Fsp/FspBinBtls.inf'
