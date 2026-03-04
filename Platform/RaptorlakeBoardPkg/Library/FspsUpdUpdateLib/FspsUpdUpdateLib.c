@@ -441,7 +441,7 @@ UpdateFspConfig (
     DEBUG ((DEBUG_ERROR, "Unsupported PCH.\n"));
   }
 
-  if (GetBootMode () != BOOT_ON_FLASH_UPDATE) {
+  if (!PcdGetBool(PcdEnableSetup) && (GetBootMode () != BOOT_ON_FLASH_UPDATE)) {
     BiosProtected = FALSE;
     PrIndex = 0;
     Status = SpiGetRegionAddress (FlashRegionBios, &BaseAddress, &TotalSize);
