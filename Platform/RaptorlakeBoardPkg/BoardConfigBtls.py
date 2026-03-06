@@ -1,7 +1,7 @@
 ## @file
 # This file is used to provide board specific image information.
 #
-#  Copyright (c) 2024, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2024 - 2026, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -131,6 +131,11 @@ class Board(RaptorlakeBoardConfig.Board):
         # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
         # 3: Enable NOSMRR (for edk2-stable202411 and newer UEFI payload)  4: Auto NOSMRR
         self.ENABLE_SMM_REBASE    = 4
+        # TXT (Trusted Execution Technology) is not supported
+        # 0: Disabled (default)  1: Enabled
+        # Keep TXT disabled for BTLS and rely on BoardConfigRpls.GetPlatformDsc()
+        # to select TxtLibNull, so no BTLS-specific GetDscLibraryClasses override is needed.
+        self.TXT_ENABLED          = 0
 
     def GetContainerList (self):
         container_list = super(Board, self).GetContainerList()

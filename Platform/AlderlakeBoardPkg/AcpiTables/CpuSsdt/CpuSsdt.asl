@@ -892,6 +892,10 @@ DefinitionBlock (
           //
           // Mask CPU Family
           //
+          And (CPID, 0xFFFFFFF0, Local0)
+          If (LOr (LOr(LEqual (Local0, 0x000B0670),LEqual (Local0, 0x000B06A0)), LEqual (Local0, 0x000B06F0))) {
+            Return ("INT_RPL_SINIT")
+          }
           Return ("INT_UNK_SINIT")
         } // End of Method (_CID)
       } // End of Device (ACM)
