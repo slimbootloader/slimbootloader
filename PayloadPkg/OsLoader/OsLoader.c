@@ -492,7 +492,7 @@ SetupBootImage (
     DEBUG ((DEBUG_INFO, "Boot image is ELF format...\n"));
     EntryPoint = 0;
     ZeroMem (&PayloadInfo, sizeof(PayloadInfo));
-    Status = LoadElfPayload (BootFile->Addr, &PayloadInfo);
+    Status = LoadElfPayload (BootFile->Addr, (UINTN)BootFile->Size, &PayloadInfo);
     if (!EFI_ERROR (Status)) {
       EntryPoint = PayloadInfo.EntryPoint;
       if (FeaturePcdGet (PcdMultibootSupportEnabled) && IsMultiboot (BootFile->Addr)) {
