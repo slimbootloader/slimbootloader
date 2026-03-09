@@ -106,9 +106,9 @@ RelocateElf32Sections  (
       //
       // Check against malformed or truncated relocation tables where the last entry might be incomplete,
       //
-
       if ((Rel32Shdr->sh_entsize == 0) ||
-          (Rel32Shdr->sh_entsize < sizeof (Elf32_Rel) || (Rel32Shdr->sh_size % Rel32Shdr->sh_entsize) != 0)) {
+          (Rel32Shdr->sh_entsize < sizeof (Elf32_Rel)) ||
+          ((Rel32Shdr->sh_size % Rel32Shdr->sh_entsize) != 0)) {
         return EFI_INVALID_PARAMETER;
       }
 
@@ -138,10 +138,10 @@ RelocateElf32Sections  (
             //
             // Sanity check for the relocation address
             //
-            if (((UINTN)Ptr32 < (UINTN)ElfCt->ImageAddress) || \
+            if (((UINTN)Ptr32 < (UINTN)ElfCt->ImageAddress) ||
                 ((UINTN)Ptr32 + sizeof(UINT32) > (UINTN)ElfCt->ImageAddress + ElfCt->ImageSize)) {
-               DEBUG ((DEBUG_ERROR, "Relocation target out of bounds: 0x%p\n", Ptr32));
-               return EFI_LOAD_ERROR;
+              DEBUG ((DEBUG_ERROR, "Relocation target out of bounds: 0x%p\n", Ptr32));
+              return EFI_LOAD_ERROR;
             }
 
             *Ptr32 += (UINT32) Delta;
@@ -218,11 +218,11 @@ LoadElf32Image (
     // Check bounds for file read and memory write
     //
     if ((UINTN)ProgramHdr->p_offset + (UINTN)ProgramHdr->p_filesz > ElfCt->FileSize) {
-       return EFI_INVALID_PARAMETER;
+      return EFI_INVALID_PARAMETER;
     }
 
     if (Delta + (UINTN)ProgramHdr->p_memsz > ElfCt->ImageSize) {
-       return EFI_INVALID_PARAMETER;
+      return EFI_INVALID_PARAMETER;
     }
 
     CopyMem (ElfCt->ImageAddress + Delta, ElfCt->FileBase + ProgramHdr->p_offset, ProgramHdr->p_filesz);
@@ -230,7 +230,7 @@ LoadElf32Image (
   }
 
   //
-  // Relocate when new new image base is not the preferred image base.
+  // Relocate when new image base is not the preferred image base.
   //
   if ((UINTN)ElfCt->ImageAddress != (UINTN)ElfCt->PreferredImageAddress) {
     if (EFI_ERROR (RelocateElf32Sections (ElfCt))) {

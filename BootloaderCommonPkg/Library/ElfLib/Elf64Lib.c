@@ -109,7 +109,7 @@ RelocateElf64Sections  (
       // Check against malformed or truncated relocation tables where the last entry might be incomplete,
       // Use DivU64x64Remainder to avoid intrinsic call to __umoddi3
       //
-      if(Rel64Shdr->sh_entsize == 0) {
+      if (Rel64Shdr->sh_entsize == 0) {
         return EFI_INVALID_PARAMETER;
       }
 
@@ -142,10 +142,10 @@ RelocateElf64Sections  (
             //
             // Sanity check for the relocation address
             //
-            if (((UINTN)Ptr64 < (UINTN)ElfCt->ImageAddress) || \
+            if (((UINTN)Ptr64 < (UINTN)ElfCt->ImageAddress) ||
                 ((UINTN)Ptr64 + sizeof(UINT64) > (UINTN)ElfCt->ImageAddress + ElfCt->ImageSize)) {
-               DEBUG ((DEBUG_ERROR, "Relocation target out of bounds: 0x%p\n", Ptr64));
-               return EFI_LOAD_ERROR;
+              DEBUG ((DEBUG_ERROR, "Relocation target out of bounds: 0x%p\n", Ptr64));
+              return EFI_LOAD_ERROR;
             }
 
             *Ptr64 += Delta;
@@ -156,10 +156,10 @@ RelocateElf64Sections  (
             //
             // Sanity check for the relocation address
             //
-            if (((UINTN)Ptr32 < (UINTN)ElfCt->ImageAddress) || \
+            if (((UINTN)Ptr32 < (UINTN)ElfCt->ImageAddress) ||
                 ((UINTN)Ptr32 + sizeof(UINT32) > (UINTN)ElfCt->ImageAddress + ElfCt->ImageSize)) {
-               DEBUG ((DEBUG_ERROR, "Relocation target out of bounds: 0x%p\n", Ptr32));
-               return EFI_LOAD_ERROR;
+              DEBUG ((DEBUG_ERROR, "Relocation target out of bounds: 0x%p\n", Ptr32));
+              return EFI_LOAD_ERROR;
             }
 
             *Ptr32 += (UINT32)Delta;
@@ -236,11 +236,11 @@ LoadElf64Image (
     // Check bounds for file read and memory write
     //
     if ((UINTN)ProgramHdr->p_offset + (UINTN)ProgramHdr->p_filesz > ElfCt->FileSize) {
-       return EFI_INVALID_PARAMETER;
+      return EFI_INVALID_PARAMETER;
     }
 
     if (Delta + (UINTN)ProgramHdr->p_memsz > ElfCt->ImageSize) {
-       return EFI_INVALID_PARAMETER;
+      return EFI_INVALID_PARAMETER;
     }
 
     CopyMem (ElfCt->ImageAddress + Delta, ElfCt->FileBase + (UINTN) ProgramHdr->p_offset, (UINTN) ProgramHdr->p_filesz);
