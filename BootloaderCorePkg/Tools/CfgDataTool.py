@@ -628,8 +628,13 @@ def CmdExport(Args):
     Stage1bPath = '/'.join(CfgdPath.split('/')[:-1]) + '/%s' % Stage1bName
     Stage1bComp = IfwiParser.locate_component (Ifwi, Stage1bPath)
     if not Stage1bComp:
-        print ('ERROR: Failed to extract external STAGE1B !')
-        return -2
+        print ("Not found STAGE1B in the same region as CFGDATA")
+        print ("Check the Top Swap region for the BUILD_IDENTICAL_TS case")
+        Stage1bPath = '/'.join(CfgdPath.split('/')[:-2]) + '/TS%d/' % Bp + '%s' % Stage1bName
+        Stage1bComp = IfwiParser.locate_component (Ifwi, Stage1bPath)
+        if not Stage1bComp:
+            print ('ERROR: Failed to extract external STAGE1B !')
+            return -2
 
     # Decompress Stage1B image if required
     Stage1bBin  = IfwiBin[Stage1bComp.offset : Stage1bComp.offset + Stage1bComp.length]
