@@ -303,27 +303,27 @@ ParseElfImage (
   if (ElfCt->EiClass == ELFCLASS32) {
     // Check for integer overflow in section table size calculation
     if ((UINTN)Elf32Hdr->e_shnum * (UINTN)Elf32Hdr->e_shentsize > MAX_UINTN - (UINTN)Elf32Hdr->e_shoff) {
-        return (ElfCt->ParseStatus = EFI_UNSUPPORTED);
+      return (ElfCt->ParseStatus = EFI_UNSUPPORTED);
     }
 
     // Check if section header table is within file bounds if FileSize is valid
     if ((ElfCt->FileSize != MAX_UINTN) &&
         ((UINTN)Elf32Hdr->e_shoff + (UINTN)Elf32Hdr->e_shnum * (UINTN)Elf32Hdr->e_shentsize > ElfCt->FileSize)) {
-        return (ElfCt->ParseStatus = EFI_UNSUPPORTED);
+      return (ElfCt->ParseStatus = EFI_UNSUPPORTED);
     }
 
     //
     // Check if index is valid before calling GetElf32SectionByIndex
     //
     if (Elf32Hdr->e_shstrndx >= Elf32Hdr->e_shnum) {
-        return (ElfCt->ParseStatus = EFI_UNSUPPORTED);
+      return (ElfCt->ParseStatus = EFI_UNSUPPORTED);
     }
 
     //
     // Check if the section headers are valid (e.g. not overlapping with ELF header)
     //
     if ((UINTN)Elf32Hdr->e_shoff < sizeof(Elf32_Ehdr)) {
-        return (ElfCt->ParseStatus = EFI_UNSUPPORTED);
+      return (ElfCt->ParseStatus = EFI_UNSUPPORTED);
     }
 
     Elf32Shdr = (Elf32_Shdr *)GetElf32SectionByIndex (ElfCt->FileBase, Elf32Hdr->e_shstrndx);
@@ -359,21 +359,21 @@ ParseElfImage (
     // Check for integer overflow in section table size calculation for 64-bit ELF
     //
     if ((UINTN)Elf64Hdr->e_shnum * (UINTN)Elf64Hdr->e_shentsize > MAX_UINTN - (UINTN)Elf64Hdr->e_shoff) {
-        return (ElfCt->ParseStatus = EFI_UNSUPPORTED);
+      return (ElfCt->ParseStatus = EFI_UNSUPPORTED);
     }
 
     //
     // Check if index is valid before calling GetElf64SectionByIndex
     //
     if (Elf64Hdr->e_shstrndx >= Elf64Hdr->e_shnum) {
-        return (ElfCt->ParseStatus = EFI_UNSUPPORTED);
+      return (ElfCt->ParseStatus = EFI_UNSUPPORTED);
     }
 
     //
     // Check if the section headers are valid (e.g. not overlapping with ELF header)
     //
     if ((UINTN)Elf64Hdr->e_shoff < sizeof(Elf64_Ehdr)) {
-        return (ElfCt->ParseStatus = EFI_UNSUPPORTED);
+      return (ElfCt->ParseStatus = EFI_UNSUPPORTED);
     }
 
     //
@@ -381,7 +381,7 @@ ParseElfImage (
     //
     if ((ElfCt->FileSize != MAX_UINTN) &&
         ((UINTN)Elf64Hdr->e_shoff + (UINTN)Elf64Hdr->e_shnum * (UINTN)Elf64Hdr->e_shentsize > ElfCt->FileSize)) {
-        return (ElfCt->ParseStatus = EFI_UNSUPPORTED);
+      return (ElfCt->ParseStatus = EFI_UNSUPPORTED);
     }
 
     Elf64Shdr = (Elf64_Shdr *)GetElf64SectionByIndex (ElfCt->FileBase, Elf64Hdr->e_shstrndx);
@@ -423,7 +423,7 @@ ParseElfImage (
   ASSERT(ElfCt->PhNum < MAX_ELF_PHNUM);
 
   //
-  // Use to later in check to detect segment overlap, need to keep track of all loaded segments.
+  // Used later in check to detect segment overlap, need to keep track of all loaded segments.
   // To avoid using stack memory for segment (potentially MAX_ELF_PHNUM running into __chkstk guard issue
   // on Windows build), allocate buffer to store the loaded segments info if PhNum is larger than 0.
   //
@@ -473,19 +473,19 @@ ParseElfImage (
     // Check for integer overflow when calculating End
     //
     if (SegInfo.MemAddr + SegInfo.MemLen < SegInfo.MemAddr) {
-        ElfCt->ParseStatus = EFI_UNSUPPORTED;
-        goto Error;
+      ElfCt->ParseStatus = EFI_UNSUPPORTED;
+      goto Error;
     }
 
     //
     // Check for overlap with previous segments
     //
     for (Index2 = 0; Index2 < LoadSegCount; Index2++) {
-        if (!((SegInfo.MemAddr + SegInfo.MemLen <= SegInfoLite[Index2].MemAddr) ||
-              (SegInfo.MemAddr >= SegInfoLite[Index2].MemAddr + SegInfoLite[Index2].MemLen))) {
-            ElfCt->ParseStatus = EFI_UNSUPPORTED;
-            goto Error;
-        }
+      if (!((SegInfo.MemAddr + SegInfo.MemLen <= SegInfoLite[Index2].MemAddr) ||
+            (SegInfo.MemAddr >= SegInfoLite[Index2].MemAddr + SegInfoLite[Index2].MemLen))) {
+        ElfCt->ParseStatus = EFI_UNSUPPORTED;
+        goto Error;
+      }
     }
 
     SegInfoLite[LoadSegCount].MemAddr = SegInfo.MemAddr;
@@ -502,8 +502,8 @@ ParseElfImage (
     // Check for integer overflow when calculating End with alignment
     //
     if ((MAX_UINTN - (SegInfo.MemAddr + SegInfo.MemLen)) < (SegInfo.Alignment - 1)) {
-        ElfCt->ParseStatus = EFI_UNSUPPORTED;
-        goto Error;
+      ElfCt->ParseStatus = EFI_UNSUPPORTED;
+      goto Error;
     }
 
     if (End < ALIGN_VALUE (SegInfo.MemAddr + SegInfo.MemLen, SegInfo.Alignment) - 1) {
