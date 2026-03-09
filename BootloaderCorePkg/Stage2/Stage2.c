@@ -273,7 +273,7 @@ NormalBootPath (
     DEBUG ((DEBUG_INFO, "ELF Format Payload\n"));
     // Assume Universal Payload first
     ZeroMem (&PayloadInfo, sizeof(PayloadInfo));
-    Status = LoadElfPayload (Dst, &PayloadInfo);
+    Status = LoadElfPayload (Dst, (UINTN)Stage2Param->PayloadActualLength, &PayloadInfo);
     if (!EFI_ERROR(Status)) {
       if (PayloadInfo.Info.Identifier == UNIVERSAL_PAYLOAD_IDENTIFIER) {
         DEBUG ((DEBUG_INFO, "Universal Payload %a v%08X\n", PayloadInfo.Info.ImageId, PayloadInfo.Info.Revision));

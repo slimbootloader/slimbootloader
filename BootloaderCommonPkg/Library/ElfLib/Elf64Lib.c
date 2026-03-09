@@ -74,10 +74,18 @@ RelocateElf64Sections  (
   UINT64           *Ptr64;
   UINT32           RelType;
   UINTN            Delta;
+  UINT64           Remainder;
 
   Elf64Hdr  = (Elf64_Ehdr *)ElfCt->FileBase;
   if (Elf64Hdr->e_machine != EM_X86_64) {
     return EFI_UNSUPPORTED;
+  }
+
+  //
+  // Check against section header table overflow
+  //
+  if ((UINTN)Elf64Hdr->e_shoff + (UINTN)Elf64Hdr->e_shnum * (UINTN)Elf64Hdr->e_shentsize > ElfCt->FileSize) {
+    return EFI_INVALID_PARAMETER;
   }
 
   Delta  = (UINTN) ElfCt->ImageAddress - (UINTN) ElfCt->PreferredImageAddress;
@@ -95,7 +103,28 @@ RelocateElf64Sections  (
         continue;
       }
 
-      ASSERT (Rel64Shdr->sh_size < NAX_ELF_RELOC_SECT_SIZE);
+      ASSERT (Rel64Shdr->sh_size < MAX_ELF_RELOC_SECT_SIZE);
+
+      //
+      // Check against malformed or truncated relocation tables where the last entry might be incomplete,
+      // Use DivU64x64Remainder to avoid intrinsic call to __umoddi3
+      //
+      if (Rel64Shdr->sh_entsize == 0) {
+        return EFI_INVALID_PARAMETER;
+      }
+
+      DivU64x64Remainder (Rel64Shdr->sh_size, Rel64Shdr->sh_entsize, &Remainder);
+      if ((Rel64Shdr->sh_entsize < sizeof (Elf64_Rel)) || (Remainder != 0)) {
+        return EFI_INVALID_PARAMETER;
+      }
+
+      //
+      // Check relocation section bounds
+      //
+      if ((UINTN)Rel64Shdr->sh_offset + (UINTN)Rel64Shdr->sh_size > ElfCt->FileSize) {
+        return EFI_INVALID_PARAMETER;
+      }
+
       for (RelIdx = 0; RelIdx < Rel64Shdr->sh_size; RelIdx += Rel64Shdr->sh_entsize) {
         Rel64Entry = (Elf64_Rel *)((UINT8*)Elf64Hdr + Rel64Shdr->sh_offset + RelIdx);
         RelType = ELF64_R_TYPE(Rel64Entry->r_info);
@@ -109,10 +138,30 @@ RelocateElf64Sections  (
             break;
           case R_X86_64_64:
             Ptr64   = (UINT64 *)(UINTN)(Rel64Entry->r_offset + Delta);
+
+            //
+            // Sanity check for the relocation address
+            //
+            if (((UINTN)Ptr64 < (UINTN)ElfCt->ImageAddress) ||
+                ((UINTN)Ptr64 + sizeof(UINT64) > (UINTN)ElfCt->ImageAddress + ElfCt->ImageSize)) {
+              DEBUG ((DEBUG_ERROR, "Relocation target out of bounds: 0x%p\n", Ptr64));
+              return EFI_LOAD_ERROR;
+            }
+
             *Ptr64 += Delta;
             break;
           case R_X86_64_32:
             Ptr32   = (UINT32 *)(UINTN)(Rel64Entry->r_offset + Delta);
+
+            //
+            // Sanity check for the relocation address
+            //
+            if (((UINTN)Ptr32 < (UINTN)ElfCt->ImageAddress) ||
+                ((UINTN)Ptr32 + sizeof(UINT32) > (UINTN)ElfCt->ImageAddress + ElfCt->ImageSize)) {
+              DEBUG ((DEBUG_ERROR, "Relocation target out of bounds: 0x%p\n", Ptr32));
+              return EFI_LOAD_ERROR;
+            }
+
             *Ptr32 += (UINT32)Delta;
             break;
           default:
@@ -156,6 +205,14 @@ LoadElf64Image (
   // Per the sprit of ELF, loading to memory only consumes info from program headers.
   //
   Elf64Hdr       = (Elf64_Ehdr *)ElfCt->FileBase;
+
+  //
+  // Check against program header table overflow
+  //
+  if ((UINTN)Elf64Hdr->e_phoff + (UINTN)Elf64Hdr->e_phnum * (UINTN)Elf64Hdr->e_phentsize > ElfCt->FileSize) {
+    return EFI_INVALID_PARAMETER;
+  }
+
   ProgramHdrBase = (Elf64_Phdr *)(ElfCt->FileBase + Elf64Hdr->e_phoff);
   ASSERT(Elf64Hdr->e_phnum < MAX_ELF_PHNUM);
   for (Index = 0; Index < Elf64Hdr->e_phnum; Index++) {
@@ -174,15 +231,29 @@ LoadElf64Image (
     // Note: CopyMem() does nothing when the dst equals to src.
     //
     Delta = (UINTN) ProgramHdr->p_paddr - (UINTN) ElfCt->PreferredImageAddress;
+
+    //
+    // Check bounds for file read and memory write
+    //
+    if ((UINTN)ProgramHdr->p_offset + (UINTN)ProgramHdr->p_filesz > ElfCt->FileSize) {
+      return EFI_INVALID_PARAMETER;
+    }
+
+    if (Delta + (UINTN)ProgramHdr->p_memsz > ElfCt->ImageSize) {
+      return EFI_INVALID_PARAMETER;
+    }
+
     CopyMem (ElfCt->ImageAddress + Delta, ElfCt->FileBase + (UINTN) ProgramHdr->p_offset, (UINTN) ProgramHdr->p_filesz);
     ZeroMem (ElfCt->ImageAddress + Delta + (UINTN) ProgramHdr->p_filesz, (UINTN) (ProgramHdr->p_memsz - ProgramHdr->p_filesz));
   }
 
   //
-  // Relocate when new new image base is not the preferred image base.
+  // Relocate when new image base is not the preferred image base.
   //
-  if (ElfCt->ImageAddress != ElfCt->PreferredImageAddress) {
-    RelocateElf64Sections (ElfCt);
+  if ((UINTN)ElfCt->ImageAddress != (UINTN)ElfCt->PreferredImageAddress) {
+    if (EFI_ERROR (RelocateElf64Sections (ElfCt))) {
+      return EFI_LOAD_ERROR;
+    }
   }
 
   return EFI_SUCCESS;

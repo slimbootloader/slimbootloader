@@ -79,6 +79,13 @@ RelocateElf32Sections  (
     return EFI_UNSUPPORTED;
   }
 
+  //
+  // Check against section header table overflow
+  //
+  if ((UINTN)Elf32Hdr->e_shoff + (UINTN)Elf32Hdr->e_shnum * (UINTN)Elf32Hdr->e_shentsize > ElfCt->FileSize) {
+    return EFI_INVALID_PARAMETER;
+  }
+
   Delta  = (UINTN) ElfCt->ImageAddress - (UINTN) ElfCt->PreferredImageAddress;
   CurPtr = ElfCt->FileBase + Elf32Hdr->e_shoff;
   ASSERT(Elf32Hdr->e_shnum < MAX_ELF_SHNUM);
@@ -93,8 +100,25 @@ RelocateElf32Sections  (
       if (!IsTextShdr(Sec32Shdr) && !IsDataShdr(Sec32Shdr)) {
         continue;
       }
-      DEBUG ((DEBUG_INFO, "Relocate SEC %d\n", Rel32Shdr->sh_info));
-      ASSERT (Rel32Shdr->sh_size < NAX_ELF_RELOC_SECT_SIZE);
+
+      ASSERT (Rel32Shdr->sh_size < MAX_ELF_RELOC_SECT_SIZE);
+
+      //
+      // Check against malformed or truncated relocation tables where the last entry might be incomplete,
+      //
+      if ((Rel32Shdr->sh_entsize == 0) ||
+          (Rel32Shdr->sh_entsize < sizeof (Elf32_Rel)) ||
+          ((Rel32Shdr->sh_size % Rel32Shdr->sh_entsize) != 0)) {
+        return EFI_INVALID_PARAMETER;
+      }
+
+      //
+      // Check relocation section bounds
+      //
+      if ((UINTN)Rel32Shdr->sh_offset + (UINTN)Rel32Shdr->sh_size > ElfCt->FileSize) {
+        return EFI_INVALID_PARAMETER;
+      }
+
       for (RelIdx = 0; RelIdx < Rel32Shdr->sh_size; RelIdx += Rel32Shdr->sh_entsize) {
         Rel32Entry = (Elf32_Rel *)((UINT8*)Elf32Hdr + Rel32Shdr->sh_offset + RelIdx);
         RelType = ELF32_R_TYPE(Rel32Entry->r_info);
@@ -110,6 +134,16 @@ RelocateElf32Sections  (
             // Creates a relative relocation entry from the absolute entry.
             //
             Ptr32 = (UINT32 *) (UINTN) (Rel32Entry->r_offset + Delta);
+
+            //
+            // Sanity check for the relocation address
+            //
+            if (((UINTN)Ptr32 < (UINTN)ElfCt->ImageAddress) ||
+                ((UINTN)Ptr32 + sizeof(UINT32) > (UINTN)ElfCt->ImageAddress + ElfCt->ImageSize)) {
+              DEBUG ((DEBUG_ERROR, "Relocation target out of bounds: 0x%p\n", Ptr32));
+              return EFI_LOAD_ERROR;
+            }
+
             *Ptr32 += (UINT32) Delta;
             break;
           default:
@@ -153,6 +187,14 @@ LoadElf32Image (
   // Per the sprit of ELF, loading to memory only consumes info from program headers.
   //
   Elf32Hdr       = (Elf32_Ehdr *)ElfCt->FileBase;
+
+  //
+  // Check against program header table overflow
+  //
+  if ((UINTN)Elf32Hdr->e_phoff + (UINTN)Elf32Hdr->e_phnum * (UINTN)Elf32Hdr->e_phentsize > ElfCt->FileSize) {
+    return EFI_INVALID_PARAMETER;
+  }
+
   ProgramHdrBase = (Elf32_Phdr *)(ElfCt->FileBase + Elf32Hdr->e_phoff);
   ASSERT(Elf32Hdr->e_phnum < MAX_ELF_PHNUM);
   for (Index = 0; Index < Elf32Hdr->e_phnum; Index++) {
@@ -171,15 +213,29 @@ LoadElf32Image (
     // Note: CopyMem() does nothing when the dst equals to src.
     //
     Delta = ProgramHdr->p_paddr - (UINT32) (UINTN) ElfCt->PreferredImageAddress;
+
+    //
+    // Check bounds for file read and memory write
+    //
+    if ((UINTN)ProgramHdr->p_offset + (UINTN)ProgramHdr->p_filesz > ElfCt->FileSize) {
+      return EFI_INVALID_PARAMETER;
+    }
+
+    if (Delta + (UINTN)ProgramHdr->p_memsz > ElfCt->ImageSize) {
+      return EFI_INVALID_PARAMETER;
+    }
+
     CopyMem (ElfCt->ImageAddress + Delta, ElfCt->FileBase + ProgramHdr->p_offset, ProgramHdr->p_filesz);
     ZeroMem (ElfCt->ImageAddress + Delta + ProgramHdr->p_filesz, ProgramHdr->p_memsz - ProgramHdr->p_filesz);
   }
 
   //
-  // Relocate when new new image base is not the preferred image base.
+  // Relocate when new image base is not the preferred image base.
   //
-  if (ElfCt->ImageAddress != ElfCt->PreferredImageAddress) {
-    RelocateElf32Sections (ElfCt);
+  if ((UINTN)ElfCt->ImageAddress != (UINTN)ElfCt->PreferredImageAddress) {
+    if (EFI_ERROR (RelocateElf32Sections (ElfCt))) {
+      return EFI_LOAD_ERROR;
+    }
   }
 
   return EFI_SUCCESS;
