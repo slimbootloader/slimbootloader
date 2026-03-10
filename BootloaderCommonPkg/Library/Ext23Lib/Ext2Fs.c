@@ -173,8 +173,16 @@ BDevStrategy (
   }
 
   Startblockno = BlockNum + PrivateData->StartBlock;
+
+  //
+  // Check if the start block is within the valid range
+  //
+  if ((Startblockno < PrivateData->StartBlock) || (Startblockno > PrivateData->LastBlock)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
   if (ReadWrite == F_READ) {
-    Status = MediaReadBlocks (PrivateData->PhysicalDevNo, (UINT32)Startblockno, Size, Buf);
+    Status = MediaReadBlocks (PrivateData->PhysicalDevNo, (EFI_PEI_LBA)Startblockno, Size, Buf);
     if (RETURN_ERROR (Status)) {
       return Status;
     }
@@ -211,6 +219,14 @@ ReadInode (
 
   Fp = (FILE *)File->FileSystemSpecificData;
   FileSystem = Fp->SuperBlockPtr;
+
+  if (INumber == 0 || INumber > FileSystem->Ext2Fs.Ext2FsINodeCount) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (INOTOCG(FileSystem, INumber) >= (UINT32)FileSystem->Ext2FsNumCylinder) {
+    return EFI_INVALID_PARAMETER;
+  }
 
   Ext2FsGrpDes = &FileSystem->Ext2FsGrpDes[INOTOCG(FileSystem, INumber)];
 
@@ -276,23 +292,39 @@ BlockMap (
   INDPTR   *Buf;
   UINT32    Index;
   UINT64    NextLevelNode;
+  UINT32    MaxEntries;
+  UINT16    CurrentDepth;
   EXT4_EXTENT_TABLE *Etable;
   EXT4_EXTENT_INDEX *ExtIndex;
   EXT4_EXTENT       *Extent;
-  RETURN_STATUS     Status;
+  RETURN_STATUS      Status;
 
   Fp = (FILE *)File->FileSystemSpecificData;
   FileSystem = Fp->SuperBlockPtr;
   Buf = (VOID *)Fp->Buffer;
 
+  if (FileBlock < 0) {
+    return EFI_INVALID_PARAMETER;
+  }
+
   if ((Fp->DiskInode.Ext2DInodeStatusFlags & EXT4_EXTENTS) != 0) {
     Etable = (EXT4_EXTENT_TABLE*) &(Fp->DiskInode.Ext2DInodeBlocks);
     if (Etable->Eheader.EhMagic != EXT4_EXTENT_HEADER_MAGIC) {
-        DEBUG ((DEBUG_ERROR, "EXT4 extent header magic mismatch 0x%X!\n", Etable->Eheader.EhMagic));
-        return EFI_DEVICE_ERROR;
+      DEBUG ((DEBUG_ERROR, "EXT4 extent header magic mismatch 0x%X!\n", Etable->Eheader.EhMagic));
+      return EFI_DEVICE_ERROR;
     }
 
+    CurrentDepth = Etable->Eheader.EhDepth;
+    // Root Node extent tree i_block is 60 bytes. Header is 12. Index/Leaf is 12. Max 4 entries.
+    // However, the spec says i_block can hold a header and 4 extents.
+    MaxEntries = 4;
+
     while (Etable->Eheader.EhDepth > 0) {
+      if (Etable->Eheader.EhEntries > MaxEntries) {
+        DEBUG ((DEBUG_ERROR, "EXT4 extent entries %d > max %d\n", Etable->Eheader.EhEntries, MaxEntries));
+        return EFI_DEVICE_ERROR;
+      }
+
       ExtIndex = NULL;
 
       /* if only one entry exists, the first entry should be used */
@@ -332,13 +364,35 @@ BlockMap (
 
         Etable = (EXT4_EXTENT_TABLE*) Buf;
         if (Etable->Eheader.EhMagic != EXT4_EXTENT_HEADER_MAGIC) {
-            DEBUG ((DEBUG_ERROR, "EXT4 extent header magic mismatch 0x%X!\n", Etable->Eheader.EhMagic));
-            return EFI_DEVICE_ERROR;
+          DEBUG ((DEBUG_ERROR, "EXT4 extent header magic mismatch 0x%X!\n", Etable->Eheader.EhMagic));
+          return EFI_DEVICE_ERROR;
         }
+
+        //
+        // Depth must decrease strictly to avoid loops
+        //
+        if (Etable->Eheader.EhDepth >= CurrentDepth) {
+          DEBUG ((DEBUG_ERROR, "EXT4 extent depth loop detected! New %d >= Old %d\n", Etable->Eheader.EhDepth, CurrentDepth));
+          return EFI_DEVICE_ERROR;
+        }
+        CurrentDepth = Etable->Eheader.EhDepth;
+
+        //
+        // Block-based extent node can have more entries
+        //
+        MaxEntries = (FileSystem->Ext2FsBlockSize - 12) / 12; // Header 12, Entry 12
       } else {
         DEBUG ((DEBUG_ERROR, "Could not find FileBlock #%d in the index extent data!\n", FileBlock));
         return EFI_NO_MAPPING;
       }
+    }
+
+    //
+    // Also check entries for Leaf node
+    //
+    if (Etable->Eheader.EhEntries > MaxEntries) {
+      DEBUG ((DEBUG_ERROR, "EXT4 extent leaf entries %d > max %d\n", Etable->Eheader.EhEntries, MaxEntries));
+      return EFI_DEVICE_ERROR;
     }
 
     Extent = NULL;
@@ -380,17 +434,16 @@ BlockMap (
 
     for (Level = 0;;) {
       Level += Fp->NiShift;
-      if (FileBlock < (INDPTR)1 << Level) {
+      if (FileBlock < (INDPTR)LShiftU64 (1, Level)) {
         break;
       }
-      if (Level > NIADDR * Fp->NiShift)
+      if (Level > NIADDR * Fp->NiShift) {
         //
         // Block number too high
         //
-      {
         return EFI_OUT_OF_RESOURCES;
       }
-      FileBlock -= (INDPTR)1 << Level;
+      FileBlock -= (INDPTR)LShiftU64 (1, Level);
     }
 
     IndBlockNum =
@@ -559,20 +612,45 @@ SearchDirectory (
     EdPtr = (EXT2FS_DIRECT *) (Buf + BufSize);
     for (; Dp < EdPtr;
          Dp = (VOID *) ((CHAR8 *)Dp + Dp->Ext2DirectRecLen)) {
-      if (Dp->Ext2DirectRecLen <= 0) {
+      //
+      // header size check (RecLen and Inode)
+      //
+      if ((CHAR8 *)Dp + 8 > (CHAR8 *)EdPtr) {
+        break;
+      }
+
+      //
+      // Check for valid RecLen to prevent OOB
+      // 1. RecLen must be at least 8 bytes (header size)
+      // 2. RecLen must be 4-byte aligned
+      // 3. Entry must not exceed buffer boundary
+      //
+      if ((Dp->Ext2DirectRecLen < 8) ||
+          ((Dp->Ext2DirectRecLen & 3) != 0) ||
+          ((CHAR8 *)Dp + Dp->Ext2DirectRecLen > (CHAR8 *)EdPtr)) {
         break;
       }
       if (Dp->Ext2DirectInodeNumber == (INODE32)0) {
         continue;
       }
       NameLen = Dp->Ext2DirectNameLen;
+      if (NameLen > Dp->Ext2DirectRecLen - 8) {
+         continue;
+      }
       if (NameLen == Length &&
           !CompareMem (Name, Dp->Ext2DirectName, Length)) {
         //
         // found entry
         //
         *INumPtr = Dp->Ext2DirectInodeNumber;
-        AsciiStrCpyS (File->FileNameBuf, EXT2FS_MAXNAMLEN, Name);
+        //
+        // Safe copy of the name (up to MAXNAMLEN - 1 to ensure null termination)
+        //
+        if (Length >= EXT2FS_MAXNAMLEN) {
+          Length = EXT2FS_MAXNAMLEN - 1;
+        }
+        CopyMem (File->FileNameBuf, Name, Length);
+        File->FileNameBuf[Length] = '\0';
         return 0;
       }
     }
@@ -605,6 +683,7 @@ Ext2SbValidate (
   UINT32 BufSize;
   RETURN_STATUS Rc;
   UINT32 SbOffset;
+  UINT32 ReadSize;
 
   Rc = 0;
   Buffer = NULL;
@@ -616,7 +695,8 @@ Ext2SbValidate (
 
   PrivateData = (PEI_EXT_PRIVATE_DATA *)FsHandle;
 
-  Buffer = AllocatePool ((PrivateData->BlockSize > SBSIZE) ? PrivateData->BlockSize : SBSIZE);
+  ReadSize = (PrivateData->BlockSize > SBSIZE) ? PrivateData->BlockSize : SBSIZE;
+  Buffer = AllocateZeroPool (ReadSize);
   if (Buffer == NULL) {
     Rc = EFI_OUT_OF_RESOURCES;
     goto Exit;
@@ -624,10 +704,10 @@ Ext2SbValidate (
 
   if (File == NULL) {
     Rc = BDevStrategy (PrivateData, F_READ,
-                       SBOFF / PrivateData->BlockSize, PrivateData->BlockSize, Buffer, &BufSize);
+                       SBOFF / PrivateData->BlockSize, ReadSize, Buffer, &BufSize);
   } else {
     Rc = DEV_STRATEGY (File->DevPtr) (PrivateData, F_READ,
-                                      SBOFF / PrivateData->BlockSize, PrivateData->BlockSize,
+                                      SBOFF / PrivateData->BlockSize, ReadSize,
                                       Buffer, &BufSize);
   }
 
@@ -654,6 +734,25 @@ Ext2SbValidate (
   if (Ext2Fs->Ext2FsRev == E2FS_REV0) {
     Ext2Fs->Ext2FsFirstInode = 11;
     Ext2Fs->Ext2FsInodeSize  = 128;
+  }
+
+  //
+  // Validate block size and group descriptor limits to prevent integer overflows and divide by zero
+  //
+  if ((Ext2Fs->Ext2FsLogBlockSize > 16) ||
+      (Ext2Fs->Ext2FsBlocksPerGroup == 0) ||
+      (Ext2Fs->Ext2FsINodesPerGroup == 0)) {
+    Rc = EFI_UNSUPPORTED;
+    goto Exit;
+  }
+
+  if ((Ext2Fs->Ext2FsFeaturesIncompat & EXT2F_INCOMPAT_64BIT) != 0) {
+    if ((Ext2Fs->Ext2FsGDSize == 0) ||
+        (Ext2Fs->Ext2FsGDSize > (MINBSIZE << Ext2Fs->Ext2FsLogBlockSize))) {
+      DEBUG ((DEBUG_ERROR, "EXT2: Invalid group descriptor size %d\n", Ext2Fs->Ext2FsGDSize));
+      Rc = EFI_UNSUPPORTED;
+      goto Exit;
+    }
   }
 
   if (RExt2Fs != NULL) {
@@ -702,6 +801,15 @@ ReadSBlock (
   FileSystem->Ext2FsNumCylinder       =
     HOWMANY (FileSystem->Ext2Fs.Ext2FsBlockCount - FileSystem->Ext2Fs.Ext2FsFirstDataBlock,
              FileSystem->Ext2Fs.Ext2FsBlocksPerGroup);
+
+  //
+  // Validate number of groups to prevent integer overflow in allocation size
+  // and excessive memory usage. Limit to ~1 million groups (32MB descriptor table).
+  //
+  if (FileSystem->Ext2FsNumCylinder > EXT2_MAX_BLOCK_GROUPS) {
+    DEBUG ((DEBUG_ERROR, "Ext2: Too many groups %d (Max %d)\n", FileSystem->Ext2FsNumCylinder, EXT2_MAX_BLOCK_GROUPS));
+    return EFI_UNSUPPORTED;
+  }
 
   FileSystem->Ext2FsFsbtobd           = (INT32)(FileSystem->Ext2Fs.Ext2FsLogBlockSize + 10) - (INT32)HighBitSet32 (PrivateData->BlockSize);
   FileSystem->Ext2FsBlockSize         = MINBSIZE << FileSystem->Ext2Fs.Ext2FsLogBlockSize;
@@ -778,7 +886,7 @@ ReadGDBlock (
         Ptr = Fp->Buffer + (i * FileSystem->Ext2FsGDSize);
         E2FS_CGLOAD (Ptr,
                      &FileSystem->Ext2FsGrpDes[Index * gdpb + i],
-                     FileSystem->Ext2FsGDSize);
+                     (FileSystem->Ext2FsGDSize > sizeof (EXT2GD)) ? sizeof (EXT2GD) : FileSystem->Ext2FsGDSize);
       }
     }
   }
@@ -819,6 +927,7 @@ Ext2fsOpen (
 
   Nlinks = 0;
   CHAR8 SymFileNameBuf[EXT2FS_MAXNAMLEN];
+  SetMem (SymFileNameBuf, EXT2FS_MAXNAMLEN, 0);
 #endif
 
   INDPTR mult;
@@ -859,15 +968,20 @@ Ext2fsOpen (
   // alloc a block sized buffer used for all FileSystem transfers
   //
   Fp->Buffer = AllocatePool (FileSystem->Ext2FsBlockSize);
+  if (Fp->Buffer == NULL) {
+    Status = EFI_OUT_OF_RESOURCES;
+    goto out;
+  }
+
   //
   // read group descriptor blocks
   //
-  // Invalid Ext2FsNumCylinder could overflow UINTN
-  if ((UINT32)(FileSystem->Ext2FsNumCylinder) >= (MAX_UINTN/sizeof(EXT2GD))) {
-    Status = EFI_DEVICE_ERROR;
+  FileSystem->Ext2FsGrpDes = AllocatePool (sizeof(EXT2GD) * FileSystem->Ext2FsNumCylinder);
+  if (FileSystem->Ext2FsGrpDes == NULL) {
+    Status = EFI_OUT_OF_RESOURCES;
     goto out;
   }
-  FileSystem->Ext2FsGrpDes = AllocatePool (sizeof(EXT2GD) * FileSystem->Ext2FsNumCylinder);
+
   Status = ReadGDBlock (File, FileSystem);
   if (RETURN_ERROR (Status)) {
     goto out;
@@ -960,18 +1074,20 @@ Ext2fsOpen (
       UINTN Len;
 
       LinkLength = Fp->DiskInode.Ext2DInodeSize;
-
       Len = AsciiStrLen (Cp);
 
-      if (Nlinks == 0) {
-        /* copy the top-most filename */
-        AsciiStrCpyS (SymFileNameBuf, EXT2FS_MAXNAMLEN, Ncp);
-      }
-
-      if (((LinkLength + Len) > MAXPATHLEN) ||
+      //
+      // Check for symbolic link loops and path length overflow
+      //
+      if ((LinkLength > MAXPATHLEN) || (Len > MAXPATHLEN - LinkLength) ||
           ((++Nlinks) > MAXSYMLINKS)) {
         Status = RETURN_LOAD_ERROR;
         goto out;
+      }
+
+      if (Nlinks == 0) {
+        /* copy the top-most filename */
+        AsciiStrnCpyS (SymFileNameBuf, EXT2FS_MAXNAMLEN, Ncp, (UINTN)(Cp - Ncp));
       }
 
       CopyMem (&NameBuf[LinkLength], Cp, Len + 1);
@@ -984,6 +1100,11 @@ Ext2fsOpen (
         //
         UINT32 BufSize;
         INDPTR    DiskBlock;
+
+        if (LinkLength > (UINTN)FileSystem->Ext2FsBlockSize) {
+          Status = RETURN_LOAD_ERROR;
+          goto out;
+        }
 
         Buf = Fp->Buffer;
         Status = BlockMap (File, (INDPTR)0, &DiskBlock);
@@ -1083,13 +1204,16 @@ Ext2fsClose (
     return RETURN_SUCCESS;
   }
 
-  if (Fp->SuperBlockPtr->Ext2FsGrpDes) {
-    FreePool (Fp->SuperBlockPtr->Ext2FsGrpDes);
+  if (Fp->SuperBlockPtr != NULL) {
+    if (Fp->SuperBlockPtr->Ext2FsGrpDes != NULL) {
+      FreePool (Fp->SuperBlockPtr->Ext2FsGrpDes);
+    }
+    FreePool (Fp->SuperBlockPtr);
   }
-  if (Fp->Buffer) {
+
+  if (Fp->Buffer != NULL) {
     FreePool (Fp->Buffer);
   }
-  FreePool (Fp->SuperBlockPtr);
   FreePool (Fp);
   return RETURN_SUCCESS;
 }

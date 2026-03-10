@@ -96,7 +96,7 @@ struct ENTRY {
   ENTRY    *EntryNext;
   INODE32  EntryInode;
   UINT8    EntryType;
-  CHAR8    EntryName[EXT2FS_MAXNAMLEN];
+  CHAR8    EntryName[EXT2FS_MAXNAMLEN + 1];
 };
 
 STATIC CONST CHAR8 *CONST mTypeStr[] = { "unknown", "REG",  "DIR",  "CHR",  "BLK",  "FIFO",  "SOCK",  "LNK" };
@@ -160,7 +160,18 @@ Ext2fsLs (
     EdPtr = (EXT2FS_DIRECT *)(Buf + BufSize);
 
     for (; Dp < EdPtr;  Dp = (VOID *) ((CHAR8 *)Dp + Dp->Ext2DirectRecLen)) {
-      if (Dp->Ext2DirectRecLen <= 0) {
+      //
+      // header size check (RecLen and Inode)
+      //
+      if ((CHAR8 *)Dp + 8 > (CHAR8 *)EdPtr) {
+        Status = EFI_DEVICE_ERROR;
+        goto out;
+      }
+
+      //
+      // Check for valid RecLen and valid pointer range to prevent OOB
+      //
+      if ((Dp->Ext2DirectRecLen <= 0) || ((CHAR8 *)Dp + Dp->Ext2DirectRecLen > (CHAR8 *)EdPtr)) {
         Status = EFI_DEVICE_ERROR;
         goto out;
       }
@@ -186,16 +197,32 @@ Ext2fsLs (
       }
       Type = mTypeStr[Dp->Ext2DirectType];
 
-      New = AllocateZeroPool (sizeof * New + AsciiStrLen (Dp->Ext2DirectName));
+      //
+      // Ext2 directory entries are not guaranteed to be null-terminated since store on-disk as
+      // raw bytes so not safe to use AsciiStrLen (Dp->Ext2DirectName) as it relies on null-terminated.
+      // Use Ext2DirectNameLen instead but validate it first.
+      // Also ensure RecLen is 4-byte aligned to prevent unaligned access on strict architectures.
+      //
+      if ((Dp->Ext2DirectRecLen < 8) ||
+          (Dp->Ext2DirectNameLen > Dp->Ext2DirectRecLen - 8) ||
+          (Dp->Ext2DirectNameLen > EXT2FS_MAXNAMLEN) ||
+          ((Dp->Ext2DirectRecLen & 3) != 0)) {
+        //
+        // Skip invalid name length or rec length
+        //
+        continue;
+      }
+
+      New = AllocateZeroPool (sizeof * New);
       if (New == NULL) {
-        DEBUG ((DEBUG_INFO, "%d: %s (%s)\n",
+        DEBUG ((DEBUG_INFO, "%d: (Buffer Allocation failed) (%s) (%s)\n",
                 Dp->Ext2DirectInodeNumber, Dp->Ext2DirectName, Type));
         continue;
       }
 
       New->EntryInode = Dp->Ext2DirectInodeNumber;
       New->EntryType  = Dp->Ext2DirectType;
-      AsciiStrCpyS (New->EntryName, EXT2FS_MAXNAMLEN, Dp->Ext2DirectName);
+      CopyMem (New->EntryName, Dp->Ext2DirectName, Dp->Ext2DirectNameLen);
       New->EntryName[Dp->Ext2DirectNameLen] = '\0';
       for (NextPtr = &Names; *NextPtr != NULL; NextPtr = & (*NextPtr)->EntryNext) {
           if (AsciiStrCmp (New->EntryName, (*NextPtr)->EntryName) < 0) {
