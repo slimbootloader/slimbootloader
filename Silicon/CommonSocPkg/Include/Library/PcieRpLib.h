@@ -1,7 +1,7 @@
 /** @file
   This file contains definitions of PCIe controller information
 
-  Copyright (c) 2024, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -20,30 +20,6 @@ typedef struct {
   UINT32 ForceOverride                : 1;
   UINT32 Reserved                     : 7;
 } LTR_OVERRIDE;
-
-/**
-  Get PCIe port number for enabled Root Port.
-
-  @param[in] RpBase    Root Port pci segment base address
-
-  @retval Root Port number (1 based)
-**/
-UINT32
-EFIAPI
-PciePortNum (
-  IN     UINT64  RpBase
-  );
-
-/**
-  Get PCIe root port index
-  @param[in] RpBase    Root Port pci segment base address
-  @return Root Port index (0 based)
-**/
-UINT32
-EFIAPI
-PciePortIndex (
-  IN     UINT64  RpBase
-  );
 
 /**
   This function checks whether PHY lane power gating is enabled on the port.

@@ -39,36 +39,14 @@
 
 #include <PcieRegs.h>
 
-
-#define N_PCIE_MEM_LPHYCP4_LGCLKSQEXITDBTIMERS 0
-#define N_PCIE_MEM_LPHYCP4_OSCCLKSQEXITDBTIMERS 3
-
-
-#define N_PCIE_MEM_PIPEPDCTL2_L1D1UPUPGPDCTL  4
-#define N_PCIE_MEM_PIPEPDCTL2_L1D1PGNOPGPDCTL 8
-
-#define N_PCIE_MEM_PIPEPDCTL3_L1DLOWNOPGPDCTL 0
-
-
-#define N_PCIE_MEM_PX32EQCFG1_PX32GMEQSMMFLNTL 1
-#define N_PCIE_MEM_PX32EQCFG1_PX32GEQTS2IRRC  7
-
-
 #define R_PCIE_CFG_LCAP                       0x0000004cU      ///< Link Capabilities
 #define N_PCIE_CFG_LCAP_PN                    24
-
 
 #define R_PCIE_CFG_CCFG                       0x000000d0U      ///< Channel Configuration
 #define B_PCIE_CFG_CCFG_UNRS                  ( BIT6 | BIT5 | BIT4 ) ///< Upstream Non-Posted Request Size
 #define N_PCIE_CFG_CCFG_UNRS                  4
 
-
-#define B_PCIE_CFG_LTROVR2_LTRSOVREN          BIT0             ///< LTR Snoop Override Enable
-#define B_PCIE_CFG_LTROVR2_LTRNSOVREN         BIT1             ///< LTR Non-Snoop Override Enable
-
-
 #define R_PCIE_CFG_LPCR                       0x00000c8cU      ///< Lock Policy Control Register
 #define B_PCIE_CFG_LPCR_LTRCFGLOCK            BIT16            ///< LTR Configuration Lock
-
 
 #endif

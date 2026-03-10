@@ -309,51 +309,6 @@ typedef struct _CONFIG_BLOCK_HEADER {
   UINT8             Attributes;                   ///< Offset 25    The main revision for config block
   UINT8             Reserved[2];                  ///< Offset 26-27 Reserved for future use
 } CONFIG_BLOCK_HEADER;
-/**
-  The PCH_PCIE_CONFIG block describes the expected configuration of the PCH PCI Express controllers
-  <b>Revision 1</b>:
-  - Initial version.
-  <b>Revision 2</b>:
-  - Moved EnablePort8xhDecode policy to PCIE_COMMON_CONFIG
-  <b>Revision 3</b>:
-  - Add DmiPowerGatingDis
-**/
-typedef struct {
-  CONFIG_BLOCK_HEADER   Header;                   ///< Config Block Header
-  ///
-  /// These members describe the configuration of each PCH PCIe root port.
-  ///
-  PCIE_COMMON_CONFIG                PcieCommonConfig;
-  PCH_PCIE_ROOT_PORT_CONFIG         RootPort[PCH_MAX_PCIE_ROOT_PORTS];
-  PCH_PCIE_ROOT_PORT_CONFIG         DmiPort;
-
-  ///
-  /// <b>(Test)</b> The Index of PCIe Port that is selected for Port8xh Decode (0 Based)
-  ///
-  UINT8                             PchPciePort8xhDecodePortIndex;
-  UINT8                             DmiPowerReduction;
-  UINT8                             DmiPowerGatingDis;
-  UINT8                             RsvdBytes0;
-} PCH_PCIE_CONFIG;
-
-/**
-  The PCIE_RP_DXE_CONFIG block describes the expected configuration of the PCH PCI Express controllers in DXE phase
-
-  <b>Revision 1</b>:
-  - Init version
-**/
-typedef struct {
-  CONFIG_BLOCK_HEADER      Header;                     ///< Config Block Header
-
-  /**
-    PCIe device override table
-    The PCIe device table is being used to override PCIe device ASPM settings.
-    And it's only used in DXE phase.
-    Please refer to PCIE_DEVICE_OVERRIDE structure for the table.
-    Last entry VendorId must be 0.
-  **/
-  PCIE_DEVICE_OVERRIDE     *PcieDeviceOverrideTablePtr;
-} PCIE_RP_DXE_CONFIG;
 
 #pragma pack (pop)
 
