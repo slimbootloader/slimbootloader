@@ -1,7 +1,7 @@
 /** @file
   PCIe Config Block
 
-  Copyright (c) 2024, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 #ifndef _PCIE_CONFIG_H_
@@ -11,43 +11,6 @@
 #define PCIE_LINK_EQ_PRESETS_MAX 11
 
 #pragma pack (push,1)
-
-enum PCIE_COMPLETION_TIMEOUT {
-  PcieCompletionTO_Default,
-  PcieCompletionTO_50_100us,
-  PcieCompletionTO_1_10ms,
-  PcieCompletionTO_16_55ms,
-  PcieCompletionTO_65_210ms,
-  PcieCompletionTO_260_900ms,
-  PcieCompletionTO_1_3P5s,
-  PcieCompletionTO_4_13s,
-  PcieCompletionTO_17_64s,
-  PcieCompletionTO_Disabled
-};
-
-typedef enum {
-  PcieAuto,
-  PcieGen1,
-  PcieGen2,
-  PcieGen3,
-  PcieGen4,
-  PcieGen5
-} PCIE_SPEED;
-
-typedef enum {
-  PcieDisabled,
-  PcieL1SUB_1,
-  PcieL1SUB_1_2
-}L1_SUBSTATES;
-
-/**
-  Represent lane specific PCIe Gen3 equalization parameters.
-**/
-typedef struct {
-  UINT8   Cm;                 ///< Coefficient C-1
-  UINT8   Cp;                 ///< Coefficient C+1
-  UINT8   Rsvd0[2];           ///< Reserved bytes
-} PCIE_EQ_PARAM;
 
 typedef struct {
   UINT16  LtrMaxSnoopLatency;                     ///< <b>(Test)</b> Latency Tolerance Reporting, Max Snoop Latency.
@@ -63,33 +26,6 @@ typedef struct {
   UINT8   LtrOverrideSpecComplaint;
   UINT8   RsvdByte1;
 } PCIE_LTR_CONFIG;
-
-/**
-  Specifies the form factor that the slot
-  implements. For custom form factors that
-  do not require any special handling please
-  set PcieFormFactorOther.
-**/
-typedef enum {
-  PcieFormFactorOther = 0,
-  PcieFormFactorCem,
-  PcieFormFactorMiniPci,
-  PcieFormFactorM2,
-  PcieFormFactorOcuLink,
-  PcieFormFactorExpressModule, // Also known as Server IO module(SIOM)
-  PcieFormFactorExpressCard,
-  PcieFormFactorU2 // Also known as SF-8639
-} PCIE_FORM_FACTOR;
-
-typedef enum {
-  PcieLinkHardwareEq = 0,  ///< Hardware is responsible for performing coefficient/preset search.
-  PcieLinkFixedEq          ///< No coefficient/preset search is performed. Fixed values are used.
-} PCIE_LINK_EQ_METHOD;
-
-typedef enum {
-  PcieLinkEqPresetMode = 0,   ///< Use presets during PCIe link equalization
-  PcieLinkEqCoefficientMode   ///< Use coefficients during PCIe link equalization
-} PCIE_LINK_EQ_MODE;
 
 typedef struct {
   UINT32  PreCursor;    ///< Pre-cursor coefficient
@@ -265,146 +201,6 @@ typedef struct {
   PCIE_LINK_EQ_PLATFORM_SETTINGS    PcieGen4LinkEqPlatformSettings;  ///< Global PCIe Gen4 link EQ settings that BIOS will use during PCIe link EQ for every port.
   PCIE_LINK_EQ_PLATFORM_SETTINGS    PcieGen5LinkEqPlatformSettings;  ///< Global PCIe Gen5 link EQ settings that BIOS will use during PCIe link EQ for every port.
 } PCIE_ROOT_PORT_COMMON_CONFIG;
-
-/**
-  PCIe Common Config
-  @note This structure will be expanded to hold all common PCIe policies between SA and PCH
-**/
-typedef struct {
-  /**
-    RpFunctionSwap allows BIOS to use root port function number swapping when root port of function 0 is disabled.
-    A PCIE device can have higher functions only when Function0 exists. To satisfy this requirement,
-    BIOS will always enable Function0 of a device that contains more than 0 enabled root ports.
-    - <b>Enabled: One of enabled root ports get assigned to Function0.</b>
-      This offers no guarantee that any particular root port will be available at a specific DevNr:FuncNr location
-    - Disabled: Root port that corresponds to Function0 will be kept visible even though it might be not used.
-      That way rootport - to - DevNr:FuncNr assignment is constant. This option will impact ports 1, 9, 17.
-      NOTE: This option will not work if ports 1, 9, 17 are fused or configured for RST PCIe storage or disabled through policy
-            In other words, it only affects ports that would become hidden because they have no device connected.
-      NOTE: Disabling function swap may have adverse impact on power management. This option should ONLY
-            be used when each one of root ports 1, 9, 17:
-        - is configured as PCIe and has correctly configured ClkReq signal, or
-        - does not own any mPhy lanes (they are configured as SATA or USB)
-  **/
-  UINT32  RpFunctionSwap                   :  1;
-  /**
-    Compliance Test Mode shall be enabled when using Compliance Load Board.
-    <b>0: Disable</b>, 1: Enable
-  **/
-  UINT32  ComplianceTestMode               :  1;
-  UINT32  RsvdBits0                        : 30;   ///< Reserved bits
-  ///
-  /// <b>(Test)</b> This member describes whether PCIE root port Port 8xh Decode is enabled. <b>0: Disable</b>; 1: Enable.
-  ///
-  UINT8  EnablePort8xhDecode;
-  UINT8  RsvdBytes0[3];
-} PCIE_COMMON_CONFIG;
-
-/**
-  PCIe device table entry entry
-
-  The PCIe device table is being used to override PCIe device ASPM settings.
-  To take effect table consisting of such entries must be instelled as PPI
-  on gPchPcieDeviceTablePpiGuid.
-  Last entry VendorId must be 0.
-**/
-typedef struct {
-  UINT16  VendorId;                    ///< The vendor Id of Pci Express card ASPM setting override, 0xFFFF means any Vendor ID
-  UINT16  DeviceId;                    ///< The Device Id of Pci Express card ASPM setting override, 0xFFFF means any Device ID
-  UINT8   RevId;                       ///< The Rev Id of Pci Express card ASPM setting override, 0xFF means all steppings
-  UINT8   BaseClassCode;               ///< The Base Class Code of Pci Express card ASPM setting override, 0xFF means all base class
-  UINT8   SubClassCode;                ///< The Sub Class Code of Pci Express card ASPM setting override, 0xFF means all sub class
-  UINT8   EndPointAspm;                ///< Override device ASPM (see: PCH_PCIE_ASPM_CONTROL)
-                                       ///< Bit 1 must be set in OverrideConfig for this field to take effect
-  UINT16  OverrideConfig;              ///< The override config bitmap (see: PCH_PCIE_OVERRIDE_CONFIG).
-  /**
-    The L1Substates Capability Offset Override. (applicable if bit 2 is set in OverrideConfig)
-    This field can be zero if only the L1 Substate value is going to be override.
-  **/
-  UINT16  L1SubstatesCapOffset;
-  /**
-    L1 Substate Capability Mask. (applicable if bit 2 is set in OverrideConfig)
-    Set to zero then the L1 Substate Capability [3:0] is ignored, and only L1s values are override.
-    Only bit [3:0] are applicable. Other bits are ignored.
-  **/
-  UINT8   L1SubstatesCapMask;
-  /**
-    L1 Substate Port Common Mode Restore Time Override. (applicable if bit 2 is set in OverrideConfig)
-    L1sCommonModeRestoreTime and L1sTpowerOnScale can have a valid value of 0, but not the L1sTpowerOnValue.
-    If L1sTpowerOnValue is zero, all L1sCommonModeRestoreTime, L1sTpowerOnScale, and L1sTpowerOnValue are ignored,
-    and only L1SubstatesCapOffset is override.
-  **/
-  UINT8   L1sCommonModeRestoreTime;
-  /**
-    L1 Substate Port Tpower_on Scale Override. (applicable if bit 2 is set in OverrideConfig)
-    L1sCommonModeRestoreTime and L1sTpowerOnScale can have a valid value of 0, but not the L1sTpowerOnValue.
-    If L1sTpowerOnValue is zero, all L1sCommonModeRestoreTime, L1sTpowerOnScale, and L1sTpowerOnValue are ignored,
-    and only L1SubstatesCapOffset is override.
-  **/
-  UINT8   L1sTpowerOnScale;
-  /**
-    L1 Substate Port Tpower_on Value Override. (applicable if bit 2 is set in OverrideConfig)
-    L1sCommonModeRestoreTime and L1sTpowerOnScale can have a valid value of 0, but not the L1sTpowerOnValue.
-    If L1sTpowerOnValue is zero, all L1sCommonModeRestoreTime, L1sTpowerOnScale, and L1sTpowerOnValue are ignored,
-    and only L1SubstatesCapOffset is override.
-  **/
-  UINT8   L1sTpowerOnValue;
-
-  /**
-    SnoopLatency bit definition
-    Note: All Reserved bits must be set to 0
-
-    BIT[15]     - When set to 1b, indicates that the values in bits 9:0 are valid
-                  When clear values in bits 9:0 will be ignored
-    BITS[14:13] - Reserved
-    BITS[12:10] - Value in bits 9:0 will be multiplied with the scale in these bits
-                  000b - 1 ns
-                  001b - 32 ns
-                  010b - 1024 ns
-                  011b - 32,768 ns
-                  100b - 1,048,576 ns
-                  101b - 33,554,432 ns
-                  110b - Reserved
-                  111b - Reserved
-    BITS[9:0]   - Snoop Latency Value. The value in these bits will be multiplied with
-                  the scale in bits 12:10
-
-    This field takes effect only if bit 3 is set in OverrideConfig.
-  **/
-  UINT16  SnoopLatency;
-  /**
-    NonSnoopLatency bit definition
-    Note: All Reserved bits must be set to 0
-
-    BIT[15]     - When set to 1b, indicates that the values in bits 9:0 are valid
-                  When clear values in bits 9:0 will be ignored
-    BITS[14:13] - Reserved
-    BITS[12:10] - Value in bits 9:0 will be multiplied with the scale in these bits
-                  000b - 1 ns
-                  001b - 32 ns
-                  010b - 1024 ns
-                  011b - 32,768 ns
-                  100b - 1,048,576 ns
-                  101b - 33,554,432 ns
-                  110b - Reserved
-                  111b - Reserved
-    BITS[9:0]   - Non Snoop Latency Value. The value in these bits will be multiplied with
-                  the scale in bits 12:10
-
-    This field takes effect only if bit 3 is set in OverrideConfig.
-  **/
-  UINT16  NonSnoopLatency;
-
-  /**
-    Forces LTR override to be permanent
-    The default way LTR override works is:
-      rootport uses LTR override values provided by BIOS until connected device sends an LTR message, then it will use values from the message
-    This settings allows force override of LTR mechanism. If it's enabled, then:
-      rootport will use LTR override values provided by BIOS forever; LTR messages sent from connected device will be ignored
-  **/
-  UINT8  ForceLtrOverride;
-  UINT8  Reserved[3];
-} PCIE_DEVICE_OVERRIDE;
 
 #pragma pack (pop)
 #endif // _PCIE_CONFIG_H_

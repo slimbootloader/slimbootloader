@@ -16,7 +16,11 @@ PCIe controller configuration.
 //
 // Device 1 Memory Mapped IO Register Offset Equates
 //
+#define SA_PEG_BUS_NUM     0x00
 #define SA_PEG_DEV_NUM     0x01
+#define SA_PEG0_FUN_NUM    0x00
 #define SA_PEG0_DEV_NUM    SA_PEG_DEV_NUM
 #define SA_PEG3_DEV_NUM    0x06
+#define SA_PEG1_DEV_NUM    SA_PEG_DEV_NUM
+
 #endif
