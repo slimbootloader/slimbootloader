@@ -396,3 +396,5 @@
 [PcdsFixedAtBuild]
   gPlatformCommonLibTokenSpaceGuid.PcdFipsSupport     | FALSE      | BOOLEAN | 0x20000226
   gPlatformCommonLibTokenSpaceGuid.PcdIppcrypto2Lib   | FALSE      | BOOLEAN | 0x20000227
+
+  gPlatformCommonLibTokenSpaceGuid.PcdUfsRefClockFrequency   |        0x0 | UINT8  | 0x20000230

@@ -1390,7 +1390,7 @@ InitializeUfs (
   UFS_CARD_REF_CLK_FREQ_ATTRIBUTE  Attributes,RefClkFreq;
   UINT8                            RefClkAttr;
 
-  RefClkFreq = UfsCardRefClkFreq19p2Mhz;
+  RefClkFreq = (UFS_CARD_REF_CLK_FREQ_ATTRIBUTE) PcdGet8 (PcdUfsRefClockFrequency);
   if (DevInitPhase == DevDeinit) {
     if (gPrivate != NULL) {
       Private = gPrivate;
@@ -1502,9 +1502,6 @@ InitializeUfs (
       continue;
     }
 
-    //
-    // Check the UFS device is initialized completed.
-    //
     Status = UfsFinishDeviceInitialization (Private);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "Device failed to finish initialization, Status = %r\n", Status));
