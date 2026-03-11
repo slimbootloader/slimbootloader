@@ -172,7 +172,7 @@ class Board(BaseBoard):
         self.SBLRSVD_SIZE         = 0x00001000
         self.FWUPDATE_SIZE        = 0x00020000 if self.ENABLE_FWU else 0
         # Need a little bit more for full paging table
-        self.OS_LOADER_FD_SIZE    = 0x00061000
+        self.OS_LOADER_FD_SIZE    = 0x00063000
         self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         # If BUILD_IDENTICAL_TS is 0, the flash map sizings and layout

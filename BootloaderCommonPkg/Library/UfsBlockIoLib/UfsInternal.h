@@ -28,6 +28,7 @@
 #define UFS_PEIM_HC_SIG             SIGNATURE_32 ('U', 'F', 'S', 'H')
 #define UFS_PEIM_MAX_LUNS           12
 #define UFS_INIT_COMPLETION_TIMEOUT 600000
+#define UFS_UIC_TIMEOUT             5000
 
 typedef struct {
   ///
