@@ -47,3 +47,4 @@
 
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdUfsPciHostControllerMmioBase
+  gPlatformCommonLibTokenSpaceGuid.PcdUfsRefClockFrequency
