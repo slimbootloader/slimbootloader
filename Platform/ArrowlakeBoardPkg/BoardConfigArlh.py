@@ -343,7 +343,7 @@ class Board(BaseBoard):
             'PciePm|Silicon/$(SILICON_PKG_NAME)/Library/PciePm/PciePm.inf',
             'PciExpressHelpersLib|Silicon/$(SILICON_PKG_NAME)/Library/PciExpressHelpersLibrary/PciExpressHelpersLibrary.inf',
             'BasePcieHelperLib|Silicon/$(SILICON_PKG_NAME)/Library/BasePcieHelperLib/BasePcieHelperLib.inf',
-            'PcieRpLib|Silicon/$(SILICON_PKG_NAME)/Library/PcieRpLib/PcieRpLib.inf',
+            'PcieRpLib|Silicon/CommonSocPkg/Library/PcieRpLib/PcieRpLib.inf',
             'PchPciBdfLib|Silicon/$(SILICON_PKG_NAME)/Library/BasePchPciBdfLib/BasePchPciBdfLib.inf',
             ]
             dsc['LibraryClasses.%s' % self.BUILD_ARCH].extend (lib)

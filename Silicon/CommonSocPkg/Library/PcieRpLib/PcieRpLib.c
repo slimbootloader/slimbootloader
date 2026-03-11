@@ -1,7 +1,7 @@
 /** @file
   This file contains routines that support PCI Express initialization
 
-  Copyright (c) 2024, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 #include <Uefi/UefiBaseType.h>
@@ -9,44 +9,11 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/PcieHelperLib.h>
 #include <Library/PchSbiAccessLib.h>
-#include <Library/PchPciBdfLib.h>
 #include <Library/PcieRpLib.h>
-#include <Library/PchInfoLib.h>
 #include <Register/PchPcieRpRegs.h>
 #include <Register/PcieSipRegs.h>
 #include <PcieRegs.h>
 #include <CpuPcieInfo.h>
-
-/**
-  Get PCIe port number for enabled port.
-  @param[in] RpBase    Root Port pci segment base address
-
-  @retval Root Port number (1 based)
-**/
-UINT32
-EFIAPI
-PciePortNum (
-  IN     UINT64  RpBase
-  )
-{
-  return PciSegmentRead32 (RpBase + R_PCIE_CFG_LCAP) >> N_PCIE_CFG_LCAP_PN;
-}
-
-/**
-  Get PCIe root port index
-
-  @param[in] RpBase    Root Port pci segment base address
-
-  @retval Root Port index (0 based)
-**/
-UINT32
-EFIAPI
-PciePortIndex (
-  IN     UINT64  RpBase
-  )
-{
-  return PciePortNum (RpBase) - 1;
-}
 
 /**
   This function checks whether PHY lane power gating is enabled on the port.
