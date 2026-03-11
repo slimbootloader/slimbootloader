@@ -136,8 +136,20 @@ ExtFsOpenFile (
     return EFI_INVALID_PARAMETER;
   }
 
+  if (FileName == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (FileHandle == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
   NameSize = StrSize (FileName);
   NameBuffer = AllocatePool (NameSize);
+  if (NameBuffer == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
   Status = UnicodeStrToAsciiStrS (FileName, NameBuffer, NameSize);
   if (EFI_ERROR(Status)) {
     FreePool (NameBuffer);
@@ -191,8 +203,7 @@ ExtFsGetFileSize (
   OPEN_FILE              *OpenFile;
 
   OpenFile = (OPEN_FILE *)FileHandle;
-  ASSERT (OpenFile != NULL);
-  if (OpenFile == NULL) {
+  if ((OpenFile == NULL) || (FileSize == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -231,17 +242,16 @@ ExtFsReadFile (
   EFI_STATUS              Status;
 
   OpenFile = (OPEN_FILE *)FileHandle;
-  ASSERT (OpenFile != NULL);
-  if (OpenFile == NULL) {
+  if ((OpenFile == NULL) || (FileSizePtr == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
   FileSize = Ext2fsFileSize (OpenFile);
+  *FileSizePtr = FileSize;
   if (FileSize == 0) {
     return EFI_SUCCESS;
   }
 
-  ASSERT (FileBufferPtr != NULL);
   if (FileBufferPtr == NULL) {
     return EFI_INVALID_PARAMETER;
   }
@@ -251,8 +261,6 @@ ExtFsReadFile (
   Status = Ext2fsRead (OpenFile, FileBuffer, FileSize, &Residual);
   if (EFI_ERROR (Status) || (Residual != 0)) {
     return EFI_LOAD_ERROR;
-  } else {
-    *FileSizePtr = FileSize;
   }
 
   return EFI_SUCCESS;
