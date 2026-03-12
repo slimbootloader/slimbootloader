@@ -124,8 +124,7 @@ SpiGetMediaInfo (
   }
 
   Status = mSpiService->SpiGetRegion (FlashRegionAll, &FlashBase, &FlashSize);
-  DevBlockInfo->BlockNum  = ((FlashSize % SPI_BLOCK_SIZE) == 0) ? FlashSize / SPI_BLOCK_SIZE :
-                            (FlashSize / SPI_BLOCK_SIZE) + 1;
+  DevBlockInfo->BlockNum  = FlashSize;
   DevBlockInfo->BlockSize = SPI_BLOCK_SIZE;
 
   return Status;
