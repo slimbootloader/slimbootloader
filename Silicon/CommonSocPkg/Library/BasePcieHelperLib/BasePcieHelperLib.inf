@@ -6,7 +6,6 @@
 #
 ##
 
-
 [Defines]
 INF_VERSION = 0x00010017
 BASE_NAME = BasePcieHelperLib
@@ -20,18 +19,13 @@ LIBRARY_CLASS = BasePcieHelperLib
 # VALID_ARCHITECTURES = IA32 X64 IPF EBC
 #
 
-
-
 [LibraryClasses]
 DebugLib
 PciSegmentLib
 
-
 [Packages]
 MdePkg/MdePkg.dec
 Silicon/CommonSocPkg/CommonSocPkg.dec
-Silicon/ArrowlakePkg/ArrowlakePkg.dec
-
 
 [Sources]
 BasePcieHelperLib.c

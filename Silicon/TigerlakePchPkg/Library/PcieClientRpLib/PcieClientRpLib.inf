@@ -35,8 +35,8 @@
 
 [Packages]
   MdePkg/MdePkg.dec
-  Silicon/CommonSocPkg/CommonSocPkg.dec
   Silicon/TigerlakePchPkg/TigerlakePchPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
 
 [Sources]
   PcieClientRpLib.c

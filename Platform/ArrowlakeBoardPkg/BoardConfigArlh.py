@@ -341,8 +341,8 @@ class Board(BaseBoard):
         if self.ENABLE_PCIE_PM:
             lib = [
             'PciePm|Silicon/$(SILICON_PKG_NAME)/Library/PciePm/PciePm.inf',
-            'PciExpressHelpersLib|Silicon/$(SILICON_PKG_NAME)/Library/PciExpressHelpersLibrary/PciExpressHelpersLibrary.inf',
-            'BasePcieHelperLib|Silicon/$(SILICON_PKG_NAME)/Library/BasePcieHelperLib/BasePcieHelperLib.inf',
+            'PciExpressHelpersLib|Silicon/CommonSocPkg/Library/PciExpressHelpersLibrary/PciExpressHelpersLibrary.inf',
+            'BasePcieHelperLib|Silicon/CommonSocPkg/Library/BasePcieHelperLib/BasePcieHelperLib.inf',
             'PcieRpLib|Silicon/$(SILICON_PKG_NAME)/Library/PcieRpLib/PcieRpLib.inf',
             'PchPciBdfLib|Silicon/$(SILICON_PKG_NAME)/Library/BasePchPciBdfLib/BasePchPciBdfLib.inf',
             ]
