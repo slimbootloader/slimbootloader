@@ -9,15 +9,10 @@
 #include <Library/PcieHelperLib.h>
 #include <Library/DebugLib.h>
 #include <Library/PciSegmentLib.h>
-#include <Library/PchInfoLib.h>
 #include <Library/PcieRpLib.h>
-#include <Register/PcieSipRegs.h>
-#include <CpuPcieInfo.h>
-#include <Register/SaRegsHostBridge.h>
 
 #define ASPM_L1_NO_LIMIT 0xFF
 #define ASPM_L0s_NO_LIMIT 0x7
-#define LINK_RETRAIN_WAIT_TIME 1000 // microseconds
 
 typedef struct {
   UINT32                          Size;
@@ -105,39 +100,6 @@ TpoToUs (
     return 0;
   }
   return (TpoScaleMultiplier[TpoScale] * TpoValue);
-}
-
-/**
-  Get max PCIe link speed supported by the root port.
-
-  @param[in] RpBase    Root Port base address
-
-  @retval Max link speed
-**/
-UINT32
-GetMaxLinkSpeed (
-  UINT64 RpBase
-  )
-{
-  return PciSegmentRead32 (RpBase + R_PCIE_CFG_LCAP) & B_PCIE_LCAP_MLS;
-}
-
-/**
-  Get max link width.
-
-  @param[in] RpDev  Pointer to the root port device
-  @retval           Max link width, 0 when failed
-**/
-UINT32
-GetMaxLinkWidth (
-  UINT64 RpBase
-  )
-{
-  UINT32 LinkWidth;
-
-  LinkWidth = (PciSegmentRead32 (RpBase + R_PCIE_CFG_LCAP) & B_PCIE_LCAP_MLW) >> N_PCIE_LCAP_MLW;
-
-  return LinkWidth;
 }
 
 /**
@@ -435,34 +397,6 @@ EnableCpm (
 }
 
 /**
-  Checks if given device is an IoAPIC
-
-  @param[in] Base            device's base address
-
-  @retval TRUE if it's an IoAPIC
-**/
-BOOLEAN
-IsIoApicDevice (
-  UINT64 Base
-  )
-{
-  UINT8 BaseClassCode;
-  UINT8 SubClassCode;
-  UINT8 ProgInterface;
-
-  BaseClassCode = PciSegmentRead8 (Base + PCI_CLASSCODE_OFFSET + 2);
-  SubClassCode  = PciSegmentRead8 (Base + PCI_CLASSCODE_OFFSET + 1);
-  ProgInterface = PciSegmentRead8 (Base + PCI_CLASSCODE_OFFSET);
-  if ((BaseClassCode == PCI_CLASS_SYSTEM_PERIPHERAL) &&
-      (SubClassCode == PCI_SUBCLASS_PIC) &&
-      ((ProgInterface == PCI_IF_APIC_CONTROLLER) ||
-       (ProgInterface == PCI_IF_APIC_CONTROLLER2))) {
-    return TRUE;
-  }
-  return FALSE;
-}
-
-/**
   There are some devices which support L1 substates, but due to silicon bugs the corresponding register
   cannot be found by scanning PCIe capabilities. This function checks list of such devices and if one
   is found, returns its L1ss capability register offset
@@ -667,9 +601,6 @@ SetL1ss (
   ///
   Ctrl1Register |= ((TpoToUs (L1ss.TpoScale, L1ss.TpoValue) + L1ss.Cmrt + 10) << N_PCIE_EX_L1SCTL1_L12LTRTLV);
   Ctrl1Register |= (2 << N_PCIE_EX_L1SCTL1_L12LTRTLSV);
-
-
-
 
   Ctrl2Register |= (L1ss.TpoScale);
   Ctrl2Register |= (L1ss.TpoValue << N_PCIE_EX_L1SCTL2_POWT);
@@ -1211,8 +1142,6 @@ RecursiveL1ssConfiguration (
   return GetL1ssCaps (Base, Override);
 }
 
-
-
 /**
   Sets Enable Clock Power Management bit for devices that support it.
   A device supports CPM only if all function of this device report CPM support.
@@ -1253,7 +1182,6 @@ RecursiveCpmConfiguration (
   }
   return IsCpmSupported (Sbdf);
 }
-
 
 /**
   Configures Latency Tolerance Reporting in given device and in PCIe tree below it.
@@ -1601,52 +1529,4 @@ RootportDownstreamPmConfiguration (
   RecursiveAspmConfiguration (RpSbdf, 0, &PmOverrideTable);
   DynamicLinkThrottlingEnable (RpSbdf);
   ClearBusFromTable (&BridgeCleanupList);
-}
-
-/**
-  Configures the following power-management related features in rootport and devices behind it:
-  LTR limit (generic)
-  L0s and L1 (generic)
-
-  Generic: any code written according to PCIE Express base specification can do that.
-
-  @param[in] RpSegment                address of rootport on PCIe
-  @param[in] RpBus                    address of rootport on PCIe
-  @param[in] RpDevice                 address of rootport on PCIe
-  @param[in] RpFunction               address of rootport on PCIe
-**/
-VOID
-TcssRootportDownstreamPmConfiguration(
-  UINT8                     RpSegment,
-  UINT8                     RpBus,
-  UINT8                     RpDevice,
-  UINT8                     RpFunction,
-  LTR_LIMIT                 PolicyLtr
-)
-{
-  UINT64         RpBase;
-  SBDF           RpSbdf;
-
-  RpBase = PCI_SEGMENT_LIB_ADDRESS(RpSegment, RpBus, RpDevice, RpFunction, 0);
-  if (!(IsDevicePresent(RpBase))) {
-    return;
-  }
-
-  DEBUG((DEBUG_INFO, "TcssRootportDownstreamPmConfiguration %x:%x\n", RpDevice, RpFunction));
-
-  RpSbdf.Seg = RpSegment;
-  RpSbdf.Bus = RpBus;
-  RpSbdf.Dev = RpDevice;
-  RpSbdf.Func = RpFunction;
-  RpSbdf.PcieCap = PcieBaseFindCapId(RpBase, EFI_PCI_CAPABILITY_ID_PCIEXP);
-
-  //
-  // The 'Recursive...' functions below expect bus numbers to be already assigned
-  //
-  RecursiveLtrConfiguration(RpSbdf, PolicyLtr);
-
-  //
-  // ASPM Enabling
-  //
-  RecursiveAspmConfiguration(RpSbdf, 0,NULL);
 }

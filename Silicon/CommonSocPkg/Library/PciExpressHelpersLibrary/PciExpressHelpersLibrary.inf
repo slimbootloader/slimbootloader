@@ -6,7 +6,6 @@
 #
 ##
 
-
 [Defines]
   INF_VERSION = 0x00010017
   BASE_NAME = PciExpressHelpersLib
@@ -20,17 +19,13 @@
 # VALID_ARCHITECTURES = IA32 X64 IPF EBC
 #
 
-
 [LibraryClasses]
   IoLib
   DebugLib
   PcieRpLib
-  PchInfoLib
-  TimerLib
   BasePcieHelperLib
 
 [Packages]
-  Silicon/ArrowlakePkg/ArrowlakePkg.dec
   Silicon/CommonSocPkg/CommonSocPkg.dec
   MdePkg/MdePkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
