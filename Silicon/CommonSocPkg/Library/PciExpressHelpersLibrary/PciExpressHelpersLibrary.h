@@ -13,24 +13,10 @@
 #include <Library/DebugLib.h>
 #include <IndustryStandard/Pci.h>
 #include <PchPcieRpConfig.h>
-#include <Library/PchPcrLib.h>
-#include <Library/PchInfoLib.h>
 #include <Library/PciSegmentLib.h>
-#include <Library/TimerLib.h>
 #include <Library/PciExpressHelpersLib.h>
 #include <Library/PcieRpLib.h>
 #include <PcieRegs.h>
 #include <Register/PchPcieRpRegs.h>
 
-
-#define LTR_VALUE_MASK (BIT0 + BIT1 + BIT2 + BIT3 + BIT4 + BIT5 + BIT6 + BIT7 + BIT8 + BIT9)
-#define LTR_SCALE_MASK (BIT10 + BIT11 + BIT12)
-
-// LTR related macros
-//
-#define LTR_LATENCY_VALUE(x)           ((x) & LTR_VALUE_MASK)
-#define LTR_SCALE_VALUE(x)             (((x) & LTR_SCALE_MASK) >> 10)
-#define LTR_LATENCY_NS(x)              (LTR_LATENCY_VALUE(x) * (1 << (5 * LTR_SCALE_VALUE(x))))
-
-
-#endif
+#endif // _PCI_EXPRESS_HELPERS_LIBRARY_H_
