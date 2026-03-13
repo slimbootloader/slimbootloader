@@ -393,6 +393,9 @@ typedef struct {
 //
 #define UFS_HC_UICCMD_ARG3 UINT32
 
+#define UFS_CR_WR                  0x1
+#define UFS_CR_RD                  0x0
+
 //
 // UIC command opcodes
 //
@@ -1417,9 +1420,51 @@ typedef enum {
   PA_AdaptTypeInPA_INIT               = 0x15D5,
   PA_Local_TX_LCC_Enable              = 0x155E,
   PA_Peer_TX_LCC_Enable               = 0x155F,
+  PA_PWRModeUserData0                 = 0x15B0,
+  PA_PWRModeUserData1                 = 0x15B1,
+  PA_PWRModeUserData2                 = 0x15B2,
   PA_Reserved                         = 0xFFFF
 } PA_ATTRIBUTES;
 
+typedef enum {
+  DME_FC0ProtectionTimeOutVal         = 0xD041,
+  DME_TC0ReplayTimeOutVal             = 0xD042,
+  DME_AFC0ReqTimeOutVal               = 0xD043,
+  DME_Reserved                        = 0xFFFF,
+} DME_ATTRIBUTES;
+
+typedef enum {
+  CBRATESEL                           = 0x8114,
+  CBCREGADDRLSB                       = 0x8116,
+  CBCREGADDRMSB                       = 0x8117,
+  CBCREGWRLSB                         = 0x8118,
+  CBCREGWRMSB                         = 0x8119,
+  CBCREGRDLSB                         = 0x811A,
+  CBCREGRDMSB                         = 0x811B,
+  CBCREGRDWRSEL                       = 0x811C,
+  VS_MPHY_CFG_UPDT                    = 0xD085
+} RMMI_ATTRIBUTES;
+
+typedef enum {
+  T_ConnectionState                   = 0x4020,
+  T_CPortFlags                        = 0x4025,
+  TL_Reserved                         = 0xFFFF
+} TL_ATTRIBUTES;
+
+typedef enum {
+  RAWLANEN0_DIG_PCS_XF_RX_OVRD_IN_1   = 0x3006,
+  RAWLANEN0_DIG_PCS_XF_RX_PCS_OUT     = 0x300F,
+  RAWLANEN1_DIG_PCS_XF_RX_OVRD_IN_1   = 0x3106,
+  RAWLANEN1_DIG_PCS_XF_RX_PCS_OUT     = 0x310F
+} MPHY_ATTRIBUTES;
+
+typedef union {
+  struct {
+    UINT16 RxAck    : 1; // Value from Raw PCS for rx_ack
+    UINT16 Reserved : 15;
+  } Fields;
+  UINT16 Data16;
+} UFS_MPHY_RAWLANEN_DIG_PCS_XF_RX_PCS_OUT;
 #pragma pack()
 
 #endif

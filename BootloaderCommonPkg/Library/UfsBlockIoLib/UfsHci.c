@@ -1468,6 +1468,322 @@ UfsHcPlatformPostHce (
 }
 
 /**
+  Starts UIC Command sequence for Attribute Access (B)
+  This is a proprietary sequence where each MPHY CR register access requires six UIC commands.
+  The MPHY CR Register address and the write data needs to be embedded with RMMI Attributes
+  that are accessed using these UIC commands.
+
+  @param[in] Private                 Interface to the functionalities provided by core driver
+  @param[in] RegisterAddress         MPHY CR Register Addr
+  @param[in] Data                    MPHY CR Register Write/Read Data
+  @param[in] WriteSelection          '1' CR Write, '0' CR Read
+
+**/
+EFI_STATUS
+UfsUicAttributeAccessB(
+    IN  UFS_PEIM_HC_PRIVATE_DATA* Private,
+    IN UINT16                     RegisterAddress,
+    IN OUT UINT16*                Data16,
+    IN UINT8                      WriteSelection
+)
+{
+  EFI_STATUS         Status;
+  UFS_COMMAND        UicCommand;
+
+  UfsFillUicCommand(UfsUicDmeSet, CBCREGADDRLSB, 0, 0, RegisterAddress & 0x00FF, &UicCommand);
+  Status = UfsExecUicCommands(Private, &UicCommand);
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, "UfsUicAttributeAccessB Failed to Set UfsUicDmeSet CBCREGADDRLSB(0x%X) Reg.Addr LSB (0x%X)\n", CBCREGADDRLSB, RegisterAddress & 0x00FF));
+    return Status;
+  }
+
+  UfsFillUicCommand(UfsUicDmeSet, CBCREGADDRMSB, 0, 0, (RegisterAddress & 0xFF00) >> 8, &UicCommand);
+  Status = UfsExecUicCommands(Private, &UicCommand);
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, "UfsUicAttributeAccessB Failed to Set UfsUicDmeSet CBCREGADDRMSB(0x%X) Reg.Addr MSB (0x%X)\n", CBCREGADDRMSB, RegisterAddress & 0xFF00));
+    return Status;
+  }
+
+  if (WriteSelection == 1) {
+    //
+    // Write Operation
+    //
+    UfsFillUicCommand(UfsUicDmeSet, CBCREGWRLSB, 0, 0, *Data16 & 0x00FF, &UicCommand);
+    Status = UfsExecUicCommands(Private, &UicCommand);
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, "UfsUicAttributeAccessB Failed to Set UfsUicDmeSet CBCREGWRLSB(0x%x) Data16 LSB: 0x%X\n", CBCREGWRLSB, *Data16 & 0x00FF));
+      return Status;
+    }
+    UfsFillUicCommand(UfsUicDmeSet, CBCREGWRMSB, 0, 0, (*Data16 & 0xFF00) >> 8, &UicCommand);
+    Status = UfsExecUicCommands(Private, &UicCommand);
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, "UfsUicAttributeAccessB Failed to Set UfsUicDmeSet CBCREGWRMSB(0x%x) Data16 MSB: 0x%X\n", CBCREGWRMSB, (*Data16 & 0xFF00) >> 8));
+      return Status;
+    }
+    UfsFillUicCommand(UfsUicDmeSet, CBCREGRDWRSEL, 0, 0, 1, &UicCommand);
+    Status = UfsExecUicCommands(Private, &UicCommand);
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, "UfsUicAttributeAccessB Failed to Set UfsUicDmeSet CBCREGRDWRSEL(0x%x) for Write\n", CBCREGRDWRSEL));
+      return Status;
+    }
+
+    UfsFillUicCommand(UfsUicDmeSet, VS_MPHY_CFG_UPDT, 0, 0, 1, &UicCommand); // MPHY_CFG_UPDT_CMD = 0x1
+    Status = UfsExecUicCommands(Private, &UicCommand);
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, "UfsUicAttributeAccessB Failed to Set UfsUicDmeSet VS_MPHY_CFG_UPDT(0x%x) MPHY_CFG_UPDT_CMD: 0x1\n", VS_MPHY_CFG_UPDT));
+      return Status;
+    }
+  }
+  else {
+    //
+    // Read Operation
+    //
+    UfsFillUicCommand(UfsUicDmeSet, CBCREGRDWRSEL, 0, 0, 0, &UicCommand);
+    Status = UfsExecUicCommands(Private, &UicCommand);
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, "UfsUicAttributeAccessB Failed to Set UfsUicDmeSet CBCREGRDWRSEL(0x%x) for Read\n", CBCREGRDWRSEL));
+      return Status;
+    }
+    UfsFillUicCommand(UfsUicDmeGet, CBCREGRDLSB, 0, 0, 0, &UicCommand);
+    Status = UfsExecUicCommands(Private, &UicCommand);
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, "UfsUicAttributeAccessB Failed to Set UfsUicDmeGet CBCREGRDLSB(0x%x) UicCommand LSB: 0x%X\n", CBCREGRDLSB, UicCommand.Arg3));
+      return Status;
+    }
+    *Data16 = (UINT16)UicCommand.Arg3 & 0x00FF;
+    UfsFillUicCommand(UfsUicDmeGet, CBCREGRDMSB, 0, 0, 0, &UicCommand);
+    Status = UfsExecUicCommands(Private, &UicCommand);
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, "UfsUicAttributeAccessB Failed to Set UfsUicDmeGet CBCREGRDMSB(0x%x) UicCommand MSB: 0x%X\n", CBCREGRDMSB, UicCommand.Arg3));
+      return Status;
+    }
+    *Data16 = *Data16 | (((UINT8)UicCommand.Arg3) << 8);
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Programs the recipe required for High speed link Unipro C-Port connection programming
+
+  @param[in] Private   Interface to the functionalities provided by core driver
+
+  @retval EFI_SUCCESS  Successfully programmed the recipe
+  @retval others       Failed to program the recipe
+**/
+EFI_STATUS
+UfsHsUniproCPortRecipieProgramming(
+  IN  UFS_PEIM_HC_PRIVATE_DATA* Private
+)
+{
+  EFI_STATUS         Status;
+  UFS_COMMAND        UicCommand;
+  UINT32             Data = 0;
+  UINT32             Timeout = UFS_UIC_TIMEOUT;
+
+  while ((Data != 1) && Timeout != 0) {
+    UfsFillUicCommand(UfsUicDmeSet, T_ConnectionState, 0, 0, 0x0, &UicCommand);
+    Status = UfsExecUicCommands(Private, &UicCommand);
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, "T_ConnectionState = 0 failed\n"));
+      return Status;
+    }
+    UfsFillUicCommand(UfsUicDmeSet, T_CPortFlags, 0, 0, 0x6, &UicCommand);
+    Status =UfsExecUicCommands(Private, &UicCommand);
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, "T_CPortFlags = 6 failed\n"));
+      return Status;
+    }
+    UfsFillUicCommand(UfsUicDmeSet, T_ConnectionState, 0, 0, 0x1, &UicCommand);
+    Status = UfsExecUicCommands(Private, &UicCommand);
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, "T_ConnectionState = 1 failed\n"));
+      return Status;
+    }
+    UfsFillUicCommand(UfsUicDmeGet, T_ConnectionState, 0, 0, 0x0, &UicCommand);
+    Status = UfsExecUicCommands(Private, &UicCommand);
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, "DmeGet for T_ConnectionState failed\n"));
+      return Status;
+    }
+    Data = UicCommand.Arg3;
+    MicroSecondDelay(1);
+    Timeout--;
+  }
+  DEBUG((DEBUG_INFO, "UfsHsUniproCPortRecipieProgramming, Status = %r Data=%d Timeout=%d\n", Status, Data, Timeout));
+  return Status;
+}
+
+/**
+  Programs the PHY recipe required for High speed link
+
+  @param[in] Private   Interface to the functionalities provided by core driver
+
+  @retval EFI_SUCCESS  Successfully programmed the recipe
+  @retval others       Failed to program the recipe
+**/
+EFI_STATUS
+UfsHsPhyRecipieProgramming(
+  IN  UFS_PEIM_HC_PRIVATE_DATA* Private
+)
+{
+  EFI_STATUS                               Status;
+  UFS_COMMAND                              UicCommand;
+  UINT16                                   Data16;
+  UINT16                                   UfsUicTimeout;
+  UFS_MPHY_RAWLANEN_DIG_PCS_XF_RX_PCS_OUT  DigPcsXfRxPcsOut;
+
+  DEBUG((DEBUG_INFO, "UfsHsPhyRecipieProgramming \n"));
+
+  //
+  // Step 1: Override RMMI (RMMI Reference M-PHY MODULE Interface) CBRATESEL with the desired rate (Rate B)
+  // UIC Attribute Access (A): (Attribute Name: CBRATESEL, AttrID: 0x8114, RxLaneSelect: 0, Value: 0x01) //Rate B
+  //
+  DEBUG((DEBUG_INFO, "Override RMMI (RMMI Reference M-PHY MODULE Interface) CBRATESEL with the desired rate (Rate B)\n"));
+  UfsFillUicCommand(UfsUicDmeSet, CBRATESEL, 0, 0, 0x1, &UicCommand);
+  Status = UfsExecUicCommands(Private, &UicCommand);
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, "Failed to set CBRATESEL(%x) \n", CBRATESEL));
+    return Status;
+  }
+
+  //
+  // Step 2: Set TX_CFGUPDT_0 to 1'b1 for one TX_CFGCLK_0 cycle.
+  // UIC Attribute Access (A): (Attribute Name: VS_MphyCfgUpdt, AttrID: 0xD085, RxLaneSelect: 0x0, Value 0x1)
+  // UFSHC sets tx_cfgupt_*/rx_cfgupt_* for one pulse
+  //
+  DEBUG((DEBUG_INFO, "Set TX_CFGUPDT_0 to 1'b1 for one TX_CFGCLK_0 cycle.\n"));
+  UfsFillUicCommand(UfsUicDmeSet, VS_MPHY_CFG_UPDT, 0, 0, 0x1, &UicCommand);
+  Status = UfsExecUicCommands(Private, &UicCommand);
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, "Failed to set VS_MPHY_CFG_UPDT(%x) \n", VS_MPHY_CFG_UPDT));
+    return Status;
+  }
+
+  //
+  // Step 3: Program the MPHY register to override lane 0 phy rx_req to 1.
+  // UIC Attribute Access (B) (Attribute Name: RAWLANEN_DIG_PCS_XF_RX_OVRD_IN_1, AttrID: 0x3006 RxLaneSelect: 0x0, Value: 0x0C)
+  //
+  DEBUG((DEBUG_INFO, "Ufs Program the MPHY register to override lane 0 phy rx_req to 1.\n"));
+  Data16 = 0xC;
+  UfsUicAttributeAccessB(Private, RAWLANEN0_DIG_PCS_XF_RX_OVRD_IN_1, &Data16, UFS_CR_WR);
+
+  //
+  // Step 4: Poll the MPHY rx_ack register until the value becomes 1.
+  // UIC Attribute Read Access (B) (Attribute Name: RAWLANEN_DIG_PCS_XF_RX_PCS_OUT, AttrID: 0x300F, RxLaneSelect: 0x0, Expected Data: 8h01)
+  //
+  DEBUG((DEBUG_INFO, "Ufs Poll the MPHY rx_ack register until the value becomes 1.\n"));
+  UfsUicTimeout = UFS_UIC_TIMEOUT;
+  DigPcsXfRxPcsOut.Data16 = 0x0;
+  UfsUicAttributeAccessB(Private, RAWLANEN0_DIG_PCS_XF_RX_PCS_OUT, &DigPcsXfRxPcsOut.Data16, UFS_CR_RD);
+  while (DigPcsXfRxPcsOut.Fields.RxAck != 0x1) {
+    UfsUicAttributeAccessB(Private, RAWLANEN0_DIG_PCS_XF_RX_PCS_OUT, &DigPcsXfRxPcsOut.Data16, UFS_CR_RD);
+    UfsUicTimeout--;
+    MicroSecondDelay(1);
+    if (UfsUicTimeout == 0) {
+      DEBUG((DEBUG_ERROR, "Failed to confirm rx_ack in RAWLANEN0_DIG_PCS_XF_RX_PCS_OUT(%x) Data16: 0x%X\n", RAWLANEN0_DIG_PCS_XF_RX_PCS_OUT, DigPcsXfRxPcsOut.Data16));
+      return EFI_DEVICE_ERROR;
+    }
+  }
+
+  //
+  // Step 5: Program the MPHY register to override lane 1 phy rx_req to 1.
+  // UIC Attribute Access (B) (Attribute Name: RAWLANEN_DIG_PCS_XF_RX_OVRD_IN_1, AttrID: 0x3106, RxLaneSelect: 0x0, Value: 0x0C)
+  //
+  DEBUG((DEBUG_INFO, "Ufs Program the MPHY register to override lane 1 phy rx_req to 1.\n"));
+  Data16 = 0xC;
+  UfsUicAttributeAccessB(Private, RAWLANEN1_DIG_PCS_XF_RX_OVRD_IN_1, &Data16, UFS_CR_WR);
+
+  //
+  // Step 6: Poll the MPHY rx_ack register until the value becomes 1.
+  // UIC Attribute Read Access (B) (Attribute Name: RAWLANEN_DIG_PCS_XF_RX_PCS_OUT, AttrID: 0x310F, RxLaneSelect: 0x0, Expected Data: 8h01)
+  //
+  DEBUG((DEBUG_INFO, "Ufs Poll the MPHY rx_ack register until the value becomes 1.\n"));
+  UfsUicTimeout = UFS_UIC_TIMEOUT;
+  DigPcsXfRxPcsOut.Data16 = 0x0;
+  UfsUicAttributeAccessB(Private, RAWLANEN1_DIG_PCS_XF_RX_PCS_OUT, &DigPcsXfRxPcsOut.Data16, UFS_CR_RD);
+  while (DigPcsXfRxPcsOut.Fields.RxAck != 0x1) {
+    UfsUicAttributeAccessB(Private, RAWLANEN1_DIG_PCS_XF_RX_PCS_OUT, &DigPcsXfRxPcsOut.Data16, UFS_CR_RD);
+    UfsUicTimeout--;
+    MicroSecondDelay(1);
+    if (UfsUicTimeout == 0) {
+      DEBUG((DEBUG_ERROR, "Failed to confirm rx_ack in RAWLANEN1_DIG_PCS_XF_RX_PCS_OUT(%x) Data16: 0x%X\n", RAWLANEN1_DIG_PCS_XF_RX_PCS_OUT, DigPcsXfRxPcsOut.Data16));
+      return EFI_DEVICE_ERROR;
+    }
+  }
+
+  //
+  // Step 7: Program the MPHY register to override lane 0 phy rx_req to 0.
+  // UIC Attribute Access (B) (Attribute Name: RAWLANEN_DIG_PCS_XF_RX_OVRD_IN_1, AttrID: 0x3006 RxLaneSelect: 0x0, Value: 0x08)
+  //
+  DEBUG((DEBUG_INFO, "Ufs Program the MPHY register to override lane 0 phy rx_req to 0.\n"));
+  Data16 = 0x8;
+  UfsUicAttributeAccessB(Private, RAWLANEN0_DIG_PCS_XF_RX_OVRD_IN_1, &Data16, UFS_CR_WR);
+
+  //
+  // Step 8: Poll the MPHY rx_ack register until the value becomes 0..
+  // UIC Attribute Read Access (B) (Attribute Name: RAWLANEN_DIG_PCS_XF_RX_PCS_OUT, AttrID: 0x300F, RxLaneSelect: 0x0, Expected Data: 8h00)
+  //
+  DEBUG((DEBUG_INFO, "Ufs Poll the MPHY rx_ack register until the value becomes 0..\n"));
+  UfsUicTimeout = UFS_UIC_TIMEOUT;
+  DigPcsXfRxPcsOut.Data16 = 0xFFFF;
+  UfsUicAttributeAccessB(Private, RAWLANEN0_DIG_PCS_XF_RX_PCS_OUT, &DigPcsXfRxPcsOut.Data16, UFS_CR_RD);
+  while (DigPcsXfRxPcsOut.Fields.RxAck != 0x0) {
+    UfsUicAttributeAccessB(Private, RAWLANEN0_DIG_PCS_XF_RX_PCS_OUT, &DigPcsXfRxPcsOut.Data16, UFS_CR_RD);
+    UfsUicTimeout--;
+    MicroSecondDelay(1);
+    if (UfsUicTimeout == 0) {
+      DEBUG((DEBUG_ERROR, "Failed to confirm rx_ack in RAWLANEN0_DIG_PCS_XF_RX_PCS_OUT(%x) Data16: 0x%X Expected Data: 0x00\n", RAWLANEN0_DIG_PCS_XF_RX_PCS_OUT, DigPcsXfRxPcsOut.Data16));
+      return EFI_DEVICE_ERROR;
+    }
+  }
+
+  //
+  // Step 9: Program the MPHY register to override lane 1 phy rx_req to 0.
+  // UIC Attribute Access (B) (Attribute Name: RAWLANEN_DIG_PCS_XF_RX_OVRD_IN_1, AttrID: 0x3106, RxLaneSelect: 0x0, Value: 0x08)
+  //
+  DEBUG((DEBUG_INFO, "Ufs Program the MPHY register to override lane 1 phy rx_req to 0.\n"));
+  Data16 = 0x8;
+  UfsUicAttributeAccessB(Private, RAWLANEN1_DIG_PCS_XF_RX_OVRD_IN_1, &Data16, UFS_CR_WR);
+
+  //
+  // Step 10: Poll the MPHY rx_ack register until the value becomes 0.
+  // UIC Attribute Read Access (B) (Attribute Name: RAWLANEN_DIG_PCS_XF_RX_PCS_OUT, AttrID: 0x310F, RxLaneSelect: 0x0, Expected Data: 8h00)
+  //
+  DEBUG((DEBUG_INFO, "Ufs Poll the MPHY rx_ack register until the value becomes 0.\n"));
+  UfsUicTimeout = UFS_UIC_TIMEOUT;
+  DigPcsXfRxPcsOut.Data16 = 0xFFFF;
+  UfsUicAttributeAccessB(Private, RAWLANEN1_DIG_PCS_XF_RX_PCS_OUT, &DigPcsXfRxPcsOut.Data16, UFS_CR_RD);
+  while (DigPcsXfRxPcsOut.Fields.RxAck != 0x0) {
+    UfsUicAttributeAccessB(Private, RAWLANEN1_DIG_PCS_XF_RX_PCS_OUT, &DigPcsXfRxPcsOut.Data16, UFS_CR_RD);
+    UfsUicTimeout--;
+    MicroSecondDelay(1);
+    if (UfsUicTimeout == 0) {
+      DEBUG((DEBUG_ERROR, "Failed to confirn rx_ack in RAWLANEN1_DIG_PCS_XF_RX_PCS_OUT(%x) Data16: 0x%X Expected Data: 0x00\n", RAWLANEN1_DIG_PCS_XF_RX_PCS_OUT, DigPcsXfRxPcsOut.Data16));
+      return EFI_DEVICE_ERROR;
+    }
+  }
+
+  //
+  // Step 11: Program the MPHY register to remove the phy rx_req override (lane 0).
+  // UIC Attribute Access (B) (Attribute Name: RAWLANEN_DIG_PCS_XF_RX_OVRD_IN_1, AttrID: 0x3006 RxLaneSelect: 0x0, Value: 0x00)
+  //
+  DEBUG((DEBUG_INFO, "Ufs Program the MPHY register to remove the phy rx_req override (lane 0).\n"));
+  Data16 = 0x0;
+  UfsUicAttributeAccessB(Private, RAWLANEN0_DIG_PCS_XF_RX_OVRD_IN_1, &Data16, UFS_CR_WR);
+
+  //
+  // Step 12: Program the MPHY register to remove the phy_rx_req override (lane 1).
+  // UIC Attribute Access (B) (Attribute Name: RAWLANEN_DIG_PCS_XF_RX_OVRD_IN_1, AttrID: 0x3106 RxLaneSelect: 0x0, Value: 0x00)
+  //
+  DEBUG((DEBUG_INFO, "Ufs Program the MPHY register to remove the phy_rx_req override (lane 1).\n"));
+  Data16 = 0x0;
+  UfsUicAttributeAccessB(Private, RAWLANEN1_DIG_PCS_XF_RX_OVRD_IN_1, &Data16, UFS_CR_WR);
+
+  return Status;
+}
+
+/**
   Enable the UFS host controller for accessing.
 
   @param[in] Private                 The pointer to the UFS_PEIM_HC_PRIVATE_DATA data structure.
@@ -1690,42 +2006,111 @@ UfsHsRecipieProgramming (
 {
   EFI_STATUS         Status;
   UFS_COMMAND        UicCommand;
+  UFS_HC_VER         UfsHcVer;
 
-  UfsFillUicCommand (UfsUicDmeSet, DL_FC0ProtectionTimeOutVal, 0, 0, 0x1FFF, &UicCommand );
-  Status = UfsExecUicCommands (Private, &UicCommand);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "Failed to set active FC0 protection time out value\n"));
-    return Status;
+  CopyMem (&UfsHcVer, &Private->Version, sizeof (UfsHcVer));
+
+  if (UfsHcVer.Mjr >= 3) {
+    UfsFillUicCommand (UfsUicDmeSet, PA_HSSeries, 0, 0, UFS_PA_HS_MODE_B, &UicCommand );
+    Status = UfsExecUicCommands (Private, &UicCommand);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Ufs UfsUicDmeSet Status=%r PA_HSSeries(0x%X) Value: 0x%X \n", Status, PA_HSSeries, UFS_PA_HS_MODE_B));
+      return Status;
+    }
+    UfsFillUicCommand (UfsUicDmeSet, PA_RxTermination, 0, 0, 0x1, &UicCommand );
+    Status = UfsExecUicCommands (Private, &UicCommand);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to enable Rx termination\n"));
+      return Status;
+    }
+    UfsFillUicCommand (UfsUicDmeSet, PA_TxTermination, 0, 0, 0x1, &UicCommand );
+    Status = UfsExecUicCommands (Private, &UicCommand);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to enable Tx termination\n"));
+      return Status;
+    }
+
+    UfsFillUicCommand (UfsUicDmeSet, PA_Scrambling, 0, 0, 0, &UicCommand );
+    Status = UfsExecUicCommands (Private, &UicCommand);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to set PA_Scrambling(0x%X)\n", PA_Scrambling));
+      return Status;
+    }
+
+    UfsFillUicCommand (UfsUicDmeSet, DME_FC0ProtectionTimeOutVal, 0, 0, 0x13ec, &UicCommand );
+    Status = UfsExecUicCommands (Private, &UicCommand);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to set DME_FC0ProtectionTimeOutVal(0x%X)\n", DME_FC0ProtectionTimeOutVal));
+      return Status;
+    }
+    UfsFillUicCommand (UfsUicDmeSet, DME_TC0ReplayTimeOutVal, 0, 0, 0x13ec, &UicCommand );
+    Status = UfsExecUicCommands (Private, &UicCommand);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to set DME_TC0ReplayTimeOutVal(0x%X)\n", DME_TC0ReplayTimeOutVal));
+      return Status;
+    }
+    UfsFillUicCommand (UfsUicDmeSet, DME_AFC0ReqTimeOutVal, 0, 0, 0xaf0, &UicCommand );
+    Status = UfsExecUicCommands (Private, &UicCommand);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to set DME_AFC0ReqTimeOutVal(0x%X)\n", DME_AFC0ReqTimeOutVal));
+      return Status;
+    }
+    UfsFillUicCommand (UfsUicDmeSet, PA_PWRModeUserData0, 0, 0, 0x13ec, &UicCommand );
+    Status = UfsExecUicCommands (Private, &UicCommand);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to set PA_PWRModeUserData0(0x%X)\n", PA_PWRModeUserData0));
+      return Status;
+    }
+    UfsFillUicCommand (UfsUicDmeSet, PA_PWRModeUserData1, 0, 0, 0x13ec, &UicCommand );
+    Status = UfsExecUicCommands (Private, &UicCommand);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to set PA_PWRModeUserData1(0x%X)\n", PA_PWRModeUserData1));
+      return Status;
+    }
+    UfsFillUicCommand (UfsUicDmeSet, PA_PWRModeUserData2, 0, 0, 0xaf0, &UicCommand );
+    Status = UfsExecUicCommands (Private, &UicCommand);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to set PA_PWRModeUserData2(0x%X)\n", PA_PWRModeUserData2));
+      return Status;
+    }
   }
-  UfsFillUicCommand (UfsUicDmeSet, DL_TC0ReplayTimeOutVal, 0, 0, 0xFFFF, &UicCommand );
-  Status = UfsExecUicCommands (Private, &UicCommand);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "Failed to set active TC0 replay time out value\n"));
+  else {
+    UfsFillUicCommand (UfsUicDmeSet, DL_FC0ProtectionTimeOutVal, 0, 0, 0x1FFF, &UicCommand );
+    Status = UfsExecUicCommands (Private, &UicCommand);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to set active FC0 protection time out value\n"));
+      return Status;
+    }
+    UfsFillUicCommand (UfsUicDmeSet, DL_TC0ReplayTimeOutVal, 0, 0, 0xFFFF, &UicCommand );
+    Status = UfsExecUicCommands (Private, &UicCommand);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to set active TC0 replay time out value\n"));
+      return Status;
+    }
+    UfsFillUicCommand (UfsUicDmeSet, DL_AFC0ReqTimeOutVal, 0, 0, 0x7FFF, &UicCommand );
+    Status = UfsExecUicCommands (Private, &UicCommand);
+    if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to set active AFC0 req time out value\n"));
+      return Status;
+    }
+    UfsFillUicCommand (UfsUicDmeSet, PA_HSSeries, 0, 0, UFS_PA_HS_MODE_B, &UicCommand );
+    Status = UfsExecUicCommands (Private, &UicCommand);
+    if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to enable rate B\n"));
     return Status;
-  }
-  UfsFillUicCommand (UfsUicDmeSet, DL_AFC0ReqTimeOutVal, 0, 0, 0x7FFF, &UicCommand );
-  Status = UfsExecUicCommands (Private, &UicCommand);
-  if (EFI_ERROR (Status)) {
-   DEBUG ((DEBUG_ERROR, "Failed to set active AFC0 req time out value\n"));
-    return Status;
-  }
-  UfsFillUicCommand (UfsUicDmeSet, PA_HSSeries, 0, 0, UFS_PA_HS_MODE_B, &UicCommand );
-  Status = UfsExecUicCommands (Private, &UicCommand);
-  if (EFI_ERROR (Status)) {
-  DEBUG ((DEBUG_ERROR, "Failed to enable rate B\n"));
-  return Status;
-  }
-  UfsFillUicCommand (UfsUicDmeSet, PA_RxTermination, 0, 0, 0x1, &UicCommand );
-  Status = UfsExecUicCommands (Private, &UicCommand);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "Failed to enable Rx termination\n"));
-    return Status;
-  }
-  UfsFillUicCommand (UfsUicDmeSet, PA_TxTermination, 0, 0, 0x1, &UicCommand );
-  Status = UfsExecUicCommands (Private, &UicCommand);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "Failed to enable Tx termination\n"));
-    return Status;
+    }
+    UfsFillUicCommand (UfsUicDmeSet, PA_RxTermination, 0, 0, 0x1, &UicCommand );
+    Status = UfsExecUicCommands (Private, &UicCommand);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to enable Rx termination\n"));
+      return Status;
+    }
+    UfsFillUicCommand (UfsUicDmeSet, PA_TxTermination, 0, 0, 0x1, &UicCommand );
+    Status = UfsExecUicCommands (Private, &UicCommand);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to enable Tx termination\n"));
+      return Status;
+    }
   }
   return Status;
 }
@@ -1744,6 +2129,8 @@ UfsDumpLinkConfig (
 {
   EFI_STATUS         Status;
   UFS_COMMAND        UicCommand;
+  UFS_HC_VER         UfsHcVer;
+  CopyMem (&UfsHcVer, &Private->Version, sizeof (UfsHcVer));
 
   DEBUG ((DEBUG_INFO, "UfsDumpLinkConfig Entry \n"));
 
@@ -1838,26 +2225,28 @@ UfsDumpLinkConfig (
   }
   DEBUG ((DEBUG_INFO, "UfsUicDmeGet PA_RxPWRStatus(%x) = %x \n", PA_RxPWRStatus, UicCommand.Arg3));
 
-  UfsFillUicCommand (UfsUicDmeGet, DL_FC0ProtectionTimeOutVal, 0, 0, 0, &UicCommand );
-  Status = UfsExecUicCommands (Private, &UicCommand);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet DL_FC0ProtectionTimeOutVal(%x)\n", DL_FC0ProtectionTimeOutVal));
-  }
-  DEBUG ((DEBUG_INFO, "UfsUicDmeGet DL_FC0ProtectionTimeOutVal(%x) = %x \n", DL_FC0ProtectionTimeOutVal, UicCommand.Arg3));
+  if (UfsHcVer.Mjr < 3) {
+    UfsFillUicCommand (UfsUicDmeGet, DL_FC0ProtectionTimeOutVal, 0, 0, 0, &UicCommand );
+    Status = UfsExecUicCommands (Private, &UicCommand);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet DL_FC0ProtectionTimeOutVal(%x)\n", DL_FC0ProtectionTimeOutVal));
+    }
+    DEBUG ((DEBUG_INFO, "UfsUicDmeGet DL_FC0ProtectionTimeOutVal(%x) = %x \n", DL_FC0ProtectionTimeOutVal, UicCommand.Arg3));
 
-  UfsFillUicCommand (UfsUicDmeGet, DL_TC0ReplayTimeOutVal, 0, 0, 0, &UicCommand );
-  Status = UfsExecUicCommands (Private, &UicCommand);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet DL_TC0ReplayTimeOutVal(%x)\n", DL_TC0ReplayTimeOutVal));
-  }
-  DEBUG ((DEBUG_INFO, "UfsUicDmeGet DL_TC0ReplayTimeOutVal(%x) = %x \n", DL_TC0ReplayTimeOutVal, UicCommand.Arg3));
+    UfsFillUicCommand (UfsUicDmeGet, DL_TC0ReplayTimeOutVal, 0, 0, 0, &UicCommand );
+    Status = UfsExecUicCommands (Private, &UicCommand);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet DL_TC0ReplayTimeOutVal(%x)\n", DL_TC0ReplayTimeOutVal));
+    }
+    DEBUG ((DEBUG_INFO, "UfsUicDmeGet DL_TC0ReplayTimeOutVal(%x) = %x \n", DL_TC0ReplayTimeOutVal, UicCommand.Arg3));
 
-  UfsFillUicCommand (UfsUicDmeGet, DL_AFC0ReqTimeOutVal, 0, 0, 0, &UicCommand );
-  Status = UfsExecUicCommands (Private, &UicCommand);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet DL_AFC0ReqTimeOutVal(%x)\n", DL_AFC0ReqTimeOutVal));
+    UfsFillUicCommand (UfsUicDmeGet, DL_AFC0ReqTimeOutVal, 0, 0, 0, &UicCommand );
+    Status = UfsExecUicCommands (Private, &UicCommand);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to Get UfsUicDmeGet DL_AFC0ReqTimeOutVal(%x)\n", DL_AFC0ReqTimeOutVal));
+    }
+    DEBUG ((DEBUG_INFO, "UfsUicDmeGet DL_AFC0ReqTimeOutVal(%x) = %x \n", DL_AFC0ReqTimeOutVal, UicCommand.Arg3));
   }
-  DEBUG ((DEBUG_INFO, "UfsUicDmeGet DL_AFC0ReqTimeOutVal(%x) = %x \n", DL_AFC0ReqTimeOutVal, UicCommand.Arg3));
 
   UfsFillUicCommand (UfsUicDmeGet, PA_TXGear, 0, 0, 0, &UicCommand );
   Status = UfsExecUicCommands (Private, &UicCommand);
@@ -1925,10 +2314,34 @@ UfsPowerModeAndGearSwitch (
   UINT32             MaxPwmGear[] = {PWM_G1, PWM_G1};
   UFS_COMMAND        UicCommand;
   UINTN              Address;
+  UFS_DEV_DESC       DeviceDescriptor;
+  UINT32             DeviceDescriptorSize = sizeof (UFS_DEV_DESC); 
 
   DEBUG ((DEBUG_INFO, "UfsPowerModeAndGearSwitch Entry: \n" ));
+
+  UFS_HC_VER UfsHcVer;
+  CopyMem (&UfsHcVer, &Private->Version, sizeof (UfsHcVer));
+
+  if (UfsHcVer.Mjr >= 3) {
+    //
+    //Program the Unipro C-Port connection
+    //
+    Status = UfsHsUniproCPortRecipieProgramming(Private);
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, "UfsHsUniproCPortRecipieProgramming Fails, Status = %r\n", Status));
+    }
+
+    //
+    //Program the platform specific PHY recipe
+    //
+    Status = UfsHsPhyRecipieProgramming(Private);
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, "UfsHsPhyRecipieProgramming Fails, Status = %r\n", Status));
+    }
+  }
+
   //
-  //Step 1: Program Lanes
+  //Program Lanes
   //
   Status = UfsActivateAllLanes (Private);
   if (EFI_ERROR (Status)) {
@@ -1936,7 +2349,7 @@ UfsPowerModeAndGearSwitch (
     return Status;
   }
   //
-  //Step 2: Query Max HS Gear and Max PWM Gears and if no HS gear, set PowerMode to SlowAuto
+  //Query Max HS Gear and Max PWM Gears and if no HS gear, set PowerMode to SlowAuto
   //
   UfsFillUicCommand (UfsUicDmeGet, PA_MaxRxPWMGear, 0, 0, 0, &UicCommand );
   Status = UfsExecUicCommands (Private, &UicCommand);
@@ -1971,7 +2384,7 @@ UfsPowerModeAndGearSwitch (
   MaxHsGear[UfsTxLane] = UicCommand.Arg3;
 
   //
-  //Step 3: Mark the Power Mode as SlowAuto_Mode
+  //Mark the Power Mode as SlowAuto_Mode
   //
   if ((NO_HS == MaxHsGear[UfsRxLane]) || (NO_HS == MaxHsGear[UfsTxLane])) {
     PowerMode[UfsRxLane] = SlowAuto_Mode;
@@ -1985,8 +2398,18 @@ UfsPowerModeAndGearSwitch (
   DEBUG ((DEBUG_INFO, "MaxPwmGear[UfsRxLane] = %x \n", MaxPwmGear[UfsRxLane]));
   DEBUG ((DEBUG_INFO, "MaxPwmGear[UfsTxLane] = %x \n", MaxPwmGear[UfsTxLane]));
 
+  Status = UfsRwDeviceDesc (Private, TRUE, UfsDeviceDesc, 0, 0, &DeviceDescriptor, &DeviceDescriptorSize);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to read device descriptor, status = %r\n", Status));
+    return Status;
+  }
+
+  UINT8 UfsDevDescMajorVer = (UINT8) (DeviceDescriptor.SpecVersion & 0xF);
+  // If UFS device or controller version is less than 3, limit the HS gear to HS_G3.
+  UINT32 RefMaxHsGear = (UINT32) (UfsHcVer.Mjr < 3 || UfsDevDescMajorVer < 3 ? HS_G3 : HS_G4);
+  DEBUG ((DEBUG_INFO, "Max HS Gear based on UFS Device or Host Controller version = 0x%x \n", RefMaxHsGear));
   //
-  //Step 4: Set Rx gear
+  //Set Rx gear
   //
   if (PowerMode[UfsRxLane] == SlowAuto_Mode) {
     UfsFillUicCommand (UfsUicDmeSet, PA_RXGear, 0, 0, MaxPwmGear[UfsRxLane], &UicCommand );
@@ -1996,8 +2419,8 @@ UfsPowerModeAndGearSwitch (
       return Status;
     }
   } else {
-    if (MaxHsGear[UfsRxLane] > HS_G3) {
-      MaxHsGear[UfsRxLane] = HS_G3;
+    if (MaxHsGear[UfsRxLane] > RefMaxHsGear) {
+      MaxHsGear[UfsRxLane] = RefMaxHsGear;
       DEBUG ((DEBUG_INFO, "Limited MaxHsGear to %x \n", MaxHsGear[UfsRxLane]));
     }
 
@@ -2020,7 +2443,7 @@ UfsPowerModeAndGearSwitch (
     }
   }
   //
-  //Step 5: Set Tx gear
+  //Set Tx gear
   //
   if (PowerMode[UfsTxLane] == SlowAuto_Mode) {
     UfsFillUicCommand (UfsUicDmeSet, PA_TXGear, 0, 0, MaxPwmGear[UfsTxLane], &UicCommand );
@@ -2030,8 +2453,8 @@ UfsPowerModeAndGearSwitch (
       return Status;
     }
   } else {
-    if (MaxHsGear[UfsTxLane] > HS_G3) {
-      MaxHsGear[UfsTxLane] = HS_G3;
+    if (MaxHsGear[UfsTxLane] > RefMaxHsGear) {
+      MaxHsGear[UfsTxLane] = RefMaxHsGear;
       DEBUG ((DEBUG_INFO, "Limited MaxHsGear to %x \n", MaxHsGear[UfsTxLane]));
     }
     UfsFillUicCommand (UfsUicDmeGet, PA_TXGear, 0, 0, 0, &UicCommand );
@@ -2051,15 +2474,31 @@ UfsPowerModeAndGearSwitch (
       }
     }
   }
+
   //
-  //Step 6: Program the Intel platform specific recipe required for High speed link Power Mode and Gear switch
+  //Set Adapt, if the target is HS Gear 4
+  //
+  if (UfsHcVer.Mjr >= 3) {
+    if ((HS_G4 == MaxHsGear[UfsRxLane]) && (HS_G4 == MaxHsGear[UfsTxLane])) {
+      //Refresh=0; Initial=1; No Adapt=3 (Only applicable to G4)
+      UfsFillUicCommand (UfsUicDmeSet, PA_TxHsAdaptType, 0, 0, 0x1, &UicCommand );
+      Status = UfsExecUicCommands (Private, &UicCommand);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "Failed to set PA_TxHsAdaptType(%x) \n", PA_TxHsAdaptType));
+        return Status;
+      }
+    }
+  }
+
+  //
+  //Program the Intel platform specific recipe required for High speed link Power Mode and Gear switch
   //
   Status = UfsHsRecipieProgramming (Private);
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, "UfsHsRecipieProgramming Fails, Status = %r\n", Status));
   }
   //
-  // Step 7 Change Power Mode of both directions
+  //Change Power Mode of both directions
   //
   UfsFillUicCommand (UfsUicDmeSet, PA_PWRMode, 0, 0, (((PowerMode[UfsRxLane] & 0xF) << 4) | (PowerMode[UfsTxLane] & 0xF)), &UicCommand );
   Status = UfsExecUicCommands (Private, &UicCommand);
@@ -2439,6 +2878,7 @@ GetUfsHcInfo (
   Data = MmioRead32 (Address);
 
   Private->Version = Data;
+  DEBUG ((DEBUG_INFO, "UfsHostController Version: 0x%04x\n", Private->Version));
 
   Address = Private->UfsHcBase + UFS_HC_CAP_OFFSET;
   Data    = MmioRead32 (Address);
