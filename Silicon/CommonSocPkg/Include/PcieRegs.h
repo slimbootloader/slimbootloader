@@ -65,10 +65,6 @@
 #define N_PCIE_LCAP_EL0                           12
 #define B_PCIE_LCAP_APMS_L0S                      BIT10
 #define B_PCIE_LCAP_APMS_L1                       BIT11
-#define B_PCIE_LCAP_MLW                           0x000003F0 ///< Maximum Link Width
-#define N_PCIE_LCAP_MLW                           4
-#define B_PCIE_LCAP_MLS                           (BIT3 | BIT2 | BIT1 | BIT0) ///< Max Link Speed
-
 #define R_PCIE_LCTL_OFFSET                        0x10 ///< Link Control Register (Offset 10h)
 #define B_PCIE_LCTL_ECPM                          BIT8 ///< Enable Clock Power Management
 #define B_PCIE_LCTL_CCC                           BIT6 ///< Common Clock Configuration
@@ -129,31 +125,6 @@
 #define N_PCIE_EX_L1SCTL1_L12LTRTLV              16
 #define R_PCIE_EX_L1SCTL2_OFFSET                 0x0C ///< L1 Sub-States Control 2
 #define N_PCIE_EX_L1SCTL2_POWT                   3
-
-//
-// Base Address Offset
-//
-#define B_PCI_BAR_MEMORY_TYPE_MASK                (BIT1 | BIT2)
-#define B_PCI_BAR_MEMORY_TYPE_64                  BIT2
-
-
-#define R_PCI_BAR0_OFFSET                         0x10
-
-
-#define B_PCIE_DCTL2_LTREN                        BIT10 ///< LTR Mechanism Enable
-
-//
-// PTM Extended Capability Register (CAPID:001Fh)
-//
-#define  B_PCIE_EX_PTMCAP_PTMRC                   BIT2 ///< PTM Root Capable
-#define  B_PCIE_EX_PTMCAP_PTMRSPC                 BIT1 ///< PTM Responder Capable
-
-//
-// Base Address Offset
-//
-#define B_PCI_BAR_MEMORY_TYPE_MASK                (BIT1 | BIT2)
-#define B_PCI_BAR_MEMORY_TYPE_64                  BIT2
-
 
 //
 // PCI Express Extended Capability Header
