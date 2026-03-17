@@ -212,7 +212,7 @@ DmarTableUpdate (
   // Add DRHD for VTd Engine 3
   BaseAddress = ReadVtdBaseAddress(2);
   if (BaseAddress != 0) {
-  DmarHdr = AddDrhdHdr (AcpiHeader, 0, SIZE_4KB, 0, BaseAddress);
+    DmarHdr = AddDrhdHdr (AcpiHeader, EFI_ACPI_DMAR_DRHD_FLAGS_INCLUDE_PCI_ALL, SIZE_4KB, 0, BaseAddress);
     if (DmarHdr != NULL) {
       // Add IOAPIC scope
       AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_IOAPIC, 0, 2, 0, 0x1E, 7);
