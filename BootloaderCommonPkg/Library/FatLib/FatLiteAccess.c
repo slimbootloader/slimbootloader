@@ -106,7 +106,7 @@ FatGetBpbInfo (
     return EFI_NOT_FOUND;
   }
 
-  if (Bpb.ReservedSectors == 0 || Bpb.NoFats == 0 || Sectors == 0) {
+  if (Bpb.ReservedSectors == 0 || Bpb.NoFats == 0 || Sectors == 0 || Bpb.SectorSize == 0) {
     return EFI_NOT_FOUND;
   }
 
@@ -164,13 +164,18 @@ FatGetBpbInfo (
   RootDirSectors = ((Volume->RootEntries * sizeof (FAT_DIRECTORY_ENTRY)) + (Volume->SectorSize - 1)) / Volume->SectorSize;
 
   FatLba                  = Bpb.ReservedSectors;
-  RootLba                 = Bpb.NoFats * SectorsPerFat + FatLba;
+
+  // Cast to UINT64 to prevent 32-bit overflow before addition
+  RootLba                 = (UINT64)Bpb.NoFats * SectorsPerFat + FatLba;
   FirstClusterLba         = RootLba + RootDirSectors;
 
   Volume->VolumeSize      = MultU64x32 (Sectors, Volume->SectorSize);
   Volume->FatPos          = MultU64x32 (FatLba, Volume->SectorSize);
   Volume->RootDirPos      = MultU64x32 (RootLba, Volume->SectorSize);
   Volume->FirstClusterPos = MultU64x32 (FirstClusterLba, Volume->SectorSize);
+  if (FirstClusterLba >= Sectors) {
+    return EFI_NOT_FOUND;
+  }
   Volume->MaxCluster      = (UINT32) (Sectors - FirstClusterLba) / Bpb.SectorsPerCluster;
   Volume->RootDirCluster  = BpbEx.RootDirFirstCluster;
 
@@ -218,6 +223,10 @@ FatGetNextCluster (
   *NextCluster = 0;
 
   if (Volume->FatType == Fat32) {
+    if (Cluster >= Volume->MaxCluster + 2) {
+      return EFI_INVALID_PARAMETER;
+    }
+
     FatEntryPos = Volume->FatPos + MultU64x32 (4, Cluster);
 
     Status      = FatReadDisk (PrivateData, Volume->BlockDeviceNo, FatEntryPos, 4, NextCluster);
@@ -231,6 +240,13 @@ FatGetNextCluster (
     }
 
   } else if (Volume->FatType == Fat16) {
+    //
+    // Make sure we have enough space for FAT16 entry (2 bytes)
+    //
+    if (Cluster >= Volume->MaxCluster + 2) {
+      return EFI_INVALID_PARAMETER;
+    }
+
     FatEntryPos = Volume->FatPos + MultU64x32 (2, Cluster);
 
     Status      = FatReadDisk (PrivateData, Volume->BlockDeviceNo, FatEntryPos, 2, NextCluster);
@@ -243,6 +259,13 @@ FatGetNextCluster (
     }
 
   } else {
+    //
+    // Make sure we have enough space for FAT12 entry (1.5 bytes)
+    //
+    if (Cluster >= Volume->MaxCluster + 2) {
+      return EFI_INVALID_PARAMETER;
+    }
+
     FatEntryPos = Volume->FatPos + DivU64x32Remainder (MultU64x32 (3, Cluster), 2, &Dummy);
 
     Status      = FatReadDisk (PrivateData, Volume->BlockDeviceNo, FatEntryPos, 2, NextCluster);
@@ -338,6 +361,9 @@ FatSetFilePos (
     File->StraightReadAmount  = 0;
     Cluster                   = File->CurrentCluster;
     while (!FAT_CLUSTER_FUNCTIONAL (Cluster)) {
+      if (File->StraightReadAmount > MAX_UINT32 - File->Volume->ClusterSize) {
+        break;
+      }
       File->StraightReadAmount += File->Volume->ClusterSize;
       PrevCluster = Cluster;
       Status      = FatGetNextCluster (PrivateData, File->Volume, Cluster, &Cluster);
@@ -416,6 +442,15 @@ FatReadFile (
     //
     while (Size != 0) {
       DivU64x32Remainder (File->CurrentPos, File->Volume->ClusterSize, &Offset);
+
+      //
+      // Check for calculation CurrentCluster - 2 underflows in next step
+      // if CurrentCluster is 0 or 1.
+      //
+      if (File->CurrentCluster < 2) {
+        return EFI_DEVICE_ERROR;
+      }
+
       PhysicalAddr  = File->Volume->FirstClusterPos + MultU64x32 (File->Volume->ClusterSize, File->CurrentCluster - 2);
 
       Amount        = File->StraightReadAmount;
@@ -433,7 +468,10 @@ FatReadFile (
       //
       // Advance the file's current pos and current cluster
       //
-      FatSetFilePos (PrivateData, File, (UINT32) Amount);
+      Status = FatSetFilePos (PrivateData, File, (UINT32) Amount);
+      if (EFI_ERROR (Status)) {
+        return EFI_DEVICE_ERROR;
+      }
 
       BufferPtr += Amount;
       Size -= Amount;
@@ -479,23 +517,34 @@ FatReadNextDirectoryEntry (
   CHAR16             *LfnBufferPointer;
   UINT8               LfnOrdinal;
   UINTN               LfnBufferLen;
+  UINT32              DirEntryCount;
+  UINT32              LfnEntryCount;
 
   LfnBufferLen = 0;
   ZeroMem ((UINT8 *) SubFile, sizeof (PEI_FAT_FILE));
+  DirEntryCount = 0;
 
   //
   // Pick a valid directory entry
   //
-  while (1) {
+  while (DirEntryCount < PEI_FAT_MAX_DIR_ENTRY_COUNT) {
+    DirEntryCount++;
     //
     // Read one entry
     //
     LfnOrdinal   = 0;
+    LfnEntryCount = 0;
 
     //
     // If it is LFN entry, read all of the following LFN entries.
     //
     do {
+      LfnEntryCount++;
+      if (LfnEntryCount > MAX_LFN_ENTRIES) {
+        LfnOrdinal = 0;
+        LfnBufferLen = 0;
+        break;
+      }
       Status = FatReadFile (PrivateData, ParentDir, 32, &DirEntry);
       if (EFI_ERROR (Status)) {
         return EFI_DEVICE_ERROR;
@@ -524,6 +573,10 @@ FatReadNextDirectoryEntry (
           LfnBufferPointer += LFN_CHAR3_LEN;
           LfnOrdinal--;
         }
+      } else if (LfnOrdinal > 0) {
+        LfnOrdinal = 0;
+        LfnBufferLen = 0;
+        break;
       }
     } while (LfnOrdinal > 0);
 
@@ -560,6 +613,10 @@ FatReadNextDirectoryEntry (
     if ((UINT8) DirEntry.FileName[0] != DELETE_ENTRY_MARK) {
       break;
     }
+  }
+
+  if (DirEntryCount >= PEI_FAT_MAX_DIR_ENTRY_COUNT) {
+    return EFI_NOT_FOUND;
   }
   //
   // fill in the output parameter
