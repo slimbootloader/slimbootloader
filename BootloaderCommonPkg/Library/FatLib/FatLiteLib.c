@@ -116,12 +116,16 @@ FatReadBlock (
   Status    = EFI_SUCCESS;
   BlockDev  = & (PrivateData->BlockDevice[BlockDeviceNo]);
 
+  if (Lba > BlockDev->LastBlock) {
+    return EFI_DEVICE_ERROR;
+  }
+
   if (BufferSize > MultU64x32 (BlockDev->LastBlock - Lba + 1, BlockDev->BlockSize)) {
     return EFI_DEVICE_ERROR;
   }
 
   if (!BlockDev->Logical) {
-    Status = MediaReadBlocks (BlockDev->PhysicalDevNo, (UINT32) (Lba + BlockDev->StartingPos), BufferSize, Buffer);
+    Status = MediaReadBlocks (BlockDev->PhysicalDevNo, Lba + BlockDev->StartingPos, BufferSize, Buffer);
   } else {
     Status = FatReadDisk (
                PrivateData,

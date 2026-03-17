@@ -32,8 +32,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define PEI_FAT_MAX_BLOCK_DEVICE                      64
 #define PEI_FAT_MAX_BLOCK_IO_PPI                      32
 #define PEI_FAT_MAX_VOLUME                            64
-
-#define PEI_FAT_MEMMORY_PAGE_SIZE                     0x1000
+#define PEI_FAT_MAX_DIR_ENTRY_COUNT                   0x10000
+#define PEI_FAT_MEMORY_PAGE_SIZE                      0x1000
 
 //
 // The block device

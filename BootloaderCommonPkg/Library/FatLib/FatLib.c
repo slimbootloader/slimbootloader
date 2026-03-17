@@ -121,6 +121,7 @@ FindFile (
   CHAR16        *NodeCurr;
   CHAR16        *NodeNext;
   UINT32         NodeLen;
+  UINT32         EntryCount;
 
   File = &PrivateData->File;
 
@@ -155,7 +156,13 @@ FindFile (
   while (NodeCurr != NULL) {
     NodeNext = GetNextFilePathNode (NodeCurr, &NodeLen);
     if (NodeLen > 0) {
+      EntryCount = 0;
       do {
+        if (EntryCount++ > PEI_FAT_MAX_DIR_ENTRY_COUNT) {
+          Status = EFI_NOT_FOUND;
+          break;
+        }
+
         Status   = FatReadNextDirectoryEntry (
                        PrivateData,
                        &Parent,
@@ -237,7 +244,9 @@ FatInitFileSystem (
   // Valid parameters
   PartBlockDev = (PART_BLOCK_DEVICE *)PartHandle;
   if ( (FsHandle == NULL) || (PartBlockDev == NULL) || \
-       (PartBlockDev->Signature != PART_INFO_SIGNATURE) ) {
+       (PartBlockDev->Signature != PART_INFO_SIGNATURE) || \
+       (PartBlockDev->BlockInfo.BlockSize == 0) || \
+       (PartBlockDev->BlockInfo.BlockSize > PEI_FAT_MAX_BLOCK_SIZE) ) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -258,6 +267,10 @@ FatInitFileSystem (
   FatBlockDevice->PhysicalDevNo = (UINT8)PartBlockDev->HarewareDevice;
   FatBlockDevice->BlockSize     = PartBlockDev->BlockInfo.BlockSize;
   FatBlockDevice->LastBlock     = PartBlockDev->BlockInfo.BlockNum - 1;
+
+  if (PartBlockDev->BlockInfo.BlockNum == 0) {
+    FatBlockDevice->LastBlock = 0;
+  }
 
   PrivateData->BlockDeviceCount = 1;
 
