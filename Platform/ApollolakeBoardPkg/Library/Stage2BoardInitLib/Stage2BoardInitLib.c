@@ -1770,7 +1770,7 @@ UpdateDmarAcpi (
   // Add DRHD for General Purpose Engine (VTD Engine 2)
   BaseAddress = ReadVtdBaseAddress(1);  // General Purpose VTD Engine
   if (BaseAddress != 0) {
-    DmarHdr = AddDrhdHdr (AcpiHeader, 0, SIZE_4KB, 0, BaseAddress);
+    DmarHdr = AddDrhdHdr (AcpiHeader, EFI_ACPI_DMAR_DRHD_FLAGS_INCLUDE_PCI_ALL, SIZE_4KB, 0, BaseAddress);
     ASSERT (DmarHdr != NULL);
     // Add IOAPIC scope
     AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_IOAPIC, 0, 2, 0, 0x1F, 0);
