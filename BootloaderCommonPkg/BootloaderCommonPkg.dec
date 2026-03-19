@@ -383,6 +383,8 @@
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled                  | FALSE  | BOOLEAN | 0x20000221
   gPlatformCommonLibTokenSpaceGuid.PcdFspNoEop                    | FALSE  | BOOLEAN | 0x20000223
   gPlatformCommonLibTokenSpaceGuid.PcdTxtEnabled                  | FALSE  | BOOLEAN | 0x20000229
+  # Control if platform MADT Local apic entries should be used as is or get updated by AcpiInitLib
+  gPlatformCommonLibTokenSpaceGuid.PcdMadtUsePlatformLapic        | FALSE  | BOOLEAN | 0x20000231
   # Enable ELF payload support
   gPlatformCommonLibTokenSpaceGuid.PcdElfSupportEnabled           | TRUE   | BOOLEAN | 0x2000022A
   # Enable FV payload support

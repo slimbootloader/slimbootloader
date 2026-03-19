@@ -361,6 +361,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdDmaProtectionEnabled | $(ENABLE_DMA_PROTECTION)
   gPlatformCommonLibTokenSpaceGuid.PcdMultiUsbBootDeviceEnabled |  $(ENABLE_MULTI_USB_BOOT_DEV)
   gPlatformCommonLibTokenSpaceGuid.PcdCpuX2ApicEnabled    | $(SUPPORT_X2APIC)
+  gPlatformCommonLibTokenSpaceGuid.PcdMadtUsePlatformLapic | $(MADT_USE_PLATFORM_LAPIC)
   gPlatformModuleTokenSpaceGuid.PcdAriSupport             | $(SUPPORT_ARI)
   gPlatformModuleTokenSpaceGuid.PcdSrIovSupport           | $(SUPPORT_SR_IOV)
   gPlatformModuleTokenSpaceGuid.PcdResizableBarSupport    | $(SUPPORT_RESIZABLE_BAR)
