@@ -177,7 +177,7 @@ ExtendBtGuardEvents(
   @param[out] Svn         Svn of Acm.
 
   @retval EFI_SUCCESS     The Svn was found for the given Acm
-  @retval Others          An error occured in finding the given Acm Svn
+  @retval Others          An error occurred in finding the given Acm Svn
 **/
 EFI_STATUS
 EFIAPI
@@ -193,7 +193,7 @@ GetAcmSvnFromAcmHdr (
   Get SVN from existing ACM.
 
   @retval EFI_SUCCESS     The Svn was found for the existing Acm
-  @retval Others          An error occured in finding the existing Acm Svn
+  @retval Others          An error occurred in finding the existing Acm Svn
 **/
 EFI_STATUS
 EFIAPI

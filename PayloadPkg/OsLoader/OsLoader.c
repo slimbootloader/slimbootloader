@@ -252,7 +252,7 @@ UpdateLoadedImage (
     for (Index = 2; Index < NumFiles; Index += 2) {
       if (Index < MAX_MULTIBOOT_MODULE_NUMBER) {
         // Multiboot modules are in a cmdline-ELF pair according to the spec.
-        // So to accomodate for that, ACPI binary blobs should be preceded by
+        // So to accommodate for that, ACPI binary blobs should be preceded by
         // a corresponding dummy cmdline file that contains the MULTIBOOT_SPECIAL_MODULE_MAGIC
         // string to indicate that the paired file is the ACPI binary blob
         if (* (UINT32 *) File[Index].Addr == MULTIBOOT_SPECIAL_MODULE_MAGIC) {

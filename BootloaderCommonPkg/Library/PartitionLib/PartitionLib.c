@@ -104,7 +104,7 @@ PartitionValidMbr (
     if (EndingLBA > LastLba) {
       //
       // Compatability Errata:
-      //  Some systems try to hide drive space with thier INT 13h driver
+      //  Some systems try to hide drive space with their INT 13h driver
       //  This does not hide space from the OS driver. This means the MBR
       //  that gets created from DOS is smaller than the MBR created from
       //  a real OS (NT & Win98). This leads to BlockIo->LastBlock being
@@ -147,7 +147,7 @@ PartitionValidMbr (
   @retval EFI_SUCCESS        New partitions are detected and logical block devices
                              are  added to block device array
   @retval EFI_NOT_FOUND      No New partitions are added
-  @retval EFI_DEVICE_ERROR   Error occured for device access
+  @retval EFI_DEVICE_ERROR   Error occurred for device access
 
 **/
 EFI_STATUS
@@ -312,8 +312,8 @@ PartitionValidGpt (
   @retval EFI_SUCCESS        New partitions are detected and logical block devices
                              are  added to block device array
   @retval EFI_NOT_FOUND      No New partitions are added
-  @retval EFI_DEVICE_ERROR   Error occured for device access
-  @retval EFI_CRC_ERROR      Error occured with primary and secondary GPT CRC
+  @retval EFI_DEVICE_ERROR   Error occurred for device access
+  @retval EFI_CRC_ERROR      Error occurred with primary and secondary GPT CRC
   @retval EFI_UNSUPPORTED    The number of GPT entries exceeds the maximum number allowed
 
 **/
@@ -498,7 +498,7 @@ This function will check hardware partition for MBR, GPT or NONE parition.
 
   @retval EFI_SUCCESS        The partition was found successfully.
   @retval EFI_NOT_FOUND      No partition was found.
-  @retval EFI_DEVICE_ERROR   Error occured for device access.
+  @retval EFI_DEVICE_ERROR   Error occurred for device access.
   @retval EFI_INVALID_PARAMETER   Invalid parameters.
   @retval EFI_OUT_OF_RESOURCES    Insufficant memory resource pool.
 

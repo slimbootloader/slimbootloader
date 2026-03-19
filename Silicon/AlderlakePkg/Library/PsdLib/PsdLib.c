@@ -68,7 +68,7 @@ GetMeBiosPayloadHobData (
   @param[in,out] EomState         Pointer to The EOM state value.
 
   @retval EFI_SUCCESS             The EOM state was retrieved successfully.
-  @retval Others                  An error occured.
+  @retval Others                  An error occurred.
 
  **/
 EFI_STATUS

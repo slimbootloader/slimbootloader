@@ -319,7 +319,7 @@ typedef struct {
   UINT32   HybridStorageLocation;                   ///< Offset 730
   UINT8    PchUsb2PortCount;                        ///< Offset 734     Number of USB2 ports in PCH
   UINT8    PchUsb3PortCount;                        ///< Offset 735     Number of USB3 ports in PCH
-  UINT8    SataPortPresence;                        ///< Offset 736     Holds information from SATA PCS register about SATA ports which recieved COMINIT from connected devices.
+  UINT8    SataPortPresence;                        ///< Offset 736     Holds information from SATA PCS register about SATA ports which received COMINIT from connected devices.
   UINT8    ClkreqIpcCmdSupported;                   ///< Offset 737     PCIE CLKREQ IPC command support
   UINT8    ClockReq[18];                            ///< Offset 738     CLOCK Source index to ClkReq Number. Used during PCIe D3Cold flows
   UINT32   ThcWakOnTouchInterrupt[2];               ///< Offset 756     Touch Host Controller Wake On Touch Interrupt Number - when 0 wake is disabled

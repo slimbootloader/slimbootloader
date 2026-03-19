@@ -556,7 +556,7 @@ DwcXdciCoreInitTrb (
 
   //
   // Can't transfer in one TRB.
-  // Seperate it in every ONE_TRB_SIZE of TRB
+  // Separate it in every ONE_TRB_SIZE of TRB
   //
   TrbBuffer = BufferPtr;
   TrbIndex = 0;

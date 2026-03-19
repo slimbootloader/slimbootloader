@@ -78,7 +78,7 @@ typedef struct {
   UINT32     TpoValue : 6; // T power_on value
 } L1SS_CAPS;
 
-#define MAX_SBDF_TABLE_SIZE 50 //arbitrary table size; big enough to accomodate even full length TBT chain.
+#define MAX_SBDF_TABLE_SIZE 50 //arbitrary table size; big enough to accommodate even full length TBT chain.
 
 typedef struct {
   UINT32 Count;

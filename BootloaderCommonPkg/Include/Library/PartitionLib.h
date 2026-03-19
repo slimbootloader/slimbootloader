@@ -74,7 +74,7 @@ This function will check hardware partition for MBR, GPT or NONE parition.
 
   @retval EFI_SUCCESS        The partition was found successfully.
   @retval EFI_NOT_FOUND      No partition was found.
-  @retval EFI_DEVICE_ERROR   Error occured for device access.
+  @retval EFI_DEVICE_ERROR   Error occurred for device access.
   @retval EFI_INVALID_PARAMETER   Invalid parameters.
   @retval EFI_OUT_OF_RESOURCES    Insufficant memory resource pool.
 

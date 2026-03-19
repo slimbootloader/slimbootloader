@@ -99,7 +99,7 @@ GetNextFilePathNode (
   @param  FileName                The file name to find.
   @param  Handle                  The output file handle.
 
-  @retval EFI_DEVICE_ERROR        Some error occured when operating the FAT
+  @retval EFI_DEVICE_ERROR        Some error occurred when operating the FAT
                                   volume.
   @retval EFI_NOT_FOUND           The file was not found.
   @retval EFI_SUCCESS             The file was successfully found on the

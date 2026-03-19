@@ -185,8 +185,8 @@ typedef union {
                                   //      1: Set to 1 when DW_apb_i2c is acting as a slave and another I2C master is attempting
                                   //         to read data from DW_apb_i2c.
                                   //      0: The processor just read the IC_CLR_RD_REQ register
-    UINT32  RTxAbrt        :1;    //[RO][6] This bit indicates if a transmit abort has occured
-                                  //        if set, the IC_TX_ABRT_SOURCE register contains why the transmit abort has occured
+    UINT32  RTxAbrt        :1;    //[RO][6] This bit indicates if a transmit abort has occurred
+                                  //        if set, the IC_TX_ABRT_SOURCE register contains why the transmit abort has occurred
     UINT32  RRxDone        :1;    //[RO][7] When the DW_apb_i2c is acting as a slave-transmitter, set if
                                   //        the master does not acknowledge a transmitted byte, which occurs if transmission is done
     UINT32  RActivity      :1;    //[RO][8] Captures DW_apb_i2c activity and stays set until it is cleared by
@@ -290,7 +290,7 @@ typedef union {
   UINT32 Data32;
 } SERIAL_IO_I2C_MEM_TRANSMIT_FIFO;
 
-// 0x78, I2C Recieve FIFO Level Register
+// 0x78, I2C Receive FIFO Level Register
 //
 // This register contains the number of valid data entries in the receive FIFO buffer. It is cleared
 // whenever:
@@ -731,7 +731,7 @@ SerialIoI2cGetHsScl (
 
   @param[in]  MmioBase    MMIO Base Address of specified I2C controller
 
-  @retval     TRUE        Tx Abort occured
+  @retval     TRUE        Tx Abort occurred
   @retval     FALSE       No Tx Abort errors
 **/
 BOOLEAN

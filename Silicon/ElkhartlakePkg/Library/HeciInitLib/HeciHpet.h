@@ -32,14 +32,14 @@ StartTimer (
   );
 
 /**
-  Used to determine if a timeout has occured.
+  Used to determine if a timeout has occurred.
 
   @param[in] Start                Snapshot of the HPET timer when the timeout period started.
   @param[in] End                  Calculated time when timeout period will be done.
   @param[in] HpetTimer            The value of High Precision Event Timer
 
-  @retval TRUE                    Timeout occured.
-  @retval FALSE                   Timeout has not occured yet.
+  @retval TRUE                    Timeout occurred.
+  @retval FALSE                   Timeout has not occurred yet.
 **/
 BOOLEAN
 IsHeciTimeout (

@@ -137,7 +137,7 @@ GpioIsDswGroup (
   IN  GPIO_GROUP         Group
   )
 {
-  // TODO: Update code for CDF- check wich groups are in DSW
+  // TODO: Update code for CDF- check which groups are in DSW
   return FALSE;
 }
 

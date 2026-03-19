@@ -441,7 +441,7 @@ HeciRevokeOemKey (
                                     0x01 (HECI_EOP_PERFORM_GLOBAL_RESET) - Global reset
 
   @retval EFI_SUCCESS             Platform reached End of Post successfully
-  @retval EFI_DEVICE_ERROR        An error has occured by EoP message
+  @retval EFI_DEVICE_ERROR        An error has occurred by EoP message
 **/
 EFI_STATUS
 EFIAPI

@@ -13,7 +13,7 @@ CONST UINT32 mErrorCodeFlag = 0x00027d00;
 /**
   Common exception handler.
 
-  It will print out the location where exception occured and then halt the system.
+  It will print out the location where exception occurred and then halt the system.
   This function will never return.
 
   @param[in] Stack          Current stack address pointer.
