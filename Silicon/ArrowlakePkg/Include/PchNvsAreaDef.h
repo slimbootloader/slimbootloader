@@ -332,7 +332,7 @@ typedef struct {
   UINT16   IclkPid;                                 ///< Offset 822     Iclk PID number
   UINT8    PchUsb2PortCount;                        ///< Offset 824     Number of USB2 ports in PCH
   UINT8    PchUsb3PortCount;                        ///< Offset 825     Number of USB3 ports in PCH
-  UINT8    SataPortPresence;                        ///< Offset 826     Holds information from SATA PCS register about SATA ports which recieved COMINIT from connected devices.
+  UINT8    SataPortPresence;                        ///< Offset 826     Holds information from SATA PCS register about SATA ports which received COMINIT from connected devices.
   UINT8    ClkreqIpcCmdSupported;                   ///< Offset 827     PCIE CLKREQ IPC command support
   UINT8    ClockReq[18];                            ///< Offset 828     CLOCK Source index to ClkReq Number. Used during PCIe D3Cold flows
   UINT32   ThcWakOnTouchInterrupt[2];               ///< Offset 846     Touch Host Controller Wake On Touch Interrupt Number - when 0 wake is disabled

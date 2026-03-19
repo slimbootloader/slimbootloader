@@ -116,8 +116,8 @@ SpiLoadExternalConfigData (
   @param[in]    pFwUpdStatus     Pointer to FW_UPDATE_STATUS structure.
 
   @retval  EFI_SUCCESS           State machine initialized in reserved region.
-  @retval  EFI_UNSUPPORTED       Failure occured during state machine init.
-  @retval  others                Error occured during state machine init.
+  @retval  EFI_UNSUPPORTED       Failure occurred during state machine init.
+  @retval  others                Error occurred during state machine init.
 **/
 EFI_STATUS
 CheckStateMachine (
@@ -132,7 +132,7 @@ CheckStateMachine (
   @param[in,out]  PssTableAddr      Pointer to PSS Table to be updated
   @param[in]      PssParams         All PSS calculation related info
   @retval         EFI_SUCCESS       Patch done successfully
-  @retval         others            Error occured during patching the table
+  @retval         others            Error occurred during patching the table
 
 **/
 EFI_STATUS

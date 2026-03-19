@@ -828,7 +828,7 @@ SerialIoI2cGetHsScl (
 
   @param[in]  MmioBase    MMIO Base Address of specified I2C controller
 
-  @retval     TRUE        Tx Abort occured
+  @retval     TRUE        Tx Abort occurred
   @retval     FALSE       No Tx Abort errors
 **/
 BOOLEAN

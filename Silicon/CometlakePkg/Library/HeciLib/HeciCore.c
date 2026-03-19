@@ -1215,7 +1215,7 @@ HeciPacketWrite (
   MmioWrite32 (HeciMBAR + H_CSR, HeciRegHCsr.ul);
 
   ///
-  /// Test if ME Ready bit is set to 1, if set to 0 a fatal error occured during
+  /// Test if ME Ready bit is set to 1, if set to 0 a fatal error occurred during
   /// the transmission of this message.
   ///
   HeciRegMeCsrHa.ul = MmioRead32 (HeciMBAR + ME_CSR_HA);

@@ -275,7 +275,7 @@ CheckMsgAllowance (
   @param[in] Offset        Offset to Host/Me Control Status Register
 
   @retval FilledSlots      Number of filled slots in circular buffer
-  @retval HECI_CB_OVERFLOW Circular buffer overflow has occured
+  @retval HECI_CB_OVERFLOW Circular buffer overflow has occurred
 **/
 UINT32
 GetFilledSlots (
@@ -507,7 +507,7 @@ HeciReInitialize (
   BIOS does not rely on Interrupt Status bit, since this bit can be set due to several reasons:
     a) CSME has finished reading data from H_CSR
     b) CSME has finished writing data to ME_CSR
-    c) Reset has occured
+    c) Reset has occurred
   Because of above - additional checks must be conducted in order to prevent misinterpretations.
 
   @param[in] HeciMemBar           HECI Memory BAR.
@@ -735,7 +735,7 @@ HeciReceive (
                   );
 
     ///
-    /// If timeout occured we need to reset the interface to clear the data that could possibly come later.
+    /// If timeout occurred we need to reset the interface to clear the data that could possibly come later.
     /// Also buffer overflow and transaction errors will require a reset.
     /// We need to continue read even if buffer too small to clear the data and signal the buffer size.
     ///
@@ -784,10 +784,10 @@ HeciReceive (
   @param[in] MessageData          Pointer to the actual message data.
 
   @retval EFI_SUCCESS             One message packet sent
-  @retval EFI_ABORTED             Fatal error has occured during transmission of the message
-  @retval EFI_DEVICE_ERROR        Unrecoverable fatal error has occured during transmission of the message
+  @retval EFI_ABORTED             Fatal error has occurred during transmission of the message
+  @retval EFI_DEVICE_ERROR        Unrecoverable fatal error has occurred during transmission of the message
   @retval EFI_TIMEOUT             CSME failed to empty the circular buffer
-  @retval EFI_NOT_READY           Fatal error has occured during transmission of the message
+  @retval EFI_NOT_READY           Fatal error has occurred during transmission of the message
 **/
 EFI_STATUS
 HeciPacketWrite (
@@ -844,7 +844,7 @@ HeciPacketWrite (
   MmioWrite32 (HeciMemBar + H_CSR, HeciCsrHost.Data);
 
   ///
-  /// Test if ME Ready bit is set to 1, if set to 0 a fatal error occured during
+  /// Test if ME Ready bit is set to 1, if set to 0 a fatal error occurred during
   /// the transmission of this message.
   ///
   HeciCsrMeHra.Data = MmioRead32 (HeciMemBar + ME_CSR_HA);

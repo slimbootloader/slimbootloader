@@ -260,7 +260,7 @@ typedef struct {
                                                     ///< Offset 648     Latency Tolerance Reporting Enable
                                                     ///< Offset 649     Latency Tolerance Reporting Enable
   UINT8    GBES;                                    ///< Offset 650     GbE Support
-  UINT8    SataPortPresence;                        ///< Offset 651     Holds information from SATA PCS register about SATA ports which recieved COMINIT from connected devices.
+  UINT8    SataPortPresence;                        ///< Offset 651     Holds information from SATA PCS register about SATA ports which received COMINIT from connected devices.
   UINT8    SdPowerEnableActiveHigh;                 ///< Offset 652     SD PWREN# active high indication
   UINT8    EmmcEnabled;                             ///< Offset 653     Set to indicate that eMMC is enabled
   UINT8    SdCardEnabled;                           ///< Offset 654     Set to indicate that SD card is enabled

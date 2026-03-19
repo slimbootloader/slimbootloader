@@ -81,7 +81,7 @@ RpmbCheckMac(
   }
 
   if (CompareMem(Mac, Frames[BlkCnt - 1].KeyMac, RPMB_MAC_SIZE)) {
-    DEBUG ((DEBUG_ERROR, "RpmbCheckMac: HMAC mismatch occured\n"));
+    DEBUG ((DEBUG_ERROR, "RpmbCheckMac: HMAC mismatch occurred\n"));
     return 1;
   }
 

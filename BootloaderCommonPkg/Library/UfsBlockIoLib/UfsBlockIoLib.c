@@ -1278,7 +1278,7 @@ UfsGetMediaInfo (
 }
 
 /**
-  Finishes device initialization by setting fDeviceInit flag and waiting untill device responds by
+  Finishes device initialization by setting fDeviceInit flag and waiting until device responds by
   clearing it.
 
   @param[in] Private  Pointer to the UFS_PASS_THRU_PRIVATE_DATA.
