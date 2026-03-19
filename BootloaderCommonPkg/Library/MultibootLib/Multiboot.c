@@ -383,6 +383,59 @@ CheckAndAlignMultibootModules (
 }
 
 /**
+  Check if a memory range is valid (present in memory map as usable/allocated).
+
+  @param[in]  Start    Start address of the range
+  @param[in]  Length   Length of the range
+
+  @retval TRUE         Range is valid
+  @retval FALSE        Range is invalid
+**/
+BOOLEAN
+EFIAPI
+IsMemoryRangeValid (
+  IN  UINT64               Start,
+  IN  UINT64               Length
+  )
+{
+  MEMORY_MAP_INFO          *MemoryMapInfo;
+  UINT32                   Index;
+  MEMORY_MAP_ENTRY         *MmapEntry;
+  UINT64                   End;
+  UINT64                   EntryStart;
+  UINT64                   EntryEnd;
+
+  if (Length == 0) {
+    return TRUE;
+  }
+
+  End = Start + Length;
+  if (End < Start) {
+    return FALSE; // Overflow
+  }
+
+  MemoryMapInfo = GetMemoryMapInfo();
+  if (MemoryMapInfo == NULL) {
+    return FALSE;
+  }
+
+  MmapEntry = &MemoryMapInfo->Entry[0];
+  for (Index = 0; Index < MemoryMapInfo->Count; Index++) {
+    EntryStart = MmapEntry[Index].Base;
+    EntryEnd   = MmapEntry[Index].Base + MmapEntry[Index].Size;
+
+    if ((Start >= EntryStart) && (End <= EntryEnd)) {
+      if (MmapEntry[Index].Type == MEM_MAP_TYPE_RAM) {
+        return TRUE;
+      }
+    }
+  }
+
+  DEBUG ((DEBUG_ERROR, "Invalid Multiboot Range: 0x%lx - 0x%lx\n", Start, End));
+  return FALSE;
+}
+
+/**
   Setup Multiboot image and its boot info.
 
   @param[in,out] MultiBoot   Point to loaded Multiboot image structure
@@ -437,9 +490,24 @@ SetupMultibootImage (
   LoadEnd    = MbHeader->LoadEndAddr;
   BssEnd     = MbHeader->BssEndAddr;
   ImgOffset  = (UINT32)((UINT8 *)MbHeader - (UINT8 *)MultiBoot->BootFile.Addr - (HeaderAddr - LoadAddr));
-  ImgLength  = (UINT32)((LoadEnd == NULL) ? MultiBoot->BootFile.Size - ImgOffset : LoadEnd - LoadAddr);
-  if ((ImgOffset >= MultiBoot->BootFile.Size) || (ImgOffset + ImgLength > MultiBoot->BootFile.Size)) {
+
+  if ((LoadEnd != NULL) && ((UINTN)LoadEnd < (UINTN)LoadAddr)) {
     return RETURN_LOAD_ERROR;
+  }
+
+  ImgLength  = (UINT32)((LoadEnd == NULL) ? MultiBoot->BootFile.Size - ImgOffset : LoadEnd - LoadAddr);
+  if ((ImgOffset > (MAX_UINT32 - ImgLength)) || (ImgOffset + ImgLength > MultiBoot->BootFile.Size)) {
+    return RETURN_LOAD_ERROR;
+  }
+
+  if (!IsMemoryRangeValid ((UINT64)(UINTN)LoadAddr, ImgLength)) {
+    return RETURN_LOAD_ERROR;
+  }
+
+  if ((BssEnd != NULL) && (LoadEnd != NULL) && (BssEnd > LoadEnd)) {
+    if (!IsMemoryRangeValid ((UINT64)(UINTN)LoadEnd, (UINT64)(UINTN)BssEnd - (UINT64)(UINTN)LoadEnd)) {
+      return RETURN_LOAD_ERROR;
+    }
   }
 
   DEBUG ((DEBUG_INFO, "Mb: LoadAddr=0x%p, LoadEnd=0x%p , BssEnd=0x%p, Size=0x%x\n", LoadAddr, LoadEnd, BssEnd, ImgLength));

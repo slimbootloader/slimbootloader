@@ -521,9 +521,24 @@ SetupMultiboot2Image (
   }
 
   ImgOffset  = (UINT32)((UINT8 *)MbHeader - (UINT8 *)MultiBoot->BootFile.Addr - (HeaderAddr - LoadAddr));
-  ImgLength  = (UINT32)((LoadEnd == NULL) ? MultiBoot->BootFile.Size - ImgOffset : LoadEnd - LoadAddr);
-  if ((ImgOffset >= MultiBoot->BootFile.Size) || (ImgOffset + ImgLength > MultiBoot->BootFile.Size)) {
+
+  if ((LoadEnd != NULL) && ((UINTN)LoadEnd < (UINTN)LoadAddr)) {
     return RETURN_LOAD_ERROR;
+  }
+
+  ImgLength  = (UINT32)((LoadEnd == NULL) ? MultiBoot->BootFile.Size - ImgOffset : LoadEnd - LoadAddr);
+  if ((ImgOffset > (MAX_UINT32 - ImgLength)) || (ImgOffset + ImgLength > MultiBoot->BootFile.Size)) {
+    return RETURN_LOAD_ERROR;
+  }
+
+  if (!IsMemoryRangeValid ((UINT64)(UINTN)LoadAddr, ImgLength)) {
+    return RETURN_LOAD_ERROR;
+  }
+
+  if ((BssEnd != NULL) && (LoadEnd != NULL) && (BssEnd > LoadEnd)) {
+    if (!IsMemoryRangeValid ((UINT64)(UINTN)LoadEnd, (UINT64)(UINTN)BssEnd - (UINT64)(UINTN)LoadEnd)) {
+      return RETURN_LOAD_ERROR;
+    }
   }
 
   DEBUG ((DEBUG_INFO, "Mb: LoadAddr=0x%p, LoadEnd=0x%p , BssEnd=0x%p, Size=0x%x\n", LoadAddr, LoadEnd, BssEnd, ImgLength));
