@@ -71,6 +71,9 @@ class Board(BaseBoard):
         if self.HAVE_FIT_TABLE:
             self.FIT_ENTRY_MAX_NUM  = 12
 
+        self.OS_LOADER_FD_SIZE    = 0x00058000
+        self.OS_LOADER_FD_NUMBLK   = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
+
         self.STAGE1A_SIZE         = 0x00010000
         self.STAGE1B_SIZE         = 0x00100000
         self.STAGE2_SIZE          = 0x000EA000
