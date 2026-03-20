@@ -213,13 +213,12 @@ IgdOpRegionInit (
 
   // Initialize hardware state:
   // Set ASLS Register to the OpRegion physical memory address.
-  // Set SWSCI register bit 15 to a "1" to activate SCI interrupts.
-
   PciWrite32(PCI_LIB_ADDRESS(IGD_BUS, IGD_DEV, IGD_FUN_0, IGD_ASLS_OFFSET), (UINT32)(UINTN)(mIgdOpRegion.OpRegion));
 
+  // Note: Do NOT set SWSCI BIT15 (SCI interrupt enable).
+  // SBL does not have an SMM handler for SWSCI.
   Data16 = PciRead16(PCI_LIB_ADDRESS(IGD_BUS, IGD_DEV, IGD_FUN_0, IGD_SWSCI_OFFSET));
-  Data16 &= ~BIT0;
-  Data16 |= BIT15;
+  Data16 &= ~(BIT0 | BIT15);
   PciWrite16(PCI_LIB_ADDRESS(IGD_BUS, IGD_DEV, IGD_FUN_0, IGD_SWSCI_OFFSET), Data16);
 
   DEBUG ((DEBUG_INFO, "IgdOpRegion ended\n"));
