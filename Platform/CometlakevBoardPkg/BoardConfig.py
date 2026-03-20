@@ -117,6 +117,10 @@ class Board(BaseBoard):
         self.SLIMBOOTLOADER_SIZE  = (self.TOP_SWAP_SIZE + self.REDUNDANT_SIZE) * 2 + \
             self.NON_REDUNDANT_SIZE + self.NON_VOLATILE_SIZE
 
+        # OS Loader FD/FV sizes
+        self.OS_LOADER_FD_SIZE     = 0x00058000
+        self.OS_LOADER_FD_NUMBLK   = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
+
         self.PLD_HEAP_SIZE        = 0x04000000
         self.PLD_STACK_SIZE       = 0x00020000
         self.PLD_RSVD_MEM_SIZE    = 0x00500000
