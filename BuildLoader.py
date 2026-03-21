@@ -189,6 +189,7 @@ class BaseBoard(object):
         self.SUPPORT_ARI           = 0
         self.SUPPORT_SR_IOV        = 0
         self.SUPPORT_X2APIC        = 0
+        self.MADT_USE_PLATFORM_LAPIC = 0
         self.TXT_ENABLED           = 0
 
         self.BUILD_CSME_UPDATE_DRIVER    = 0

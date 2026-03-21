@@ -610,11 +610,13 @@ AcpiInit (
           Mcfg->Segment.BaseAddress = PcdGet64 (PcdPciExpressBaseAddress);
           break;
         case EFI_ACPI_5_0_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE:
-          // MADT
-          Status = UpdateMadt (Current);
-          if (EFI_ERROR(Status)) {
-            // MADT is critical, if error occurs, abort.
-            return Status;
+          if (!FeaturePcdGet(PcdMadtUsePlatformLapic)) {
+            // MADT
+            Status = UpdateMadt (Current);
+            if (EFI_ERROR(Status)) {
+              // MADT is critical, if error occurs, abort.
+              return Status;
+            }
           }
           break;
         case EFI_ACPI_5_0_FIRMWARE_PERFORMANCE_DATA_TABLE_SIGNATURE:
