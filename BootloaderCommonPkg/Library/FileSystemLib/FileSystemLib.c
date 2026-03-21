@@ -91,7 +91,7 @@ GetFileSystemCurrentPartNo (
   FILE_SYSTEM_CONTROL_BLOCK  *FileSystemControlBlock;
 
   FileSystemControlBlock = (FILE_SYSTEM_CONTROL_BLOCK *)FsHandle;
-  if (FileSystemControlBlock == NULL) {
+  if ((FileSystemControlBlock == NULL) || (SwPartNo == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
   ASSERT (FileSystemControlBlock->Signature == FILE_SYSTEM_CB_SIGNATURE);
@@ -124,11 +124,12 @@ GetFileSystemType (
   if (FileSystemControlBlock == NULL) {
     return FsType;
   }
+
   ASSERT (FileSystemControlBlock->Signature == FILE_SYSTEM_CB_SIGNATURE);
 
   SubFsHandle = FileSystemControlBlock->FsHandle;
   if (SubFsHandle != NULL) {
-    Signature = *(UINTN *)SubFsHandle;
+    Signature = *(UINT32 *)SubFsHandle;
     if (Signature == FS_FAT_SIGNATURE) {
       FsType = EnumFileSystemTypeFat;
     } else if (Signature == FS_EXT_SIGNATURE) {
@@ -168,7 +169,7 @@ InitFileSystem (
 
   Status = EFI_INVALID_PARAMETER;
 
-  if (FsType >= EnumFileSystemMax) {
+  if ((FsType >= EnumFileSystemMax) || (FsHandle == NULL)) {
     return Status;
   }
 
@@ -194,6 +195,9 @@ InitFileSystem (
   if (!EFI_ERROR (Status)) {
     FileSystemControlBlock = (FILE_SYSTEM_CONTROL_BLOCK *) AllocatePool (sizeof (FILE_SYSTEM_CONTROL_BLOCK));
     if (FileSystemControlBlock == NULL) {
+      if ((mFileSystemFuncs[Type].CloseFileSystem != NULL) && (Handle != NULL)) {
+        mFileSystemFuncs[Type].CloseFileSystem (Handle);
+      }
       return EFI_OUT_OF_RESOURCES;
     }
 
@@ -228,32 +232,33 @@ CloseFileSystem (
   LIST_ENTRY                 *Node;
 
   FileSystemControlBlock = (FILE_SYSTEM_CONTROL_BLOCK *)FsHandle;
-  if (FileSystemControlBlock == NULL) {
-    return;
-  }
-
-  FsType = GetFileSystemType (FsHandle);
-  if (FsType >= EnumFileSystemTypeAuto) {
+  if ((FileSystemControlBlock == NULL) || (FileSystemControlBlock->Signature != FILE_SYSTEM_CB_SIGNATURE)) {
     return;
   }
 
   Node = GetFirstNode (&FileSystemControlBlock->OpenFiles);
   while (!IsNull (&FileSystemControlBlock->OpenFiles, Node)) {
     FileControlBlock = (FILE_CONTROL_BLOCK *)Node;
+    Node = GetNextNode (&FileSystemControlBlock->OpenFiles, Node);
     if (FileControlBlock->Signature == FILE_CB_SIGNATURE) {
       DEBUG ((DEBUG_INFO, "  Close file handle 0x%p\n", FileControlBlock->FileHandle));
       CloseFile (FileControlBlock);
     }
-    Node = GetNextNode (&FileSystemControlBlock->OpenFiles, Node);
   }
 
-  if (mFileSystemFuncs[FsType].CloseFileSystem == NULL) {
-    return;
+  FsType = GetFileSystemType (FsHandle);
+  if (FsType < EnumFileSystemTypeAuto) {
+    if (mFileSystemFuncs[FsType].CloseFileSystem != NULL) {
+      mFileSystemFuncs[FsType].CloseFileSystem (FileSystemControlBlock->FsHandle);
+    }
+    DEBUG ((DEBUG_INFO, "CloseFileSystem: FsType %d\n", FsType));
   }
 
-  mFileSystemFuncs[FsType].CloseFileSystem (FileSystemControlBlock->FsHandle);
+  // Need to ensure that any subsequent use of the dangling pointer will fail the signature
+  // This mitigates use-after-free issues by invalidating the signature before freeing
+  // the memory.
+  FileSystemControlBlock->Signature = 0;
   FreePool (FileSystemControlBlock);
-  DEBUG ((DEBUG_INFO, "CloseFileSystem: FsType %d\n", FsType));
 }
 
 /**
@@ -286,7 +291,7 @@ OpenFile (
 
   FileSystemControlBlock = (FILE_SYSTEM_CONTROL_BLOCK *)FsHandle;
   ASSERT (FileSystemControlBlock != NULL);
-  if (FileSystemControlBlock == NULL) {
+  if ((FileSystemControlBlock == NULL) || (FileHandle == NULL) || (FileName == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -306,6 +311,9 @@ OpenFile (
 
   FileControlBlock = (FILE_CONTROL_BLOCK *) AllocatePool (sizeof (FILE_CONTROL_BLOCK));
   if (FileControlBlock == NULL) {
+    if (mFileSystemFuncs[FsType].CloseFile != NULL) {
+      mFileSystemFuncs[FsType].CloseFile (FsFileHandle);
+    }
     return EFI_OUT_OF_RESOURCES;
   }
 
@@ -342,7 +350,7 @@ GetFileSize (
 
   FileControlBlock = (FILE_CONTROL_BLOCK *)FileHandle;
   ASSERT (FileControlBlock != NULL);
-  if (FileControlBlock == NULL) {
+  if ((FileControlBlock == NULL) || (FileSize == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
   ASSERT (FileControlBlock->Signature == FILE_CB_SIGNATURE);
@@ -395,7 +403,7 @@ ReadFile (
   }
 
   ASSERT (FileBuffer != NULL);
-  if (FileBuffer == NULL) {
+  if ((FileBuffer == NULL) || (FileSize == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -449,17 +457,36 @@ CloseFile (
     return;
   }
 
-  FsType = GetFileSystemType (FileSystemControlBlock);
-  if (FsType >= EnumFileSystemTypeAuto) {
-    return;
+  // Iterate to verify if FileControlBlock is in the list
+  BOOLEAN Found = FALSE;
+  LIST_ENTRY *Node = GetFirstNode (&FileSystemControlBlock->OpenFiles);
+  while (!IsNull (&FileSystemControlBlock->OpenFiles, Node)) {
+    if ((FILE_CONTROL_BLOCK *)Node == FileControlBlock) {
+      Found = TRUE;
+      break;
+    }
+    Node = GetNextNode (&FileSystemControlBlock->OpenFiles, Node);
   }
 
-  if (mFileSystemFuncs[FsType].CloseFile == NULL) {
+  if (!Found) {
+    // FileHandle not found in this FileSystem's OpenFile list.
+    // Possibly a fake handle or already closed.
     return;
   }
 
   RemoveEntryList (&FileControlBlock->Link);
-  mFileSystemFuncs[FsType].CloseFile (FileControlBlock->FileHandle);
+
+  FsType = GetFileSystemType (FileSystemControlBlock);
+  if (FsType < EnumFileSystemTypeAuto) {
+    if (mFileSystemFuncs[FsType].CloseFile != NULL) {
+      mFileSystemFuncs[FsType].CloseFile (FileControlBlock->FileHandle);
+    }
+  }
+
+  // We ensure that any subsequent use of the dangling pointer will fail the signature
+  // This mitigates use-after-free issues by invalidating the signature before freeing
+  // the memory.
+  FileControlBlock->Signature = 0;
   FreePool (FileControlBlock);
 }
 
