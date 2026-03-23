@@ -747,7 +747,8 @@ Ext2SbValidate (
   }
 
   if ((Ext2Fs->Ext2FsFeaturesIncompat & EXT2F_INCOMPAT_64BIT) != 0) {
-    if ((Ext2Fs->Ext2FsGDSize == 0) ||
+    if ((Ext2Fs->Ext2FsGDSize < 32) ||
+        ((Ext2Fs->Ext2FsGDSize & (Ext2Fs->Ext2FsGDSize - 1)) != 0) ||
         (Ext2Fs->Ext2FsGDSize > (MINBSIZE << Ext2Fs->Ext2FsLogBlockSize))) {
       DEBUG ((DEBUG_ERROR, "EXT2: Invalid group descriptor size %d\n", Ext2Fs->Ext2FsGDSize));
       Rc = EFI_UNSUPPORTED;
