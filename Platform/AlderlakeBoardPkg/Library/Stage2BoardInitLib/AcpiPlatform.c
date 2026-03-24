@@ -259,6 +259,43 @@ VOID UpdLpiStat (
 }
 
 /**
+  Udate the MADT table
+
+  @param[in, out] AcpiHeader         - The table to be set
+**/
+VOID
+MadtTableUpdate (
+  IN OUT   EFI_ACPI_DESCRIPTION_HEADER       *AcpiHeader
+  )
+{
+  EFI_STATUS                                 Status;
+
+  Status = AddAcpiMadtHdr (AcpiHeader, LOCAL_APIC_BASE_ADDRESS, EFI_ACPI_6_4_PCAT_COMPAT);
+  if (EFI_ERROR (Status)) {
+    return;
+  }
+
+  if (FeaturePcdGet (PcdMadtUsePlatformLapic)) {
+    // Add all Local APICs if platform isn't using AcpiInitLib to do it.
+    AddMadtAllLocalApics(AcpiHeader);
+  }
+
+  // Add IO APIC entry
+  AddMadtIoApic (AcpiHeader, ICH_IOAPIC_ID, IO_APIC_BASE_ADDRESS, 0x18 * 0);
+
+  // Add Interrupt Source Override entries
+  AddMadtIntSrcOverride (AcpiHeader, 0, 0, 2, 0);   // IRQ0=>IRQ2
+  AddMadtIntSrcOverride (AcpiHeader, 0, 9, 9, 0xD); // SCI Active High
+
+  // NMI Entry for all processors, edge triggered, active high, on LINT 1
+  if (FeaturePcdGet (PcdCpuX2ApicEnabled)) {
+    AddLocalX2ApicNmi (AcpiHeader, 0x5, 0xFFFFFFFF, 1);
+  } else {
+    AddLocalApicNmi (AcpiHeader, 0xFF, 0x5, 1);
+  }
+}
+
+/**
   Update the DMAR table
 
   @param[in, out] AcpiHeader         - The DMAR table header to update
@@ -567,6 +604,9 @@ PlatformUpdateAcpiTable (
     if ((PlatformData != NULL) && (PlatformData->PlatformFeatures.VtdEnable == 1)) {
       DmarTableUpdate (Table);
     }
+  } else if (Table->Signature == EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE) {
+    DEBUG ((DEBUG_INFO, "Updating MADT Table entries\n"));
+    MadtTableUpdate (Table);
   }
 
   if (MEASURED_BOOT_ENABLED()) {

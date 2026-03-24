@@ -81,6 +81,7 @@
 #include <Library/HeciMeExtLib.h>
 #include <Library/PchInfoLib.h>
 #include <Library/DmarLib.h>
+#include <Library/MadtLib.h>
 #include <Library/VTdLib.h>
 #include <Library/CpuPcieHsPhyInitLib.h>
 #include <Include/TccConfigSubRegions.h>
