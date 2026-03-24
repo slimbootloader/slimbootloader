@@ -193,6 +193,10 @@ def GetRepoAndCommit (driver_inf):
 
 def CopyBins (repo_dir, sbl_dir, driver_inf):
     if not os.path.exists(driver_inf):
+        driver_inf = os.path.join(sbl_dir, driver_inf)
+    if not os.path.exists(driver_inf):
+        if driver_inf:
+            print ('WARNING: driver_inf not found: %s' % driver_inf)
         return
 
     sys.stdout.flush()
