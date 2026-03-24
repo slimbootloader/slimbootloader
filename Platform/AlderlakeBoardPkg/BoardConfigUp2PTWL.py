@@ -44,6 +44,8 @@ class Board(BaseBoard):
         self.PCI_MEM32_BASE       = 0x80000000
         self.ACPI_PM_TIMER_BASE   = 0x1808
 
+        self.MADT_USE_PLATFORM_LAPIC = 1
+
         self.FLASH_LAYOUT_START   = 0x100000000 # 4GB Top
         self.FLASH_BASE_SIZE      = 0x02000000  # 32MB
         self.FLASH_BASE_ADDRESS   = (self.FLASH_LAYOUT_START - self.FLASH_BASE_SIZE)
@@ -286,6 +288,7 @@ class Board(BaseBoard):
             'MeChipsetLib|Silicon/$(SILICON_PKG_NAME)/Library/MeChipsetLib/MeChipsetLib.inf',
             'VtdLib|Silicon/$(SILICON_PKG_NAME)/Library/VTdLib/VTdLib.inf',
             'DmarLib|Silicon/CommonSocPkg/Library/DmarLib/DmarLib.inf',
+            'MadtLib|Silicon/CommonSocPkg/Library/MadtLib/MadtLib.inf',
             'PsdLib|Silicon/$(SILICON_PKG_NAME)/Library/PsdLib/PsdLib.inf',
             'HeciMeExtLib|Silicon/CommonSocPkg/Library/HeciMeExtLib/HeciMeExtLib.inf',
             'MeExtMeasurementLib|Silicon/$(SILICON_PKG_NAME)/Library/MeExtMeasurementLib/MeExtMeasurementLib.inf',

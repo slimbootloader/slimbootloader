@@ -23,13 +23,11 @@
 [sources.common]
   AcpiTablePlatform.h
   Facs/Facs.h
-  Madt/Madt.h
   Hpet/Hpet.h
   Fadt/Fadt6.3.h
   Dsdt/Dsdt.asl
   Facs/Facs.act
   Fadt/Fadt6.3.act
-  Madt/Madt.act
   Hpet/Hpet.act
   Ssdt/SocCommonSsdt.asl
   Ssdt/SocGpeSsdt.asl

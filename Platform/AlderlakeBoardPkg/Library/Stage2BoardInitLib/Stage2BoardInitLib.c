@@ -35,9 +35,11 @@ STATIC S3_SAVE_REG mS3SaveReg = {
 };
 
 extern EFI_ACPI_DMAR_HEADER mAcpiDmarTableTemplate;
+extern EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER mAcpiMadtTableTemplate;
 STATIC
 CONST EFI_ACPI_COMMON_HEADER *mPlatformAcpiTables[] = {
   (EFI_ACPI_COMMON_HEADER *)&mAcpiDmarTableTemplate,
+  (EFI_ACPI_COMMON_HEADER *)&mAcpiMadtTableTemplate,
   NULL
 };
 
