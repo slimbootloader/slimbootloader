@@ -1357,6 +1357,41 @@ VerifyUfsHcPlatformPostHceSwitchGear (
 }
 
 /**
+  Frees all resources allocated for UFS private data.
+
+  This function releases the memory pool and DMA buffers allocated during
+  UFS controller initialization, including the UtpTmrlBase and UtpTrlBase.
+
+  @param[in] Private  Pointer to the UFS_PEIM_HC_PRIVATE_DATA structure.
+
+**/
+VOID
+UfsFreePrivateDataResources (
+  IN UFS_PEIM_HC_PRIVATE_DATA  *Private
+  )
+{
+  if ((Private->Pool != NULL) && (Private->Pool->Head != NULL)) {
+    UfsFreeMemPool (Private->Pool);
+  }
+
+  if (Private->UtpTmrlBase != NULL) {
+    IoMmuFreeBuffer (
+      EFI_SIZE_TO_PAGES (Private->Nutmrs * sizeof (UTP_TMRD)),
+      Private->UtpTmrlBase,
+      Private->TmrlMapping
+      );
+  }
+
+  if (Private->UtpTrlBase != NULL) {
+    IoMmuFreeBuffer (
+      EFI_SIZE_TO_PAGES (Private->Nutrs * sizeof (UTP_TRD)),
+      Private->UtpTrlBase,
+      Private->TrlMapping
+      );
+  }
+}
+
+/**
   The function will initialize UFS device.
 
   Based on UfsHcPciBase, this function will initialize UFS host controller, allocate
@@ -1378,6 +1413,7 @@ InitializeUfs (
   )
 {
   EFI_STATUS                    Status;
+  EFI_STATUS                    ReturnStatus;
   UFS_PEIM_HC_PRIVATE_DATA      *Private;
   UINT32                        Index;
   UFS_UNIT_DESC                 UnitDescriptor;
@@ -1395,25 +1431,7 @@ InitializeUfs (
     if (gPrivate != NULL) {
       Private = gPrivate;
 
-      if ((Private->Pool != NULL) && (Private->Pool->Head != NULL)) {
-        UfsFreeMemPool (Private->Pool);
-      }
-
-      if (Private->UtpTmrlBase != NULL) {
-        IoMmuFreeBuffer (
-          EFI_SIZE_TO_PAGES (Private->Nutmrs * sizeof (UTP_TMRD)),
-          Private->UtpTmrlBase,
-          Private->TmrlMapping
-          );
-      }
-
-      if (Private->UtpTrlBase != NULL) {
-        IoMmuFreeBuffer (
-          EFI_SIZE_TO_PAGES (Private->Nutrs * sizeof (UTP_TRD)),
-          Private->UtpTrlBase,
-          Private->TrlMapping
-          );
-      }
+      UfsFreePrivateDataResources(Private);
 
       UfsControllerStop (Private);
 
@@ -1439,6 +1457,8 @@ InitializeUfs (
 
   UfsPrivateHcData = (UFS_HC_PEI_PRIVATE_DATA *)AllocatePool (sizeof (UFS_HC_PEI_PRIVATE_DATA));
   if (UfsPrivateHcData == NULL) {
+    FreePool (Private);
+    gPrivate = NULL;
     DEBUG ((DEBUG_ERROR, "Failed to allocate memory for UFS_HC_PEI_PRIVATE_DATA! \n"));
     return EFI_OUT_OF_RESOURCES;
   }
@@ -1451,6 +1471,7 @@ InitializeUfs (
   Controller = 0;
   MmioBase   = 0;
 
+  ReturnStatus = RETURN_DEVICE_ERROR;
   while (TRUE) {
     Status = GetUfsHcMmioBar (UfsPrivateHcData, Controller, &MmioBase);
     //
@@ -1595,10 +1616,18 @@ InitializeUfs (
       }
     }
 
+    ReturnStatus = EFI_SUCCESS;
     Controller++;
   }
 
-  DEBUG ((DEBUG_INFO, "Init UFS done\n"));
+  if (EFI_ERROR (ReturnStatus)) {
+    UfsFreePrivateDataResources(Private);
+    FreePool (Private);
+    gPrivate = NULL;
+    DEBUG ((DEBUG_ERROR, "No UFS Controller is initialized successfully!\n"));
+  } else {
+    DEBUG ((DEBUG_INFO, "Init UFS done\n"));
+  }
 
-  return EFI_SUCCESS;
+  return ReturnStatus;
 }
