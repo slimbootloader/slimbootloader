@@ -67,3 +67,4 @@
   gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr
   gPlatformModuleTokenSpaceGuid.PcdAcpiProcessorIdBase
   gPlatformCommonLibTokenSpaceGuid.PcdMadtUsePlatformLapic
+  gPlatformCommonLibTokenSpaceGuid.PcdMcfgUsePlatformBaseAddr

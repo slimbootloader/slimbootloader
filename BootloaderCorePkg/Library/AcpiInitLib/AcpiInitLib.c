@@ -605,9 +605,11 @@ AcpiInit (
           UpdateRdstXsdt = 0;
           break;
         case EFI_ACPI_5_0_PCI_EXPRESS_MEMORY_MAPPED_CONFIGURATION_SPACE_BASE_ADDRESS_DESCRIPTION_TABLE_SIGNATURE:
-          // MCFG
-          Mcfg = (EFI_ACPI_MEMORY_MAPPED_CONFIGURATION_BASE_ADDRESS_TABLE *)Current;
-          Mcfg->Segment.BaseAddress = PcdGet64 (PcdPciExpressBaseAddress);
+          if (!FeaturePcdGet(PcdMcfgUsePlatformBaseAddr)) {
+            // MCFG
+            Mcfg = (EFI_ACPI_MEMORY_MAPPED_CONFIGURATION_BASE_ADDRESS_TABLE *)Current;
+            Mcfg->Segment.BaseAddress = PcdGet64 (PcdPciExpressBaseAddress);
+          }
           break;
         case EFI_ACPI_5_0_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE:
           if (!FeaturePcdGet(PcdMadtUsePlatformLapic)) {
