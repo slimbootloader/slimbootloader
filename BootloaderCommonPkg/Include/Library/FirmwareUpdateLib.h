@@ -30,7 +30,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define MAX_FW_COMPONENTS       6
 #define MAX_FW_FAILED_RETRY     3
 
-#define CAPSULE_FLAGS_CFG_DATA  BIT0
+#define CAPSULE_FLAGS_CFG_DATA          BIT0
+#define CAPSULE_FLAG_PRESERVE_SMBIOS    BIT1
 
 #define FW_UPDATE_COMP_CSME_REGION_ORDER      1
 #define FW_UPDATE_COMP_CSME_DRIVER_ORDER      2
