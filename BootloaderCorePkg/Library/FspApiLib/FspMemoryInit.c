@@ -122,7 +122,7 @@ CallFspMemoryInit (
     } else {
       Status = Execute32BitCode ((UINTN)FspMemoryInit, (UINTN)FspmUpdPtr, (UINTN)HobList, FALSE);
     }
-    Status = (UINTN)LShiftU64 (Status & ((UINTN)MAX_INT32 + 1), 32) | (Status & MAX_INT32);
+    Status = (UINTN)LShiftU64 (Status & (UINTN)(BIT31 | BIT30), 32) | (Status & ~(UINT32)(BIT31 | BIT30));
   } else {
     if (NewStack != 0) {
       Status = FspmSwitchStack ((VOID *)(UINTN)FspMemoryInit, (VOID *)FspmUpdPtr, (VOID *)HobList, (VOID *)NewStack);
@@ -251,7 +251,7 @@ CallFspMultiPhaseMemoryInit (
 #else //FixedPcdGetBool(PcdFSPM64Bit)
   if (IS_X64)  {
     Status = Execute32BitCode ((UINTN)FspMultiPhaseMemoryInit, (UINTN)MultiPhaseInitParamPtr, (UINTN)NULL, FALSE);
-    Status = (UINTN)LShiftU64 (Status & ((UINTN)MAX_INT32 + 1), 32) | (Status & MAX_INT32);
+    Status = (UINTN)LShiftU64 (Status & (UINTN)(BIT31 | BIT30), 32) | (Status & ~(UINT32)(BIT31 | BIT30));
   } else {
     Status = FspMultiPhaseMemoryInit (MultiPhaseInitParamPtr);
   }
