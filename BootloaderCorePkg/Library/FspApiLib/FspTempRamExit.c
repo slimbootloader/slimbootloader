@@ -62,7 +62,7 @@ CallFspTempRamExit (
 #else //FixedPcdGetBool(PcdFSPM64Bit)
   if (IS_X64) {
     Status = Execute32BitCode ((UINTN)TempRamExit, (UINTN)0, (UINTN)0, TRUE);
-    Status = (UINTN)LShiftU64 (Status & ((UINTN)MAX_INT32 + 1), 32) | (Status & MAX_INT32);
+    Status = (UINTN)LShiftU64 (Status & (UINTN)(BIT31 | BIT30), 32) | (Status & ~(UINT32)(BIT31 | BIT30));
   } else {
     Status  = TempRamExit (NULL);
   }

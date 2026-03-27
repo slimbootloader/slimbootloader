@@ -73,7 +73,7 @@ CallFspSiliconInit (
 #else //FixedPcdGetBool(PcdFSPS64Bit)
   if (IS_X64) {
     Status = Execute32BitCode ((UINTN)FspSiliconInit,(UINTN) FspsUpdptr, (UINTN)0, FALSE);
-    Status = (UINTN)LShiftU64 (Status & ((UINTN)MAX_INT32 + 1), 32) | (Status & MAX_INT32);
+    Status = (UINTN)LShiftU64 (Status & (UINTN)(BIT31 | BIT30), 32) | (Status & ~(UINT32)(BIT31 | BIT30));
   } else {
     Status = FspSiliconInit (FspsUpdptr);
   }
@@ -190,7 +190,7 @@ CallFspMultiPhaseSiliconInit (
 #else //FixedPcdGetBool(PcdFSPS64Bit)
   if (IS_X64) {
     Status = Execute32BitCode ((UINTN)FspMultiPhaseSiliconInit, (UINTN)MultiPhaseInitParamPtr, (UINTN)NULL, FALSE);
-    Status = (UINTN)LShiftU64 (Status & ((UINTN)MAX_INT32 + 1), 32) | (Status & MAX_INT32);
+    Status = (UINTN)LShiftU64 (Status & (UINTN)(BIT31 | BIT30), 32) | (Status & ~(UINT32)(BIT31 | BIT30));
   } else {
     Status = FspMultiPhaseSiliconInit (MultiPhaseInitParamPtr);
   }
