@@ -190,13 +190,15 @@ AfterUpdateEnforceFwUpdatePolicy (
   Perform full BIOS region update.
 
   @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
+  @param[in] CapsuleFlags   Capsule flags from firmware update header
 
   @retval  EFI_SUCCESS      Update successful.
   @retval  other            error occurred during firmware update
 **/
 EFI_STATUS
 UpdateFullBiosRegion (
-  IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
+  IN UINT32                        CapsuleFlags
   );
 
 /**
@@ -206,6 +208,7 @@ UpdateFullBiosRegion (
 
   @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
   @param[in] FwPolicy       Fw update policy
+  @param[in] CapsuleFlags   Capsule flags from firmware update header
 
   @retval  EFI_SUCCESS      Update successful.
   @retval  other            error occurred during firmware update
@@ -213,7 +216,8 @@ UpdateFullBiosRegion (
 EFI_STATUS
 UpdateSystemFirmware (
   IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
-  IN FIRMWARE_UPDATE_POLICY        FwPolicy
+  IN FIRMWARE_UPDATE_POLICY  FwPolicy,
+  IN UINT32                  CapsuleFlags
   );
 
 /**
@@ -224,6 +228,7 @@ UpdateSystemFirmware (
 
   @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
   @param[in] FwPolicy       Fw update policy
+  @param[in] CapsuleFlags   Capsule flags from firmware update header
 
   @retval  EFI_SUCCESS      Update successful.
   @retval  other            error occurred during firmware update
@@ -231,7 +236,8 @@ UpdateSystemFirmware (
 EFI_STATUS
 UpdateSblComponent (
   IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
-  IN FIRMWARE_UPDATE_POLICY        FwPolicy
+  IN FIRMWARE_UPDATE_POLICY        FwPolicy,
+  IN UINT32                        CapsuleFlags
   );
 
 
@@ -407,5 +413,31 @@ UpdateStatus (
   IN UINT16                   LastAttemptVersion,
   IN EFI_STATUS               LastAttemptStatus
  );
+
+/**
+  Initialize SMBIOS preservation by locating SMBIOS component in flash.
+
+  @retval  EFI_SUCCESS      SMBIOS component located successfully
+  @retval  EFI_NOT_FOUND    SMBIOS component not found in flash
+**/
+EFI_STATUS
+InitSmbiosPreservation (
+  VOID
+  );
+
+/**
+  Check if an address range overlaps with SMBIOS component region.
+
+  @param[in] Address    Flash address to check
+  @param[in] Size       Size of the region
+
+  @retval TRUE          Region overlaps with SMBIOS
+  @retval FALSE         No overlap
+**/
+BOOLEAN
+IsSmbiosRegion (
+  IN UINT64  Address,
+  IN UINT32  Size
+  );
 
 #endif

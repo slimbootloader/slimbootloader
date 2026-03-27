@@ -31,6 +31,13 @@
 SPI_FLASH_SERVICE   *mFwuSpiService = NULL;
 
 /**
+  Helper globals for SMBIOS preservation
+**/
+STATIC BOOLEAN   mPreserveSmbios = FALSE;
+STATIC UINT32    mSmbiosFlashBase = 0;
+STATIC UINT32    mSmbiosFlashSize = 0;
+
+/**
   This function initialized boot media.
 
   It initializes SPI services and SPI Flash size information.
@@ -340,6 +347,15 @@ UpdateRegionBlock (
     if (Count + BlockLen > Length) {
       BlockLen = Length - Count;
     }
+
+    //
+    // Check if this block overlaps with SMBIOS region (if preservation is enabled)
+    //
+    if (IsSmbiosRegion(Address + Count, BlockLen)) {
+      DEBUG ((DEBUG_INFO, "Skipping SMBIOS region at 0x%08X (preservation enabled)\n", (UINT32)(Address + Count)));
+      continue;
+    }
+
     Status = BootMediaRead(Address + Count, BlockLen, ReadBuffer);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "BootMediaRead.  readaddr: 0x%llx, Status = 0x%x\n", Address + Count, Status));
@@ -388,6 +404,97 @@ End:
   }
 
   return Status;
+}
+
+/**
+  Initialize SMBIOS preservation by locating SMBIOS component in flash.
+
+  @retval  EFI_SUCCESS      SMBIOS component located successfully
+  @retval  EFI_NOT_FOUND    SMBIOS component not found in flash
+**/
+EFI_STATUS
+InitSmbiosPreservation (
+  VOID
+  )
+{
+  EFI_STATUS        Status;
+  CONTAINER_ENTRY   *ContainerEntry;
+  COMPONENT_ENTRY   *ComponentEntry;
+  CONTAINER_HDR     *ContainerHdr;
+  FLASH_MAP         *FlashMap;
+  UINT32            RomBase;
+  UINT32            SmbiosAbsAddr;
+
+  // Locate IPFW container and SMBS component
+  Status = LocateComponentEntry (
+             SIGNATURE_32('I', 'P', 'F', 'W'),
+             SIGNATURE_32('S', 'M', 'B', 'S'),
+             &ContainerEntry,
+             &ComponentEntry
+             );
+
+  if (EFI_ERROR(Status)) {
+    DEBUG ((DEBUG_INFO, "SMBIOS component not found in IPFW container (may not exist)\n"));
+    return Status;
+  }
+
+  if ((ContainerEntry == NULL) || (ComponentEntry == NULL)) {
+    return EFI_NOT_FOUND;
+  }
+
+  FlashMap = GetFlashMapPtr ();
+  if (FlashMap == NULL) {
+    return EFI_NOT_FOUND;
+  }
+
+  //
+  // ContainerEntry->Base is an absolute ROM address (e.g. 0xFF42C000).
+  // UpdateRegionBlock uses flash offsets (0-based from start of BIOS region).
+  // Convert: flash_offset = abs_address - (0x100000000 - RomSize)
+  //
+  RomBase       = (UINT32)(0x100000000ULL - FlashMap->RomSize);
+  ContainerHdr  = (CONTAINER_HDR *)(UINTN)ContainerEntry->HeaderCache;
+  SmbiosAbsAddr = ContainerEntry->Base + ContainerHdr->DataOffset + ComponentEntry->Offset;
+  mSmbiosFlashBase = SmbiosAbsAddr - RomBase;
+  mSmbiosFlashSize = ComponentEntry->Size;
+
+  DEBUG ((DEBUG_INFO, "SMBIOS abs=0x%08X flash_offset=0x%08X size=0x%X\n",
+          SmbiosAbsAddr, mSmbiosFlashBase, mSmbiosFlashSize));
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Check if an address range overlaps with SMBIOS component region.
+
+  @param[in] Address    Flash address to check
+  @param[in] Size       Size of the region
+
+  @retval TRUE          Region overlaps with SMBIOS
+  @retval FALSE         No overlap
+**/
+BOOLEAN
+IsSmbiosRegion (
+  IN UINT64  Address,
+  IN UINT32  Size
+  )
+{
+  UINT64  RegionEnd;
+  UINT64  SmbiosEnd;
+
+  if (!mPreserveSmbios || (mSmbiosFlashSize == 0)) {
+    return FALSE;
+  }
+
+  RegionEnd = Address + Size;
+  SmbiosEnd = (UINT64)mSmbiosFlashBase + mSmbiosFlashSize;
+
+  // Check for overlap
+  if ((Address < SmbiosEnd) && (RegionEnd > (UINT64)mSmbiosFlashBase)) {
+    return TRUE;
+  }
+
+  return FALSE;
 }
 
 /**
@@ -499,13 +606,15 @@ UpdateBootPartition (
   Perform full BIOS region update.
 
   @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
+  @param[in] CapsuleFlags   Capsule flags from firmware update header
 
   @retval  EFI_SUCCESS      Update successful.
   @retval  other            error occurred during firmware update
 **/
 EFI_STATUS
 UpdateFullBiosRegion (
-  IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
+  IN UINT32                        CapsuleFlags
   )
 {
   EFI_STATUS               Status;
@@ -529,11 +638,26 @@ UpdateFullBiosRegion (
     return Status;
   }
 
+  //
+  // Check if SMBIOS preservation is requested
+  //
+  if ((CapsuleFlags & CAPSULE_FLAG_PRESERVE_SMBIOS) != 0) {
+    DEBUG ((DEBUG_INFO, "SMBIOS preservation requested for full BIOS update\n"));
+    mPreserveSmbios = TRUE;
+    InitSmbiosPreservation();
+  }
+
   ZeroMem (&UpdateRegion, sizeof(UpdateRegion));
   UpdateRegion.ToUpdateAddress = BiosRgnSize - ImageHdr->UpdateImageSize;
   UpdateRegion.UpdateSize      = ImageHdr->UpdateImageSize;
   UpdateRegion.SourceAddress   = (UINT8 *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
   Status = UpdateBootRegion (&UpdateRegion, 0, UpdateRegion.UpdateSize);
+
+  // Clean up preservation state
+  mPreserveSmbios = FALSE;
+  mSmbiosFlashBase = 0;
+  mSmbiosFlashSize = 0;
+
   return Status;
 }
 
@@ -544,6 +668,7 @@ UpdateFullBiosRegion (
 
   @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
   @param[in] FwPolicy       Fw update policy
+  @param[in] CapsuleFlags   Capsule flags from firmware update header
 
   @retval  EFI_SUCCESS      Update successful.
   @retval  other            error occurred during firmware update
@@ -551,7 +676,8 @@ UpdateFullBiosRegion (
 EFI_STATUS
 UpdateSystemFirmware (
   IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
-  IN FIRMWARE_UPDATE_POLICY        FwPolicy
+  IN FIRMWARE_UPDATE_POLICY        FwPolicy,
+  IN UINT32                        CapsuleFlags
   )
 {
   EFI_STATUS                  Status;
@@ -576,6 +702,15 @@ UpdateSystemFirmware (
   }
 
   //
+  // Check if SMBIOS preservation is requested
+  //
+  if ((CapsuleFlags & CAPSULE_FLAG_PRESERVE_SMBIOS) != 0) {
+    DEBUG ((DEBUG_INFO, "SMBIOS preservation requested, reading current SMBIOS from flash\n"));
+    mPreserveSmbios = TRUE;
+    InitSmbiosPreservation();
+  }
+
+  //
   // Check firmware structure.
   //
   Status = VerifyFwStruct (ImageHdr);
@@ -590,6 +725,12 @@ UpdateSystemFirmware (
   //
   Status = UpdateBootPartition (UpdatePartition);
   FreePool(UpdatePartition);
+
+  // Clean up preservation state
+  mPreserveSmbios = FALSE;
+  mSmbiosFlashBase = 0;
+  mSmbiosFlashSize = 0;
+
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "UpdateBootPartition, Status = 0x%x\n", Status));
     return Status;
@@ -704,13 +845,15 @@ UpdateNonRedundantComp (
   and if found, will update the container component.
 
   @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
+  @param[in] CapsuleFlags   Capsule flags from firmware update header
 
   @retval  EFI_SUCCESS      Update successful.
   @retval  other            error occurred during firmware update
 **/
 EFI_STATUS
 UpdateContainerComp (
-  IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr
+  IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
+  IN UINT32                        CapsuleFlags
   )
 {
   EFI_STATUS               Status;
@@ -728,6 +871,15 @@ UpdateContainerComp (
 
   ComponentName = (UINT32)RShiftU64 (ImageHdr->UpdateHardwareInstance, 32);
   ContainerName = (UINT32)ImageHdr->UpdateHardwareInstance;
+
+  //
+  // Check if this is SMBIOS component and preservation flag is set
+  //
+  if ((ComponentName == SIGNATURE_32('S', 'M', 'B', 'S')) &&
+      ((CapsuleFlags & CAPSULE_FLAG_PRESERVE_SMBIOS) != 0)) {
+    DEBUG ((DEBUG_INFO, "SMBIOS preservation flag set, skipping SMBIOS update\n"));
+    return EFI_SUCCESS;
+  }
 
   Status = LocateComponentEntry (ContainerName, ComponentName, &ContainerEntryPtr, &ComponentEntryPtr);
   if (EFI_ERROR (Status)) {
@@ -1138,6 +1290,7 @@ CheckUCodeVersion (
 
   @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
   @param[in] FwPolicy       Fw update policy
+  @param[in] CapsuleFlags   Capsule flags from firmware update header
 
   @retval  EFI_SUCCESS      Update successful.
   @retval  other            error occurred during firmware update
@@ -1145,7 +1298,8 @@ CheckUCodeVersion (
 EFI_STATUS
 UpdateSblComponent (
   IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
-  IN FIRMWARE_UPDATE_POLICY        FwPolicy
+  IN FIRMWARE_UPDATE_POLICY        FwPolicy,
+  IN UINT32                        CapsuleFlags
   )
 {
   EFI_STATUS             Status;
@@ -1159,7 +1313,7 @@ UpdateSblComponent (
     // Upper 4 bytes are not null, this is a container component update.
     //
     DEBUG ((DEBUG_INFO, "Container component update requested! \n"));
-    Status = UpdateContainerComp (ImageHdr);
+    Status = UpdateContainerComp (ImageHdr, CapsuleFlags);
     return Status;
   }
 
@@ -1184,7 +1338,7 @@ UpdateSblComponent (
   //
   if (IsRedundantComponent(ImageHdr->UpdateHardwareInstance)) {
     DEBUG ((DEBUG_INFO, "Redundant component update requested! \n"));
-    Status = UpdateSystemFirmware(ImageHdr, FwPolicy);
+    Status = UpdateSystemFirmware(ImageHdr, FwPolicy, CapsuleFlags);
   } else {
     DEBUG ((DEBUG_INFO, "Non redundant component update requested! \n"));
     Status = UpdateNonRedundantComp(ImageHdr);
