@@ -78,6 +78,7 @@
   MediaAccessLib
   DmarLib
   TxtLib
+  MadtLib
 
 [Guids]
   gOsConfigDataGuid
@@ -123,6 +124,9 @@
   gPlatformModuleTokenSpaceGuid.PcdIgdOpRegionAddress
   gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr
   gPlatformModuleTokenSpaceGuid.PcdEnableSetup
+  gPlatformModuleTokenSpaceGuid.PcdCpuMaxLogicalProcessorNumber
+  gPlatformCommonLibTokenSpaceGuid.PcdCpuX2ApicEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdMadtUsePlatformLapic
 
 [FeaturePcd]
   gPlatformCommonLibTokenSpaceGuid.PcdTxtEnabled
