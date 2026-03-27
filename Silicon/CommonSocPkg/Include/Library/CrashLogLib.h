@@ -25,6 +25,32 @@ typedef struct {
   CRASHLOG_HOB  Telemetry;
 } CPU_CRASHLOG_HOB;
 
+// Crashlog Hob definitions for PTL platform
+//
+// Crashlog agent type
+//
+typedef enum {
+  CrashlogAgentCpu      = 0,
+  CrashlogAgentSoc,
+  CrashlogAgentPch,
+  CrashlogAgentTypeMax
+} CRASH_LOG_AGENT_TYPE;
+
+//
+// Structure to be used by crashlog HOB
+//
+typedef struct {
+  UINT64    Address;
+  UINT32    Size;
+  UINT32    CrashNode;
+} CRASHLOG_HOB_RECORD_ENTRY;
+
+typedef struct {
+  UINT32                  RecordCount;
+  CRASH_LOG_AGENT_TYPE    CrashlogAgent;
+  // CRASHLOG_HOB_RECORD_ENTRY    Records[];
+} CRASHLOG_HOB_DATA;
+
 /**
   Update BERT Table with Crash Log data
 
