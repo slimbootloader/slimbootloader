@@ -14,20 +14,20 @@
 #include "pcpsha512stuff.h"
 
 #include <Library/CryptoLib.h>
-#include <Library/DebugLib.h>
 
 /**
-  Initializes user context for hash computation. Compaitable with XIP.
+  Initializes user context for hash computation.
 
   @retval                  Pointer to SHA384 hash-method.
 **/
 IPPFUN( const IppsHashMethod*, ippsHashMethod_SHA384Sbl, (void) )
 {
-   static IppsHashMethod method = {
+   static const IppsHashMethod method = {
       ippHashAlg_SHA384,
       IPP_SHA384_DIGEST_BITSIZE/8,
       MBS_SHA512,
       MLR_SHA512,
+      IPP_SHA384_STATE_BYTESIZE,
       sha512_384_hashInit,
       sha512_hashUpdate,
       sha512_384_hashOctString,
