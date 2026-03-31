@@ -1536,6 +1536,11 @@ class Build(object):
         # patch stages
         self.patch_stages ()
 
+        # fixup Stage2 TE alignment for IppCrypto2Lib L9/AVX2
+        # DISABLED: Testing with enhanced debug to identify exact misaligned address
+        if self._board.ENABLE_CRYPTO_SHA_OPT & IPP_CRYPTO_OPTIMIZATION_MASK['X64_L9']:
+            fixup_stage2_avx2_alignment(self._fv_dir)
+
         # create redundant components
         self.create_redundant_components ()
 
