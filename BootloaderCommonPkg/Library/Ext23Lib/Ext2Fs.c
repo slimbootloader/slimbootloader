@@ -1077,19 +1077,21 @@ Ext2fsOpen (
       LinkLength = Fp->DiskInode.Ext2DInodeSize;
       Len = AsciiStrLen (Cp);
 
-      //
-      // Check for symbolic link loops and path length overflow
-      //
-      if ((LinkLength > MAXPATHLEN) || (Len > MAXPATHLEN - LinkLength) ||
-          ((++Nlinks) > MAXSYMLINKS)) {
-        Status = RETURN_LOAD_ERROR;
-        goto out;
-      }
-
       if (Nlinks == 0) {
         /* copy the top-most filename */
         AsciiStrnCpyS (SymFileNameBuf, EXT2FS_MAXNAMLEN, Ncp, (UINTN)(Cp - Ncp));
       }
+
+      //
+      // Check for symbolic link loops and path length overflow
+      //
+      if ((LinkLength > MAXPATHLEN) || (Len > MAXPATHLEN - LinkLength) ||
+          ((Nlinks + 1) > MAXSYMLINKS)) {
+        Status = RETURN_LOAD_ERROR;
+        goto out;
+      }
+
+      Nlinks++;
 
       CopyMem (&NameBuf[LinkLength], Cp, Len + 1);
 
