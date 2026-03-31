@@ -536,6 +536,14 @@ BoardInit (
 #endif
     break;
   case PostSiliconInit:
+    /* FSP Silicon Init clears CR4.OSXSAVE (bit 18) and leaves XCR0=0, even though
+       CR4.OSFXSR (bit 9) is preserved.  Without this call, any VEX-encoded AVX instruction
+       (e.g. in IppCrypto2Lib E9/L9) throws Exception #6 (#UD - Invalid Opcode) in Raptor Lake.
+
+       PRE  AsmEnableAvx: CR4=0x0000000000000660  XCR0=0x0000000000000000
+       POST AsmEnableAvx: CR4=0x0000000000040660  XCR0=0x0000000000000007
+    */
+    AsmEnableAvx ();
     FusaConfigPostSi();
     FeatureCfgData = (FEATURES_DATA *)FindConfigDataByTag (CDATA_FEATURES_TAG);
     SiCfgData = (SILICON_CFG_DATA *)FindConfigDataByTag (CDATA_SILICON_TAG);

@@ -78,6 +78,7 @@
   DmarLib
   TxtLib
   MadtLib
+  ExtraBaseLib
 
 [Guids]
   gOsConfigDataGuid
