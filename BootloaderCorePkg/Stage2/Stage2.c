@@ -543,6 +543,9 @@ SecStartup (
   AddMeasurePoint (0x3030);
   FspResetHandler (Status);
 
+  // Re-enable AVX state before container authentication uses IPP crypto paths.
+  AsmEnableAvx ();
+
   BoardInit (PostSiliconInit);
   AddMeasurePoint (0x3040);
 
