@@ -406,6 +406,7 @@ FIRMWARE_UPDATE_IMAGE_FILE_GUID = uuid.UUID('{1A3EAE58-B580-4fef-ACA3-A16D9E00DF
 class FirmwareUpdateHeader(Structure):
 
   CAPSULE_FLAG_FORCE_BIOS_UPDATE = 0x80000000
+  CAPSULE_FLAG_PRESERVE_SMBIOS   = 0x00000002
 
   _fields_ = [
     ('FileGuid',           ARRAY(c_uint8, 16)),
@@ -422,7 +423,7 @@ class FirmwareUpdateHeader(Structure):
   ]
 
 
-def SignImage(RawData, OutFile, HashType, SignScheme, PrivKey, ForceBiosUpdate):
+def SignImage(RawData, OutFile, HashType, SignScheme, PrivKey, ForceBiosUpdate, PreserveSmbios):
 
     #
     # Generate the new image layout
@@ -448,6 +449,9 @@ def SignImage(RawData, OutFile, HashType, SignScheme, PrivKey, ForceBiosUpdate):
     header.CapsuleFlags     = 0
     if ForceBiosUpdate:
         header.CapsuleFlags  |= FirmwareUpdateHeader.CAPSULE_FLAG_FORCE_BIOS_UPDATE
+    if PreserveSmbios:
+        print("Preserving SMBIOS container during firmware update.")
+        header.CapsuleFlags  |= FirmwareUpdateHeader.CAPSULE_FLAG_PRESERVE_SMBIOS
     header.ImageOffset      = header.HeaderSize
     header.ImageSize        = file_size
     header.SignatureOffset  = header.ImageOffset + header.ImageSize
@@ -503,6 +507,7 @@ def main():
     parser.add_argument('-o',  '--output', dest='NewImage', type=str, required=True, help='Output file for signed image')
     parser.add_argument("-v",  "--verbose", dest='Verbose', action="store_true", help= "Turn on verbose output with informational messages printed, including capsule headers and warning messages.")
     parser.add_argument("-f",  "--force_bios_update", dest='ForceBiosUpdate', action="store_true", help= "Force update whole BIOS region in a single shot.")
+    parser.add_argument("--preserve_smbios", dest='PreserveSmbios', action="store_true", help= "Preserve existing SMBIOS container during firmware update.")
 
     #
     # Parse command line arguments
@@ -575,7 +580,7 @@ def main():
     #
     # Create final capsule
     #
-    SignImage(Result, args.NewImage, args.HashType, args.SignScheme, args.PrivKey, args.ForceBiosUpdate)
+    SignImage(Result, args.NewImage, args.HashType, args.SignScheme, args.PrivKey, args.ForceBiosUpdate, args.PreserveSmbios)
     print('Success')
 
     #
