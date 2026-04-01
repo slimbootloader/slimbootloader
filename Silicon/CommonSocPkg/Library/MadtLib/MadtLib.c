@@ -147,9 +147,6 @@ AddMadtLocalApic (
   }
 
   LocalApicStruct = (EFI_ACPI_6_4_PROCESSOR_LOCAL_APIC_STRUCTURE *) ((UINT8 *)AcpiHeader + AcpiHeader->Length);
-  if (LocalApicStruct == NULL) {
-    return EFI_INVALID_PARAMETER;
-  }
 
   ZeroMem(LocalApicStruct, sizeof(EFI_ACPI_6_4_PROCESSOR_LOCAL_APIC_STRUCTURE));
   LocalApicStruct->Type         = EFI_ACPI_6_4_PROCESSOR_LOCAL_APIC;
@@ -200,9 +197,6 @@ AddMadtLocalX2Apic (
   }
 
   LocalX2ApicStruct = (EFI_ACPI_6_4_PROCESSOR_LOCAL_X2APIC_STRUCTURE *) ((UINT8 *)AcpiHeader + AcpiHeader->Length);
-  if (LocalX2ApicStruct == NULL) {
-    return EFI_INVALID_PARAMETER;
-  }
 
   ZeroMem(LocalX2ApicStruct, sizeof(EFI_ACPI_6_4_PROCESSOR_LOCAL_X2APIC_STRUCTURE));
   LocalX2ApicStruct->Type         = EFI_ACPI_6_4_PROCESSOR_LOCAL_X2APIC;
@@ -252,9 +246,6 @@ AddMadtIoApic (
   }
 
   IoApicStruct = (EFI_ACPI_6_4_IO_APIC_STRUCTURE *) ((UINT8 *)AcpiHeader + AcpiHeader->Length);
-  if (IoApicStruct == NULL) {
-    return EFI_INVALID_PARAMETER;
-  }
 
   ZeroMem(IoApicStruct, sizeof(EFI_ACPI_6_4_IO_APIC_STRUCTURE));
   IoApicStruct->Type         = EFI_ACPI_6_4_IO_APIC;
@@ -306,9 +297,6 @@ AddMadtIntSrcOverride (
   }
 
   IntSrcOvrStruct = (EFI_ACPI_6_4_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE *) ((UINT8 *)AcpiHeader + AcpiHeader->Length);
-  if (IntSrcOvrStruct == NULL) {
-    return EFI_INVALID_PARAMETER;
-  }
 
   ZeroMem(IntSrcOvrStruct, sizeof(EFI_ACPI_6_4_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE));
   IntSrcOvrStruct->Type         = EFI_ACPI_6_4_INTERRUPT_SOURCE_OVERRIDE;
@@ -361,9 +349,6 @@ AddLocalApicNmi (
   }
 
   LocalApicNmiStruct = (EFI_ACPI_6_4_LOCAL_APIC_NMI_STRUCTURE *) ((UINT8 *)AcpiHeader + AcpiHeader->Length);
-  if (LocalApicNmiStruct == NULL) {
-    return EFI_INVALID_PARAMETER;
-  }
 
   ZeroMem(LocalApicNmiStruct, sizeof(EFI_ACPI_6_4_LOCAL_APIC_NMI_STRUCTURE));
   LocalApicNmiStruct->Type             = EFI_ACPI_6_4_LOCAL_APIC_NMI;
@@ -414,9 +399,6 @@ AddLocalX2ApicNmi (
   }
 
   LocalX2ApicNmiStruct = (EFI_ACPI_6_4_LOCAL_X2APIC_NMI_STRUCTURE *) ((UINT8 *)AcpiHeader + AcpiHeader->Length);
-  if (LocalX2ApicNmiStruct == NULL) {
-    return EFI_INVALID_PARAMETER;
-  }
 
   ZeroMem(LocalX2ApicNmiStruct, sizeof(EFI_ACPI_6_4_LOCAL_X2APIC_NMI_STRUCTURE));
   LocalX2ApicNmiStruct->Type             = EFI_ACPI_6_4_LOCAL_X2APIC_NMI;
