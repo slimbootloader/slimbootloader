@@ -1317,6 +1317,11 @@ class Build(object):
             else:
                 gen_vbt_file (self._board.BOARD_PKG_NAME, self._board._MULTI_VBT_FILE, os.path.join(self._fv_dir, 'Vbt.bin'))
 
+        # Fetch ACTM binary from repo if ACTM_INF_FILE is defined
+        if self._board.HAVE_ACTM_BIN and hasattr(self._board, 'ACTM_INF_FILE'):
+            actm_repo_dir = os.path.abspath (os.path.join(plt_dir, '../Download', self._board.SILICON_PKG_NAME, '$AUTO'))
+            PreBuild.CopyBins (actm_repo_dir, plt_dir, self._board.ACTM_INF_FILE)
+
         # create ACTM file
         if self._board.HAVE_ACTM_BIN:
             if hasattr(self._board, 'BOARD_PKG_NAME_OVERRIDE'):
@@ -1329,8 +1334,11 @@ class Build(object):
         self.create_dsc_inc_file (platform_dsc_path)
 
         # process INF files having [UserExtensions.SBL."CopyList"]
+        ignore_list = [self._board.FSP_INF_FILE, self._board.MICROCODE_INF_FILE]
+        if hasattr(self._board, 'ACTM_INF_FILE'):
+            ignore_list.append(self._board.ACTM_INF_FILE)
         try:
-            PreBuild.ProcessInfFileCopyList (sbl_dir, [self._board.FSP_INF_FILE, self._board.MICROCODE_INF_FILE])
+            PreBuild.ProcessInfFileCopyList (sbl_dir, ignore_list)
         except Exception as e:
             raise Exception(f'Failed to process other INF files: {str(e)}')
 
@@ -1636,6 +1644,21 @@ def main():
                             if os.path.exists(file_full_path):
                                 print('Removing %s' % file_full_path)
                                 os.remove(file_full_path)
+
+                    if hasattr(board, 'ACTM_INF_FILE'):
+                        actm_inf = board.ACTM_INF_FILE
+                        actm_inf_full_path = os.path.join(sbl_dir, actm_inf)
+                        dest_dir = sbl_dir
+                        if not os.path.exists(actm_inf_full_path) and plt_dir:
+                            actm_inf_full_path = os.path.join(plt_dir, actm_inf)
+                            dest_dir = plt_dir
+
+                        if os.path.exists(actm_inf_full_path):
+                            for _, file in PreBuild.GetCopyList (actm_inf_full_path):
+                                file_full_path = os.path.join(dest_dir, file)
+                                if os.path.exists(file_full_path):
+                                    print('Removing %s' % file_full_path)
+                                    os.remove(file_full_path)
 
                     break
 
