@@ -272,6 +272,7 @@
   gPlatformModuleTokenSpaceGuid.PcdFastBootEnabled                | $(ENABLE_FAST_BOOT)
 
   gPayloadTokenSpaceGuid.PcdRtcmRsvdSize                        | $(RTCM_RSVD_SIZE)
+  gPayloadTokenSpaceGuid.PcdExtraImageSupportEnabled            | $(ENABLE_EXTRA_IMAGE_SUPPORT)
 
   gPlatformCommonLibTokenSpaceGuid.PcdBootPerformanceMask       | $(BOOT_PERFORMANCE_MASK)
   gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled         | $(ENABLE_SBL_RESILIENCY)

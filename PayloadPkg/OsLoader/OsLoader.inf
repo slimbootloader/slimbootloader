@@ -112,6 +112,7 @@
   gPayloadTokenSpaceGuid.PcdGrubBootCfgEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootHashMask
   gPayloadTokenSpaceGuid.PcdRtcmRsvdSize
+  gPayloadTokenSpaceGuid.PcdExtraImageSupportEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdAbSlotSupportEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdMultibootSupportEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdMultiboot2SupportEnabled

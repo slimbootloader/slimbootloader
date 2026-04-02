@@ -320,7 +320,8 @@ GetBootImageFromFs (
     goto Done;
   }
 
-  if ((LoadedImage->LoadImageType == LoadImageTypeExtra0) &&
+  if (FixedPcdGet8 (PcdExtraImageSupportEnabled) &&
+      (LoadedImage->LoadImageType == LoadImageTypeExtra0) &&
       !AsciiStrCmp(FileName, "/boot/sbl_rtcm")) {
      //
      // Currently extra image is used only by RTCM which need allocate reserved memory.
@@ -851,7 +852,8 @@ LoadBootImages (
     }
 
     if (Index >= LoadImageTypeExtra0) {
-      if (((BootFlags & BOOT_FLAGS_EXTRA) == 0) || (BootImage[Index].LbaImage.Valid == 0)) {
+      if (!FixedPcdGet8 (PcdExtraImageSupportEnabled) ||
+          ((BootFlags & BOOT_FLAGS_EXTRA) == 0) || (BootImage[Index].LbaImage.Valid == 0)) {
         continue;
       }
     }
@@ -879,7 +881,7 @@ LoadBootImages (
     LoadedImagesInfo->LoadedImageList[Index] = LoadedImage;
 
     if (EFI_ERROR (Status)) {
-      if (Index >= LoadImageTypeExtra0) {
+      if (FixedPcdGet8 (PcdExtraImageSupportEnabled) && (Index >= LoadImageTypeExtra0)) {
         // Continue boot if load extra image failed.
         Status = EFI_SUCCESS;
         LoadedImagesInfo->LoadedImageList[Index] = NULL;
