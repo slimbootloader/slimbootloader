@@ -1428,9 +1428,11 @@ RunShell (
   IN  UINTN    Timeout
   )
 {
-  LocalConsoleInit (FALSE);
+  if (FixedPcdGet8 (PcdShellEnabled)) {
+    LocalConsoleInit (FALSE);
 
-  Shell (Timeout);
+    Shell (Timeout);
+  }
 }
 
 /**
@@ -1529,7 +1531,8 @@ PayloadMain (
       }
     }
 
-    if ((DebugCodeEnabled () || (OsBootOptionList->BootToShell != 0)) && (OsBootOptionList->RestrictedBoot == 0)) {
+    if (FixedPcdGet8 (PcdShellEnabled) &&
+        (DebugCodeEnabled () || (OsBootOptionList->BootToShell != 0)) && (OsBootOptionList->RestrictedBoot == 0)) {
       // Restricted boot should not fall back to shell
       RunShell (0);
     } else {

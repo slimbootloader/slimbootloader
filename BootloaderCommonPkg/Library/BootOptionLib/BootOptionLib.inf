@@ -28,6 +28,7 @@
 
 [Guids]
   gOsConfigDataGuid
+  gOsBootOptionGuid
 
 [LibraryClasses]
   BaseLib
