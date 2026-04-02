@@ -69,6 +69,7 @@
   PciePm
   P2sbLib
   DmarLib
+  MadtLib
 
 [Guids]
   gOsConfigDataGuid
@@ -114,3 +115,7 @@
   gPlatformModuleTokenSpaceGuid.PcdPciResAllocTableBase
   gPlatformModuleTokenSpaceGuid.PcdEnablePciePm
   gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr
+
+[FeaturePcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdMadtUsePlatformLapic
+  gPlatformCommonLibTokenSpaceGuid.PcdCpuX2ApicEnabled
