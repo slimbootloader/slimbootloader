@@ -234,6 +234,7 @@ class BaseBoard(object):
         self.ENABLE_MULTIBOOT_SUPPORT  = 1
         self.ENABLE_MULTIBOOT2_SUPPORT = 1
         self.ENABLE_EXTRA_IMAGE_SUPPORT = 1
+        self.ENABLE_SHELL           = 1
 
         #     0: Direct access from flash
         # other: Load image into memory address

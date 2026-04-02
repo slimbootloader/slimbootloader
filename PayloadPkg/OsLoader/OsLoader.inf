@@ -83,6 +83,7 @@
   LocalApicLib
   SynchronizationLib
   MpServiceLib
+  ConsoleInLib
 
 [Guids]
   gOsConfigDataGuid
@@ -116,6 +117,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdAbSlotSupportEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdMultibootSupportEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdMultiboot2SupportEnabled
+  gPayloadTokenSpaceGuid.PcdShellEnabled
 
 [Depex]
   TRUE
