@@ -88,6 +88,9 @@
 #include <Library/WatchDogTimerLib.h>
 #include <Library/HeciMeExtLib.h>
 #include <LowPowerSupport.h>
+#include <Library/MadtLib.h>
+
+#define ICH_IOAPIC_ID         0x02
 
 #define V_EPOC_XTAL_38_4_MHZ  0x38400000
 //
