@@ -19,7 +19,7 @@
       help         : >
                      Specify boot device
       length       : 0x01
-      value        : 5
+      value        : 6
   - DevInstance  :
       name         : Boot Device instance
       type         : Combo
