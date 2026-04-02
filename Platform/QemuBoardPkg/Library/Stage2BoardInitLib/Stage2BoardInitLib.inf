@@ -44,6 +44,7 @@
   BoardSupportLib
   GraphicsInitLib
   SmbiosInitLib
+  MadtLib
 
 [Guids]
   gReservedMemoryResourceHobTsegGuid
@@ -69,3 +70,6 @@
   gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsPtr
   gPlatformModuleTokenSpaceGuid.PcdSmbiosStringsCnt
   gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled
+
+[FeaturePcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdMadtUsePlatformLapic
