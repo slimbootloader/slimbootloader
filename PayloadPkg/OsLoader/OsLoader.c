@@ -1066,24 +1066,26 @@ SetupBootImages (
   //
   // Check if extra images exist and need setup
   //
-  for (Type = LoadImageTypeExtra0; Type < LoadImageTypeMax; Type++) {
-    Status = GetLoadedImageByType (LoadedImageHandle, Type, &LoadedExtraImage);
-    if (EFI_ERROR (Status)) {
-      break;
-    }
-    DEBUG ((DEBUG_INFO, "SetupBootImage ImageType-%d Flags %x\n", Type, LoadedExtraImage->Flags));
-    if (LoadedExtraImage != NULL) {
-      if ((LoadedExtraImage->Flags & LOADED_IMAGE_RUN_EXTRA) != 0) {
-        Status = SetupBootImage (LoadedExtraImage);
-        if (EFI_ERROR (Status)) {
-          return Status;
-        }
+  if (FixedPcdGet8 (PcdExtraImageSupportEnabled)) {
+    for (Type = LoadImageTypeExtra0; Type < LoadImageTypeMax; Type++) {
+      Status = GetLoadedImageByType (LoadedImageHandle, Type, &LoadedExtraImage);
+      if (EFI_ERROR (Status)) {
+        break;
       }
-      if (((LoadedImage->Flags & LOADED_IMAGE_MULTIBOOT) ||
-           (LoadedImage->Flags & LOADED_IMAGE_MULTIBOOT2)) &&
-          (LoadedExtraImage->Flags & LOADED_IMAGE_MBMODULE)) {
-        DEBUG ((DEBUG_INFO, "SetupBootImage Append ImageType-%d\n", Type));
-        AppendMultibootModules (LoadedImage, LoadedExtraImage);
+      DEBUG ((DEBUG_INFO, "SetupBootImage ImageType-%d Flags %x\n", Type, LoadedExtraImage->Flags));
+      if (LoadedExtraImage != NULL) {
+        if ((LoadedExtraImage->Flags & LOADED_IMAGE_RUN_EXTRA) != 0) {
+          Status = SetupBootImage (LoadedExtraImage);
+          if (EFI_ERROR (Status)) {
+            return Status;
+          }
+        }
+        if (((LoadedImage->Flags & LOADED_IMAGE_MULTIBOOT) ||
+             (LoadedImage->Flags & LOADED_IMAGE_MULTIBOOT2)) &&
+            (LoadedExtraImage->Flags & LOADED_IMAGE_MBMODULE)) {
+          DEBUG ((DEBUG_INFO, "SetupBootImage Append ImageType-%d\n", Type));
+          AppendMultibootModules (LoadedImage, LoadedExtraImage);
+        }
       }
     }
   }
@@ -1133,7 +1135,11 @@ UpdateBootParameters (
     return Status;
   }
   Status = GetLoadedImageByType (LoadedImageHandle, LoadImageTypePreOs, &LoadedPreOsImage);
-  Status = GetLoadedImageByType (LoadedImageHandle, LoadImageTypeExtra0, &LoadedExtraImages);
+  if (FixedPcdGet8 (PcdExtraImageSupportEnabled)) {
+    Status = GetLoadedImageByType (LoadedImageHandle, LoadImageTypeExtra0, &LoadedExtraImages);
+  } else {
+    LoadedExtraImages = NULL;
+  }
   return UpdateOsParameters (OsBootOption, LoadedImage, LoadedPreOsImage, LoadedExtraImages);
 }
 
@@ -1152,16 +1158,18 @@ StartBootImages (
   //
   // Check if extra images exist and need start before OS image.
   //
-  for (Type = LoadImageTypeExtra0; Type < LoadImageTypeMax; Type++) {
-    Status = GetLoadedImageByType (LoadedImageHandle, Type, &LoadedExtraImage);
-    if (EFI_ERROR (Status)) {
-      break;
-    }
-    if ((LoadedExtraImage != NULL) && ((LoadedExtraImage->Flags & LOADED_IMAGE_RUN_EXTRA) != 0)) {
-      // For now, only RTCM will be supported.
-      Status = CallExtraModule (PLD_EXTRA_MOD_RTCM, LoadedExtraImage);
+  if (FixedPcdGet8 (PcdExtraImageSupportEnabled)) {
+    for (Type = LoadImageTypeExtra0; Type < LoadImageTypeMax; Type++) {
+      Status = GetLoadedImageByType (LoadedImageHandle, Type, &LoadedExtraImage);
       if (EFI_ERROR (Status)) {
-        return Status;
+        break;
+      }
+      if ((LoadedExtraImage != NULL) && ((LoadedExtraImage->Flags & LOADED_IMAGE_RUN_EXTRA) != 0)) {
+        // For now, only RTCM will be supported.
+        Status = CallExtraModule (PLD_EXTRA_MOD_RTCM, LoadedExtraImage);
+        if (EFI_ERROR (Status)) {
+          return Status;
+        }
       }
     }
   }

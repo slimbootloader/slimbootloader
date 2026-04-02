@@ -45,5 +45,6 @@
   gPayloadTokenSpaceGuid.PcdPayloadModuleEnabled | FALSE    | BOOLEAN | 0x2001003
 
 [PcdsFixedAtBuild]
-  gPayloadTokenSpaceGuid.PcdRtcmRsvdSize         | 0x00000000 | UINT32 | 0x30001000
-  gPayloadTokenSpaceGuid.PcdIoeCsmeUpdateEnabled | 0x00000000 | UINT32 | 0x30001001
+  gPayloadTokenSpaceGuid.PcdRtcmRsvdSize             | 0x00000000 | UINT32 | 0x30001000
+  gPayloadTokenSpaceGuid.PcdIoeCsmeUpdateEnabled     | 0x00000000 | UINT32 | 0x30001001
+  gPayloadTokenSpaceGuid.PcdExtraImageSupportEnabled | 0x01       | UINT8  | 0x30001002

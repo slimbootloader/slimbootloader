@@ -303,7 +303,8 @@ UpdateOsParameters (
   }
 
   if ((CurrentBootOption->BootFlags & BOOT_FLAGS_EXTRA) != 0) {
-    if ((LoadedExtraImages != NULL) && ((LoadedExtraImages->Flags & LOADED_IMAGE_RUN_EXTRA) != 0)) {
+    if (FixedPcdGet8 (PcdExtraImageSupportEnabled) &&
+        (LoadedExtraImages != NULL) && ((LoadedExtraImages->Flags & LOADED_IMAGE_RUN_EXTRA) != 0)) {
       DEBUG ((DEBUG_INFO, "Extra image is loaded and will run before OS.\n"));
     } else {
       DEBUG ((DEBUG_ERROR, "Warning: Extra image not loaded, or need pass it to OS in boot parameter.\n"));
