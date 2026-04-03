@@ -60,6 +60,7 @@
   HdaLib
   BoardSupportLib
   VtdPmrLib
+  MadtLib
 
 [Guids]
   gOsConfigDataGuid
@@ -109,3 +110,6 @@
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcHs400SupportEnabled
   gPlatformModuleTokenSpaceGuid.PcdIgdOpRegionAddress
   gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr
+
+[FeaturePcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdMadtUsePlatformLapic

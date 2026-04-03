@@ -71,7 +71,9 @@
 #include <CseMsg.h>
 #include <Library/GpioLibApl.h>
 #include <Library/PlatformHookLib.h>
+#include <Library/MadtLib.h>
 
+#define ICH_IOAPIC_ID                 0x01
 #define IOC_UART_PPR_CLK_N_DIV        0x64
 #define IOC_UART_PPR_CLK_M_DIV        0x40
 #define R_XHCI_MEM_DUAL_ROLE_CFG0     0x80D8

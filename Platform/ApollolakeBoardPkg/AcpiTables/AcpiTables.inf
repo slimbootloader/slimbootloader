@@ -23,14 +23,12 @@
   EFI_SPECIFICATION_VERSION      = 0x00020000
 
 [sources.common]
-  Madt/Madt.h
   AcpiTablePlatform.h
   Dsdt/Dsdt.asl
   Facs/Facs.aslc
   Facp/Facp.aslc
   Mcfg/Mcfg.aslc
   Hpet/Hpet.aslc
-  Madt/Madt30.aslc
   Platform/CommonBoardPkg/AcpiTables/Tpm/Tpm2.aslc
   Platform/CommonBoardPkg/AcpiTables/Tpm/TpmSsdt.asl
   Platform/CommonBoardPkg/AcpiTables/Fpdt/Fpdt.aslc
