@@ -54,6 +54,7 @@
   PsdLib
   S3SaveRestoreLib
   BoardSupportLib
+  MadtLib
 
 [Guids]
   gSmmInformationGuid
@@ -84,3 +85,7 @@
   gPlatformModuleTokenSpaceGuid.PcdSmbiosTablesBase
   gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled
   gPlatformModuleTokenSpaceGuid.PcdIgdOpRegionAddress
+  gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr
+
+[FeaturePcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdMadtUsePlatformLapic

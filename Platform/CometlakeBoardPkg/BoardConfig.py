@@ -113,6 +113,8 @@ class Board(BaseBoard):
 
         self.MAX_MEMORY_MAP_ENTRY_NUM = 0x30
 
+        self.MADT_USE_PLATFORM_LAPIC = 1
+
         self.TOP_SWAP_SIZE        = 0x040000
         self.REDUNDANT_SIZE  = self.UCODE_SIZE + self.STAGE2_SIZE + self.STAGE1B_SIZE + self.FWUPDATE_SIZE + self.CFGDATA_SIZE + self.KEYHASH_SIZE
         self.NON_REDUNDANT_SIZE   = 0x2AF000
@@ -162,6 +164,7 @@ class Board(BaseBoard):
             'PsdLib|Silicon/$(SILICON_PKG_NAME)/Library/PsdLib/PsdLib.inf',
             'HeciLib|Silicon/$(SILICON_PKG_NAME)/Library/HeciLib/HeciLib.inf',
             'ShellExtensionLib|Platform/$(BOARD_PKG_NAME)/Library/ShellExtensionLib/ShellExtensionLib.inf',
+            'MadtLib|Silicon/CommonSocPkg/Library/MadtLib/MadtLib.inf',
             'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
             'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf',
             'P2sbLib|Silicon/CommonSocPkg/Library/P2sbLib/P2sbLib.inf',

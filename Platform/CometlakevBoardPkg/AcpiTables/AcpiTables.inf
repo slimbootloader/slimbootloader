@@ -25,7 +25,6 @@
 [sources.common]
   AcpiTablePlatform.h
   Dsdt/PlatformBoardId.h
-  Madt/Madt.h
   Dsdt/PchSerialIoAcpiDefinesCmlv.h
   Hpet/Hpet.h
   Mcfg/Mcfg.h
@@ -33,7 +32,6 @@
   Dsdt/Dsdt.asl
   Facs/Facs.act
   Facp/Facp.aslc
-  Madt/Madt.act
   Mcfg/Mcfg.act
   Hpet/Hpet.act
   Ecdt/Ecdt.act
