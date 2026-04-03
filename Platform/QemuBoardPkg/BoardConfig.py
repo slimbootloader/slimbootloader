@@ -71,6 +71,7 @@ class Board(BaseBoard):
         self.ENABLE_UPL_HANDOFF_FDT   = 0
 
         self.CPU_MAX_LOGICAL_PROCESSOR_NUMBER = 255
+        self.MADT_USE_PLATFORM_LAPIC = 1
 
         # RSA2048 or RSA3072
         self._RSA_SIGN_TYPE          = 'RSA3072'
@@ -218,7 +219,8 @@ class Board(BaseBoard):
             'BootGuardLib|Silicon/CommonSocPkg/Library/BootGuardLibCBnT/BootGuardLibCBnT.inf',
             'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
             'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf',
-            'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf'
+            'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf',
+            'MadtLib|Silicon/CommonSocPkg/Library/MadtLib/MadtLib.inf',
         ]
         dsc['PcdsFeatureFlag.%s' % self.BUILD_ARCH] = [
             'gPlatformCommonLibTokenSpaceGuid.PcdMultiUsbBootDeviceEnabled | TRUE'

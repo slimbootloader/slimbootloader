@@ -169,6 +169,7 @@ class Board(BaseBoard):
             'PsdLib|Silicon/$(SILICON_PKG_NAME)/Library/PsdLib/PsdLib.inf',
             'HeciLib|Silicon/$(SILICON_PKG_NAME)/Library/HeciLib/HeciLib.inf',
             'ShellExtensionLib|Platform/$(BOARD_PKG_NAME)/Library/ShellExtensionLib/ShellExtensionLib.inf',
+            'MadtLib|Silicon/CommonSocPkg/Library/MadtLib/MadtLib.inf',
             'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
             'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf',
             'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf'

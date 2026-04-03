@@ -17,11 +17,9 @@
 
 [sources.common]
   AcpiTablePlatform.h
-  Madt/Madt.h
   Dsdt/Dsdt.asl
   Facs/Facs.aslc
   Facp/Facp.aslc
-  Madt/Madt30.aslc
   Mcfg/Mcfg.aslc
   Hpet/Hpet.aslc
   Platform/CommonBoardPkg/AcpiTables/Fpdt/Fpdt.aslc

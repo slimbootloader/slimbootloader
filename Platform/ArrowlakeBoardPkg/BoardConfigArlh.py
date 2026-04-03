@@ -85,6 +85,7 @@ class Board(BaseBoard):
         self.CPU_MAX_LOGICAL_PROCESSOR_NUMBER = 32
 
         self.SUPPORT_X2APIC = 0
+        self.MADT_USE_PLATFORM_LAPIC = 1
 
         self.ENABLE_GRUB_CONFIG       = 1
 
@@ -172,7 +173,7 @@ class Board(BaseBoard):
         self.SBLRSVD_SIZE         = 0x00001000
         self.FWUPDATE_SIZE        = 0x00020000 if self.ENABLE_FWU else 0
         # Need a little bit more for full paging table
-        self.OS_LOADER_FD_SIZE    = 0x00063000
+        self.OS_LOADER_FD_SIZE    = 0x00064000
         self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         # If BUILD_IDENTICAL_TS is 0, the flash map sizings and layout
@@ -328,6 +329,7 @@ class Board(BaseBoard):
             'MeChipsetLib|Silicon/CommonSocPkg/Library/MeChipsetLib/MeChipsetLib.inf',
             'VtdLib|Silicon/$(SILICON_PKG_NAME)/Library/VTdLib/VTdLib.inf',
             'DmarLib|Silicon/CommonSocPkg/Library/DmarLib/DmarLib.inf',
+            'MadtLib|Silicon/CommonSocPkg/Library/MadtLib/MadtLib.inf',
             'PsdLib|Silicon/$(SILICON_PKG_NAME)/Library/PsdLib/PsdLib.inf',
             'HeciMeExtLib|Silicon/CommonSocPkg/Library/HeciMeExtLib/HeciMeExtLib.inf',
             'MeExtMeasurementLib|Silicon/$(SILICON_PKG_NAME)/Library/MeExtMeasurementLib/MeExtMeasurementLib.inf',

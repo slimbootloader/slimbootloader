@@ -28,12 +28,10 @@
   Facs/Facs.h
   Mcfg/Mcfg.h
   Dsdt/PlatformBoardId.h
-  Madt/Madt.h
   Hpet/Hpet.h
   Dsdt/Dsdt.asl
   Facs/Facs.act
   Facp/Facp.aslc
-  Madt/Madt.act
   Mcfg/Mcfg.act
   Hpet/Hpet.act
   Ecdt/Ecdt.act
