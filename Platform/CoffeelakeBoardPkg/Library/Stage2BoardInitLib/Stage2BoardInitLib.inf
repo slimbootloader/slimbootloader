@@ -56,7 +56,7 @@
   BoardSupportLib
   VtdPmrLib
   VtdLib
-
+  MadtLib
 [Guids]
   gSmmInformationGuid
   gCpuInitDataHobGuid
@@ -92,3 +92,7 @@
   gPlatformModuleTokenSpaceGuid.PcdPciResourceMem64Base
   gPlatformModuleTokenSpaceGuid.PcdVtdEnabled
   gPlatformModuleTokenSpaceGuid.PcdIgdOpRegionAddress
+  gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr
+
+[FeaturePcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdMadtUsePlatformLapic
