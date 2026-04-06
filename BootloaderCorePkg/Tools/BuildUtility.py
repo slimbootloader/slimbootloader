@@ -857,9 +857,50 @@ def gen_smbios_bin(yaml_file, bin_file):
             out.write(string_val.encode('ascii') + b'\0')
             i += 3  # Skip to next entry
 
-def gen_actm_file (brd_pkg_name, actm_bin, actm_file):
-    # Copy ACTM file
-    src_path = os.path.join(os.environ['PLT_SOURCE'], 'Platform', brd_pkg_name, 'Actm', actm_bin)
+def get_actm_bin_path (actm_inf_path, plt_dir):
+    # Locate ACTM binary path from INF.
+    # Checks CopyList destination first, then falls back to [Sources] section.
+    from PrepareBuildComponentBin import GetCopyList
+    actm_inf_dir = os.path.dirname(actm_inf_path)
+
+    # Try CopyList destination first (used when binary is cloned/copied from repo)
+    copy_list = GetCopyList (actm_inf_path)
+    if copy_list:
+        candidate = os.path.join(plt_dir, copy_list[0][1])
+        if os.path.exists(candidate):
+            return candidate
+
+    # Fall back to [Sources] section resolved relative to INF directory
+    in_sources = False
+    with open(actm_inf_path, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith('['):
+                if line.startswith('[Sources'):
+                    in_sources = True
+                else:
+                    if in_sources:
+                        break
+                    in_sources = False
+                continue
+            if in_sources and line and not line.startswith('#'):
+                # Try path relative to INF directory
+                candidate = os.path.join(actm_inf_dir, line)
+                if os.path.exists(candidate):
+                    return candidate
+                # Try just the filename in INF directory
+                candidate = os.path.join(actm_inf_dir, os.path.basename(line))
+                if os.path.exists(candidate):
+                    return candidate
+
+    return None
+
+
+def gen_actm_file (actm_inf, plt_dir, actm_file):
+    actm_inf_path = actm_inf if os.path.isabs(actm_inf) else os.path.join(plt_dir, actm_inf)
+    src_path = get_actm_bin_path (actm_inf_path, plt_dir)
+    if not src_path:
+        raise Exception ('ACTM binary not found from INF: %s' % actm_inf_path)
     shutil.copy (src_path, actm_file)
     return
 
