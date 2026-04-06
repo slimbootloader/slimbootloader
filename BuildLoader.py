@@ -1606,7 +1606,10 @@ def main():
                     fsp_inf_full_path = os.path.join(sbl_dir, fsp_inf)
                     dest_dir = sbl_dir
 
-                    plt_dir = os.environ['PLT_SOURCE'] if 'PLT_SOURCE' in os.environ else None
+                    if 'PLT_SOURCE' in os.environ:
+                        plt_dir = os.environ['PLT_SOURCE']
+                    else:
+                        plt_dir = os.path.abspath (os.path.join (os.path.dirname (board_cfgs[index]), '../..'))
 
                     if not os.path.exists(fsp_inf_full_path) and plt_dir:
                         fsp_inf_full_path = os.path.join(plt_dir, fsp_inf)
