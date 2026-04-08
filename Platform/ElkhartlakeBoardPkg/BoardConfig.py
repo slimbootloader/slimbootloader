@@ -211,6 +211,8 @@ class Board(BaseBoard):
         self._CFGDATA_INT_FILE = []
         self._CFGDATA_EXT_FILE = [self._generated_cfg_file_prefix + 'CfgData_Int_IotgRvp1.dlt', self._generated_cfg_file_prefix + 'CfgData_Ext_IotgCrb.dlt', self._generated_cfg_file_prefix + 'CfgData_Ext_Up6000.dlt']
 
+        self.MADT_USE_PLATFORM_LAPIC = 1
+
     def PlatformBuildHook (self, build, phase):
         if phase == 'pre-build:before':
             # create build folder if not exist
@@ -253,7 +255,8 @@ class Board(BaseBoard):
             'MeExtMeasurementLib|Silicon/$(SILICON_PKG_NAME)/Library/MeExtMeasurementLib/MeExtMeasurementLib.inf',
             'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
             'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf',
-            'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf'
+            'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf',
+            'MadtLib|Silicon/CommonSocPkg/Library/MadtLib/MadtLib.inf'
         ]
 
         if self.BUILD_CSME_UPDATE_DRIVER:

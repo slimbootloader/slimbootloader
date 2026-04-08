@@ -79,6 +79,7 @@
 #include <Library/GpioLib.h>
 #include <Library/PlatformHookLib.h>
 #include <Library/ResetSystemLib.h>
+#include <Library/MadtLib.h>
 
 //
 // GPIO_PAD Fileds
@@ -214,8 +215,10 @@ SI_PCH_DEVICE_INTERRUPT_CONFIG mPchDevIntConfig[] = {
 
 STATIC UINT8 mPchSciSupported = 0xFF;
 
+extern EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER mAcpiMadtTableTemplate;
 STATIC
 CONST EFI_ACPI_COMMON_HEADER *mPlatformAcpiTables[] = {
+  (EFI_ACPI_COMMON_HEADER *)&mAcpiMadtTableTemplate,
   NULL
 };
 
