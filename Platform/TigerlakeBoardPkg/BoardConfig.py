@@ -245,6 +245,8 @@ class Board(BaseBoard):
         #   VbtBin folder.
         #self._MULTI_VBT_FILE      = {1:'Vbt.dat', 2:'Vbt2.dat'}
 
+        self.MADT_USE_PLATFORM_LAPIC  = 1
+
     def PlatformBuildHook (self, build, phase):
         if phase == 'pre-build:before':
             # create build folder if not exist
@@ -279,6 +281,7 @@ class Board(BaseBoard):
             'SpiFlashLib|Silicon/CommonSocPkg/Library/SpiFlashLib/SpiFlashLib.inf',
             'VtdLib|Silicon/$(SILICON_PKG_NAME)/Library/VTdLib/VTdLib.inf',
             'DmarLib|Silicon/CommonSocPkg/Library/DmarLib/DmarLib.inf',
+            'MadtLib|Silicon/CommonSocPkg/Library/MadtLib/MadtLib.inf',
             'ShellExtensionLib|Platform/$(BOARD_PKG_NAME)/Library/ShellExtensionLib/ShellExtensionLib.inf',
             'IgdOpRegionLib|Silicon/CommonSocPkg/Library/IgdOpRegionLib/IgdOpRegionLib.inf',
             'HeciInitLib|Silicon/$(PCH_PKG_NAME)/Library/HeciInitLib/HeciInitLib.inf',
