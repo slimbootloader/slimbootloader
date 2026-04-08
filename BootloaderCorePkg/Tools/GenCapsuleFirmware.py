@@ -405,7 +405,8 @@ FIRMWARE_UPDATE_IMAGE_FILE_GUID = uuid.UUID('{1A3EAE58-B580-4fef-ACA3-A16D9E00DF
 
 class FirmwareUpdateHeader(Structure):
 
-  CAPSULE_FLAG_FORCE_BIOS_UPDATE = 0x80000000
+  CAPSULE_FLAG_FORCE_BIOS_UPDATE            = 0x80000000
+  CAPSULE_FLAG_SKIP_ALL_NON_VOLATILE_REGION = 0x00000002
 
   _fields_ = [
     ('FileGuid',           ARRAY(c_uint8, 16)),
@@ -422,7 +423,7 @@ class FirmwareUpdateHeader(Structure):
   ]
 
 
-def SignImage(RawData, OutFile, HashType, SignScheme, PrivKey, ForceBiosUpdate):
+def SignImage(RawData, OutFile, HashType, SignScheme, PrivKey, CapsuleFlags):
 
     #
     # Generate the new image layout
@@ -445,9 +446,7 @@ def SignImage(RawData, OutFile, HashType, SignScheme, PrivKey, ForceBiosUpdate):
     header.FileGuid         = (c_ubyte *16).from_buffer_copy(FIRMWARE_UPDATE_IMAGE_FILE_GUID.bytes_le)
     header.HeaderSize       = sizeof(FirmwareUpdateHeader)
     header.FirmwreVersion   = 1
-    header.CapsuleFlags     = 0
-    if ForceBiosUpdate:
-        header.CapsuleFlags  |= FirmwareUpdateHeader.CAPSULE_FLAG_FORCE_BIOS_UPDATE
+    header.CapsuleFlags     = CapsuleFlags
     header.ImageOffset      = header.HeaderSize
     header.ImageSize        = file_size
     header.SignatureOffset  = header.ImageOffset + header.ImageSize
@@ -503,11 +502,18 @@ def main():
     parser.add_argument('-o',  '--output', dest='NewImage', type=str, required=True, help='Output file for signed image')
     parser.add_argument("-v",  "--verbose", dest='Verbose', action="store_true", help= "Turn on verbose output with informational messages printed, including capsule headers and warning messages.")
     parser.add_argument("-f",  "--force_bios_update", dest='ForceBiosUpdate', action="store_true", help= "Force update whole BIOS region in a single shot.")
+    parser.add_argument("-sa", "--skip-all", dest='SkipAll', action="store_true", help= "Skip updating the following data regions (MRC data, SBL variable, UEFI variable, SMBIOS) during BIOS region update.")
 
     #
     # Parse command line arguments
     #
     args = parser.parse_args()
+
+    #
+    # --skip-all is not compatible with force BIOS update
+    #
+    if args.ForceBiosUpdate and args.SkipAll:
+        raise Exception ("--skip-all cannot be used together with force BIOS update (-f) !")
 
     #
     # Error out if components overlap
@@ -573,9 +579,19 @@ def main():
         FmpCapsuleHeader.DumpInfo()
 
     #
+    # Build CapsuleFlags
+    #
+    CapsuleFlags = 0
+    if args.ForceBiosUpdate:
+        CapsuleFlags |= FirmwareUpdateHeader.CAPSULE_FLAG_FORCE_BIOS_UPDATE
+    if args.SkipAll:
+        CapsuleFlags |= FirmwareUpdateHeader.CAPSULE_FLAG_SKIP_ALL_NON_VOLATILE_REGION
+        print("[INFO] Skipping the following data regions (MRC data, SBL variable, UEFI variable, SMBIOS) during firmware update.")
+
+    #
     # Create final capsule
     #
-    SignImage(Result, args.NewImage, args.HashType, args.SignScheme, args.PrivKey, args.ForceBiosUpdate)
+    SignImage(Result, args.NewImage, args.HashType, args.SignScheme, args.PrivKey, CapsuleFlags)
     print('Success')
 
     #

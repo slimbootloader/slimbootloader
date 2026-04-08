@@ -780,14 +780,15 @@ ValidateCapsuleLayout (
   }
 
   //
-  // Whitelist CapsuleFlags against the two defined flags:
-  //   CAPSULE_FLAGS_CFG_DATA      (BIT0)  - config data update flag
+  // Whitelist CapsuleFlags against the three defined flags:
+  //   CAPSULE_FLAGS_CFG_DATA      (BIT0)  - config data update
+  //   CAPSULE_FLAG_SKIP_ALL_NON_VOLATILE_REGION (BIT1) - skip update non-volatile region
   //   CAPSULE_FLAG_FORCE_BIOS_UPDATE (BIT31) - bypasses FWU state machine
   // Any bit outside this set is unrecognized and could trigger unintended
   // update paths. Rejecting undefined flags here prevents a crafted capsule
   // from reaching later code with an unexpected flags value.
   //
-  if ((Header->CapsuleFlags & ~(CAPSULE_FLAGS_CFG_DATA | CAPSULE_FLAG_FORCE_BIOS_UPDATE)) != 0) {
+  if ((Header->CapsuleFlags & ~(CAPSULE_FLAGS_CFG_DATA | CAPSULE_FLAG_SKIP_ALL_NON_VOLATILE_REGION | CAPSULE_FLAG_FORCE_BIOS_UPDATE)) != 0) {
     DEBUG ((DEBUG_ERROR, "Invalid capsule: unrecognized CapsuleFlags bits set (0x%x)\n",
             Header->CapsuleFlags));
     return EFI_INVALID_PARAMETER;
@@ -1502,7 +1503,7 @@ ApplyFwImage (
     if ((CapHdr->CapsuleFlags & CAPSULE_FLAG_FORCE_BIOS_UPDATE) != 0) {
       Status = UpdateFullBiosRegion (ImageHdr);
     } else {
-      Status = UpdateSystemFirmware (ImageHdr, FwPolicy);
+      Status = UpdateSystemFirmware (ImageHdr, FwPolicy, CapHdr->CapsuleFlags);
     }
     *ResetRequired = TRUE;
     break;
