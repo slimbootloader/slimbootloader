@@ -598,11 +598,13 @@ PlatformUpdateAcpiTable (
       DEBUG ((DEBUG_INFO, "Board SsdtRtd3 Table: %x\n", Table->OemTableId));
     }
     return Status;
-  } else if (FeaturePcdGet (PcdVtdEnabled) && (Table->Signature == EFI_ACPI_6_4_DMA_REMAPPING_TABLE_SIGNATURE)) {
+  } else if (Table->Signature == EFI_ACPI_6_4_DMA_REMAPPING_TABLE_SIGNATURE) {
     DEBUG ((DEBUG_INFO, "Updated DMAR Table entries\n"));
     PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
-    if ((PlatformData != NULL) && (PlatformData->PlatformFeatures.VtdEnable == 1)) {
+    if (FeaturePcdGet (PcdVtdEnabled) && (PlatformData != NULL) && (PlatformData->PlatformFeatures.VtdEnable == 1)) {
       DmarTableUpdate (Table);
+    } else {
+      return EFI_UNSUPPORTED;
     }
   } else if (Table->Signature == EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE) {
     DEBUG ((DEBUG_INFO, "Updating MADT Table entries\n"));
