@@ -72,6 +72,7 @@
   PciePm
   TxtLib
   DmarLib
+  MadtLib
 
 [Guids]
   gOsConfigDataGuid
@@ -114,3 +115,6 @@
   gPlatformModuleTokenSpaceGuid.PcdFSPSBase
   gPlatformCommonLibTokenSpaceGuid.PcdTxtEnabled
   gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr
+
+[FeaturePcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdMadtUsePlatformLapic
