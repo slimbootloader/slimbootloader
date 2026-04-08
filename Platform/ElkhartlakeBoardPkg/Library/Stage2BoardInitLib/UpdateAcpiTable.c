@@ -29,7 +29,9 @@
 #include <Register/PmcRegs.h>
 #include <Library/PchSciLib.h>
 #include <PlatformData.h>
+#include <Library/MadtLib.h>
 
+#define ICH_IOAPIC_ID                   0x02
 #define NHLT_ACPI_TABLE_SIGNATURE  SIGNATURE_32 ('N', 'H', 'L', 'T')
 
 //
@@ -42,6 +44,38 @@
 
 FVID_TABLE  *mFvidPointer               = NULL;
 
+/**
+  Update the MADT table
+
+  @param[in, out] AcpiHeader         - The table to be set
+**/
+VOID
+MadtTableUpdate (
+  IN OUT   EFI_ACPI_DESCRIPTION_HEADER       *AcpiHeader
+  )
+{
+  EFI_STATUS                                 Status;
+
+  Status = AddAcpiMadtHdr (AcpiHeader, LOCAL_APIC_BASE_ADDRESS, EFI_ACPI_6_4_PCAT_COMPAT);
+  if (EFI_ERROR (Status)) {
+    return;
+  }
+
+  if (FeaturePcdGet (PcdMadtUsePlatformLapic)) {
+    // Add all Local APICs if platform isn't using AcpiInitLib to do it.
+    AddMadtAllLocalApics(AcpiHeader);
+  }
+
+  // Add IO APIC entry
+  AddMadtIoApic (AcpiHeader, ICH_IOAPIC_ID, IO_APIC_BASE_ADDRESS, 0x18 * 0);
+
+  // Add Interrupt Source Override entries
+  AddMadtIntSrcOverride (AcpiHeader, 0, 0, 2, 0);   // IRQ0=>IRQ2
+  AddMadtIntSrcOverride (AcpiHeader, 0, 9, 9, 0xD); // SCI Level-tiggered, Active High
+
+  // NMI Entry for all processors, level triggered, active high, on LINT 1
+  AddLocalApicNmi (AcpiHeader, 0xFF, 0xD, 1);
+}
 
 /**
   This function updates CpuSsdt table PNVS dynamically.
@@ -467,7 +501,7 @@ PlatformUpdateAcpiTable (
         (((ACPI_LOW_POWER_IDLE_TABLE *)Table)->LpiStates[LpitStateEntries - 1].ResidencyCounter) = SetResidencyCounter[0];
         (((ACPI_LOW_POWER_IDLE_TABLE *)Table)->LpiStates[LpitStateEntries - 1].ResidencyCounterFrequency) = ResidencyCounterFrequency;
       }
-    } else if (Table->Signature == EFI_ACPI_VTD_DMAR_TABLE_SIGNATURE) {
+  } else if (Table->Signature == EFI_ACPI_VTD_DMAR_TABLE_SIGNATURE) {
     if (FeaturePcdGet (PcdVtdEnabled)) {
       DEBUG ((DEBUG_INFO, "Updated DMAR Table in AcpiTable Entries\n"));
       UpdateDmarAcpi (Table);
@@ -489,6 +523,9 @@ PlatformUpdateAcpiTable (
         }
       }
     }
+  } else if (Table->Signature == EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE) {
+    DEBUG ((DEBUG_INFO, "Updating MADT Table entries\n"));
+    MadtTableUpdate (Table);
   }
   return EFI_SUCCESS;
 }
