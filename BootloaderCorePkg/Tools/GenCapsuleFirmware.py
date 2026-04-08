@@ -405,7 +405,11 @@ FIRMWARE_UPDATE_IMAGE_FILE_GUID = uuid.UUID('{1A3EAE58-B580-4fef-ACA3-A16D9E00DF
 
 class FirmwareUpdateHeader(Structure):
 
-  CAPSULE_FLAG_FORCE_BIOS_UPDATE = 0x80000000
+  CAPSULE_FLAG_FORCE_BIOS_UPDATE     = 0x80000000
+  CAPSULE_FLAG_SKIP_UPDATE_MRC_DATA  = 0x00000001
+  CAPSULE_FLAG_SKIP_UPDATE_SBL_VAR   = 0x00000002
+  CAPSULE_FLAG_SKIP_UPDATE_UEFI_VAR  = 0x00000004
+  CAPSULE_FLAG_SKIP_UPDATE_SMBIOS    = 0x00000008
 
   _fields_ = [
     ('FileGuid',           ARRAY(c_uint8, 16)),
@@ -422,7 +426,7 @@ class FirmwareUpdateHeader(Structure):
   ]
 
 
-def SignImage(RawData, OutFile, HashType, SignScheme, PrivKey, ForceBiosUpdate):
+def SignImage(RawData, OutFile, HashType, SignScheme, PrivKey, CapsuleFlags):
 
     #
     # Generate the new image layout
@@ -445,9 +449,7 @@ def SignImage(RawData, OutFile, HashType, SignScheme, PrivKey, ForceBiosUpdate):
     header.FileGuid         = (c_ubyte *16).from_buffer_copy(FIRMWARE_UPDATE_IMAGE_FILE_GUID.bytes_le)
     header.HeaderSize       = sizeof(FirmwareUpdateHeader)
     header.FirmwreVersion   = 1
-    header.CapsuleFlags     = 0
-    if ForceBiosUpdate:
-        header.CapsuleFlags  |= FirmwareUpdateHeader.CAPSULE_FLAG_FORCE_BIOS_UPDATE
+    header.CapsuleFlags     = CapsuleFlags
     header.ImageOffset      = header.HeaderSize
     header.ImageSize        = file_size
     header.SignatureOffset  = header.ImageOffset + header.ImageSize
@@ -503,6 +505,10 @@ def main():
     parser.add_argument('-o',  '--output', dest='NewImage', type=str, required=True, help='Output file for signed image')
     parser.add_argument("-v",  "--verbose", dest='Verbose', action="store_true", help= "Turn on verbose output with informational messages printed, including capsule headers and warning messages.")
     parser.add_argument("-f",  "--force_bios_update", dest='ForceBiosUpdate', action="store_true", help= "Force update whole BIOS region in a single shot.")
+    parser.add_argument("-sm", "--skip-mrcdata",  dest='SkipMrcData',  action="store_true", help= "Skip updating MRC training data during BIOS region update.")
+    parser.add_argument("-ss", "--skip-sblvar",   dest='SkipSblVar',   action="store_true", help= "Skip updating SBL variable storage during BIOS region update.")
+    parser.add_argument("-su", "--skip-uefivar",  dest='SkipUefiVar',  action="store_true", help= "Skip updating UEFI variable storage during BIOS region update.")
+    parser.add_argument("-sb", "--skip-smbios",   dest='SkipSmbios',   action="store_true", help= "Skip updating SMBIOS binary data during BIOS region update.")
 
     #
     # Parse command line arguments
@@ -573,9 +579,35 @@ def main():
         FmpCapsuleHeader.DumpInfo()
 
     #
+    # Build CapsuleFlags
+    #
+    CapsuleFlags = 0
+    if args.ForceBiosUpdate:
+        CapsuleFlags |= FirmwareUpdateHeader.CAPSULE_FLAG_FORCE_BIOS_UPDATE
+    if args.SkipMrcData:
+        CapsuleFlags |= FirmwareUpdateHeader.CAPSULE_FLAG_SKIP_UPDATE_MRC_DATA
+        print("[INFO] Skipping MRC training data update during firmware update.")
+    if args.SkipSblVar:
+        CapsuleFlags |= FirmwareUpdateHeader.CAPSULE_FLAG_SKIP_UPDATE_SBL_VAR
+        print("[INFO] Skipping SBL variable storage update during firmware update.")
+    if args.SkipUefiVar:
+        CapsuleFlags |= FirmwareUpdateHeader.CAPSULE_FLAG_SKIP_UPDATE_UEFI_VAR
+        print("[INFO] Skipping UEFI variable storage update during firmware update.")
+    if args.SkipSmbios:
+        CapsuleFlags |= FirmwareUpdateHeader.CAPSULE_FLAG_SKIP_UPDATE_SMBIOS
+        print("[INFO] Skipping SMBIOS binary data update during firmwares update.")
+
+    #
+    # Skip update flags are not compatible with force BIOS update
+    #
+    SkipFlags = CapsuleFlags & ~FirmwareUpdateHeader.CAPSULE_FLAG_FORCE_BIOS_UPDATE
+    if args.ForceBiosUpdate and SkipFlags:
+        raise Exception ("Skip update flags (--skip-*) cannot be used together with force BIOS update (-f) !")
+
+    #
     # Create final capsule
     #
-    SignImage(Result, args.NewImage, args.HashType, args.SignScheme, args.PrivKey, args.ForceBiosUpdate)
+    SignImage(Result, args.NewImage, args.HashType, args.SignScheme, args.PrivKey, CapsuleFlags)
     print('Success')
 
     #
