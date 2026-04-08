@@ -56,6 +56,12 @@ PCH_DEVICE_INTERRUPT_CONFIG mDevIntConfig[] = {
     { 6, 0, PchIntA, PchPIRQA}, // VRP2
 };
 
+extern EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER mAcpiMadtTableTemplate;
+STATIC
+CONST EFI_ACPI_COMMON_HEADER *mPlatformAcpiTables[] = {
+  (EFI_ACPI_COMMON_HEADER *)&mAcpiMadtTableTemplate,
+  NULL
+};
 /**
   Clear SMI sources
 
@@ -144,6 +150,7 @@ BoardInit (
       UpdatePayloadId ();
     }
     SpiConstructor ();
+    (VOID) PcdSet32S (PcdAcpiTableTemplatePtr, (UINT32)(UINTN)mPlatformAcpiTables);
     break;
   case PostSiliconInit:
     PlatformPostSiliconInit ();
@@ -907,6 +914,9 @@ PlatformUpdateAcpiTable (
         DEBUG ( (DEBUG_INFO, "Updated Psd Table in AcpiTable Entries\n") );
       }
     }
+    break;
+  case EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE:
+    MadtTableUpdate(Table);
     break;
   }
 

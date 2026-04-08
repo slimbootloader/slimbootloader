@@ -43,7 +43,6 @@
   Platform/CommonBoardPkg/AcpiTables/Fpdt/Fpdt.aslc
   PsdTable/PsdTable.aslc
   # runtime generation tables
-  Madt/Madt.aslc
   Dmar/Dmar.aslc
   BdatTable/BdatTable.aslc
 

@@ -83,6 +83,7 @@
 #include <Register/Intel/ArchitecturalMsr.h>
 #include <Register/Intel/Cpuid.h>
 #include <Library/WatchDogTimerLib.h>
+#include <Library/MadtLib.h>
 
 //
 // --------------------- Interrupts Config ------------------------------
@@ -120,6 +121,15 @@ typedef struct {
 
 #pragma pack (pop)
 
+/**
+  Update the MADT table
+
+  @param[in, out] AcpiHeader         - The table to be set
+**/
+VOID
+MadtTableUpdate (
+  IN OUT   EFI_ACPI_DESCRIPTION_HEADER       *AcpiHeader
+  );
 
 /**
   Configure GPIOs
