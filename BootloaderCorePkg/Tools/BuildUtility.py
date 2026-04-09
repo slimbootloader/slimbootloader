@@ -89,6 +89,7 @@ IPP_CRYPTO_OPTIMIZATION_MASK = {
     "X64_Y8"          : 0x0080, # SSE4.2
     "X64_E9"          : 0x0100, # AVX
     "X64_L9"          : 0x0200, # AVX2
+    "X64_NO"          : 0x0400, # No Optimization
     }
 
 IPP_CRYPTO_ALG_MASK = {
