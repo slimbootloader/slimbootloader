@@ -58,8 +58,6 @@
                      Specify image ID for desired VBT binary
       length       : 0x04
       value        : 1
-  - $ACTION      :
-      page         : OS
   - CurrentBoot  :
       name         : Current Boot Option
       type         : Combo
@@ -78,6 +76,3 @@
                      have same behavior with debug build in the release build.
       length       : 0x01
       value        : 0
-  - Dummy        :
-      length       : 0x3
-      value        : 0x0
