@@ -51,6 +51,9 @@ CallFspSiliconInit (
   /* Update architectural UPD fields */
   UpdateFspConfig (FspsUpdptr);
 
+  DEBUG ((DEBUG_INFO, "Dumping FSPS_UPD - Size: 0x%08X\n", FspHeader->CfgRegionSize));
+  DumpHex (0, 0, FspHeader->CfgRegionSize, FspsUpdptr);
+
   ASSERT (FspHeader->FspSiliconInitEntryOffset != 0);
   FspSiliconInit = (FSP_SILICON_INIT)(UINTN)(FspHeader->ImageBase + \
                                              FspHeader->FspSiliconInitEntryOffset);

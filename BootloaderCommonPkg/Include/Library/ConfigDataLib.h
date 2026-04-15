@@ -19,6 +19,7 @@
 #define CDATA_FLAG_TYPE_NORMAL  (0 << 0)
 #define CDATA_FLAG_TYPE_ARRAY   (1 << 0)
 #define CDATA_FLAG_TYPE_REFER   (2 << 0)
+#define CDATA_FLAG_TYPE_DELTA   (1 << 2)
 
 #define CFG_LOAD_SRC_PDR        (1 << 0)
 #define CFG_LOAD_SRC_BIOS       (1 << 1)
@@ -252,6 +253,29 @@ UINT32
 EFIAPI
 GetConfigDataSize (
   VOID
+  );
+
+/**
+  Apply FSP UPD delta entries from a per-board CFGDATA tag to an FSP UPD structure.
+
+  Computes tag = BaseTag + GetPlatformId(), looks up the CFGDATA tag via
+  FindConfigHdrByTag(), and applies each packed delta entry to the UPD buffer.
+
+  @param[in]      BaseTag    Base CFGDATA tag ID.
+  @param[in,out]  UpdPtr     Pointer to the FSP UPD structure to patch.
+  @param[in]      UpdSize    Size of the UPD structure (for bounds checking).
+
+  @retval EFI_SUCCESS            Deltas applied successfully.
+  @retval EFI_NOT_FOUND          No delta tag for this board.
+  @retval EFI_INVALID_PARAMETER  NULL pointer.
+
+**/
+EFI_STATUS
+EFIAPI
+ApplyFspUpdDelta (
+  IN      UINT32  BaseTag,
+  IN OUT  VOID    *UpdPtr,
+  IN      UINT32  UpdSize
   );
 
 #endif

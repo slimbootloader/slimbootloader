@@ -10,6 +10,7 @@
 #include <Library/BoardInitLib.h>
 #include <Library/BootloaderCoreLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <BootloaderCoreGlobal.h>
 
 /**
   This FSP API is called after TempRamInit and initializes the memory.
@@ -58,6 +59,7 @@ CallFspMemoryInit (
   if (FspmUpdPtr == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
+  GetLoaderGlobalDataPointer()->FspmUpdPtr = (VOID *)FspmUpdPtr;
 
   // Copy default UPD data
   DefaultMemoryInitUpd = (UINT8 *)(UINTN)(FspHeader->ImageBase + FspHeader->CfgRegionOffset);
@@ -92,6 +94,9 @@ CallFspMemoryInit (
   }
 
   UpdateFspConfig (FspmUpdPtr);
+
+  DEBUG ((DEBUG_INFO, "Dumping FSPM_UPD - Size: 0x%08X\n", FspHeader->CfgRegionSize));
+  DumpHex (0, 0, FspHeader->CfgRegionSize, FspmUpdPtr);
 
   ASSERT (FspHeader->FspMemoryInitEntryOffset != 0);
   FspMemoryInit = (FSP_MEMORY_INIT)(UINTN)(FspHeader->ImageBase + \
