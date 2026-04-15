@@ -65,3 +65,24 @@ GetFspHobListPtr (
   }
   return LdrGlobal->FspHobList;
 }
+
+/**
+  Returns the pointer to the patched FSPM UPD data.
+
+  @return The pointer to the FSPM UPD data, or NULL if not available.
+
+**/
+VOID *
+EFIAPI
+GetFspmUpdPtr (
+  VOID
+  )
+{
+  LOADER_GLOBAL_DATA  *LdrGlobal;
+
+  LdrGlobal = GetLoaderGlobalDataPointer();
+  if (LdrGlobal == NULL) {
+    return NULL;
+  }
+  return LdrGlobal->FspmUpdPtr;
+}

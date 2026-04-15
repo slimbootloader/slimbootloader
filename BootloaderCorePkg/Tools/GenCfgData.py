@@ -1033,15 +1033,22 @@ class CGenCfgData:
             if 'indx' in cfgs:
                 act_cfg = self.get_item_by_index (cfgs['indx'])
                 cfg_name = act_cfg['name'].lower()
+                cfg_cname = act_cfg.get('cname', '').lower()
+                found = False
                 if cfg_name:
                     if wildcard:
                         found = fnmatch.fnmatch(cfg_name, find_name)
                     else:
                         found = find_name in cfg_name
-                    if found:
-                        if instance[0] == key:
-                            result.append (act_cfg)
-                        instance[0] += 1
+                if not found and cfg_cname:
+                    if wildcard:
+                        found = fnmatch.fnmatch(cfg_cname, find_name)
+                    else:
+                        found = find_name in cfg_cname
+                if found:
+                    if instance[0] == key:
+                        result.append (act_cfg)
+                    instance[0] += 1
 
         result    = []
         instance  = [0]

@@ -178,6 +178,7 @@ typedef struct {
   UINT8             Padding[3];
   UINT64            MemoryInfo[EnumMemInfoMax];
   VOID             *FspHobList;
+  VOID             *FspmUpdPtr;
   VOID             *LdrHobList;
   VOID             *FlashMapPtr;
   VOID             *VerInfoPtr;
