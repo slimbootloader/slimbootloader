@@ -10,6 +10,17 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/ConfigDataLib.h>
 #include <Library/BaseMemoryLib.h>
 
+//
+// FSP UPD delta entry layout. Must stay in sync with
+// the Python tool GenFspUpdDelta.py which generates the blobs.
+//
+#pragma pack(1)
+typedef struct {
+  UINT16  Offset;
+  UINT8   Length;
+} FSPUPD_DELTA_ENTRY;
+#pragma pack()
+
 /**
   Find configuration data header by its tag and platform ID.
 
@@ -421,6 +432,114 @@ BuildConfigData (
 
     Offset += (CdataHdr->Length << 2);
   }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Apply FSP UPD delta entries from a per-board CFGDATA tag to an FSP UPD structure.
+
+  Computes tag = BaseTag + GetPlatformId(), looks up the CFGDATA tag via
+  FindConfigHdrByTag(), and applies each packed delta entry to the UPD buffer.
+
+  @param[in]      BaseTag    Base CFGDATA tag ID.
+  @param[in,out]  UpdPtr     Pointer to the FSP UPD structure to patch.
+  @param[in]      UpdSize    Size of the UPD structure (for bounds checking).
+
+  @retval EFI_SUCCESS            Deltas applied successfully.
+  @retval EFI_NOT_FOUND          No delta tag for this board.
+  @retval EFI_INVALID_PARAMETER  NULL pointer.
+
+**/
+EFI_STATUS
+EFIAPI
+ApplyFspUpdDelta (
+  IN      UINT32  BaseTag,
+  IN OUT  VOID    *UpdPtr,
+  IN      UINT32  UpdSize
+  )
+{
+  UINT8               *DeltaPtr;
+  UINT8               *DeltaEnd;
+  UINT16              Offset;
+  UINT8               Length;
+  UINT16              PlatformId;
+  UINT32              Tag;
+  CDATA_HEADER        *CdataHdr;
+  VOID                *DeltaData;
+  UINT32              PayloadSize;
+  UINT32              EntryCount;
+  UINT16              MinOffset;
+  UINT16              MaxOffset;
+
+  if (UpdPtr == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  PlatformId = GetPlatformId ();
+  Tag = BaseTag + PlatformId;
+
+  DEBUG ((DEBUG_INFO, "FSPUPD delta: Looking for tag 0x%03X (base=0x%03X + pid=0x%02X)\n", Tag, BaseTag, PlatformId));
+
+  //
+  // Use FindConfigHdrByTag to get the CDATA_HEADER so we can compute the exact payload size.
+  //
+  CdataHdr = FindConfigHdrByTag (Tag);
+  if (CdataHdr == NULL) {
+    DEBUG ((DEBUG_WARN, "FSPUPD delta: Tag 0x%03X not found for PlatformId 0x%02X\n", Tag, PlatformId));
+    return EFI_NOT_FOUND;
+  }
+
+  //
+  // Payload starts after the CDATA_HEADER and condition words.
+  // Payload is packed delta entries directly (no blob header).
+  //
+  DeltaData   = (VOID *)((UINT8 *)CdataHdr + sizeof (CDATA_HEADER) + sizeof (CDATA_COND) * CdataHdr->ConditionNum);
+  PayloadSize = CdataHdr->Length * 4 - sizeof (CDATA_HEADER) - sizeof (CDATA_COND) * CdataHdr->ConditionNum;
+  DEBUG ((DEBUG_INFO, "FSPUPD delta: PayloadSize=%d UpdSize=0x%X\n", PayloadSize, UpdSize));
+
+  //
+  // Walk delta entries and apply each patch.
+  //
+  DeltaPtr = (UINT8 *)DeltaData;
+  DeltaEnd = (UINT8 *)DeltaData + PayloadSize;
+
+  EntryCount = 0;
+  MinOffset  = 0xFFFF;
+  MaxOffset  = 0;
+
+  while (DeltaPtr + sizeof (FSPUPD_DELTA_ENTRY) <= DeltaEnd) {
+    Offset = *(UINT16 *)DeltaPtr;
+    Length = *(DeltaPtr + sizeof (UINT16));
+
+    if (Length == 0) {
+      break;
+    }
+
+    DeltaPtr += sizeof (FSPUPD_DELTA_ENTRY);
+
+    if (DeltaPtr + Length > DeltaEnd) {
+      DEBUG ((DEBUG_WARN, "FSPUPD delta: Entry truncated at payload boundary: off=0x%04X len=%d\n", Offset, Length));
+      break;
+    }
+
+    if (((UINT32)Offset + Length) <= UpdSize) {
+      CopyMem ((UINT8 *)UpdPtr + Offset, DeltaPtr, Length);
+      EntryCount++;
+      if (Offset < MinOffset) {
+        MinOffset = Offset;
+      }
+      if ((UINT32)Offset + Length > MaxOffset) {
+        MaxOffset = (UINT16)((UINT32)Offset + Length);
+      }
+    } else {
+      DEBUG ((DEBUG_WARN, "FSPUPD delta: Entry out of bounds: off=0x%04X len=%d updSize=0x%X\n", Offset, Length, UpdSize));
+    }
+    DeltaPtr += Length;
+  }
+
+  DEBUG ((DEBUG_INFO, "FSPUPD delta: Applied %d entries from tag 0x%03X, offset range [0x%04X..0x%04X)\n",
+         EntryCount, Tag, MinOffset, MaxOffset));
 
   return EFI_SUCCESS;
 }

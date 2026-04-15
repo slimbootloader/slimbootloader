@@ -44,6 +44,7 @@ class CCfgData:
         FLAG_ITEM_TYPE_ARRAY  =  1
         FLAG_ITEM_TYPE_REFER  =  2
         FLAG_ITEM_TYPE_MASK   =  3
+        FLAG_ITEM_TYPE_DELTA  =  4
         _pack_ = 1
         _fields_ = [
             ('ConditionNum', c_uint32, 2),
@@ -452,6 +453,10 @@ class CCfgData:
             TagHdr, CondBin, DataBin = CfgItem[0]
 
             CfgDataHdr  = CCfgData.CDATA_HEADER.from_buffer(TagHdr)
+
+            # Skip delta-only tags (e.g. FSP UPD) from merged binaries
+            if CfgDataHdr.Flags & CCfgData.CDATA_HEADER.FLAG_ITEM_TYPE_DELTA:
+                continue
 
             if CfgDataHdr.Tag == CCfgData.CDATA_PLATFORM_ID.TAG:
                 if PlatformId >=0:
