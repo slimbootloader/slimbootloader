@@ -46,8 +46,8 @@ typedef struct {
 
 typedef struct {
   UINT32  ConditionNum   :  2;      // [1:0]   #of condition words present
-  UINT32  Length         : 10;      // [11:2]  total size of item (in dwords)
-  UINT32  Flags          :  4;      // [15:12] unused/reserved so far
+  UINT32  Length         : 11;      // [12:2]  total size of item (in dwords)
+  UINT32  Flags          :  3;      // [15:13] bit[1:0]=type, bit[2]=delta-only
   UINT32  Version        :  4;      // [19:16] item (payload) format version
   UINT32  Tag            : 12;      // [31:20] identifies item (in payload)
   CDATA_COND     Condition[0];

@@ -1,0 +1,21 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Header Template.
+#
+#  Defines the common CFGHDR_TMPL used by all platforms.
+#  Include this file from the platform's Template_CfgData.yaml or
+#  CfgDataDef.yaml template section.
+#
+#  Copyright (c) 2020 - 2026, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+CFGHDR_TMPL: >
+  - CfgHeader    :
+      length       : 0x04
+      value        : {0x01:2b, ((_LENGTH_$(1)_)/4):11b, $(3):3b, $(4):4b, $(2):12b}
+  - CondValue    :
+      length       : 0x04
+      value        : 0x00000000
