@@ -26,6 +26,7 @@
 #include <Library/ConfigDataLib.h>
 #include <Library/TimeStampLib.h>
 #include <Library/FspApiLib.h>
+#include <Guid/FspHeaderFile.h>
 #include <Library/BlMemoryAllocationLib.h>
 #include <Library/SecureBootLib.h>
 #include <Library/CryptoLib.h>
