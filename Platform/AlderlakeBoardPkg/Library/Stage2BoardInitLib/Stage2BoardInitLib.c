@@ -592,10 +592,8 @@ BoardInit (
     break;
   case PrePciEnumeration:
     (VOID) PcdSet32S (PcdPciEnumHookProc, (UINT32)(UINTN) PlatformPciEnumHookProc);
-    if (FeaturePcdGet (PcdVtdEnabled)) {
-      // Prepare platform ACPI tables
-      Status = PcdSet32S (PcdAcpiTableTemplatePtr, (UINT32)(UINTN)mPlatformAcpiTables);
-    }
+    // Prepare platform ACPI tables
+    Status = PcdSet32S (PcdAcpiTableTemplatePtr, (UINT32)(UINTN)mPlatformAcpiTables);
     break;
   case PostPciEnumeration:
     if (FeaturePcdGet (PcdEnablePciePm)) {
