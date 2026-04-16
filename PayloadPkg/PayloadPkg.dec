@@ -49,3 +49,4 @@
   gPayloadTokenSpaceGuid.PcdIoeCsmeUpdateEnabled     | 0x00000000 | UINT32 | 0x30001001
   gPayloadTokenSpaceGuid.PcdExtraImageSupportEnabled | 0x01       | UINT8  | 0x30001002
   gPayloadTokenSpaceGuid.PcdShellEnabled             | 0x01       | UINT8  | 0x30001003
+  gPayloadTokenSpaceGuid.PcdMaxCapsuleSize           | 0x10000000 | UINT32 | 0x30001004

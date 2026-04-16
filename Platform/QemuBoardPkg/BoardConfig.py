@@ -115,7 +115,7 @@ class Board(BaseBoard):
         if self._SMBIOS_YAML_FILE:
             self.SIIPFW_SIZE += 0x1000
         self.EPAYLOAD_SIZE        = 0x0020D000
-        self.PAYLOAD_SIZE         = 0x00021000
+        self.PAYLOAD_SIZE         = 0x00022000
         self.CFGDATA_SIZE         = 0x00001000
         self.KEYHASH_SIZE         = 0x00001000
         self.VARIABLE_SIZE        = 0x00002000
