@@ -17,6 +17,9 @@
 
 #define  ELF_PT_LOAD   1
 
+#define  ELF_ET_EXEC   2
+#define  ELF_ET_DYN    3
+
 /*
  * Define Max value for Coverity check
  */
@@ -34,6 +37,7 @@ typedef struct {
   UINT8         *ImageAddress;           ///< The destination memory address set by caller.
   UINTN         ImageSize;               ///< The memory size for loading and execution.
   UINT32        EiClass;
+  UINT16        EiType;                  ///< ELF type: ET_EXEC (2) or ET_DYN (3).
   UINT32        ShNum;
   UINT32        PhNum;
   UINTN         ShStrOff;
