@@ -81,7 +81,13 @@ LoadElfPayload (
   }
 
   if (Context.ReloadRequired) {
-    Context.ImageAddress = AllocatePages (EFI_SIZE_TO_PAGES (Context.ImageSize));
+    if ((Context.EiType == ELF_ET_EXEC) && (Context.PreferredImageAddress != NULL)) {
+      // ET_EXEC is a fixed-address executable.
+      // It must be loaded to its preferred address since it has no relocation support.
+      Context.ImageAddress = Context.PreferredImageAddress;
+    } else {
+      Context.ImageAddress = AllocatePages (EFI_SIZE_TO_PAGES (Context.ImageSize));
+    }
   }
 
   // Load ELF into the required base

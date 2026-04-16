@@ -340,6 +340,7 @@ ParseElfImage (
     }
 
     ElfCt->EntryPoint = (UINTN)Elf32Hdr->e_entry;
+    ElfCt->EiType     = Elf32Hdr->e_type;
     ElfCt->ShNum      = Elf32Hdr->e_shnum;
     ElfCt->PhNum      = Elf32Hdr->e_phnum;
     ElfCt->ShStrLen   = Elf32Shdr->sh_size;
@@ -406,6 +407,7 @@ ParseElfImage (
     }
 
     ElfCt->EntryPoint = (UINTN)Elf64Hdr->e_entry;
+    ElfCt->EiType     = Elf64Hdr->e_type;
     ElfCt->ShNum      = Elf64Hdr->e_shnum;
     ElfCt->PhNum      = Elf64Hdr->e_phnum;
     ElfCt->ShStrLen   = (UINTN)Elf64Shdr->sh_size;
