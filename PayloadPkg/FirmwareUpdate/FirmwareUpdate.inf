@@ -71,6 +71,7 @@
   gPayloadTokenSpaceGuid.PcdPayloadHobList
   gPlatformCommonLibTokenSpaceGuid.PcdAcpiPmTimerBase
   gPayloadTokenSpaceGuid.PcdFwUpdStatusBase
+  gPayloadTokenSpaceGuid.PcdMaxCapsuleSize
   gPlatformCommonLibTokenSpaceGuid.PcdLowestSupportedFwVer
   gPayloadTokenSpaceGuid.PcdCsmeUpdateEnabled
   gPayloadTokenSpaceGuid.PcdIoeCsmeUpdateEnabled
