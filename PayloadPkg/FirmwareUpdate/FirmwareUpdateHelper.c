@@ -69,6 +69,11 @@ BootMediaGetRegion (
   OUT    UINT32             *RegionSize OPTIONAL
   )
 {
+  if (mFwuSpiService == NULL) {
+    DEBUG ((DEBUG_ERROR, "BootMediaGetRegion service not initialized\n"));
+    return EFI_NOT_READY;
+  }
+
   return mFwuSpiService->SpiGetRegion (FlashRegionType, BaseAddress, RegionSize);
 }
 
@@ -91,6 +96,31 @@ BootMediaRead (
   OUT    UINT8    *Buffer
   )
 {
+  UINT64  EndAddress;
+
+  if (mFwuSpiService == NULL) {
+    DEBUG ((DEBUG_ERROR, "BootMediaRead service not initialized\n"));
+    return EFI_NOT_READY;
+  }
+
+  if ((ByteCount != 0) && (Buffer == NULL)) {
+    DEBUG ((DEBUG_ERROR, "BootMediaRead invalid buffer for non-zero ByteCount\n"));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (Address > MAX_UINT32) {
+    DEBUG ((DEBUG_ERROR, "BootMediaRead address out of range: 0x%llx\n", Address));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (ByteCount != 0) {
+    EndAddress = Address + (UINT64)ByteCount - 1;
+    if ((EndAddress < Address) || (EndAddress > MAX_UINT32)) {
+      DEBUG ((DEBUG_ERROR, "BootMediaRead range out of bounds: 0x%llx + 0x%x\n", Address, ByteCount));
+      return EFI_INVALID_PARAMETER;
+    }
+  }
+
   return mFwuSpiService->SpiRead (FlashRegionBios, (UINT32)Address, ByteCount, Buffer);
 }
 
@@ -115,6 +145,31 @@ BootMediaReadByType (
   OUT    UINT8              *Buffer
   )
 {
+  UINT64  EndAddress;
+
+  if (mFwuSpiService == NULL) {
+    DEBUG ((DEBUG_ERROR, "BootMediaReadByType service not initialized\n"));
+    return EFI_NOT_READY;
+  }
+
+  if ((ByteCount != 0) && (Buffer == NULL)) {
+    DEBUG ((DEBUG_ERROR, "BootMediaReadByType invalid buffer for non-zero ByteCount\n"));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (Address > MAX_UINT32) {
+    DEBUG ((DEBUG_ERROR, "BootMediaReadByType address out of range: 0x%llx\n", Address));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (ByteCount != 0) {
+    EndAddress = Address + (UINT64)ByteCount - 1;
+    if ((EndAddress < Address) || (EndAddress > MAX_UINT32)) {
+      DEBUG ((DEBUG_ERROR, "BootMediaReadByType range out of bounds: 0x%llx + 0x%x\n", Address, ByteCount));
+      return EFI_INVALID_PARAMETER;
+    }
+  }
+
   return mFwuSpiService->SpiRead (FlashRegionType, (UINT32)Address, ByteCount, Buffer);
 }
 
@@ -137,6 +192,31 @@ BootMediaWrite (
   OUT    UINT8    *Buffer
   )
 {
+  UINT64  EndAddress;
+
+  if (mFwuSpiService == NULL) {
+    DEBUG ((DEBUG_ERROR, "BootMediaWrite service not initialized\n"));
+    return EFI_NOT_READY;
+  }
+
+  if ((ByteCount != 0) && (Buffer == NULL)) {
+    DEBUG ((DEBUG_ERROR, "BootMediaWrite invalid buffer for non-zero ByteCount\n"));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (Address > MAX_UINT32) {
+    DEBUG ((DEBUG_ERROR, "BootMediaWrite address out of range: 0x%llx\n", Address));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (ByteCount != 0) {
+    EndAddress = Address + (UINT64)ByteCount - 1;
+    if ((EndAddress < Address) || (EndAddress > MAX_UINT32)) {
+      DEBUG ((DEBUG_ERROR, "BootMediaWrite range out of bounds: 0x%llx + 0x%x\n", Address, ByteCount));
+      return EFI_INVALID_PARAMETER;
+    }
+  }
+
   return mFwuSpiService->SpiWrite (FlashRegionBios, (UINT32)Address, ByteCount, Buffer);
 }
 
@@ -161,6 +241,31 @@ BootMediaWriteByType (
   OUT    UINT8              *Buffer
   )
 {
+  UINT64  EndAddress;
+
+  if (mFwuSpiService == NULL) {
+    DEBUG ((DEBUG_ERROR, "BootMediaWriteByType service not initialized\n"));
+    return EFI_NOT_READY;
+  }
+
+  if ((ByteCount != 0) && (Buffer == NULL)) {
+    DEBUG ((DEBUG_ERROR, "BootMediaWriteByType invalid buffer for non-zero ByteCount\n"));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (Address > MAX_UINT32) {
+    DEBUG ((DEBUG_ERROR, "BootMediaWriteByType address out of range: 0x%llx\n", Address));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (ByteCount != 0) {
+    EndAddress = Address + (UINT64)ByteCount - 1;
+    if ((EndAddress < Address) || (EndAddress > MAX_UINT32)) {
+      DEBUG ((DEBUG_ERROR, "BootMediaWriteByType range out of bounds: 0x%llx + 0x%x\n", Address, ByteCount));
+      return EFI_INVALID_PARAMETER;
+    }
+  }
+
   return mFwuSpiService->SpiWrite (FlashRegionType, (UINT32)Address, ByteCount, Buffer);
 }
 
@@ -182,6 +287,26 @@ BootMediaErase (
   IN     UINT32   ByteCount
   )
 {
+  UINT64  EndAddress;
+
+  if (mFwuSpiService == NULL) {
+    DEBUG ((DEBUG_ERROR, "BootMediaErase service not initialized\n"));
+    return EFI_NOT_READY;
+  }
+
+  if (Address > MAX_UINT32) {
+    DEBUG ((DEBUG_ERROR, "BootMediaErase address out of range: 0x%llx\n", Address));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (ByteCount != 0) {
+    EndAddress = Address + (UINT64)ByteCount - 1;
+    if ((EndAddress < Address) || (EndAddress > MAX_UINT32)) {
+      DEBUG ((DEBUG_ERROR, "BootMediaErase range out of bounds: 0x%llx + 0x%x\n", Address, ByteCount));
+      return EFI_INVALID_PARAMETER;
+    }
+  }
+
   return mFwuSpiService->SpiErase (FlashRegionBios, (UINT32)Address, ByteCount);
 }
 
@@ -206,6 +331,7 @@ GetSvn (
   )
 {
   UINT32                Stage1AFvBase;
+  UINT32                FvBaseOffset;
   UINT32                TopSwapRegionSize;
   EFI_STATUS            Status;
 
@@ -222,10 +348,21 @@ GetSvn (
     DEBUG((DEBUG_ERROR, "Error getting top swap region size, failed with status: %r\n", Status));
     return Status;
   }
+
+  if (Stage1AFvPointer < TopSwapRegionSize) {
+    DEBUG((DEBUG_ERROR, "Invalid Stage1A FV pointer 0x%08x below top swap region size 0x%08x\n",
+          Stage1AFvPointer, TopSwapRegionSize));
+    return EFI_COMPROMISED_DATA;
+  }
   Stage1AFvPointer = Stage1AFvPointer - TopSwapRegionSize;
 
-  Stage1AFvBase = (UINT32)(*(UINT32 *)(UINTN)Stage1AFvPointer);
-  Stage1AFvBase = Stage1AFvPointer - (~Stage1AFvBase + 1) + sizeof(UINT32);
+  FvBaseOffset = (UINT32)(*(UINT32 *)(UINTN)Stage1AFvPointer);
+  if (((UINT64)Stage1AFvPointer + (UINT64)FvBaseOffset + sizeof (UINT32)) > MAX_UINT32) {
+    DEBUG((DEBUG_ERROR, "Stage1A FV base computation overflow: Ptr=0x%08x Offset=0x%08x\n",
+          Stage1AFvPointer, FvBaseOffset));
+    return EFI_COMPROMISED_DATA;
+  }
+  Stage1AFvBase = Stage1AFvPointer + FvBaseOffset + sizeof (UINT32);
 
   Status = GetVersionfromFv (Stage1AFvBase, FALSE, BlVersion);
   if (EFI_ERROR (Status)) {
@@ -311,18 +448,33 @@ UpdateRegionBlock (
 {
   EFI_STATUS    Status;
   UINT8         *ReadBuffer;
+  UINT8         *VerifyBuffer;
   UINT32        Count;
   UINT32        BlockLen;
+  UINT32        WriteSize;
+  UINT8         *WriteBuffer;
   UINT8         *Src;
 
   ReadBuffer = NULL;
+  VerifyBuffer = NULL;
 
   if (Length == 0) {
     return EFI_SUCCESS;
   }
 
+  if ((Address & (SIZE_4KB - 1)) != 0) {
+    DEBUG ((DEBUG_ERROR, "UpdateRegionBlock requires 4KB-aligned address: 0x%llx\n", Address));
+    return EFI_INVALID_PARAMETER;
+  }
+
   ReadBuffer = AllocatePages (EFI_SIZE_TO_PAGES (SIZE_4KB));
   if (ReadBuffer == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  VerifyBuffer = AllocatePages (EFI_SIZE_TO_PAGES (SIZE_4KB));
+  if (VerifyBuffer == NULL) {
+    FreePages (ReadBuffer, EFI_SIZE_TO_PAGES (SIZE_4KB));
     return EFI_OUT_OF_RESOURCES;
   }
 
@@ -340,7 +492,15 @@ UpdateRegionBlock (
     if (Count + BlockLen > Length) {
       BlockLen = Length - Count;
     }
-    Status = BootMediaRead(Address + Count, BlockLen, ReadBuffer);
+
+    // Partial tail update still needs full 4KB erase granularity.
+    // Preserve trailing bytes in the same erase block to avoid corrupting
+    // adjacent data outside the requested update range.
+    if (BlockLen < SIZE_4KB) {
+      Status = BootMediaRead(Address + Count, SIZE_4KB, ReadBuffer);
+    } else {
+      Status = BootMediaRead(Address + Count, BlockLen, ReadBuffer);
+    }
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "BootMediaRead.  readaddr: 0x%llx, Status = 0x%x\n", Address + Count, Status));
       goto End;
@@ -351,12 +511,21 @@ UpdateRegionBlock (
       continue;
     }
 
+    if (BlockLen < SIZE_4KB) {
+      CopyMem (ReadBuffer, Src + Count, BlockLen);
+      WriteBuffer = ReadBuffer;
+      WriteSize   = SIZE_4KB;
+    } else {
+      WriteBuffer = Src + Count;
+      WriteSize   = BlockLen;
+    }
+
     //
     // Erase the boot media
     // Block length for erase is always 4K bytes
     //
     DEBUG ((DEBUG_INIT, "x"));
-    Status = BootMediaErase ((UINT32) (Address + Count),  SIZE_4KB);
+    Status = BootMediaErase (Address + Count,  SIZE_4KB);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "ERROR: in BootMediaErase. Status = 0x%x\n", Status));
       goto End;
@@ -365,7 +534,7 @@ UpdateRegionBlock (
     //
     // Write to the boot media
     //
-    Status = BootMediaWrite ((UINT32) (Address + Count),  BlockLen, Src + Count);
+    Status = BootMediaWrite (Address + Count, WriteSize, WriteBuffer);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "ERROR: in BootDeviceWrite. Status = 0x%x\n", Status));
       goto End;
@@ -374,8 +543,13 @@ UpdateRegionBlock (
     //
     // Verify the written data
     //
-    Status = BootMediaRead (Address + Count, BlockLen, ReadBuffer);
-    if (CompareMem (Src + Count, ReadBuffer, BlockLen) != 0) {
+    Status = BootMediaRead (Address + Count, WriteSize, VerifyBuffer);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Verify BootMediaRead failed.  readaddr: 0x%llx, Status = 0x%x\n", Address + Count, Status));
+      goto End;
+    }
+
+    if (CompareMem (WriteBuffer, VerifyBuffer, WriteSize) != 0) {
       DEBUG ((DEBUG_ERROR, "Verify Error !\n"));
       Status = EFI_DEVICE_ERROR;
       goto End;
@@ -383,6 +557,10 @@ UpdateRegionBlock (
   }
 
 End:
+  if (VerifyBuffer != NULL) {
+    FreePages (VerifyBuffer, EFI_SIZE_TO_PAGES (SIZE_4KB));
+  }
+
   if (ReadBuffer != NULL) {
     FreePages (ReadBuffer, EFI_SIZE_TO_PAGES (SIZE_4KB));
   }
@@ -644,10 +822,23 @@ UpdateSingleComponent (
 
   AllocateSize    = sizeof (FIRMWARE_UPDATE_PARTITION) + sizeof (FIRMWARE_UPDATE_REGION);
   UpdatePartition = (FIRMWARE_UPDATE_PARTITION *) AllocatePool (AllocateSize);
-  ASSERT (UpdatePartition != NULL);
+  if (UpdatePartition == NULL) {
+    DEBUG ((DEBUG_ERROR, "AllocatePool failed for update partition\n"));
+    return EFI_OUT_OF_RESOURCES;
+  }
 
   UpdateRegion                  = &UpdatePartition->FwRegion[0];
-  UpdateRegion->ToUpdateAddress = FlashMap->RomSize + CompBase;
+
+  //
+  // Guard against UINT32 overflow: RomSize + CompBase may exceed MAX_UINT32
+  //
+  if (((UINT64)FlashMap->RomSize + (UINT64)CompBase) > MAX_UINT32) {
+    DEBUG((DEBUG_ERROR, "UpdateSingleComponent: address computation overflow: RomSize=0x%x CompBase=0x%x\n",
+          FlashMap->RomSize, CompBase));
+    FreePool(UpdatePartition);
+    return EFI_UNSUPPORTED;
+  }
+  UpdateRegion->ToUpdateAddress = (UINT32)(FlashMap->RomSize + CompBase);
   UpdateRegion->UpdateSize      = ImageHdr->UpdateImageSize;
   UpdateRegion->SourceAddress   = (UINT8 *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
   UpdatePartition->RegionCount  = 1;
@@ -725,6 +916,7 @@ UpdateContainerComp (
   UINT8                    CompInMem[sizeof(LOADER_COMPRESSED_HEADER)];
   FLASH_MAP                *FlashMapPtr;
   UINT32                   RomBase;
+  UINT64                   CompAddr;
 
   ComponentName = (UINT32)RShiftU64 (ImageHdr->UpdateHardwareInstance, 32);
   ContainerName = (UINT32)ImageHdr->UpdateHardwareInstance;
@@ -748,7 +940,12 @@ UpdateContainerComp (
     //
     // Component base = Container base + data offset from container base + offset of component inside container
     //
-    ComponentBase     = ContainerEntryPtr->Base + ContainerHdr->DataOffset + ComponentEntryPtr->Offset;
+    CompAddr = (UINT64)ContainerEntryPtr->Base + (UINT64)ContainerHdr->DataOffset + (UINT64)ComponentEntryPtr->Offset;
+    if (CompAddr > MAX_UINT32) {
+      DEBUG((DEBUG_ERROR, "Container component address overflow: 0x%llx\n", CompAddr));
+      return EFI_UNSUPPORTED;
+    }
+    ComponentBase     = (UINT32)CompAddr;
     FlashCompLzHeader = (LOADER_COMPRESSED_HEADER *) (UINTN)ComponentBase;
   } else {
     // Container base is NOT the flash address, need get its flash address
@@ -757,12 +954,24 @@ UpdateContainerComp (
       DEBUG((DEBUG_INFO, "Component with the matching signature not found."));
       return Status;
     }
-    ComponentBase += ContainerHdr->DataOffset + ComponentEntryPtr->Offset;
+    CompAddr = (UINT64)ComponentBase + (UINT64)ContainerHdr->DataOffset + (UINT64)ComponentEntryPtr->Offset;
+    if (CompAddr > MAX_UINT32) {
+      DEBUG((DEBUG_ERROR, "Container component address overflow: 0x%llx\n", CompAddr));
+      return EFI_UNSUPPORTED;
+    }
+    ComponentBase = (UINT32)CompAddr;
 
     // Read compressed header since container might not be MMIO mapped.
     FlashMapPtr = GetFlashMapPtr ();
-    ASSERT (FlashMapPtr != NULL);
+    if (FlashMapPtr == NULL) {
+      DEBUG((DEBUG_ERROR, "Failed to get flash map pointer for container component update\n"));
+      return EFI_NOT_FOUND;
+    }
     RomBase = (UINT32) (0x100000000ULL - FlashMapPtr->RomSize);
+    if (ComponentBase < RomBase) {
+      DEBUG((DEBUG_ERROR, "Container component address underflow: CompBase=0x%x RomBase=0x%x\n", ComponentBase, RomBase));
+      return EFI_UNSUPPORTED;
+    }
     Status  = BootMediaRead(ComponentBase - RomBase, sizeof(LOADER_COMPRESSED_HEADER), CompInMem);
     if (EFI_ERROR(Status)) {
       DEBUG((DEBUG_INFO, "Boot Media device error, read command aborts."));
@@ -815,6 +1024,8 @@ CheckSblContainerSvn (
   COMPONENT_ENTRY           *CapCompEntry;
   LOADER_COMPRESSED_HEADER  *CapLzHdr;
   UINT64                    FlashComponentName;
+  UINT64                    CapDataEnd;
+  UINT64                    CapCompOffset;
   UINT8                     ContainerSvnCheck;
   UINT8                     ComponentSvnCheck;
   EFI_STATUS                Status;
@@ -834,6 +1045,24 @@ CheckSblContainerSvn (
 
   // Locate the container header info from capsule image.
   CapContainerAddr   = (CONTAINER_HDR *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
+
+  if (ImageHdr->UpdateImageSize < sizeof (CONTAINER_HDR)) {
+    DEBUG((DEBUG_ERROR, "Container payload too small for container header: 0x%x\n", ImageHdr->UpdateImageSize));
+    return EFI_COMPROMISED_DATA;
+  }
+
+  if ((CapContainerAddr->DataOffset < sizeof (CONTAINER_HDR)) ||
+      (CapContainerAddr->DataOffset > ImageHdr->UpdateImageSize)) {
+    DEBUG((DEBUG_ERROR, "Container data offset out of bounds: 0x%x\n", CapContainerAddr->DataOffset));
+    return EFI_COMPROMISED_DATA;
+  }
+
+  CapDataEnd = (UINT64)CapContainerAddr->DataOffset + (UINT64)CapContainerAddr->DataSize;
+  if ((CapDataEnd < CapContainerAddr->DataOffset) || (CapDataEnd > ImageHdr->UpdateImageSize)) {
+    DEBUG((DEBUG_ERROR, "Container data region out of bounds: Offset=0x%x Size=0x%x Payload=0x%x\n",
+          CapContainerAddr->DataOffset, CapContainerAddr->DataSize, ImageHdr->UpdateImageSize));
+    return EFI_COMPROMISED_DATA;
+  }
 
   //Check capsule container SVN with container avaiable in flash
   if (CapContainerAddr->Svn >= FlashContainerHdr->Svn) {
@@ -865,6 +1094,25 @@ CheckSblContainerSvn (
     CapCompEntry = NULL;
     CapCompEntry = LocateComponentEntryFromContainer ((CONTAINER_HDR *) CapContainerAddr, (UINT32 ) FlashComponentName);
     if (CapCompEntry != NULL) {
+      if (((UINT64)CapCompEntry->Offset > CapContainerAddr->DataSize) ||
+          ((UINT64)CapCompEntry->Size > ((UINT64)CapContainerAddr->DataSize - CapCompEntry->Offset))) {
+        DEBUG ((DEBUG_ERROR, "Component entry out of bounds in capsule container: Offset=0x%x Size=0x%x DataSize=0x%x\n",
+                CapCompEntry->Offset, CapCompEntry->Size, CapContainerAddr->DataSize));
+        return EFI_COMPROMISED_DATA;
+      }
+
+      CapCompOffset = (UINT64)CapContainerAddr->DataOffset + (UINT64)CapCompEntry->Offset;
+      //
+      // Defense-in-depth: reject offsets that don't fit in 32 bits or exceed payload bounds
+      //
+      if ((CapCompOffset < CapContainerAddr->DataOffset) ||
+          (CapCompOffset > MAX_UINT32) ||
+          (CapCompOffset > ((UINT64)ImageHdr->UpdateImageSize - sizeof (LOADER_COMPRESSED_HEADER)))) {
+        DEBUG ((DEBUG_ERROR, "Component header out of capsule bounds: Offset=0x%llx Payload=0x%x\n",
+                CapCompOffset, ImageHdr->UpdateImageSize));
+        return EFI_COMPROMISED_DATA;
+      }
+
       CapLzHdr = (LOADER_COMPRESSED_HEADER *)((UINT8 *)CapContainerAddr + CapContainerAddr->DataOffset + CapCompEntry->Offset);
 
       if ((IS_COMPRESSED (CapLzHdr) == FALSE) || (IS_COMPRESSED (FlashLzHdr) == FALSE)) {
@@ -959,7 +1207,6 @@ CheckSblConfigDataSvn (
   //
   // Get base address of CFGDATA from  firmware block to update
   //
-
   if (FwPolicy.Fields.UpdatePartitionB == 0x1) {
     Status = GetComponentInfoByPartition(FLASH_MAP_SIG_CFGDATA, TRUE, (UINT32 *) &CfgBlobFlashAddr, &CfgBlobSize);
   } else if (FwPolicy.Fields.UpdatePartitionA == 0x1) {
@@ -972,6 +1219,12 @@ CheckSblConfigDataSvn (
   }
 
   CfgBlobFlashDataPtr = (CDATA_BLOB *) (UINTN) CfgBlobFlashAddr;
+
+  if (ImageHdr->UpdateImageSize < sizeof (CDATA_BLOB)) {
+    DEBUG((DEBUG_ERROR, "Config data payload too small for CDATA_BLOB header: 0x%x\n",
+          ImageHdr->UpdateImageSize));
+    return EFI_COMPROMISED_DATA;
+  }
 
   // Locate config data blob header info from capsule image
   CfgBlobCapAddr = (CDATA_BLOB *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
@@ -1080,9 +1333,11 @@ CheckUCodeVersion (
   UINT32                NewUCodeRev;
   UINTN                 ImageBase;
   UINTN                 Offset;
+  UINTN                 RemainingSize;
   CPU_MICROCODE_HEADER  *UCodeHdr;
   UINT8                 *ImageByte;
   UINT32                uCodeVer;
+  UINT32                SlotSize;
 
   if (ImageHdr == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -1092,8 +1347,14 @@ CheckUCodeVersion (
   DEBUG((DEBUG_INFO, "Existing UCODE revision: %x\n", ExistingUCodeRev));
 
   // Update is only supported for platforms that slot their uCode
-  if (PcdGet32 (PcdUcodeSlotSize) == 0) {
+  SlotSize = PcdGet32 (PcdUcodeSlotSize);
+  if (SlotSize == 0) {
     DEBUG((DEBUG_ERROR, "Existing image does not contain uCode slots!!\n"));
+    return EFI_UNSUPPORTED;
+  }
+
+  if (SlotSize < sizeof (CPU_MICROCODE_HEADER)) {
+    DEBUG((DEBUG_ERROR, "uCode slot size is too small for header: 0x%x\n", SlotSize));
     return EFI_UNSUPPORTED;
   }
 
@@ -1102,11 +1363,17 @@ CheckUCodeVersion (
   ImageBase = (UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER);
   ImageByte = (UINT8*)(ImageBase + Offset);
 
-  while (*ImageByte != PAD_BYTE && Offset < ImageHdr->UpdateImageSize) {
+  while ((Offset < ImageHdr->UpdateImageSize) && (*ImageByte != PAD_BYTE)) {
+    RemainingSize = (UINTN)ImageHdr->UpdateImageSize - Offset;
+    if (RemainingSize < sizeof (CPU_MICROCODE_HEADER)) {
+      DEBUG((DEBUG_ERROR, "uCode header exceeds update payload bounds\n"));
+      return EFI_COMPROMISED_DATA;
+    }
+
     UCodeHdr = (CPU_MICROCODE_HEADER *)ImageByte;
 
     // Ensure uCode size from header does not exceed slot size
-    if (UCodeHdr->TotalSize > PcdGet32 (PcdUcodeSlotSize)) {
+    if (UCodeHdr->TotalSize > SlotSize) {
       uCodeVer = 0;
       break;
     }
@@ -1115,7 +1382,12 @@ CheckUCodeVersion (
       uCodeVer = UCodeHdr->UpdateRevision;
     }
 
-    Offset   += PcdGet32(PcdUcodeSlotSize);
+    if (((UINTN)ImageHdr->UpdateImageSize - Offset) < SlotSize) {
+      Offset = (UINTN)ImageHdr->UpdateImageSize;
+      break;
+    }
+
+    Offset   += SlotSize;
     ImageByte = (UINT8*)(ImageBase + Offset);
   }
 
@@ -1213,6 +1485,13 @@ ReadCsmeNeedResetFlag (
   UINT8       Value;
 
   FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
+  //
+  // Guard against UINT32 overflow before adding the field offset
+  //
+  if (((UINT64)FwUpdStatusOffset + OFFSET_OF(FW_UPDATE_STATUS, CsmeNeedReset)) > MAX_UINT32) {
+    DEBUG((DEBUG_ERROR, "ReadCsmeNeedResetFlag: FwUpdStatusOffset (0x%x) causes overflow\n", FwUpdStatusOffset));
+    return CSME_NEED_RESET_INVALID;
+  }
   FwUpdStatusOffset += OFFSET_OF(FW_UPDATE_STATUS, CsmeNeedReset);
 
   Value = CSME_NEED_RESET_INIT;
@@ -1252,6 +1531,13 @@ WriteCsmeNeedResetFlag (
   }
 
   FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
+  //
+  // Guard against UINT32 overflow before adding the field offset
+  //
+  if (((UINT64)FwUpdStatusOffset + OFFSET_OF(FW_UPDATE_STATUS, CsmeNeedReset)) > MAX_UINT32) {
+    DEBUG((DEBUG_ERROR, "WriteCsmeNeedResetFlag: FwUpdStatusOffset (0x%x) causes overflow\n", FwUpdStatusOffset));
+    return EFI_DEVICE_ERROR;
+  }
   FwUpdStatusOffset += OFFSET_OF(FW_UPDATE_STATUS, CsmeNeedReset);
 
   Status = BootMediaWrite (FwUpdStatusOffset, sizeof(UINT8), (UINT8 *)&Value);
@@ -1301,12 +1587,20 @@ VerifyUcodeStruct (
 {
   UINTN                 ImageBase;
   UINTN                 ImageOffset;
+  UINTN                 RemainingSize;
   CPU_MICROCODE_HEADER  *UCodeHdr;
   UINT8                 *ImageByte;
+  UINT32                SlotSize;
 
   // Update is only supported for platforms that slot their uCode
-  if (PcdGet32 (PcdUcodeSlotSize) == 0) {
+  SlotSize = PcdGet32 (PcdUcodeSlotSize);
+  if (SlotSize == 0) {
     DEBUG((DEBUG_ERROR, "Existing image does not contain uCode slots!!\n"));
+    return EFI_UNSUPPORTED;
+  }
+
+  if (SlotSize < sizeof (CPU_MICROCODE_HEADER)) {
+    DEBUG((DEBUG_ERROR, "uCode slot size is too small for header: 0x%x\n", SlotSize));
     return EFI_UNSUPPORTED;
   }
 
@@ -1314,7 +1608,13 @@ VerifyUcodeStruct (
   ImageOffset = 0;
 
   ImageByte = (UINT8*)(ImageBase + ImageOffset);
-  while (*ImageByte != PAD_BYTE && ImageOffset < ImageHdr->UpdateImageSize) {
+  while ((ImageOffset < ImageHdr->UpdateImageSize) && (*ImageByte != PAD_BYTE)) {
+    RemainingSize = (UINTN)ImageHdr->UpdateImageSize - ImageOffset;
+    if (RemainingSize < sizeof (CPU_MICROCODE_HEADER)) {
+      DEBUG((DEBUG_ERROR, "uCode header exceeds update payload bounds\n"));
+      return EFI_NO_MAPPING;
+    }
+
     UCodeHdr = (CPU_MICROCODE_HEADER *)ImageByte;
 
     // Ensure patches in update image start at slot boundaries
@@ -1324,11 +1624,17 @@ VerifyUcodeStruct (
     }
 
     // Ensure total size from header does not exceed slot size
-    if (UCodeHdr->TotalSize > PcdGet32 (PcdUcodeSlotSize)) {
+    if (UCodeHdr->TotalSize > SlotSize) {
       DEBUG((DEBUG_ERROR, "Total uCode size from header exceeds uCode slot size!!\n"));
       return EFI_NO_MAPPING;
     }
-    ImageOffset += PcdGet32(PcdUcodeSlotSize);
+
+    if (((UINTN)ImageHdr->UpdateImageSize - ImageOffset) < SlotSize) {
+      DEBUG((DEBUG_ERROR, "uCode slot exceeds update payload bounds\n"));
+      return EFI_NO_MAPPING;
+    }
+
+    ImageOffset += SlotSize;
     ImageByte = (UINT8*)(ImageBase + ImageOffset);
   }
 

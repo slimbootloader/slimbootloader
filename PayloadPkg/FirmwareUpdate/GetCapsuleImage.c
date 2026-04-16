@@ -21,6 +21,7 @@
 #include <Library/FirmwareUpdateLib.h>
 #include <Library/ConfigDataLib.h>
 #include <Library/BootOptionLib.h>
+#include <Library/PcdLib.h>
 #include <ConfigDataCommonStruct.h>
 
 /**
@@ -135,11 +136,18 @@ GetCapsuleFromRawPartition (
   VOID                      *Buffer;
   UINTN                     ImageSize;
   LOGICAL_BLOCK_DEVICE      LogicBlkDev;
-  UINTN                     AlginedHeaderSize;
-  UINTN                     AlginedImageSize;
+  UINTN                     AlignedHeaderSize;
+  UINTN                     AlignedImageSize;
   UINT32                    BlockSize;
+  UINT32                    MaxCapsuleSize;
   UINT8                     BlockData[4096];
   FIRMWARE_UPDATE_HEADER    *FwUpdHeader;
+  UINT64                    StartBlock;
+  UINT64                    LastBlock;
+  UINT64                    BlockCount;
+
+  Buffer = NULL;
+  MaxCapsuleSize = PcdGet32 (PcdMaxCapsuleSize);
 
   DEBUG ((DEBUG_INFO, "Load image from SwPart (0x%x), LbaAddr(0x%x)\n", 0, 0));
   Status = GetLogicalPartitionInfo (CapsuleInfo->SwPart, HwPartHandle, &LogicBlkDev);
@@ -159,13 +167,43 @@ GetCapsuleFromRawPartition (
   // Make sure to round the Header size to be block aligned in bytes.
   //
   BlockSize = BlockInfo.BlockSize;
-  AlginedHeaderSize = ((sizeof (FIRMWARE_UPDATE_HEADER) % BlockSize) == 0) ? \
+  if ((BlockSize == 0) || (BlockSize > sizeof (BlockData))) {
+    DEBUG ((DEBUG_INFO, "Invalid block size %u for capsule header read\n", BlockSize));
+    return EFI_UNSUPPORTED;
+  }
+
+  AlignedHeaderSize = ((sizeof (FIRMWARE_UPDATE_HEADER) % BlockSize) == 0) ? \
                       sizeof (FIRMWARE_UPDATE_HEADER) : \
                       ((sizeof (FIRMWARE_UPDATE_HEADER) / BlockSize) + 1) * BlockSize;
+  if (AlignedHeaderSize > sizeof (BlockData)) {
+    DEBUG ((DEBUG_INFO, "Aligned header size 0x%x exceeds local buffer size 0x%x\n",
+            AlignedHeaderSize, sizeof (BlockData)));
+    return EFI_UNSUPPORTED;
+  }
+
+  StartBlock = (UINT64)LogicBlkDev.StartBlock + (UINT64)CapsuleInfo->LbaAddr;
+  if (StartBlock > MAX_UINT32) {
+    DEBUG ((DEBUG_INFO, "Capsule start LBA overflow: Start=0x%llx\n", StartBlock));
+    return EFI_UNSUPPORTED;
+  }
+
+  BlockCount = (AlignedHeaderSize + BlockSize - 1) / BlockSize;
+  if (BlockCount == 0) {
+    DEBUG ((DEBUG_INFO, "Invalid block count for capsule header read\n"));
+    return EFI_UNSUPPORTED;
+  }
+
+  LastBlock = StartBlock + BlockCount - 1;
+  if ((LastBlock < StartBlock) || (LastBlock > LogicBlkDev.LastBlock)) {
+    DEBUG ((DEBUG_INFO, "Capsule header read exceeds partition: Start=0x%llx Last=0x%llx PartLast=0x%llx\n",
+            StartBlock, LastBlock, (UINT64)LogicBlkDev.LastBlock));
+    return EFI_UNSUPPORTED;
+  }
+
   Status = MediaReadBlocks (
              CapsuleInfo->HwPart,
-             LogicBlkDev.StartBlock + CapsuleInfo->LbaAddr,
-             AlginedHeaderSize,
+             (EFI_LBA)StartBlock,
+             AlignedHeaderSize,
              BlockData
              );
   if (EFI_ERROR (Status)) {
@@ -195,13 +233,48 @@ GetCapsuleFromRawPartition (
   // Make sure to round the image size to be block aligned in bytes.
   //
   ImageSize        = CAPSULE_IMAGE_SIZE ((FIRMWARE_UPDATE_HEADER *) BlockData);
-  AlginedImageSize = ((ImageSize % BlockSize) == 0) ? \
+  if (ImageSize == 0) {
+    DEBUG ((DEBUG_INFO, "Invalid capsule image size: 0\n"));
+    return EFI_LOAD_ERROR;
+  }
+
+  if ((MaxCapsuleSize != 0) && (ImageSize > MaxCapsuleSize)) {
+    DEBUG ((DEBUG_INFO, "Capsule image size 0x%x exceeds policy cap 0x%x\n",
+            ImageSize, MaxCapsuleSize));
+    return EFI_BAD_BUFFER_SIZE;
+  }
+
+  if (ImageSize > ((UINTN)~0ULL - (BlockSize - 1))) {
+    DEBUG ((DEBUG_INFO, "Capsule image size overflow during alignment, ImageSize=0x%x BlockSize=0x%x\n",
+            ImageSize, BlockSize));
+    return EFI_UNSUPPORTED;
+  }
+
+  AlignedImageSize = ((ImageSize % BlockSize) == 0) ? \
                      ImageSize : \
                      ((ImageSize / BlockSize) + 1) * BlockSize;
 
-  Buffer = (UINT8 *) AllocatePages (EFI_SIZE_TO_PAGES (AlginedImageSize));
+  if (AlignedImageSize < ImageSize) {
+    DEBUG ((DEBUG_INFO, "Invalid aligned capsule image size: 0x%x < 0x%x\n", AlignedImageSize, ImageSize));
+    return EFI_UNSUPPORTED;
+  }
+
+  BlockCount = (AlignedImageSize + BlockSize - 1) / BlockSize;
+  if (BlockCount == 0) {
+    DEBUG ((DEBUG_INFO, "Invalid block count for capsule image read\n"));
+    return EFI_UNSUPPORTED;
+  }
+
+  LastBlock = StartBlock + BlockCount - 1;
+  if ((LastBlock < StartBlock) || (LastBlock > LogicBlkDev.LastBlock)) {
+    DEBUG ((DEBUG_INFO, "Capsule image read exceeds partition: Start=0x%llx Last=0x%llx PartLast=0x%llx\n",
+            StartBlock, LastBlock, (UINT64)LogicBlkDev.LastBlock));
+    return EFI_UNSUPPORTED;
+  }
+
+  Buffer = (UINT8 *) AllocatePool (AlignedImageSize);
   if (Buffer == NULL) {
-    DEBUG ((DEBUG_INFO, "Allocate memory (size:0x%x) fail.\n", AlginedImageSize));
+    DEBUG ((DEBUG_INFO, "Allocate memory (size:0x%x) fail.\n", AlignedImageSize));
     return EFI_OUT_OF_RESOURCES;
   }
 
@@ -210,16 +283,18 @@ GetCapsuleFromRawPartition (
   //
   Status = MediaReadBlocks (
              CapsuleInfo->HwPart,
-             LogicBlkDev.StartBlock + CapsuleInfo->LbaAddr,
-             AlginedImageSize,
+             (EFI_LBA)StartBlock,
+             AlignedImageSize,
              Buffer
              );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "Read capsule image error, Status = %r\n", Status));
+    FreePool (Buffer);
     return  Status;
   }
 
-  if ((Buffer == NULL) || (ImageSize == 0)) {
+  if (ImageSize == 0) {
+    FreePool (Buffer);
     return EFI_LOAD_ERROR;
   }
 
@@ -251,6 +326,8 @@ LoadCapsuleImage (
   )
 {
   EFI_STATUS          Status;
+  UINTN               CapsuleImageSizeN;
+  UINT32              MaxCapsuleSize;
   UINTN               HardwareDeviceBlockIndex;
   DEVICE_BLOCK_INFO   BlockInfo;
   EFI_HANDLE          FsHandle;
@@ -265,6 +342,8 @@ LoadCapsuleImage (
   }
 
   *CapsuleImageSize = 0;
+  CapsuleImageSizeN  = 0;
+  MaxCapsuleSize     = PcdGet32 (PcdMaxCapsuleSize);
   *CapsuleImage     = NULL;
   FileHandle        = NULL;
   HwPartHandle      = NULL;
@@ -279,7 +358,15 @@ LoadCapsuleImage (
   // If we do not have file system, try reading capsule from raw partition
   //
   if (CapsuleInfo->FsType >= EnumFileSystemMax) {
-    Status = GetCapsuleFromRawPartition (CapsuleInfo, HwPartHandle, CapsuleImage, (UINTN *)CapsuleImageSize);
+    Status = GetCapsuleFromRawPartition (CapsuleInfo, HwPartHandle, CapsuleImage, &CapsuleImageSizeN);
+    if (!EFI_ERROR (Status)) {
+      if (CapsuleImageSizeN > MAX_UINT32) {
+        DEBUG((DEBUG_ERROR, " Capsule image size 0x%llx exceeds UINT32 range\n", (UINT64)CapsuleImageSizeN));
+        Status = EFI_UNSUPPORTED;
+      } else {
+        *CapsuleImageSize = (UINT32)CapsuleImageSizeN;
+      }
+    }
     goto Done;
   }
 
@@ -313,23 +400,44 @@ LoadCapsuleImage (
       goto Done;
     }
 
-    Status = GetFileSize (FileHandle, (UINTN *)CapsuleImageSize);
+    Status = GetFileSize (FileHandle, &CapsuleImageSizeN);
     if (EFI_ERROR(Status)) {
       DEBUG((DEBUG_ERROR, " Get Capsule File '%s' size Status : %r\n", FileName, Status));
       goto Done;
     }
 
-    *CapsuleImage = AllocatePool (*CapsuleImageSize);
+    if (CapsuleImageSizeN > MAX_UINT32) {
+      DEBUG((DEBUG_ERROR, " Capsule file size 0x%llx exceeds UINT32 range\n", (UINT64)CapsuleImageSizeN));
+      Status = EFI_UNSUPPORTED;
+      goto Done;
+    }
+
+    if ((MaxCapsuleSize != 0) && (CapsuleImageSizeN > MaxCapsuleSize)) {
+      DEBUG((DEBUG_ERROR, " Capsule file size 0x%llx exceeds policy cap 0x%x\n",
+             (UINT64)CapsuleImageSizeN, MaxCapsuleSize));
+      Status = EFI_BAD_BUFFER_SIZE;
+      goto Done;
+    }
+
+    *CapsuleImage = AllocatePool (CapsuleImageSizeN);
     if (*CapsuleImage == NULL) {
       Status = EFI_OUT_OF_RESOURCES;
       goto Done;
     }
 
-    Status = ReadFile (FileHandle, *CapsuleImage, (UINTN *)CapsuleImageSize);
+    Status = ReadFile (FileHandle, *CapsuleImage, &CapsuleImageSizeN);
     if (EFI_ERROR(Status)) {
       DEBUG((DEBUG_ERROR, " Read Capsule File '%s' Status : %r\n", FileName, Status));
       goto Done;
     }
+
+    if (CapsuleImageSizeN > MAX_UINT32) {
+      DEBUG((DEBUG_ERROR, " Capsule file read size 0x%llx exceeds UINT32 range\n", (UINT64)CapsuleImageSizeN));
+      Status = EFI_UNSUPPORTED;
+      goto Done;
+    }
+
+    *CapsuleImageSize = (UINT32)CapsuleImageSizeN;
   } else {
     Status = EFI_NOT_FOUND;
   }
@@ -339,16 +447,18 @@ Done:
     CloseFile (FileHandle);
   }
 
+  if (FsHandle != NULL) {
+    CloseFileSystem (FsHandle);
+  }
+
+  if (HwPartHandle != NULL) {
+    FreePool (HwPartHandle);
+  }
+
   if (EFI_ERROR (Status)) {
     if (*CapsuleImage != NULL) {
       FreePool (*CapsuleImage);
       *CapsuleImage = NULL;
-    }
-    if (FsHandle != NULL) {
-      CloseFileSystem (FsHandle);
-    }
-    if (HwPartHandle != NULL) {
-      FreePool (HwPartHandle);
     }
   }
 
@@ -374,7 +484,7 @@ GetOsImageList (
 
   GuidHob = GetNextGuidHob (&gOsBootOptionGuid, GetHobListPtr());
   if (GuidHob == NULL) {
-    ASSERT (GuidHob);
+    DEBUG((DEBUG_ERROR, "OS boot option HOB not found\\n"));
     return NULL;
   }
   return (OS_BOOT_OPTION_LIST *)GET_GUID_HOB_DATA (GuidHob);
@@ -455,9 +565,11 @@ GetCapsuleImage (
 
     Status = LoadCapsuleImage (CapsuleInfo, CapsuleImage, CapsuleImageSize);
     if (!EFI_ERROR(Status)) {
+      // Clamp dump length to actual capsule size to prevent OOB read
+      UINT32 DumpLen = (*CapsuleImageSize < 256) ? *CapsuleImageSize : 256;
       DEBUG ((DEBUG_INFO, "Capsule Image found, ImageSize=0x%x\n", *CapsuleImageSize));
-      DEBUG ((DEBUG_INFO, "First 256Bytes of capsule image\n"));
-      DumpHex (2, 0, 256, (VOID *)*CapsuleImage);
+      DEBUG ((DEBUG_INFO, "Dumping first %u bytes of capsule image\n", DumpLen));
+      DumpHex (2, 0, DumpLen, (VOID *)*CapsuleImage);
       break;
     }
   }
