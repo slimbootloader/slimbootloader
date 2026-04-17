@@ -81,6 +81,7 @@ class Board(BaseBoard):
         self.ENABLE_GRUB_CONFIG       = 1
         self.ENABLE_DMA_PROTECTION    = 0
         self.ENABLE_SMM_REBASE        = 2
+        self.MADT_USE_PLATFORM_LAPIC  = 1
 
         # G9 for 384 | W7 Opt for SHA384| Ni  Opt for SHA256| V8 Opt for SHA256
         self.ENABLE_CRYPTO_SHA_OPT    = IPP_CRYPTO_OPTIMIZATION_MASK['SHA256_NI']
@@ -208,6 +209,7 @@ class Board(BaseBoard):
             'FlashDescriptorLib|Silicon/ApollolakePkg/Library/FlashDescriptorLib/FlashDescriptorLib.inf',
             'VtdLib|Silicon/$(SILICON_PKG_NAME)/Library/VtdLib/VtdLib.inf',
             'DmarLib|Silicon/CommonSocPkg/Library/DmarLib/DmarLib.inf',
+            'MadtLib|Silicon/CommonSocPkg/Library/MadtLib/MadtLib.inf',
             'HdaLib|Platform/$(BOARD_PKG_NAME)/Library/HdaLib/HdaLib.inf',
             'VtdPmrLib|Silicon/CommonSocPkg/Library/VtdPmrLib/VtdPmrLib.inf',
             'BaseIpcLib|Silicon/$(SILICON_PKG_NAME)/Library/BaseIpcLib/BaseIpcLib.inf',

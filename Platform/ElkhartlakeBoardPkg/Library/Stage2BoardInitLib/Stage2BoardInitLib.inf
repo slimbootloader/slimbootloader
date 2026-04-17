@@ -63,6 +63,7 @@
   TccLib
   WatchDogTimerLib
   ResetSystemLib
+  MadtLib
 
 [Guids]
   gOsConfigDataGuid
@@ -99,3 +100,6 @@
   gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr
   gPlatformModuleTokenSpaceGuid.PcdFspsUpdPtr
   gPlatformCommonLibTokenSpaceGuid.PcdFspNoEop
+
+[FeaturePcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdMadtUsePlatformLapic
