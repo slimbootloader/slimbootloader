@@ -854,14 +854,14 @@ ValidateCapsuleLayout (
     return EFI_INVALID_PARAMETER;
   }
 
-  *FwUpdHeader = Header;
-
   if (CapHeader != NULL) {
     if (Header->ImageSize < sizeof (EFI_FW_MGMT_CAP_HEADER)) {
       return EFI_INVALID_PARAMETER;
     }
     *CapHeader = (EFI_FW_MGMT_CAP_HEADER *)((UINTN)Header + Header->ImageOffset);
   }
+
+  *FwUpdHeader = Header;
 
   return EFI_SUCCESS;
 }

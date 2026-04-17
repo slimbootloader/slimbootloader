@@ -331,7 +331,8 @@ GetSvn (
   )
 {
   UINT32                Stage1AFvBase;
-  UINT32                FvBaseOffset;
+  INT32                 FvBaseOffset;
+  INT64                 Stage1AFvBase64;
   UINT32                TopSwapRegionSize;
   EFI_STATUS            Status;
 
@@ -356,13 +357,14 @@ GetSvn (
   }
   Stage1AFvPointer = Stage1AFvPointer - TopSwapRegionSize;
 
-  FvBaseOffset = (UINT32)(*(UINT32 *)(UINTN)Stage1AFvPointer);
-  if (((UINT64)Stage1AFvPointer + (UINT64)FvBaseOffset + sizeof (UINT32)) > MAX_UINT32) {
-    DEBUG((DEBUG_ERROR, "Stage1A FV base computation overflow: Ptr=0x%08x Offset=0x%08x\n",
-          Stage1AFvPointer, FvBaseOffset));
+  FvBaseOffset = (INT32)(*(UINT32 *)(UINTN)Stage1AFvPointer);
+  Stage1AFvBase64 = (INT64)(UINT64)Stage1AFvPointer + (INT64)FvBaseOffset + (INT64)sizeof (UINT32);
+  if ((Stage1AFvBase64 < 0) || (Stage1AFvBase64 > MAX_UINT32)) {
+    DEBUG((DEBUG_ERROR, "Stage1A FV base computation out of range: Ptr=0x%08x Offset=0x%08x\n",
+          Stage1AFvPointer, (UINT32)FvBaseOffset));
     return EFI_COMPROMISED_DATA;
   }
-  Stage1AFvBase = Stage1AFvPointer + FvBaseOffset + sizeof (UINT32);
+  Stage1AFvBase = (UINT32)Stage1AFvBase64;
 
   Status = GetVersionfromFv (Stage1AFvBase, FALSE, BlVersion);
   if (EFI_ERROR (Status)) {
