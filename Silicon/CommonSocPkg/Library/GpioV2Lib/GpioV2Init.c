@@ -232,7 +232,15 @@ GpioWriteAndThenOr32 (
       DEBUG ((DEBUG_ERROR, "P2SB (0x%x) is hidden and SBREG_BAR is unknown.\n", Controller->P2sbBase));
       ASSERT (FALSE);
     }
-    P2sbBase = (PciRead32 ((UINTN)Controller->P2sbBase + 0x10) & 0xFFFFFFF0) | PciRead32 ((UINTN)Controller->P2sbBase + 0x14);
+    P2sbBase = (PciRead32 ((UINTN)Controller->P2sbBase + 0x10)); // BAR low;
+    // Check if BAR is 64 bit or 32 bit
+    // (BIT 1:2 is for BAR type -> 00: 32 bit | 10: 64 bit)
+    if ((P2sbBase & (BIT1 | BIT2)) == BIT2) { // 64 bit MMIO BAR
+      P2sbBase &= 0xFFFFFFF0; // BAR low
+      P2sbBase |= LShiftU64 (PciRead32 ((UINTN)Controller->P2sbBase + 0x14), 32); // BAR high
+    } else { // 32 bit MMIO BAR
+      P2sbBase &= 0xFFFFFFF0; // BAR low
+    }
     if (P2sbBase == 0) {
       P2sbBase = Controller->P2sbBase;
     }
@@ -275,7 +283,15 @@ GpioRead32 (
       DEBUG ((DEBUG_ERROR, "P2SB (0x%x) is hidden and SBREG_BAR is unknown.\n", Controller->P2sbBase));
       ASSERT (FALSE);
     }
-    P2sbBase = (PciRead32 ((UINTN)Controller->P2sbBase + 0x10) & 0xFFFFFFF0) | PciRead32 ((UINTN)Controller->P2sbBase + 0x14);
+    P2sbBase = (PciRead32 ((UINTN)Controller->P2sbBase + 0x10)); // BAR low;
+    // Check if BAR is 64 bit or 32 bit
+    // (BIT 1:2 is for BAR type -> 00: 32 bit | 10: 64 bit)
+    if ((P2sbBase & (BIT1 | BIT2)) == BIT2) { // 64 bit MMIO BAR
+      P2sbBase &= 0xFFFFFFF0; // BAR low
+      P2sbBase |= LShiftU64 (PciRead32 ((UINTN)Controller->P2sbBase + 0x14), 32); // BAR high
+    } else { // 32 bit MMIO BAR
+      P2sbBase &= 0xFFFFFFF0; // BAR low
+    }
     if (P2sbBase == 0) {
       P2sbBase = Controller->P2sbBase;
     }
