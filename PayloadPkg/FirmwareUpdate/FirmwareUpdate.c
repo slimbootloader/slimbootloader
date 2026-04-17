@@ -1,7 +1,7 @@
 /** @file
 This driver is to update firmware in boot media.
 
-Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2017 - 2026, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -115,6 +115,17 @@ VerifySblVersion (
     // EFI_UNSUPPORTED from PlatformGetStage1AOffset and getting stage1Abase
     // will be handled in common way using the below implementation.
     if (Status == EFI_UNSUPPORTED) {
+      //
+      // The last 4 bytes of the BIOS region payload hold the Stage 1A FV base
+      // address. Guard against integer underflow: UpdateImageSize comes from the
+      // untrusted capsule image and if it were less than 4 the subtraction below
+      // would wrap to a very large address and pass an arbitrary pointer to GetSvn.
+      //
+      if (ImageHdr->UpdateImageSize < 4) {
+        DEBUG((DEBUG_ERROR, "VerifySblVersion: UpdateImageSize (%d) too small to contain FV base\n",
+               ImageHdr->UpdateImageSize));
+        return EFI_INVALID_PARAMETER;
+      }
       // Last 4 bytes of the BIOS region contain Stage 1A FV base.
       Stage1AFvBase = (UINT32)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER) + ImageHdr->UpdateImageSize - 4);
       Status = GetSvn (Stage1AFvBase, &CapsuleBlVersion);
@@ -299,6 +310,16 @@ ValidThenDecFwuRetryCount (
 
   FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
 
+  //
+  // Guard against UINT32 overflow before adding the field offset, for the same
+  // reason as SetStateMachineFlag and UpdateStatus: a wrapped offset would
+  // direct a flash write to an unintended address.
+  //
+  if (((UINT64)FwUpdStatusOffset + OFFSET_OF(FW_UPDATE_STATUS, RetryCount)) > MAX_UINT32) {
+    DEBUG((DEBUG_ERROR, "ValidThenDecFwuRetryCount: FwUpdStatusOffset (0x%x) causes overflow\n", FwUpdStatusOffset));
+    return FALSE;
+  }
+
   FwUpdStatusOffset += OFFSET_OF(FW_UPDATE_STATUS, RetryCount);
   Status = BootMediaWrite (FwUpdStatusOffset, sizeof(UINT8), (UINT8 *)&(RetryCount));
   if (EFI_ERROR (Status)) {
@@ -372,6 +393,17 @@ SetStateMachineFlag (
   DEBUG((DEBUG_INIT, "Set next FWU state: 0x%02X\n", StateMachine));
 
   FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
+
+  //
+  // Guard against UINT32 overflow before adding the field offset. An unchecked
+  // addition when PcdFwUpdStatusBase is misconfigured near MAX_UINT32 would
+  // silently wrap and direct the BootMediaWrite to an unintended flash address,
+  // mirroring the same class of bug fixed in UpdateStatus.
+  //
+  if (((UINT64)FwUpdStatusOffset + OFFSET_OF(FW_UPDATE_STATUS, StateMachine)) > MAX_UINT32) {
+    DEBUG((DEBUG_ERROR, "SetStateMachineFlag: FwUpdStatusOffset (0x%x) causes overflow\n", FwUpdStatusOffset));
+    return EFI_INVALID_PARAMETER;
+  }
 
   FwUpdStatusOffset += OFFSET_OF(FW_UPDATE_STATUS, StateMachine);
   Status = BootMediaWrite (FwUpdStatusOffset, sizeof(UINT8), (UINT8 *)&(StateMachine));
@@ -619,6 +651,20 @@ UpdateStatus (
   FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
 
   //
+  // Verify the full status region (FW_UPDATE_STATUS header + all component
+  // entries) fits within the 32-bit address space. If PcdFwUpdStatusBase is
+  // misconfigured near the top of the UINT32 range, the COMP_STATUS_OFFSET
+  // arithmetic used later would silently wrap and direct flash writes to
+  // unintended addresses, potentially corrupting unrelated flash regions.
+  //
+  if (((UINT64)FwUpdStatusOffset + sizeof(FW_UPDATE_STATUS) +
+       ((UINT64)MAX_FW_COMPONENTS * sizeof(FW_UPDATE_COMP_STATUS))) > MAX_UINT32) {
+    DEBUG((DEBUG_ERROR, "UpdateStatus: FwUpdStatusOffset (0x%x) causes status region overflow\n",
+           FwUpdStatusOffset));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  //
   // Read all the component structures
   //
   Status = BootMediaRead ((FwUpdStatusOffset + sizeof(FW_UPDATE_STATUS)), \
@@ -699,6 +745,128 @@ UpdateStatus (
 }
 
 /**
+  Validate capsule header layout and optional capsule body header.
+
+  @param[in]  FwImage       Capsule buffer.
+  @param[in]  FwSize        Capsule buffer size.
+  @param[out] FwUpdHeader   Validated firmware update header.
+  @param[out] CapHeader     Validated capsule body header.
+
+  @retval EFI_SUCCESS            Capsule layout is valid.
+  @retval EFI_INVALID_PARAMETER  Capsule layout is invalid.
+**/
+STATIC
+EFI_STATUS
+ValidateCapsuleLayout (
+  IN  UINT8                    *FwImage,
+  IN  UINT32                   FwSize,
+  OUT FIRMWARE_UPDATE_HEADER   **FwUpdHeader,
+  OUT EFI_FW_MGMT_CAP_HEADER   **CapHeader OPTIONAL
+  )
+{
+  UINT32                  SignatureEnd;
+  UINT32                  PubKeyEnd;
+  UINT32                  ImageEnd;
+  FIRMWARE_UPDATE_HEADER  *Header;
+
+  if ((FwUpdHeader == NULL) || (FwImage == NULL) || (FwSize < sizeof (FIRMWARE_UPDATE_HEADER))) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  Header = (FIRMWARE_UPDATE_HEADER *)FwImage;
+
+  if (!CompareGuid (&Header->FileGuid, &gFirmwareUpdateImageFileGuid)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  //
+  // Whitelist CapsuleFlags against the two defined flags:
+  //   CAPSULE_FLAGS_CFG_DATA      (BIT0)  - config data update flag
+  //   CAPSULE_FLAG_FORCE_BIOS_UPDATE (BIT31) - bypasses FWU state machine
+  // Any bit outside this set is unrecognized and could trigger unintended
+  // update paths. Rejecting undefined flags here prevents a crafted capsule
+  // from reaching later code with an unexpected flags value.
+  //
+  if ((Header->CapsuleFlags & ~(CAPSULE_FLAGS_CFG_DATA | CAPSULE_FLAG_FORCE_BIOS_UPDATE)) != 0) {
+    DEBUG ((DEBUG_ERROR, "Invalid capsule: unrecognized CapsuleFlags bits set (0x%x)\n",
+            Header->CapsuleFlags));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  //
+  // Every region offset must lie strictly outside the fixed-size header.
+  // A SignatureOffset less than sizeof(FIRMWARE_UPDATE_HEADER) would shrink the
+  // RSA-signed data window [0, SignatureOffset) so that it no longer covers
+  // the header fields PubKeyOffset, ImageOffset, and CapsuleFlags — allowing
+  // an attacker to construct a capsule where only the FileGUID is signed while
+  // the critical offset and flag fields are left unsigned.  ImageOffset and
+  // PubKeyOffset smaller than the header would also create unexpected overlaps
+  // between the header and the data regions.
+  //
+  if ((Header->SignatureOffset < sizeof (FIRMWARE_UPDATE_HEADER)) ||
+      (Header->PubKeyOffset    < sizeof (FIRMWARE_UPDATE_HEADER)) ||
+      (Header->ImageOffset     < sizeof (FIRMWARE_UPDATE_HEADER))) {
+    DEBUG ((DEBUG_ERROR, "Invalid capsule: region offsets (Sig=0x%x Pk=0x%x Img=0x%x) below header size (0x%x)\n",
+            Header->SignatureOffset, Header->PubKeyOffset, Header->ImageOffset,
+            (UINT32)sizeof (FIRMWARE_UPDATE_HEADER)));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if ((Header->SignatureOffset >= FwSize) || (Header->SignatureSize > (FwSize - Header->SignatureOffset))) {
+    return EFI_INVALID_PARAMETER;
+  }
+  SignatureEnd = Header->SignatureOffset + Header->SignatureSize;
+
+  if ((Header->PubKeyOffset >= FwSize) || (Header->PubKeySize > (FwSize - Header->PubKeyOffset))) {
+    return EFI_INVALID_PARAMETER;
+  }
+  PubKeyEnd = Header->PubKeyOffset + Header->PubKeySize;
+
+  if (PubKeyEnd != FwSize) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  //
+  // Verify each region is large enough to hold its fixed-size struct header.
+  // ValidateCapsuleLayout is the single authoritative gate for all callers
+  // (AuthenticateCapsule, ProcessCapsule, CheckCapsuleForRedundant, FindImage).
+  // Placing the checks here ensures no caller can cast a region pointer and
+  // read struct fields beyond the validated boundary.
+  //
+  if (Header->SignatureSize < sizeof (SIGNATURE_HDR)) {
+    DEBUG ((DEBUG_ERROR, "Invalid capsule: SignatureSize (0x%x) too small for SIGNATURE_HDR\n",
+            Header->SignatureSize));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (Header->PubKeySize < sizeof (PUB_KEY_HDR)) {
+    DEBUG ((DEBUG_ERROR, "Invalid capsule: PubKeySize (0x%x) too small for PUB_KEY_HDR\n",
+            Header->PubKeySize));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if ((Header->ImageOffset >= FwSize) || (Header->ImageSize > (FwSize - Header->ImageOffset))) {
+    return EFI_INVALID_PARAMETER;
+  }
+  ImageEnd = Header->ImageOffset + Header->ImageSize;
+
+  if ((ImageEnd > Header->SignatureOffset) || (SignatureEnd > Header->PubKeyOffset)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (CapHeader != NULL) {
+    if (Header->ImageSize < sizeof (EFI_FW_MGMT_CAP_HEADER)) {
+      return EFI_INVALID_PARAMETER;
+    }
+    *CapHeader = (EFI_FW_MGMT_CAP_HEADER *)((UINTN)Header + Header->ImageOffset);
+  }
+
+  *FwUpdHeader = Header;
+
+  return EFI_SUCCESS;
+}
+
+/**
   Verify the capsule image against its signature.
 
   This function first gets the hash of the processed public key, then compare it
@@ -720,36 +888,14 @@ AuthenticateCapsule (
   )
 {
   EFI_STATUS                Status;
-
   FIRMWARE_UPDATE_HEADER    *Header;
   PUB_KEY_HDR               *PubKeyHdr;
   SIGNATURE_HDR             *SignatureHdr;
 
-  Header = (FIRMWARE_UPDATE_HEADER *)FwImage;
-  if (FwSize < sizeof (FIRMWARE_UPDATE_HEADER)) {
-    DEBUG ((DEBUG_ERROR, "Invalid capsule: file is too small. file size=%d\n", FwSize));
-    return EFI_INVALID_PARAMETER;
-  }
-
-  if (!CompareGuid (&Header->FileGuid, &gFirmwareUpdateImageFileGuid)) {
-    DEBUG ((DEBUG_ERROR, "Invalid capsule: Image file guid is not expected. guid=%g\n", &Header->FileGuid));
-    return EFI_INVALID_PARAMETER;
-  }
-
-  if (Header->SignatureOffset >= FwSize || Header->SignatureOffset + Header->SignatureSize >= FwSize) {
-    DEBUG ((DEBUG_ERROR, "Invalid capsule: SignatureOffset=0x%x, SignatureSize=0x%x\n", Header->SignatureOffset,
-            Header->SignatureSize));
-    return EFI_INVALID_PARAMETER;
-  }
-
-  if (Header->PubKeyOffset >= FwSize || Header->PubKeyOffset + Header->PubKeySize != FwSize) {
-    DEBUG ((DEBUG_ERROR, "Invalid capsule: PubKeyOffset=0x%x, PubKeySize=0x%x\n", Header->PubKeyOffset, Header->PubKeySize));
-    return EFI_INVALID_PARAMETER;
-  }
-
-  if (Header->ImageOffset >= FwSize || Header->ImageOffset + Header->ImageSize >= FwSize) {
-    DEBUG ((DEBUG_ERROR, "Invalid capsule: ImageOffset=0x%x, ImageSize=0x%x\n", Header->ImageOffset, Header->ImageSize));
-    return EFI_INVALID_PARAMETER;
+  Status = ValidateCapsuleLayout (FwImage, FwSize, &Header, NULL);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Invalid capsule layout in AuthenticateCapsule: Status=%r\n", Status));
+    return Status;
   }
 
   PubKeyHdr       = (PUB_KEY_HDR *) (FwImage + Header->PubKeyOffset);
@@ -810,25 +956,45 @@ IsValidPayloadBoundary (
   )
 {
   UINT16                        TotalPayloadCount;
+  UINT32                        TotalCount32;
   EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImgHeader;
+  UINT64                        MinPayloadOffset;
+  UINT64                        RemainingSize;
+  UINT64                        ImageSize;
 
   if ((FwUpdHeader == NULL) || (CapHeader == NULL)) {
     return FALSE;
   }
 
-  TotalPayloadCount = (UINT16)(CapHeader->EmbeddedDriverCount + CapHeader->PayloadItemCount);
+  ImageSize = FwUpdHeader->ImageSize;
+
+  //
+  // Use a UINT32 intermediate to detect overflow before narrowing to UINT16.
+  // EmbeddedDriverCount and PayloadItemCount are each UINT16 (up to 65535);
+  // adding them directly as UINT16 would silently wrap to a smaller value,
+  // causing MinPayloadOffset to be under-estimated and defeating the boundary
+  // check entirely.
+  //
+  TotalCount32 = (UINT32)CapHeader->EmbeddedDriverCount + (UINT32)CapHeader->PayloadItemCount;
+  if (TotalCount32 > MAX_UINT16) {
+    DEBUG((DEBUG_ERROR, "Invalid capsule body: total payload count overflow (0x%x)\n", TotalCount32));
+    return FALSE;
+  }
+  TotalPayloadCount = (UINT16)TotalCount32;
 
   if (TotalPayloadCount == 0) {
     DEBUG((DEBUG_ERROR, "Invalid capsule body: no payload\n"));
     return FALSE;
   }
 
-  if (Offset < (sizeof(EFI_FW_MGMT_CAP_HEADER) + TotalPayloadCount * sizeof (UINT64))) {
+  MinPayloadOffset = sizeof (EFI_FW_MGMT_CAP_HEADER) + (UINT64)TotalPayloadCount * sizeof (UINT64);
+  if (Offset < MinPayloadOffset) {
     DEBUG((DEBUG_ERROR, "Invalid offset (0x%x): not in payload regions\n", Offset));
     return FALSE;
   }
 
-  if (Offset > (FwUpdHeader->ImageSize - sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER))) {
+  if ((ImageSize < sizeof (EFI_FW_MGMT_CAP_IMAGE_HEADER)) ||
+      (Offset > (ImageSize - sizeof (EFI_FW_MGMT_CAP_IMAGE_HEADER)))) {
     DEBUG((DEBUG_ERROR, "Invalid offset (0x%x): no room for payload header\n", Offset));
     return FALSE;
   }
@@ -840,8 +1006,20 @@ IsValidPayloadBoundary (
     return FALSE;
   }
 
-  if (FwUpdHeader->ImageSize < (Offset + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER) + \
-                               ImgHeader->UpdateImageSize + ImgHeader->UpdateVendorCodeSize)) {
+  RemainingSize = ImageSize - Offset;
+  if (RemainingSize < sizeof (EFI_FW_MGMT_CAP_IMAGE_HEADER)) {
+    DEBUG((DEBUG_ERROR, "Invalid payload header: no room for image header\n"));
+    return FALSE;
+  }
+
+  RemainingSize -= sizeof (EFI_FW_MGMT_CAP_IMAGE_HEADER);
+  if (ImgHeader->UpdateImageSize > RemainingSize) {
+    DEBUG((DEBUG_ERROR, "Invalid payload size: exceed capsue body size\n"));
+    return FALSE;
+  }
+
+  RemainingSize -= ImgHeader->UpdateImageSize;
+  if (ImgHeader->UpdateVendorCodeSize > RemainingSize) {
     DEBUG((DEBUG_ERROR, "Invalid payload size: exceed capsue body size\n"));
     return FALSE;
   }
@@ -871,12 +1049,24 @@ GetPayloadHeaderByIndex (
   )
 {
   UINT64                  Offset;
+  UINT64                  OffsetTableEntryOffset;
 
   if ((FwUpdHeader == NULL) || (CapHeader == NULL) || (OutImgHeader == NULL)) {
     return EFI_NOT_FOUND;
   }
 
-  if (Index > CapHeader->PayloadItemCount) {
+  if (Index >= CapHeader->PayloadItemCount) {
+    return EFI_NOT_FOUND;
+  }
+
+  if (FwUpdHeader->ImageSize < sizeof (EFI_FW_MGMT_CAP_HEADER)) {
+    return EFI_NOT_FOUND;
+  }
+
+  OffsetTableEntryOffset = sizeof (EFI_FW_MGMT_CAP_HEADER) +
+                           ((UINT64)CapHeader->EmbeddedDriverCount + Index) * sizeof (UINT64);
+  if (OffsetTableEntryOffset > ((UINT64)FwUpdHeader->ImageSize - sizeof (UINT64))) {
+    DEBUG((DEBUG_ERROR, "Invalid capsule payload offset table entry: Index=%d TableOffset=0x%llx\n", Index, OffsetTableEntryOffset));
     return EFI_NOT_FOUND;
   }
 
@@ -885,6 +1075,18 @@ GetPayloadHeaderByIndex (
 
   if (!IsValidPayloadBoundary (FwUpdHeader, CapHeader, Offset)) {
     DEBUG((DEBUG_ERROR, "Invalid capsule payload boundary: Index=%d Offset=0x%x\n", Index, Offset));
+    return EFI_NOT_FOUND;
+  }
+
+  //
+  // IsValidPayloadBoundary already confirmed Offset <= FwUpdHeader->ImageSize
+  // (a UINT32), so the value is bounded within 32 bits. This explicit guard
+  // is defense-in-depth for 32-bit (IA32) builds where casting a UINT64 to
+  // UINTN silently truncates any stray high-order bits, which could produce
+  // a pointer that lands outside the capsule buffer.
+  //
+  if (Offset > (UINT64)FwUpdHeader->ImageSize) {
+    DEBUG((DEBUG_ERROR, "Invalid payload offset (0x%llx) exceeds image size\n", Offset));
     return EFI_NOT_FOUND;
   }
 
@@ -953,6 +1155,12 @@ ProcessCapsule (
   SIGNATURE_HDR                 *SignatureHdr;
   UINT32                        SigLen;
 
+  Status = ValidateCapsuleLayout (FwImage, FwSize, &FwUpdHeader, &CapHeader);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "Invalid capsule layout in ProcessCapsule: Status=%r\n", Status));
+    return EFI_INVALID_PARAMETER;
+  }
+
   FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
 
   //
@@ -991,7 +1199,23 @@ ProcessCapsule (
   // set SM to capsule processing stage, this will reset back to
   // init at the end of firmware update
   //
-  SignatureHdr = (SIGNATURE_HDR *) (FwImage + ((FIRMWARE_UPDATE_HEADER *)FwImage)->SignatureOffset);
+  //
+  // ValidateCapsuleLayout already confirmed SignatureSize >= sizeof(SIGNATURE_HDR),
+  // so the cast below is safe. Verify the inner SigSize field does not claim more
+  // bytes than the signature region can hold; MIN() limits the copy length but an
+  // oversized SigSize still indicates a malformed capsule and must be rejected.
+  //
+  SignatureHdr = (SIGNATURE_HDR *) (FwImage + FwUpdHeader->SignatureOffset);
+  //
+  // Verify SigSize does not extend beyond the signature region boundary.
+  // Although MIN() below limits the copy length, an oversized SigSize field
+  // would indicate a malformed capsule and must be rejected.
+  //
+  if (SignatureHdr->SigSize > (FwUpdHeader->SignatureSize - (UINT32)sizeof (SIGNATURE_HDR))) {
+    DEBUG((DEBUG_ERROR, "Invalid capsule: SigSize (0x%x) extends beyond signature region\n",
+           SignatureHdr->SigSize));
+    return EFI_INVALID_PARAMETER;
+  }
   SigLen       = MIN (SignatureHdr->SigSize, sizeof(FwUpdStatus.CapsuleSig));
   if (FwUpdStatus.StateMachine == FW_UPDATE_SM_INIT) {
     //
@@ -1035,14 +1259,11 @@ ProcessCapsule (
     return EFI_SUCCESS;
   }
 
-  FwUpdHeader = (FIRMWARE_UPDATE_HEADER *)FwImage;
-  CapHeader = (EFI_FW_MGMT_CAP_HEADER *)((UINTN)FwUpdHeader + FwUpdHeader->ImageOffset);
-
   //
   // If capsule header is NULL or no payloads found in the capsule
   // return EFI_NOT_FOUND;
   //
-  if ((CapHeader == NULL) || (CapHeader->PayloadItemCount == 0)) {
+  if (CapHeader->PayloadItemCount == 0) {
     ImgHeader = NULL;
     return EFI_NOT_FOUND;
   }
@@ -1137,17 +1358,12 @@ CheckCapsuleForRedundant (
   *ContainsRedundant = FALSE;
   CapImageHdr = NULL;
 
-  FwUpdHeader = (FIRMWARE_UPDATE_HEADER *)CapImage;
-  if (FwUpdHeader == NULL) {
+  Status = ValidateCapsuleLayout (CapImage, CapImageSize, &FwUpdHeader, &CapHeader);
+  if (EFI_ERROR (Status)) {
     return EFI_NOT_FOUND;
   }
 
-  //
-  // If capsule header is NULL or no payloads found in the capsule
-  // return EFI_NOT_FOUND
-  //
-  CapHeader = (EFI_FW_MGMT_CAP_HEADER *)((UINTN)FwUpdHeader + FwUpdHeader->ImageOffset);
-  if ((CapHeader == NULL) || (CapHeader->PayloadItemCount == 0)) {
+  if (CapHeader->PayloadItemCount == 0) {
     return EFI_NOT_FOUND;
   }
 
@@ -1208,17 +1424,12 @@ FindImage (
   *ImageHdr = NULL;
   CapImageHdr = NULL;
 
-  FwUpdHeader = (FIRMWARE_UPDATE_HEADER *)CapImage;
-  if (FwUpdHeader == NULL) {
+  Status = ValidateCapsuleLayout (CapImage, CapImageSize, &FwUpdHeader, &CapHeader);
+  if (EFI_ERROR (Status)) {
     return EFI_NOT_FOUND;
   }
 
-  //
-  // If capsule header is NULL or no payloads found in the capsule
-  // return EFI_NOT_FOUND;
-  //
-  CapHeader = (EFI_FW_MGMT_CAP_HEADER *)((UINTN)FwUpdHeader + FwUpdHeader->ImageOffset);
-  if ((CapHeader == NULL) || (CapHeader->PayloadItemCount == 0)) {
+  if (CapHeader->PayloadItemCount == 0) {
     return EFI_NOT_FOUND;
   }
 
@@ -1457,7 +1668,8 @@ InitFirmwareUpdate (
     //
     // Error condition
     if (CapsuleImage != NULL) {
-      FreePool(CapsuleImage);
+      FreePool (CapsuleImage);
+      CapsuleImage = NULL;
     }
     return Status;
   }
@@ -1702,6 +1914,24 @@ InitFirmwareRecovery (
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "GetRegionInfo, Status = 0x%x\n", Status));
     return Status;
+  }
+
+  //
+  // Guard the four sequential UINT32 subtractions below against underflow.
+  // During recovery the flash map entries may themselves be partially corrupted;
+  // an unchecked subtraction that wraps to a large value would direct
+  // UpdateBootPartition to copy from or write to an unintended flash region —
+  // the opposite of what recovery is meant to do. Use UINT64 arithmetic to
+  // validate all four subtractions in one combined check before narrowing.
+  //
+  // Reject zero-sized regions and validate space capacity for primary and backup
+  // regions in 64-bit arithmetic to prevent overflow, even though the actual sizes are 32-bit.
+  if ((TopSwapRegionSize == 0) || (RedundantRegionSize == 0) ||
+      ((UINT64)FlashMap->RomSize <
+       ((UINT64)TopSwapRegionSize * 2 + (UINT64)RedundantRegionSize * 2))) {
+    DEBUG ((DEBUG_ERROR, "InitFirmwareRecovery: region sizes (TS=0x%x Rdnt=0x%x) exceed ROM size (0x%x)\n",
+            TopSwapRegionSize, RedundantRegionSize, FlashMap->RomSize));
+    return EFI_INVALID_PARAMETER;
   }
 
   // Top swap source address is already mapped to primary or backup by

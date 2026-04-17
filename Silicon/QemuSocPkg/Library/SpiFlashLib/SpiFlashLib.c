@@ -272,8 +272,11 @@ SpiFlashRead (
   }
 
   Address = Address - SpiInstance->TotalFlashSize - SpiInstance->StoreBase;
+
+  // Treat the upper bound as exclusive: [Address, Address + ByteCount).
+  // This allows reading the last valid page where Address + ByteCount == TotalFlashSize.
   if ((Address >= SpiInstance->TotalFlashSize) ||
-      (Address + ByteCount >= SpiInstance->TotalFlashSize)) {
+      (ByteCount > (SpiInstance->TotalFlashSize - Address))) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -325,8 +328,11 @@ SpiFlashWrite (
   }
 
   Address = Address - SpiInstance->TotalFlashSize - SpiInstance->StoreBase;
+
+  // Treat the upper bound as exclusive: [Address, Address + ByteCount).
+  // This allows writing the last valid page where Address + ByteCount == TotalFlashSize.
   if ((Address >= SpiInstance->TotalFlashSize) ||
-      (Address + ByteCount >= SpiInstance->TotalFlashSize)) {
+      (ByteCount > (SpiInstance->TotalFlashSize - Address))) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -389,8 +395,11 @@ SpiFlashErase (
   }
 
   Address = Address - SpiInstance->TotalFlashSize - SpiInstance->StoreBase;
+
+  // Treat the upper bound as exclusive: [Address, Address + ByteCount).
+  // This allows erasing up to the last valid page where Address + ByteCount == TotalFlashSize.
   if ((Address >= SpiInstance->TotalFlashSize) ||
-      (Address + ByteCount >= SpiInstance->TotalFlashSize)) {
+      (ByteCount > (SpiInstance->TotalFlashSize - Address))) {
     return EFI_INVALID_PARAMETER;
   }
 
