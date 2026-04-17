@@ -232,7 +232,7 @@ GetCapsuleFromRawPartition (
   //
   // Make sure to round the image size to be block aligned in bytes.
   //
-  ImageSize        = CAPSULE_IMAGE_SIZE ((FIRMWARE_UPDATE_HEADER *) BlockData);
+  ImageSize = CAPSULE_IMAGE_SIZE ((FIRMWARE_UPDATE_HEADER *) BlockData);
   if (ImageSize == 0) {
     DEBUG ((DEBUG_INFO, "Invalid capsule image size: 0\n"));
     return EFI_LOAD_ERROR;
@@ -244,7 +244,7 @@ GetCapsuleFromRawPartition (
     return EFI_BAD_BUFFER_SIZE;
   }
 
-  if (ImageSize > ((UINTN)~0ULL - (BlockSize - 1))) {
+  if (ImageSize > (MAX_UINTN - ((UINTN)BlockSize - 1))) {
     DEBUG ((DEBUG_INFO, "Capsule image size overflow during alignment, ImageSize=0x%x BlockSize=0x%x\n",
             ImageSize, BlockSize));
     return EFI_UNSUPPORTED;
@@ -291,11 +291,6 @@ GetCapsuleFromRawPartition (
     DEBUG ((DEBUG_INFO, "Read capsule image error, Status = %r\n", Status));
     FreePool (Buffer);
     return  Status;
-  }
-
-  if (ImageSize == 0) {
-    FreePool (Buffer);
-    return EFI_LOAD_ERROR;
   }
 
   *CapsuleImage = Buffer;
