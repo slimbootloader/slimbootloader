@@ -453,7 +453,7 @@ jobs:
       Expand-Archive .\nasm.zip C:\
 
       echo "Download iasl"
-      Invoke-WebRequest -Uri https://cdrdv2.intel.com/v1/dl/getContent/774881 -OutFile iasl.zip
+      Invoke-WebRequest -Uri https://github.com/acpica/acpica/releases/download/20251212/iasl-win-20251212.zip -OutFile iasl.zip
       Expand-Archive .\iasl.zip C:\iasl
       echo "##vso[task.setvariable variable=nasm_prefix;]C:\nasm-2.14.02\"
       echo "##vso[task.setvariable variable=iasl_prefix;]C:\iasl\"
