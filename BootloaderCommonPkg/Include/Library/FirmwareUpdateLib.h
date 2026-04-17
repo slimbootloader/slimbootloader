@@ -53,6 +53,22 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #define CAPSULE_FLAG_FORCE_BIOS_UPDATE    BIT31
 
+//
+// Capsule flags to skip updating specific non-volatile data regions
+// during BIOS region update (normal update path, NOT force BIOS update).
+// When these flags are set, the corresponding data region in the new capsule
+// image will be replaced with current flash content before writing,
+// effectively preserving the existing data on flash.
+//
+// These flags only apply to UpdateSystemFirmware (non-force BIOS update).
+// When CAPSULE_FLAG_FORCE_BIOS_UPDATE is set, the entire BIOS region is
+// overwritten and these flags are ignored.
+//
+#define CAPSULE_FLAG_SKIP_UPDATE_MRC_DATA     BIT0
+#define CAPSULE_FLAG_SKIP_UPDATE_SBL_VAR      BIT1
+#define CAPSULE_FLAG_SKIP_UPDATE_UEFI_VAR     BIT2
+#define CAPSULE_FLAG_SKIP_UPDATE_SMBIOS       BIT3
+
 typedef enum {
   TopSwapSet,
   TopSwapClear

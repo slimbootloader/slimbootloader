@@ -538,12 +538,149 @@ UpdateFullBiosRegion (
 }
 
 /**
+  Preserve a specific component inside a container during BIOS region update.
+
+  This function locates a component within a container on flash and overlays
+  only that component's data onto the capsule image buffer, so that after the
+  BIOS region is written, the component data remains unchanged while other
+  components in the same container can still be updated.
+
+  @param[in] ContainerSig    Container signature in the flash map (e.g. 'IPFW').
+  @param[in] ComponentName   Component name inside the container (e.g. 'SMBS').
+  @param[in] ImageHdr        Pointer to fw mgmt capsule Image header.
+
+  @retval  EFI_SUCCESS       Component data preserved successfully.
+  @retval  EFI_NOT_FOUND     Container or component not found.
+  @retval  others            Error reading from boot media.
+**/
+STATIC
+EFI_STATUS
+PreserveContainerComponent (
+  IN  UINT32                          ContainerSig,
+  IN  UINT32                          ComponentName,
+  IN  EFI_FW_MGMT_CAP_IMAGE_HEADER   *ImageHdr
+  )
+{
+  EFI_STATUS              Status;
+  CONTAINER_HDR           *ContainerHdr;
+  CONTAINER_ENTRY         *ContainerEntry;
+  COMPONENT_ENTRY         *CompEntry;
+  FLASH_MAP               *FlashMapPtr;
+  UINT8                   *CapsuleBase;
+  UINT32                  BiosRgnOffset;
+  UINT32                  RomBase;
+  UINT32                  CompRomOffset;
+
+  FlashMapPtr = GetFlashMapPtr ();
+  if (FlashMapPtr == NULL) {
+    return EFI_NOT_FOUND;
+  }
+
+  Status = LocateComponentEntry (ContainerSig, ComponentName, &ContainerEntry, &CompEntry);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "PreserveContainerComponent: %08X:%08X not found (%r)\n", ContainerSig, ComponentName, Status));
+    return Status;
+  }
+
+  ContainerHdr  = (CONTAINER_HDR *)(UINTN)ContainerEntry->HeaderCache;
+  RomBase       = (UINT32)(0x100000000ULL - FlashMapPtr->RomSize);
+  CompRomOffset = (ContainerEntry->Base - RomBase) + ContainerHdr->DataOffset + CompEntry->Offset;
+
+  //
+  // Overlay the component's current flash data onto the capsule buffer.
+  //
+  CapsuleBase   = (UINT8 *)((UINTN)ImageHdr + sizeof (EFI_FW_MGMT_CAP_IMAGE_HEADER));
+  if ((CompRomOffset + CompEntry->Size) > ImageHdr->UpdateImageSize) {
+    DEBUG ((DEBUG_ERROR, "Component at 0x%X size 0x%X exceeds capsule\n", CompRomOffset, CompEntry->Size));
+    return EFI_INVALID_PARAMETER;
+  }
+  DEBUG ((DEBUG_INFO, "Preserving %08X:%08X (Offset=0x%X, Size=0x%X)\n", ContainerSig, ComponentName, CompRomOffset, CompEntry->Size));
+
+  BiosRgnOffset = GetRomImageOffsetInBiosRegion ();
+  Status = BootMediaRead (BiosRgnOffset + CompRomOffset, CompEntry->Size, CapsuleBase + CompRomOffset);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "PreserveContainerComponent: Failed to read component: %r\n", Status));
+  }
+
+  return Status;
+}
+
+/**
+  Preserve a flash component during BIOS region update.
+
+  This function reads the current content of a flash component from boot media
+  and overlays it onto the capsule image buffer at the same offset, so that
+  after the BIOS region is written, the component data remains unchanged.
+
+  @param[in] Signature       Flash map signature of the component to preserve.
+  @param[in] ImageHdr        Pointer to fw mgmt capsule Image header.
+                             The capsule image buffer starts at ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER).
+
+  @retval  EFI_SUCCESS       Component data preserved successfully.
+  @retval  EFI_NOT_FOUND     Component not found in flash map.
+  @retval  others            Error reading from boot media.
+**/
+EFI_STATUS
+PreserveFlashRegion (
+  IN  UINT32                          Signature,
+  IN  EFI_FW_MGMT_CAP_IMAGE_HEADER   *ImageHdr
+  )
+{
+  EFI_STATUS              Status;
+  FLASH_MAP_ENTRY_DESC    *Entry;
+  FLASH_MAP               *FlashMap;
+  UINT8                   *CapsuleBase;
+  UINT32                  BiosRgnOffset;
+
+  FlashMap = GetFlashMapPtr ();
+  if (FlashMap == NULL) {
+    return EFI_NOT_FOUND;
+  }
+
+  //
+  // Non-volatile components (MRCD, VARS, UVAR) are in the non-redundant region
+  // Look for the component in the primary partition.
+  //
+  Entry = GetComponentEntryByPartition (Signature, FALSE);
+  if (Entry == NULL) {
+    DEBUG ((DEBUG_INFO, "PreserveFlashRegion: Component %08X not found, skipping\n", Signature));
+    return EFI_NOT_FOUND;
+  }
+
+  //
+  // CapsuleBase points to the start of the BIOS image in the capsule.
+  // Entry->Offset is the component's offset from the start of the ROM image.
+  // Ensure the component falls within the capsule image boundary.
+  //
+  CapsuleBase = (UINT8 *)((UINTN)ImageHdr + sizeof (EFI_FW_MGMT_CAP_IMAGE_HEADER));
+  if ((UINT32)(Entry->Offset + Entry->Size) > ImageHdr->UpdateImageSize) {
+    DEBUG ((DEBUG_ERROR, "Component %08X at offset 0x%X size 0x%X exceeds capsule image\n", Signature, Entry->Offset, Entry->Size));
+    return EFI_INVALID_PARAMETER;
+  }
+  DEBUG ((DEBUG_INFO, "Preserving %08X (Offset=0x%X, Size=0x%X)\n", Signature, Entry->Offset, Entry->Size));
+
+  //
+  // Read current flash content and overlay onto the capsule buffer.
+  // The BIOS region offset accounts for when the SBL ROM image does not
+  // occupy the entire BIOS region.
+  //
+  BiosRgnOffset = GetRomImageOffsetInBiosRegion ();
+  Status = BootMediaRead (BiosRgnOffset + Entry->Offset, Entry->Size, CapsuleBase + Entry->Offset);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "PreserveFlashRegion: Failed to read %08X from flash, Status = %r\n", Signature, Status));
+  }
+
+  return Status;
+}
+
+/**
   Perform system Firmware update.
 
   This function will update SBL or Configuration data alone.
 
   @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
   @param[in] FwPolicy       Fw update policy
+  @param[in] CapsuleFlags   Capsule flags from firmware update header
 
   @retval  EFI_SUCCESS      Update successful.
   @retval  other            error occurred during firmware update
@@ -551,7 +688,8 @@ UpdateFullBiosRegion (
 EFI_STATUS
 UpdateSystemFirmware (
   IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
-  IN FIRMWARE_UPDATE_POLICY        FwPolicy
+  IN FIRMWARE_UPDATE_POLICY        FwPolicy,
+  IN UINT32                        CapsuleFlags
   )
 {
   EFI_STATUS                  Status;
@@ -583,6 +721,42 @@ UpdateSystemFirmware (
     DEBUG ((DEBUG_ERROR, " VerifyFwStruct failed with Status = 0x%x\n", Status));
     FreePool(UpdatePartition);
     return Status;
+  }
+
+  //
+  // Preserve non-volatile data regions based on capsule flags.
+  // When a skip flag is set, the corresponding region's current flash
+  // content is read and overlaid onto the capsule source buffer so that
+  // after the write, the data on flash remains unchanged.
+  //
+  // These flags only apply to the normal BIOS update path (not force BIOS update).
+  //
+  if ((CapsuleFlags & CAPSULE_FLAG_SKIP_UPDATE_MRC_DATA) != 0) {
+    Status = PreserveFlashRegion (FLASH_MAP_SIG_MRCDATA, ImageHdr);
+    if (EFI_ERROR (Status) && Status != EFI_NOT_FOUND) {
+      DEBUG ((DEBUG_ERROR, "Failed to preserve MRC data: %r\n", Status));
+    }
+  }
+
+  if ((CapsuleFlags & CAPSULE_FLAG_SKIP_UPDATE_SBL_VAR) != 0) {
+    Status = PreserveFlashRegion (FLASH_MAP_SIG_VARIABLE, ImageHdr);
+    if (EFI_ERROR (Status) && Status != EFI_NOT_FOUND) {
+      DEBUG ((DEBUG_ERROR, "Failed to preserve SBL variable: %r\n", Status));
+    }
+  }
+
+  if ((CapsuleFlags & CAPSULE_FLAG_SKIP_UPDATE_UEFI_VAR) != 0) {
+    Status = PreserveFlashRegion (FLASH_MAP_SIG_UEFIVARIABLE, ImageHdr);
+    if (EFI_ERROR (Status) && Status != EFI_NOT_FOUND) {
+      DEBUG ((DEBUG_ERROR, "Failed to preserve UEFI variable: %r\n", Status));
+    }
+  }
+
+  if ((CapsuleFlags & CAPSULE_FLAG_SKIP_UPDATE_SMBIOS) != 0) {
+    Status = PreserveContainerComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('S', 'M', 'B', 'S'), ImageHdr);
+    if (EFI_ERROR (Status) && Status != EFI_NOT_FOUND) {
+      DEBUG ((DEBUG_ERROR, "Failed to preserve SMBIOS: %r\n", Status));
+    }
   }
 
   //
@@ -1184,7 +1358,7 @@ UpdateSblComponent (
   //
   if (IsRedundantComponent(ImageHdr->UpdateHardwareInstance)) {
     DEBUG ((DEBUG_INFO, "Redundant component update requested! \n"));
-    Status = UpdateSystemFirmware(ImageHdr, FwPolicy);
+    Status = UpdateSystemFirmware(ImageHdr, FwPolicy, 0);
   } else {
     DEBUG ((DEBUG_INFO, "Non redundant component update requested! \n"));
     Status = UpdateNonRedundantComp(ImageHdr);

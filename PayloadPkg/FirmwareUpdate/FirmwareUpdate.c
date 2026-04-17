@@ -1291,7 +1291,7 @@ ApplyFwImage (
     if ((CapHdr->CapsuleFlags & CAPSULE_FLAG_FORCE_BIOS_UPDATE) != 0) {
       Status = UpdateFullBiosRegion (ImageHdr);
     } else {
-      Status = UpdateSystemFirmware (ImageHdr, FwPolicy);
+      Status = UpdateSystemFirmware (ImageHdr, FwPolicy, CapHdr->CapsuleFlags);
     }
     *ResetRequired = TRUE;
     break;

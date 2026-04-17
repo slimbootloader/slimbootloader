@@ -206,6 +206,7 @@ UpdateFullBiosRegion (
 
   @param[in] ImageHdr       Pointer to fw mgmt capsule Image header
   @param[in] FwPolicy       Fw update policy
+  @param[in] CapsuleFlags   Capsule flags from firmware update header
 
   @retval  EFI_SUCCESS      Update successful.
   @retval  other            error occurred during firmware update
@@ -213,7 +214,8 @@ UpdateFullBiosRegion (
 EFI_STATUS
 UpdateSystemFirmware (
   IN EFI_FW_MGMT_CAP_IMAGE_HEADER  *ImageHdr,
-  IN FIRMWARE_UPDATE_POLICY        FwPolicy
+  IN FIRMWARE_UPDATE_POLICY        FwPolicy,
+  IN UINT32                        CapsuleFlags
   );
 
 /**
