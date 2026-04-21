@@ -219,80 +219,103 @@ FusaConfigPostMem (
 
   FusaCfgData =(FUSA_CFG_DATA *) FindConfigDataByTag (CDATA_FUSA_TAG);
 
-  if (FusaCfgData != NULL) {
-    FspsConfig->FusaConfigEnable = 1;
-    FspsConfig->DisplayFusaConfigEnable = FusaCfgData->DisplayFusaConfigEnable;
-    FspsConfig->GraphicFusaConfigEnable = FusaCfgData->GraphicFusaConfigEnable;
-    FspsConfig->OpioFusaConfigEnable = FusaCfgData->OpioFusaConfigEnable;
-    FspsConfig->IopFusaConfigEnable = FusaCfgData->IopFusaConfigEnable;
-    FspsConfig->PsfFusaConfigEnable = FusaCfgData->PsfFusaConfigEnable;
-    FspsConfig->FusaRunPeriodicArrayBistMod0 = FusaCfgData->FusaPeriodicArrayBist0;
-    FspsConfig->FusaRunPeriodicArrayBistMod1 = FusaCfgData->FusaPeriodicArrayBist1;
-    FspsConfig->FusaRunPeriodicScanBistMod0 = FusaCfgData->FusaPeriodicScanBist0;
-    FspsConfig->FusaRunPeriodicScanBistMod1 = FusaCfgData->FusaPeriodicScanBist1;
-    FspsConfig->Module0Lockstep = FusaCfgData->Module0Lockstep;
-    FspsConfig->Module1Lockstep = FusaCfgData->Module1Lockstep;
-    // Enable GSPI 0 for CRB
-    FspsConfig->SerialIoSpiMode[0] = 0x1;
+  if (FusaCfgData == NULL) {
+    DEBUG ((DEBUG_ERROR, "Fusa Config Data not found! Disable FuSa features.\n"));
+    FspsConfig->FusaConfigEnable = 0;
+    return EFI_NOT_FOUND;
+  }
 
-    // Load FuSa binary ingredients
-    Status = GetComponentInfo(
-                SIGNATURE_32 ('F', 'U', 'F', 'W'),
-                &FusaComp,
-                &FusaCompLength
-                );
-    DEBUG((DEBUG_VERBOSE, "Find Fusa FW component Status: %r, Base 0x%X, Size 0x%X\n", Status, FusaComp, FusaCompLength));
+  FspsConfig->FusaConfigEnable = 1;
+  FspsConfig->DisplayFusaConfigEnable = FusaCfgData->DisplayFusaConfigEnable;
+  FspsConfig->GraphicFusaConfigEnable = FusaCfgData->GraphicFusaConfigEnable;
+  FspsConfig->OpioFusaConfigEnable = FusaCfgData->OpioFusaConfigEnable;
+  FspsConfig->IopFusaConfigEnable = FusaCfgData->IopFusaConfigEnable;
+  FspsConfig->PsfFusaConfigEnable = FusaCfgData->PsfFusaConfigEnable;
+  FspsConfig->FusaRunPeriodicArrayBistMod0 = FusaCfgData->FusaPeriodicArrayBist0;
+  FspsConfig->FusaRunPeriodicArrayBistMod1 = FusaCfgData->FusaPeriodicArrayBist1;
+  FspsConfig->FusaRunPeriodicScanBistMod0 = FusaCfgData->FusaPeriodicScanBist0;
+  FspsConfig->FusaRunPeriodicScanBistMod1 = FusaCfgData->FusaPeriodicScanBist1;
+  FspsConfig->Module0Lockstep = FusaCfgData->Module0Lockstep;
+  FspsConfig->Module1Lockstep = FusaCfgData->Module1Lockstep;
+  // Enable GSPI 0 for CRB
+  FspsConfig->SerialIoSpiMode[0] = 0x1;
 
-    if (!EFI_ERROR(Status)) {
-      FusaComp -= PcdGet32(PcdFlashBaseAddress);
-      FusaCompInMem = AllocateTemporaryMemory(FusaCompLength);
-      if (FusaCompInMem != NULL) {
-        DEBUG((DEBUG_VERBOSE, "Allocate successful. Reading from SPI\n"));
-        Status = SpiFlashRead(
-            FlashRegionBios,
-            FusaComp,
-            FusaCompLength,
-            FusaCompInMem
-            );
-        DEBUG((DEBUG_VERBOSE, "Copy FuSa FW Container to Mem Status: %r\n", Status));
-        DEBUG((DEBUG_VERBOSE, "Signature: 0x%X\n",((CONTAINER_HDR*)FusaCompInMem)->Signature));
-      }
-      Status = RegisterContainer((UINT32)FusaCompInMem, NULL);
-      DEBUG((DEBUG_VERBOSE, "Register Fusa FW Container Status: %r\n", Status));
+  // Load FuSa binary ingredients
+  // This is the last step so fail out if any step fails up through RegisterContainer.
+  Status = GetComponentInfo(
+              SIGNATURE_32 ('F', 'U', 'F', 'W'),
+              &FusaComp,
+              &FusaCompLength
+              );
+  DEBUG((DEBUG_VERBOSE, "Find Fusa FW component Status: %r, Base 0x%X, Size 0x%X\n", Status, FusaComp, FusaCompLength));
 
-      if (!EFI_ERROR(Status)) {
-        FusaStartupBistPattern = NULL;
-        Status = LoadComponent (SIGNATURE_32 ('F', 'U', 'F', 'W'), SIGNATURE_32 ('F', 'S', 'B', 'P'), (VOID**)&FusaStartupBistPattern, &FusaCompLength);
-        DEBUG((DEBUG_VERBOSE, "LoadComponent FSBP Status: %r\n", Status));
-        if (Status == EFI_SUCCESS) {
-          DEBUG((DEBUG_VERBOSE, "Reading FuSa Startup BIST pattern from address 0x%X, Length 0x%X\n", FusaStartupBistPattern, FusaCompLength));
-          DEBUG((DEBUG_VERBOSE, "Signature: 0x%X\n", ((LOADER_COMPRESSED_HEADER*)FusaStartupBistPattern)->Signature));
-          FspsConfig->FusaStartupPatternAddr = (UINT32)FusaStartupBistPattern;
-          // Extend Startup BIST pattern FW into PCR 0
-          if (MEASURED_BOOT_ENABLED() && (GetBootMode() != BOOT_ON_S3_RESUME)) {
-            FusaStartupBistPatBlob.BlobBase = (UINT64)(UINTN)FusaStartupBistPattern;
-            FusaStartupBistPatBlob.BlobLength = FusaCompLength;
-            TpmHashAndExtendPcrEventLog (0, FusaStartupBistPattern, FusaCompLength, EV_PLATFORM_CONFIG_FLAGS, sizeof(FusaStartupBistPatBlob), (UINT8 *)&FusaStartupBistPatBlob);
-          }
-        }
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, "Fusa FW component not found! %r\n", Status));
+    return Status;
+  }
 
-        FusaPeriodicBistPattern = NULL;
-        Status = LoadComponent (SIGNATURE_32 ('F', 'U', 'F', 'W'), SIGNATURE_32 ('F', 'P', 'B', 'P'), (VOID**)&FusaPeriodicBistPattern, &FusaCompLength);
-        DEBUG((DEBUG_VERBOSE, "LoadComponent FPBP Status: %r\n", Status));
-        if (Status == EFI_SUCCESS) {
-          DEBUG((DEBUG_VERBOSE, "Reading FuSa Periodic BIST pattern from address 0x%X, Length 0x%X\n", FusaPeriodicBistPattern, FusaCompLength));
-          DEBUG((DEBUG_VERBOSE, "Signature: 0x%X\n", ((LOADER_COMPRESSED_HEADER*)FusaPeriodicBistPattern)->Signature));
-          if (FspsConfig->FusaRunPeriodicScanBistMod0 || FspsConfig->FusaRunPeriodicScanBistMod1) {
-            FspsConfig->FusaPeriodicPatternAddr = (UINT32)FusaPeriodicBistPattern;
-          }
-          // Extend Periodic BIST pattern FW into PCR 0
-          if (MEASURED_BOOT_ENABLED() && (GetBootMode() != BOOT_ON_S3_RESUME)) {
-            FusaPeriodicBistPatBlob.BlobBase = (UINT64)(UINTN)FusaPeriodicBistPattern;
-            FusaPeriodicBistPatBlob.BlobLength = FusaCompLength;
-            TpmHashAndExtendPcrEventLog (0, FusaPeriodicBistPattern, FusaCompLength, EV_PLATFORM_CONFIG_FLAGS, sizeof(FusaPeriodicBistPatBlob), (UINT8 *)&FusaPeriodicBistPatBlob);
-          }
-        }
-      }
+  FusaComp -= PcdGet32(PcdFlashBaseAddress);
+  FusaCompInMem = AllocateTemporaryMemory(FusaCompLength);
+
+  if (FusaCompInMem == NULL) {
+    DEBUG((DEBUG_ERROR, "Failed to allocate memory for FuSa component\n"));
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  DEBUG((DEBUG_VERBOSE, "Allocate successful. Reading from SPI\n"));
+  Status = SpiFlashRead(
+      FlashRegionBios,
+      FusaComp,
+      FusaCompLength,
+      FusaCompInMem
+      );
+
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, "Failed to read FuSa FW container from flash! %r\n", Status));
+    return Status;
+  }
+
+  DEBUG((DEBUG_VERBOSE, "Copy FuSa FW Container to Mem Status: %r\n", Status));
+  DEBUG((DEBUG_VERBOSE, "Signature: 0x%X\n",((CONTAINER_HDR*)FusaCompInMem)->Signature));
+
+  Status = RegisterContainer((UINT32)FusaCompInMem, NULL);
+  DEBUG((DEBUG_VERBOSE, "Register Fusa FW Container Status: %r\n", Status));
+
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, "Failed to register FuSa FW container! %r\n", Status));
+    return Status;
+  }
+
+  // Attempt to load both BIST patterns even if one fails.
+  FusaStartupBistPattern = NULL;
+  Status = LoadComponent (SIGNATURE_32 ('F', 'U', 'F', 'W'), SIGNATURE_32 ('F', 'S', 'B', 'P'), (VOID**)&FusaStartupBistPattern, &FusaCompLength);
+  DEBUG((DEBUG_VERBOSE, "LoadComponent FSBP Status: %r\n", Status));
+  if (Status == EFI_SUCCESS) {
+    DEBUG((DEBUG_VERBOSE, "Reading FuSa Startup BIST pattern from address 0x%X, Length 0x%X\n", FusaStartupBistPattern, FusaCompLength));
+    DEBUG((DEBUG_VERBOSE, "Signature: 0x%X\n", ((LOADER_COMPRESSED_HEADER*)FusaStartupBistPattern)->Signature));
+    FspsConfig->FusaStartupPatternAddr = (UINT32)FusaStartupBistPattern;
+    // Extend Startup BIST pattern FW into PCR 0
+    if (MEASURED_BOOT_ENABLED() && (GetBootMode() != BOOT_ON_S3_RESUME)) {
+      FusaStartupBistPatBlob.BlobBase = (UINT64)(UINTN)FusaStartupBistPattern;
+      FusaStartupBistPatBlob.BlobLength = FusaCompLength;
+      TpmHashAndExtendPcrEventLog (0, FusaStartupBistPattern, FusaCompLength, EV_PLATFORM_CONFIG_FLAGS, sizeof(FusaStartupBistPatBlob), (UINT8 *)&FusaStartupBistPatBlob);
+    }
+  }
+
+  FusaPeriodicBistPattern = NULL;
+  Status = LoadComponent (SIGNATURE_32 ('F', 'U', 'F', 'W'), SIGNATURE_32 ('F', 'P', 'B', 'P'), (VOID**)&FusaPeriodicBistPattern, &FusaCompLength);
+  DEBUG((DEBUG_VERBOSE, "LoadComponent FPBP Status: %r\n", Status));
+  if (Status == EFI_SUCCESS) {
+    DEBUG((DEBUG_VERBOSE, "Reading FuSa Periodic BIST pattern from address 0x%X, Length 0x%X\n", FusaPeriodicBistPattern, FusaCompLength));
+    DEBUG((DEBUG_VERBOSE, "Signature: 0x%X\n", ((LOADER_COMPRESSED_HEADER*)FusaPeriodicBistPattern)->Signature));
+    if (FspsConfig->FusaRunPeriodicScanBistMod0 || FspsConfig->FusaRunPeriodicScanBistMod1) {
+      FspsConfig->FusaPeriodicPatternAddr = (UINT32)FusaPeriodicBistPattern;
+    }
+    // Extend Periodic BIST pattern FW into PCR 0
+    if (MEASURED_BOOT_ENABLED() && (GetBootMode() != BOOT_ON_S3_RESUME)) {
+      FusaPeriodicBistPatBlob.BlobBase = (UINT64)(UINTN)FusaPeriodicBistPattern;
+      FusaPeriodicBistPatBlob.BlobLength = FusaCompLength;
+      TpmHashAndExtendPcrEventLog (0, FusaPeriodicBistPattern, FusaCompLength, EV_PLATFORM_CONFIG_FLAGS, sizeof(FusaPeriodicBistPatBlob), (UINT8 *)&FusaPeriodicBistPatBlob);
     }
   }
 
