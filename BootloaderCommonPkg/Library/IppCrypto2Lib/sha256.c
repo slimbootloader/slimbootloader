@@ -14,7 +14,6 @@
 #include "pcpsha256stuff.h"
 
 #include <Library/CryptoLib.h>
-#include <Library/DebugLib.h>
 
 /**
   Initializes user context for hash computation. Compaitable with XIP.
@@ -28,8 +27,21 @@ IPPFUN( const IppsHashMethod*, ippsHashMethod_SHA256Sbl, (void) )
       IPP_SHA256_DIGEST_BITSIZE/8,
       MBS_SHA256,
       MLR_SHA256,
+      IPP_SHA256_STATE_BYTESIZE,
       sha256_hashInit,
-#if (_IPP32E >= _IPP32E_Y8) && (_IPP32E < _IPP32E_E9)
+/* Y8 (SSE4.2/Goldmont, _IPP32E=128): SHA-NI is present on Goldmont-class,
+ * but NOT on Haswell/Broadwell/Skylake which are E9/L9 class.
+ * Condition (_IPP32E < _IPP32E_E9) therefore covers only Y8 (Goldmont etc.).
+ * L9 (AVX2, _IPP32E=512) does NOT satisfy (_IPP32E < _IPP32E_E9) = (512 < 256),
+ * so L9 falls to sha256_hashUpdate by default — which uses vmovdqa ymm (32-byte
+ * alignment required) and crashes when running XIP from unaligned flash.
+ *
+ * When IPPCP_CUSTOM_BUILD is defined (SHA-NI-capable platform only; see INF),
+ * also select sha256_ni_hashUpdate for L9 so this static method table matches
+ * what ippsHashMethodSet_SHA256_TT would select at runtime. */
+#if ((_IPP32E >= _IPP32E_Y8) && (_IPP32E < _IPP32E_E9)) \
+ || (defined(IPPCP_CUSTOM_BUILD) && (_IPP32E >= _IPP32E_L9) \
+     && (_SHA_NI_ENABLING_ == _FEATURE_TICKTOCK_ || _SHA_NI_ENABLING_ == _FEATURE_ON_))
       sha256_ni_hashUpdate,
 #else
       sha256_hashUpdate,

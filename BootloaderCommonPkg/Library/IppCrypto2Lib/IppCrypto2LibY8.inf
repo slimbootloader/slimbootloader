@@ -23,13 +23,14 @@
 #
 
 [Sources]
-  IppCryptoSupport.c
+  IppCryptoSupportX64.c
   hmac.c
   rsa_verify.c
   sha256.c
   sha384.c
   sm3.c
   intrin.h
+  assert.h
   $(IPP_PATH)/include/ippcpdefs.h
   $(IPP_PATH)/sources/include/owndefs.h
   $(IPP_PATH)/sources/ippcp/owncp.h
@@ -80,6 +81,7 @@
   $(IPP_PATH)/sources/ippcp/pcprsa_gsmethod__gpr_public.c
 
   # Hash source files
+  $(IPP_PATH)/sources/ippcp/hash/sha3/pcpsha3ca.c
   $(IPP_PATH)/sources/ippcp/hash/pcphashmessage_rmf.c
   $(IPP_PATH)/sources/ippcp/hash/pcphashinit_rmf.c
   $(IPP_PATH)/sources/ippcp/hash/pcphashupdate_rmf.c
@@ -108,6 +110,11 @@
   $(IPP_PATH)/sources/ippcp/pcpbnsetwords.c
   $(IPP_PATH)/sources/ippcp/pcprsasign_pkcs1v15_rmf.c
   $(IPP_PATH)/sources/ippcp/hash/sha256/pcphashmethodset_sha256_tt.c
+  $(IPP_PATH)/sources/ippcp/hash/sha224/pcphashmethodset_sha224_tt.c
+  $(IPP_PATH)/sources/ippcp/hash/sha384/pcphashmethodset_sha384_tt.c
+  $(IPP_PATH)/sources/ippcp/hash/sha512/pcphashmethodset_sha512_tt.c
+  $(IPP_PATH)/sources/ippcp/hash/sha512/pcphashmethodset_sha512_224_tt.c
+  $(IPP_PATH)/sources/ippcp/hash/sha512/pcphashmethodset_sha512_256_tt.c
   $(IPP_PATH)/sources/ippcp/pcprsa_gsmethod__gpr_private.c
   $(IPP_PATH)/sources/ippcp/pcprsa_gsprv_cipher_crt.c
   $(IPP_PATH)/sources/ippcp/pcprsa_gsprv_cipher.c
@@ -209,8 +216,8 @@
   gPlatformCommonLibTokenSpaceGuid.PcdCompSignType
 
 [BuildOptions]
-  MSFT:*_*_*_CC_FLAGS = -D_ABL_ -D_Y8 -DIPPCP_FIPS_MODE -D_ARCH_EM64T -D_NO_IPP_DEPRECATED /GL-
-  MSFT:*_*_X64_NASM_FLAGS = -D_ABL_ -D_Y8 -DWIN32E
+  MSFT:*_*_*_CC_FLAGS = -D_ABL_ -D_Y8 -DIPPCP_FIPS_MODE -D_ARCH_EM64T -D_NO_IPP_DEPRECATED -DNDEBUG /GL-
+  MSFT:*_*_X64_NASM_FLAGS == -Ox -f win64 -D_ABL_ -D_Y8 -DWIN32E
   GCC:*_*_X64_NASM_FLAGS = -D_ABL_ -D_Y8 -DLINUX32E
   GCC:*_*_*_CC_FLAGS  = -D_ABL_ -D_Y8  -DIPPCP_FIPS_MODE -DMBX_FIPS_MODE -D_ARCH_EM64T -D_NO_IPP_DEPRECATED -w -Wformat -Wformat-security -march=nehalem -msse4.2 -maes -mpclmul -msha -U__INTEL_COMPILER
 

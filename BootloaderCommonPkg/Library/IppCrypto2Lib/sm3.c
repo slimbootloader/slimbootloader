@@ -27,8 +27,9 @@ IPPFUN( const IppsHashMethod*, ippsHashMethod_SM3Sbl, (void) )
       IPP_SM3_DIGEST_BITSIZE/8,
       MBS_SM3,
       MLR_SM3,
+      IPP_SM3_STATE_BYTESIZE,
       sm3_hashInit,
-#if (_IPP32E >= _IPP32E_L9)
+#if (_IPP32E >= _IPP32E_L9) && !defined(IPPCP_CUSTOM_BUILD)
       sm3_hashUpdate_ni,
 #else
       sm3_hashUpdate,

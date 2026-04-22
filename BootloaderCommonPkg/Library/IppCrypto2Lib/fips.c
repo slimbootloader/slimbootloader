@@ -33,14 +33,14 @@ IppCrypto2LibFipsSelftestRsaVerifyPkcsv15 ()
 
     // Query buffer size for the test and allocate it (it can be done on Intel® Cryptography Primitives Library side with IPPCP_SELFTEST_USE_MALLOC=on)
     int KeysBufferSize = 0;
-    selftest_status += fips_selftest_ippsRSASignVerify_PKCS1v15_rmf_get_size_keys(&KeysBufferSize);
+    selftest_status += fips_selftest_ippsRSAVerify_PKCS1v15_rmf_get_size_keys(&KeysBufferSize);
 
     Ipp8u *pKeysBuffer = AllocateTemporaryMemory(KeysBufferSize);
     if (pKeysBuffer == NULL) {
         return RETURN_OUT_OF_RESOURCES;
     }
     int BufferSize = 0;
-    selftest_status += fips_selftest_ippsRSASignVerify_PKCS1v15_rmf_get_size(&BufferSize, pKeysBuffer);
+    selftest_status += fips_selftest_ippsRSAVerify_PKCS1v15_rmf_get_size(&BufferSize, pKeysBuffer);
 
     Ipp8u *pBuffer = AllocateTemporaryMemory(BufferSize);
     if (pBuffer == NULL) {
