@@ -176,6 +176,8 @@ class Board(BaseBoard):
         #   VbtBin folder.
         self._MULTI_VBT_FILE      = {1:'Vbt.dat', 2:'VbtCflH.dat', 3:'VbtCflS.dat'}
 
+        self.MADT_USE_PLATFORM_LAPIC = 1
+
     def GetPlatformDsc (self):
         debug_port_enable = False
         if (self.CONSOLE_OUT_DEVICE_MASK & 0x04) or (self.CONSOLE_IN_DEVICE_MASK & 0x04) or (self.DEBUG_OUTPUT_DEVICE_MASK & 0x04):
@@ -206,7 +208,8 @@ class Board(BaseBoard):
             'VtdPmrLib|Silicon/CommonSocPkg/Library/VtdPmrLib/VtdPmrLib.inf',
             'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
             'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf',
-            'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf'
+            'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf',
+            'MadtLib|Silicon/CommonSocPkg/Library/MadtLib/MadtLib.inf'
         ]
         if self.BUILD_CSME_UPDATE_DRIVER:
             common_libs.append ('MeFwUpdateLib|Silicon/$(SILICON_PKG_NAME)/Library/MeFwUpdateLib/MeFwUpdateLib.inf')

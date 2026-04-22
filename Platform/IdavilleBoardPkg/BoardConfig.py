@@ -190,6 +190,8 @@ class Board(BaseBoard):
         self._CFGDATA_INT_FILE = []
         self._CFGDATA_EXT_FILE = ['CfgData_Int_LccRp.dlt', 'CfgData_Int_HccRp.dlt']
 
+        self.MADT_USE_PLATFORM_LAPIC  = 1
+
     def GetPlatformDsc (self):
         dsc = {}
         # These libraries will be added into the DSC files
@@ -223,7 +225,8 @@ class Board(BaseBoard):
             'PsdLib|Silicon/$(SILICON_PKG_NAME)/Library/PsdLib/PsdLib.inf',
             'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf',
             'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
-            'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf'
+            'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf',
+            'MadtLib|Silicon/CommonSocPkg/Library/MadtLib/MadtLib.inf'
         ]
         if self.BUILD_CSME_UPDATE_DRIVER:
             common_libs.append ('MeFwUpdateLib|Silicon/$(SILICON_PKG_NAME)/Library/MeFwUpdateLib/MeFwUpdateLib.inf')

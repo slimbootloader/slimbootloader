@@ -68,6 +68,7 @@
   GpioV2Lib
   P2sbLib
   DmarLib
+  MadtLib
 
 [Guids]
   gOsConfigDataGuid
@@ -108,3 +109,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
   gPlatformModuleTokenSpaceGuid.PcdIgdOpRegionAddress
   gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr
+
+[FeaturePcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdMadtUsePlatformLapic
+  gPlatformCommonLibTokenSpaceGuid.PcdCpuX2ApicEnabled
