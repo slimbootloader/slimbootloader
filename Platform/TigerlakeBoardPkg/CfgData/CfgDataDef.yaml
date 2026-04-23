@@ -15,7 +15,7 @@ template:
   CFGHDR_TMPL: >
     - CfgHeader    :
         length       : 0x04
-        value        : {0x01:2b, ((_LENGTH_$(1)_)/4):10b, $(3):4b, $(4):4b, $(2):12b}
+        value        : {0x01:2b, ((_LENGTH_$(1)_)/4):11b, $(3):3b, $(4):4b, $(2):12b}
     - CondValue    :
         length       : 0x04
         value        : 0x00000000

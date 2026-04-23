@@ -561,7 +561,7 @@ def gen_flash_map_bin (flash_map_file, comp_list):
 def copy_expanded_file (src, dst):
     gen_cfg_data ("GENDLT", src, dst)
 
-def gen_config_file (fv_dir, brd_name_override, brd_name, platform_id, pri_key, cfg_db_size, cfg_size, cfg_def, cfg_int, cfg_ext, sign_scheme, hash_type, svn, brd_build_name):
+def gen_config_file (fv_dir, brd_name_override, brd_name, platform_id, pri_key, cfg_db_size, cfg_size, cfg_def, cfg_int, cfg_ext, sign_scheme, hash_type, svn, brd_build_name, fsp_path=None):
     # Remove previous generated files
     for file in glob.glob(os.path.join(fv_dir, "CfgData*.*")):
             os.remove(file)
@@ -677,6 +677,12 @@ def gen_config_file (fv_dir, brd_name_override, brd_name, platform_id, pri_key, 
 
     if not os.path.exists(cfg_merged_bin_file):
         cfg_merged_bin_file = cfg_bin_int_file
+
+    # Inject FSP UPD deltas into the merged config data before signing
+    if fsp_path:
+        from GenFspUpdDelta import gen_and_inject_fsp_upd_deltas
+        gen_and_inject_fsp_upd_deltas(fv_dir, brd_cfg_dir, fsp_path, cfg_merged_bin_file,
+                                      dlt_files=cfg_ext)
 
     cfg_final_file = os.path.join(fv_dir, "CFGDATA.bin")
     if pri_key:

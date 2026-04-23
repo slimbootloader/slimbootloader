@@ -381,6 +381,7 @@ SecStartup2 (
   VOID                    **FieldPtr;
   UINT32                    Tolum;
   UINT64                    Touum;
+  FSP_INFO_HEADER          *FspHdr;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer ();
   ASSERT (LdrGlobal != NULL);
@@ -638,6 +639,16 @@ SecStartup2 (
         CopyMem (BufPtr, (VOID *)(UINTN)ContainerEntry->HeaderCache, ContainerEntry->HeaderSize);
         ContainerEntry->HeaderCache = (UINT32)(UINTN)BufPtr;
       }
+    }
+  }
+
+  // Migrate FSPM UPD from CAR to memory
+  if (LdrGlobal->FspmUpdPtr != NULL) {
+    FspHdr = (FSP_INFO_HEADER *)(UINTN)(PCD_GET32_WITH_ADJUST (PcdFSPMBase) + FSP_INFO_HEADER_OFF);
+    BufPtr = AllocatePool (FspHdr->CfgRegionSize);
+    if (BufPtr != NULL) {
+      CopyMem (BufPtr, LdrGlobal->FspmUpdPtr, FspHdr->CfgRegionSize);
+      LdrGlobal->FspmUpdPtr = (VOID *)BufPtr;
     }
   }
 

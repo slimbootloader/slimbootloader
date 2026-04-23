@@ -1871,8 +1871,8 @@ def generate_values (cfg_tree):
 def bytes_to_cfghdr(data, offset):
     cfghdr = {}
     cfghdr['ConditionNum'] = data[offset] & 0x3
-    cfghdr['Length'] = ((data[ offset] & 0xFC) + ((data[offset + 1] & 0x0F) << 8))
-    cfghdr['Flags'] = data[offset + 1] >> 4
+    cfghdr['Length'] = (data[offset] & 0xFC) + ((data[offset + 1] & 0x1F) << 8)
+    cfghdr['Flags'] = data[offset + 1] >> 5
     cfghdr['Version'] = data[offset + 2] & 0x0F
     cfghdr['Tag'] = ((data[offset + 2] & 0xF0) + (data[offset + 3] << 8)) >> 4
     cfghdr['Offset'] = offset
@@ -1891,7 +1891,7 @@ def cfghdr_to_bytes(Length, ConditionNum, Flags, Version, Tag):
     # Update Length and flags from referral cfg
     Header = bytearray(4)
     Header[0] = ConditionNum | (Length & 0xFC)
-    Header[1] = (Flags << 4) | (Length >> 8)
+    Header[1] = (Flags << 5) | ((Length >> 8) & 0x1F)
     Header[2] = Version | ((Tag & 0xF) << 4)
     Header[3] = (Tag >> 4) & 0xFF
     return Header

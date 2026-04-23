@@ -278,6 +278,7 @@ class BaseBoard(object):
         self._CFGDATA_DEF_FILE     = ''
         self._CFGDATA_INT_FILE     = []
         self._CFGDATA_EXT_FILE     = []
+        self.FSP_UPD_DLT_SUPPORT   = 0
 
         self.IPP_HASH_LIB_SUPPORTED_MASK   = IPP_CRYPTO_ALG_MASK[self._SIGN_HASH]
 
@@ -341,6 +342,39 @@ class Build(object):
     def board_build_hook (self, phase):
         if getattr(self._board, "PlatformBuildHook", None):
             self._board.PlatformBuildHook (self, phase)
+
+    def _gen_fspupd_yaml (self):
+        """Auto-generate CfgData_FspM.yaml and CfgData_FspS.yaml.
+
+        Must be called before gen_config_file() so that the YAML files are
+        present when the PKL is generated (the CfgDataDef YAML includes them).
+        """
+        from GenFspUpdYaml import gen_fsp_upd_yaml_files
+
+        fsp_path = self._gen_fspupd_fsp_path()
+
+        board_pkg = getattr(self._board, 'BOARD_PKG_NAME_OVERRIDE', '') or self._board.BOARD_PKG_NAME
+        cfg_dir   = os.path.join(os.environ['PLT_SOURCE'], 'Platform', board_pkg, 'CfgData')
+        if not os.path.isdir(cfg_dir):
+            cfg_dir = os.path.join(os.environ['SBL_SOURCE'], 'Platform', board_pkg, 'CfgData')
+
+        gen_fsp_upd_yaml_files(fsp_path, self._fv_dir, cfg_dir)
+
+    def _gen_fspupd_fsp_path (self):
+        """Return the FSP directory path (containing FspmUpd.h / FspsUpd.h).
+
+        When FSP_UPD_DLT_SUPPORT is enabled, the pre-build hook copies and
+        patches the headers into <fv_dir>/Fsp/.  Use that directory so the
+        original repo headers are never modified.
+        """
+        if self._board.FSP_UPD_DLT_SUPPORT:
+            patched = os.path.join(self._fv_dir, 'Fsp')
+            if os.path.isdir(patched):
+                return patched
+        return os.path.join(
+            os.environ.get('PLT_SOURCE',
+                           os.environ.get('SBL_SOURCE', '')),
+            self._board._FSP_PATH_NAME)
 
     def update_fit_table (self):
 
@@ -1359,13 +1393,20 @@ class Build(object):
 
         # create configuration data
         if self._board.CFGDATA_SIZE > 0:
+            # generate FSP UPD YAML files before config data (so PKL includes them)
+            if self._board.FSP_UPD_DLT_SUPPORT:
+                self._gen_fspupd_yaml()
+
             svn = self._board.CFGDATA_SVN
+
             # create config data files
             board_override_name = getattr(self._board, 'BOARD_PKG_NAME_OVERRIDE', '')
+            fsp_upd_path = self._gen_fspupd_fsp_path() if self._board.FSP_UPD_DLT_SUPPORT else None
             gen_config_file (self._fv_dir, board_override_name, self._board.BOARD_PKG_NAME, self._board._PLATFORM_ID,
                              self._board._CFGDATA_PRIVATE_KEY, self._board.CFG_DATABASE_SIZE, self._board.CFGDATA_SIZE,
                              self._board._CFGDATA_DEF_FILE, self._board._CFGDATA_INT_FILE, self._board._CFGDATA_EXT_FILE,
-                             self._board._SIGNING_SCHEME, HASH_VAL_STRING[self._board.SIGN_HASH_TYPE], svn, self._board.BOARD_NAME)
+                             self._board._SIGNING_SCHEME, HASH_VAL_STRING[self._board.SIGN_HASH_TYPE], svn, self._board.BOARD_NAME,
+                             fsp_path=fsp_upd_path)
 
         # rebuild reset vector
         vtf_dir = os.path.join('BootloaderCorePkg', 'Stage1A', 'Ia32', 'Vtf0')
