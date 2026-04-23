@@ -60,7 +60,6 @@
   HeciInitLib
   PsdLib
   MeExtMeasurementLib
-  TccLib
   WatchDogTimerLib
   ResetSystemLib
 

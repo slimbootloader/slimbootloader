@@ -67,7 +67,6 @@
   PsdLib
   MeExtMeasurementLib
   BasePchPciBdfLib
-  TccLib
   SmbiosInitLib
   WatchDogTimerLib
   PciePm

@@ -59,7 +59,6 @@
   GpioLib
   WatchDogTimerLib
   HobLib
-  TccLib
 
 [Guids]
   gFspNonVolatileStorageHobGuid

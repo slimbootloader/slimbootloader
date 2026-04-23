@@ -54,7 +54,6 @@
 #include <Library/SgxLib.h>
 #include <Library/WatchDogTimerLib.h>
 #include <Library/HobLib.h>
-#include <Library/TccLib.h>
 #include <Library/PciLib.h>
 #include <Register/PchRegsP2sb.h>
 

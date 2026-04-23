@@ -76,11 +76,9 @@
 #include <PlatformData.h>
 #include <PlatformBase.h>
 #include <Library/UefiVariableLib.h>
-#include <Library/TccLib.h>
 #include <Library/TmeVarLib.h>
 #include <Library/BdatLib.h>
 #include <PsdLib.h>
-#include <TccConfigSubRegions.h>
 #include <Library/SgxLib.h>
 #include <Register/Intel/ArchitecturalMsr.h>
 #include <Register/Intel/Cpuid.h>
@@ -253,20 +251,6 @@ PatchBdatTable(
 **/
 RETURN_STATUS
 PatchTpm2AcpiTable (
-  IN  EFI_ACPI_DESCRIPTION_HEADER           *Table
-  );
-
-/**
-  Patch RTCT ACPI Table
-
-  @param[in] Table            Pointer to RTCT ACPI Table
-
-  @retval    RETURN_SUCCESS   Operation completed successfully.
-  @retval    EFI_UNSUPPORTED  Returned Unsupported
-
-**/
-RETURN_STATUS
-PatchRtctAcpiTable (
   IN  EFI_ACPI_DESCRIPTION_HEADER           *Table
   );
 

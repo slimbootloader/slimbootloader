@@ -71,7 +71,6 @@
 #include "BoardSaConfigPostMem.h"
 #include <Library/HeciInitLib.h>
 #include <TccConfigSubRegions.h>
-#include <Library/TccLib.h>
 #include <Library/WatchDogTimerLib.h>
 #include <Library/MeExtMeasurementLib.h>
 #include <GpioConfig.h>

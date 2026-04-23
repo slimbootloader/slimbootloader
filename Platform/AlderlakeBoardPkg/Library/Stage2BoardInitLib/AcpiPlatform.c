@@ -417,9 +417,6 @@ PlatformUpdateAcpiTable (
   VOID                        *FspHobList;
   PLATFORM_DATA               *PlatformData;
   FEATURES_CFG_DATA           *FeaturesCfgData;
-#if FixedPcdGet8 (PcdTccEnabled) && !defined(PLATFORM_RPLS) && !defined(PLATFORM_BTLS) && !defined(PLATFORM_ADLN) && !defined(PLATFORM_ASL)
-  TCC_CFG_DATA                *TccCfgData;
-#endif
   EFI_STATUS                   Status;
   EFI_ACPI_6_3_FIXED_ACPI_DESCRIPTION_TABLE *FadtPointer;
 
@@ -492,18 +489,6 @@ PlatformUpdateAcpiTable (
     if (GetBootMode() != BOOT_ON_FLASH_UPDATE) {
       AcpiPatchPss (Table, GlobalNvs);
     }
-  } else if (Table->Signature == SIGNATURE_32 ('R', 'T', 'C', 'T')) {
-    DEBUG ((DEBUG_INFO, "Find RTCT table\n"));
-
-#if FixedPcdGet8 (PcdTccEnabled) && !defined(PLATFORM_RPLS) && !defined(PLATFORM_BTLS) && !defined(PLATFORM_ADLN) && !defined(PLATFORM_ASL)
-      TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag(CDATA_TCC_TAG);
-      if ((TccCfgData != NULL) && (TccCfgData->TccEnable != 0)) {
-        Status = UpdateAcpiRtctTable(Table);
-        DEBUG ( (DEBUG_INFO, "Updated Rtct Table entries in AcpiTable status: %r\n", Status) );
-        return Status;
-      }
-#endif
-    return EFI_UNSUPPORTED;
   } else if (Table->OemTableId == SIGNATURE_64 ('D', 'p', 't', 'f', 'T', 'a', 'b', 'l')) { //DptfTabl
     DEBUG ((DEBUG_INFO, "Find DptfTabl table\n"));
 

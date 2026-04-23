@@ -56,18 +56,6 @@ PCH_DEVICE_INTERRUPT_CONFIG mDevIntConfig[] = {
     { 6, 0, PchIntA, PchPIRQA}, // VRP2
 };
 
-CONST EFI_ACPI_DESCRIPTION_HEADER  mAcpiTccRtctTableTemplate = {
-  EFI_ACPI_RTCT_SIGNATURE,
-  sizeof (EFI_ACPI_DESCRIPTION_HEADER)
-  // Other fields will be updated in runtime
-};
-
-STATIC
-CONST EFI_ACPI_COMMON_HEADER *mPlatformAcpiTables[] = {
-  (EFI_ACPI_COMMON_HEADER *)&mAcpiTccRtctTableTemplate,
-  NULL
-};
-
 /**
   Clear SMI sources
 
@@ -156,7 +144,6 @@ BoardInit (
       UpdatePayloadId ();
     }
     SpiConstructor ();
-    (VOID) PcdSet32S (PcdAcpiTableTemplatePtr, (UINT32)(UINTN)mPlatformAcpiTables);
     break;
   case PostSiliconInit:
     PlatformPostSiliconInit ();
@@ -906,12 +893,6 @@ PlatformUpdateAcpiTable (
   case OEM1_SSDT_TABLE_SIGNATURE:
     if (Table->OemTableId == SIGNATURE_64 ('C', 'P', 'U', ' ', 'E', 'I', 'S', 'T')) {
       Status = PatchOem1SsdtTable (Table);
-    }
-    break;
-  case EFI_ACPI_RTCT_SIGNATURE:
-    if (Table->Signature == SIGNATURE_32 ('R', 'T', 'C', 'T')) {
-      DEBUG ((DEBUG_INFO, "Find RTCT table\n"));
-      Status = PatchRtctAcpiTable (Table);
     }
     break;
   case EFI_BDAT_TABLE_SIGNATURE:
