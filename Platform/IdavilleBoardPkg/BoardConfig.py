@@ -217,7 +217,6 @@ class Board(BaseBoard):
             'MeChipsetLib|Silicon/$(SILICON_PKG_NAME)/Library/MeChipsetLib/MeChipsetLib.inf',
             'SpdLib|Silicon/$(SILICON_PKG_NAME)/Library/SpdLib/SpdLib.inf',
             'AspeedGfxLib|Platform/$(BOARD_PKG_NAME)/Library/AspeedGfxLib/AspeedGfxLib.inf',
-            'TccLib|Silicon/CommonSocPkg/Library/TccLib/TccLib.inf',
             'TmeVarLib|Platform/$(BOARD_PKG_NAME)/Library/TmeVarLib/TmeVarLib.inf',
             'BdatLib|Silicon/$(SILICON_PKG_NAME)/Library/BdatLib/BdatLib.inf',
             'PsdLib|Silicon/$(SILICON_PKG_NAME)/Library/PsdLib/PsdLib.inf',

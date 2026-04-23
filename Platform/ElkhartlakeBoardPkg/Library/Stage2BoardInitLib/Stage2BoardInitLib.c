@@ -71,7 +71,6 @@
 #include "BoardSaConfigPostMem.h"
 #include <Library/HeciInitLib.h>
 #include <TccConfigSubRegions.h>
-#include <Library/TccLib.h>
 #include <Library/WatchDogTimerLib.h>
 #include <Library/MeExtMeasurementLib.h>
 #include <GpioConfig.h>
@@ -594,9 +593,6 @@ BoardInit (
     Status = PcdSet32S (PcdAcpiTableTemplatePtr, (UINT32)(UINTN)mPlatformAcpiTables);
     break;
   case PostSiliconInit:
-    if (IsWdtFlagsSet(WDT_FLAG_TCC_DSO_IN_PROGRESS)) {
-      WdtDisable (WDT_FLAG_TCC_DSO_IN_PROGRESS);
-    }
     // Set TSEG base/size PCD
     TsegBase = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + TSEG) & ~0xF;
     TsegSize = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + BGSM) & ~0xF;

@@ -318,9 +318,6 @@ BoardInit (
 
     break;
   case PostSiliconInit:
-    if (IsWdtFlagsSet(WDT_FLAG_TCC_DSO_IN_PROGRESS)) {
-      WdtDisable (WDT_FLAG_TCC_DSO_IN_PROGRESS);
-    }
 
     // Set TSEG base/size PCD
     TsegBase = MmioRead32 (TO_MM_PCI_ADDRESS (0x00000000) + R_SA_TSEGMB) & ~0xF;

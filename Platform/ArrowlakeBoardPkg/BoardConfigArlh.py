@@ -310,7 +310,6 @@ class Board(BaseBoard):
             'GpioV2Lib|Silicon/CommonSocPkg/Library/GpioV2Lib/GpioV2Lib.inf',
             'P2sbLib|Silicon/CommonSocPkg/Library/P2sbLib/P2sbLib.inf',
             'GpioV2SiLib|Silicon/$(SILICON_PKG_NAME)/Library/GpioV2SiLib/GpioV2SiLib.inf',
-            'TccLib|Silicon/CommonSocPkg/Library/TccLib/TccLib.inf',
             'MtlPchPcieRpLib|Silicon/ArrowlakePkg/Library/MtlPchPcieRpLib/MtlPchPcieRpLib.inf',
             'ShellExtensionLib|Platform/$(BOARD_PKG_NAME)/Library/ShellExtensionLib/ShellExtensionLib.inf',
             'FspmUpdUpdateLib|Platform/$(BOARD_PKG_NAME)/Library/FspmUpdUpdateLib/FspmUpdUpdateLib.inf',

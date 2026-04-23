@@ -267,34 +267,6 @@ PatchTpm2AcpiTable (
   return Status;
 }
 
-/**
-  Patch RTCT ACPI Table
-
-  @param[in] Table            Pointer to RTCT ACPI Table
-
-  @retval    RETURN_SUCCESS   Operation completed successfully.
-  @retval    EFI_UNSUPPORTED  Returned Unsupported
-
-**/
-RETURN_STATUS
-PatchRtctAcpiTable (
-  IN  EFI_ACPI_DESCRIPTION_HEADER           *Table
-  )
-{
-  EFI_STATUS                   Status;
-  TCC_CFG_DATA                *TccCfgData;
-
-  if ((FeaturePcdGet (PcdTccEnabled)) && (GetBootMode() != BOOT_ON_FLASH_UPDATE)) {
-    TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag(CDATA_TCC_TAG);
-    if ((TccCfgData != NULL) && (TccCfgData->TccEnable != 0)) {
-      Status = UpdateAcpiRtctTable(Table);
-      DEBUG ( (DEBUG_INFO, "Updated ACPI RTCT Table : %r\n", Status) );
-      return Status;
-    }
-  }
-  return EFI_UNSUPPORTED;
-}
-
 STATIC
 UINT8 *
 SkipExternalSbOpcodes (

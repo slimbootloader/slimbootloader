@@ -25,7 +25,6 @@
 #include <ConfigDataCommonStruct.h>
 #include <Library/ContainerLib.h>
 #include <Library/BaseMemoryLib.h>
-#include <Library/TccLib.h>
 #include <Library/BoardInitLib.h>
 
 #include "BoardSaConfigPreMem.h"
