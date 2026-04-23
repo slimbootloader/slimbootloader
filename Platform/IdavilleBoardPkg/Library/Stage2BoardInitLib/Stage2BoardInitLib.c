@@ -68,8 +68,6 @@ CONST EFI_ACPI_COMMON_HEADER *mPlatformAcpiTables[] = {
   NULL
 };
 
-BOOLEAN mTccDsoTuning      = FALSE;
-
 /**
   Clear SMI sources
 
@@ -227,10 +225,6 @@ TccModePostMemConfig (
   UINT32                       TccCacheconfigSize;
   UINT32                      *TccCrlBase;
   UINT32                       TccCrlSize;
-  UINT32                      *TccStreamBase;
-  UINT32                       TccStreamSize;
-  BIOS_SETTINGS               *PolicyConfig;
-  TCC_STREAM_CONFIGURATION    *StreamConfig;
   EFI_STATUS                   Status;
   TCC_CFG_DATA                *TccCfgData;
 
@@ -266,61 +260,6 @@ TccModePostMemConfig (
   FspsUpd->FspsConfig.PcdPcieRootPort10L1SubStates     = 0;
   FspsUpd->FspsConfig.PcdPcieRootPort11Aspm            = 0;
   FspsUpd->FspsConfig.PcdPcieRootPort11L1SubStates     = 0;
-
-  if (!IsWdtFlagsSet (WDT_FLAG_TCC_DSO_IN_PROGRESS)) {
-    //
-    // If FSPM doesn't enable TCC DSO timer, FSPS should also skip TCC DSO.
-    //
-    DEBUG ((DEBUG_INFO, "DSO Tuning skipped.\n"));
-  } else if (TccCfgData->TccTuning != 0) {
-    // Reload Watch dog timer
-    WdtReloadAndStart (WDT_TIMEOUT_TCC_DSO, WDT_FLAG_TCC_DSO_IN_PROGRESS);
-
-    // Load TCC stream config from container
-    TccStreamBase = NULL;
-    TccStreamSize = 0;
-    Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'T'),
-                            (VOID **)&TccStreamBase, &TccStreamSize);
-    if (EFI_ERROR (Status) || (TccStreamSize < sizeof (TCC_STREAM_CONFIGURATION))) {
-      DEBUG ((DEBUG_INFO, "Load TCC Stream %r, size = 0x%x\n", Status, TccStreamSize));
-    } else {
-      FspsUpd->FspsConfig.PcdTccStreamCfgBase =          (UINT32)(UINTN)TccStreamBase;
-      FspsUpd->FspsConfig.PcdTccStreamCfgSize =          TccStreamSize;
-      DEBUG ((DEBUG_INFO, "Load tcc stream @0x%p, size = 0x%x\n", TccStreamBase, TccStreamSize));
-
-      // Update UPD from stream
-      if (TccCfgData->TccTuning != 0) {
-        StreamConfig   = (TCC_STREAM_CONFIGURATION *) TccStreamBase;
-        PolicyConfig = (BIOS_SETTINGS *) &StreamConfig->BiosSettings;
-
-        FspsUpd->FspsConfig.PcdPcieRootPort0Aspm         = PolicyConfig->PchPcieAspm;
-        FspsUpd->FspsConfig.PcdPcieRootPort0L1SubStates  = PolicyConfig->PchPcieRpL1;
-        FspsUpd->FspsConfig.PcdPcieRootPort1Aspm         = PolicyConfig->PchPcieAspm;
-        FspsUpd->FspsConfig.PcdPcieRootPort1L1SubStates  = PolicyConfig->PchPcieRpL1;
-        FspsUpd->FspsConfig.PcdPcieRootPort2Aspm         = PolicyConfig->PchPcieAspm;
-        FspsUpd->FspsConfig.PcdPcieRootPort2L1SubStates  = PolicyConfig->PchPcieRpL1;
-        FspsUpd->FspsConfig.PcdPcieRootPort3Aspm         = PolicyConfig->PchPcieAspm;
-        FspsUpd->FspsConfig.PcdPcieRootPort3L1SubStates  = PolicyConfig->PchPcieRpL1;
-        FspsUpd->FspsConfig.PcdPcieRootPort4Aspm         = PolicyConfig->PchPcieAspm;
-        FspsUpd->FspsConfig.PcdPcieRootPort4L1SubStates  = PolicyConfig->PchPcieRpL1;
-        FspsUpd->FspsConfig.PcdPcieRootPort5Aspm         = PolicyConfig->PchPcieAspm;
-        FspsUpd->FspsConfig.PcdPcieRootPort5L1SubStates  = PolicyConfig->PchPcieRpL1;
-        FspsUpd->FspsConfig.PcdPcieRootPort6Aspm         = PolicyConfig->PchPcieAspm;
-        FspsUpd->FspsConfig.PcdPcieRootPort6L1SubStates  = PolicyConfig->PchPcieRpL1;
-        FspsUpd->FspsConfig.PcdPcieRootPort7Aspm         = PolicyConfig->PchPcieAspm;
-        FspsUpd->FspsConfig.PcdPcieRootPort7L1SubStates  = PolicyConfig->PchPcieRpL1;
-        FspsUpd->FspsConfig.PcdPcieRootPort8Aspm         = PolicyConfig->PchPcieAspm;
-        FspsUpd->FspsConfig.PcdPcieRootPort8L1SubStates  = PolicyConfig->PchPcieRpL1;
-        FspsUpd->FspsConfig.PcdPcieRootPort9Aspm         = PolicyConfig->PchPcieAspm;
-        FspsUpd->FspsConfig.PcdPcieRootPort9L1SubStates  = PolicyConfig->PchPcieRpL1;
-        FspsUpd->FspsConfig.PcdPcieRootPort10Aspm        = PolicyConfig->PchPcieAspm;
-        FspsUpd->FspsConfig.PcdPcieRootPort10L1SubStates = PolicyConfig->PchPcieRpL1;
-        FspsUpd->FspsConfig.PcdPcieRootPort11Aspm        = PolicyConfig->PchPcieAspm;
-        FspsUpd->FspsConfig.PcdPcieRootPort11L1SubStates = PolicyConfig->PchPcieRpL1;
-        mTccDsoTuning      = TRUE;
-      }
-    }
-  }
 
   // Load TCC cache config binary from container
   TccCacheconfigBase = NULL;
@@ -1217,19 +1156,10 @@ PlatformUpdateAcpiGnvs (
 
   // Power Management
   if (PwrMgmtCfgData != NULL) {
-    if (mTccDsoTuning) {
-      AcpiParameter->MonitorMwaitEnable = 0;
-      AcpiParameter->CStateEnable       = 0;
-      AcpiParameter->C6Enable           = 0;
-      AcpiParameter->C3Enable           = 0;
-      AcpiParameter->PStateEnable       = 0;
-      AcpiParameter->HWPMEnable         = 0;
-    } else {
-      AcpiParameter->MonitorMwaitEnable = (UINT8)PwrMgmtCfgData->CState.MonitorMWait;
-      AcpiParameter->CStateEnable       = (UINT8)PwrMgmtCfgData->CState.EnableCstate;
-      AcpiParameter->PStateEnable       = (UINT8)PwrMgmtCfgData->PState.EistEnable;
-      AcpiParameter->HWPMEnable         = (UINT8)PwrMgmtCfgData->PState.HWPMEnable;
-    }
+    AcpiParameter->MonitorMwaitEnable = (UINT8)PwrMgmtCfgData->CState.MonitorMWait;
+    AcpiParameter->CStateEnable       = (UINT8)PwrMgmtCfgData->CState.EnableCstate;
+    AcpiParameter->PStateEnable       = (UINT8)PwrMgmtCfgData->PState.EistEnable;
+    AcpiParameter->HWPMEnable         = (UINT8)PwrMgmtCfgData->PState.HWPMEnable;
     if (AcpiParameter->CStateEnable != 0) {
       AcpiParameter->C6Enable           = (UINT8)((PwrMgmtCfgData->CState.C6Enable == 0xFF) ? 1 : PwrMgmtCfgData->CState.C6Enable);
       AcpiParameter->C3Enable           = (UINT8)PwrMgmtCfgData->CState.C3Enable;

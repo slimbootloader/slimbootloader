@@ -51,7 +51,6 @@ PlatformPostSiliconInit (
   EFI_HOB_GUID_TYPE         *GuidHob;
   BL_IIO_UDS                *IioUdsHobData;
   VOID                      *FspHobList;
-  TCC_CFG_DATA              *TccCfgData;
 
   Address = MM_PCI_ADDRESS (0, 0, 0, 0);
   TsegBase = MmioRead32 (Address + 0xA8) & 0xFFF00000;
@@ -74,12 +73,6 @@ PlatformPostSiliconInit (
 
   if ((GetBootMode() != BOOT_ON_FLASH_UPDATE) && (GetPayloadId() == 0)) {
     (VOID)PcdSet32S (PcdFuncCpuInitHook, (UINT32)(UINTN) PlatformCpuInit);
-  }
-
-  TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag(CDATA_TCC_TAG);
-
-  if ((TccCfgData != NULL) && (TccCfgData->TccEnable != 0) && (IsWdtFlagsSet (WDT_FLAG_TCC_DSO_IN_PROGRESS))) {
-    WdtDisable (WDT_FLAG_TCC_DSO_IN_PROGRESS);
   }
 }
 
