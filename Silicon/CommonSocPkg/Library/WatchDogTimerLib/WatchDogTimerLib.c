@@ -17,16 +17,19 @@
 #define B_ACPI_IO_OC_WDT_CTL_RLD                          BIT31
 #define B_ACPI_IO_OC_WDT_CTL_ICCSURV_STS                  BIT25
 #define B_ACPI_IO_OC_WDT_CTL_NO_ICCSURV_STS               BIT24
-#define B_ACPI_IO_OC_WDT_CTL_TOP_SWAP_TRIGGER             BIT21
+
+// BIT21 ~23 might be used by FSP
 #define B_ACPI_IO_OC_WDT_CTL_RECOVERY_TRIGGER             BIT20
+#define B_ACPI_IO_OC_WDT_CTL_SCRATCHPAD_BOOT_CNT_MASK     (BIT18 | BIT19)
+#define B_ACPI_IO_OC_WDT_CTL_TOP_SWAP_TRIGGER             BIT17
 #define B_ACPI_IO_OC_WDT_CTL_UPDATE_TRIGGER               BIT16
+
 #define B_ACPI_IO_OC_WDT_CTL_FORCE_ALL                    BIT15
 #define B_ACPI_IO_OC_WDT_CTL_EN                           BIT14
 #define B_ACPI_IO_OC_WDT_CTL_ICCSURV                      BIT13
 #define B_ACPI_IO_OC_WDT_CTL_LCK                          BIT12
 #define B_ACPI_IO_OC_WDT_CTL_TOV_MASK                     0x3FF
 #define B_ACPI_IO_OC_WDT_CTL_SCRATCHPAD_MASK              0xFF0000
-#define B_ACPI_IO_OC_WDT_CTL_SCRATCHPAD_BOOT_CNT_MASK     0xC0000
 #define B_ACPI_IO_OC_WDT_CTL_SCRATCHPAD_BOOT_CNT_SHIFT    0x12
 
 
