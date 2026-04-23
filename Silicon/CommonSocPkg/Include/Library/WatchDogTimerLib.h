@@ -8,9 +8,6 @@
 #ifndef WATCH_DOG_TIMBER_LIB_H_
 #define WATCH_DOG_TIMBER_LIB_H_
 
-#define  WDT_TIMEOUT_TCC_DSO           200    // 200 seconds
-#define  WDT_FLAG_TCC_DSO_IN_PROGRESS  BIT17
-
 /**
   Reloads WDT with new timeout value and starts it.
 

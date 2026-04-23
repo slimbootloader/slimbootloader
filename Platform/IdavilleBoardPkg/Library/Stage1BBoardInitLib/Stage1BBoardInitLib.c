@@ -106,11 +106,6 @@ TccModePreMemConfig (
   FSPM_UPD  *FspmUpd
 )
 {
-  UINT32                     *TccStreamBase;
-  UINT32                      TccStreamSize;
-  BIOS_SETTINGS              *PolicyConfig;
-  TCC_STREAM_CONFIGURATION   *StreamConfig;
-  EFI_STATUS                  Status;
   TCC_CFG_DATA               *TccCfgData;
 
   TccCfgData = (TCC_CFG_DATA *) FindConfigDataByTag(CDATA_TCC_TAG);
@@ -145,62 +140,7 @@ TccModePreMemConfig (
 
   FspmUpd->FspmConfig.PcdTccEnable                  = TccCfgData->TccEnable;
   FspmUpd->FspmConfig.PcdTccSoftwareSramEn          = TccCfgData->TccSoftSram;
-  FspmUpd->FspmConfig.PcdTccDsoTuningEn             = TccCfgData->TccTuning;
   FspmUpd->FspmConfig.PcdTccErrorLogEn              = TccCfgData->TccErrorLog;
-
-  if (IsMarkedBadDso ()) {
-    DEBUG ((DEBUG_INFO, "From previous TCC tuning issues, platform rebooted with default values.\n"));
-  } else if (IsWdtFlagsSet (WDT_FLAG_TCC_DSO_IN_PROGRESS) && IsWdtTimeout ()) {
-    DEBUG ((DEBUG_INFO, "From previous TCC tuning issues, platform rebooted with default values.\n"));
-    WdtClearScratchpad (WDT_FLAG_TCC_DSO_IN_PROGRESS);
-    InvalidateBadDso ();
-  } else if (TccCfgData->TccTuning != 0) {
-    // Setup Watch dog timer
-    WdtReloadAndStart (WDT_TIMEOUT_TCC_DSO, WDT_FLAG_TCC_DSO_IN_PROGRESS);
-
-    // Load TCC stream config from container
-    TccStreamBase = NULL;
-    TccStreamSize = 0;
-    Status = LoadComponent (SIGNATURE_32 ('I', 'P', 'F', 'W'), SIGNATURE_32 ('T', 'C', 'C', 'T'), (VOID **)&TccStreamBase, &TccStreamSize);
-
-    if (EFI_ERROR (Status) || (TccStreamSize < sizeof(TCC_STREAM_CONFIGURATION))) {
-      DEBUG ((DEBUG_INFO, "Load TCC Stream %r, size = 0x%x\n", Status, TccStreamSize));
-    } else {
-      FspmUpd->FspmConfig.PcdTccStreamCfgBasePreMem   = (UINT32)(UINTN)TccStreamBase;
-      FspmUpd->FspmConfig.PcdTccStreamCfgSizePreMem   = TccStreamSize;
-      DEBUG ((DEBUG_INFO, "Load TCC stream @0x%p, size = 0x%x\n", TccStreamBase, TccStreamSize));
-
-      if (FspmUpd->FspmConfig.PcdTccDsoTuningEn != 0) {
-        StreamConfig = (TCC_STREAM_CONFIGURATION *) TccStreamBase;
-        PolicyConfig = (BIOS_SETTINGS *) &StreamConfig->BiosSettings;
-        FspmUpd->FspmConfig.PcdPchDmiAspm             = PolicyConfig->DmiAspm;
-        FspmUpd->FspmConfig.PcdPchLegacyIoLowLatency  = PolicyConfig->PchPwrClkGate;
-
-        FspmUpd->FspmConfig.PcdProcessorEistEnable    = PolicyConfig->Pstates;
-        FspmUpd->FspmConfig.PcdProcessorHWPMEnable    = PolicyConfig->HwpEn;
-        if (!PolicyConfig->Cstates) {
-          FspmUpd->FspmConfig.PcdPackageCState       = 0;
-          FspmUpd->FspmConfig.PcdMonitorMWait        = 0;
-        }
-
-        FspmUpd->FspmConfig.PcdPowerLimit1Enable      = PolicyConfig->CoreRapl;
-        FspmUpd->FspmConfig.PcdPowerLimit2Enable      = PolicyConfig->CoreRapl;
-        FspmUpd->FspmConfig.PcdTurboMode              = PolicyConfig->Turbo;
-        FspmUpd->FspmConfig.PcdDramRaplEnable         = PolicyConfig->MemoryRapl;
-        if (PolicyConfig->MemPowerDown) {
-          FspmUpd->FspmConfig.PcdCkeProgramming       = 1; // Manual CKE
-          FspmUpd->FspmConfig.PcdApdEnable            = 0; // Disable APD
-          FspmUpd->FspmConfig.PcdPpdEnable            = 0; // Disable PPD
-        }
-
-        FspmUpd->FspmConfig.PcdPcieGlobalAspm         = PolicyConfig->CpuPcieAspm;
-        FspmUpd->FspmConfig.PcdHyperThreading         = PolicyConfig->HyperThreading;
-
-        DEBUG ((DEBUG_INFO, "Dump TCC DSO BIOS settings:\n"));
-        DumpHex (2, 0, sizeof(BIOS_SETTINGS), PolicyConfig);
-      }
-    }
-  }
 
   DEBUG ((DEBUG_INFO, "TccModePreMemConfig () - End\n"));
 }
