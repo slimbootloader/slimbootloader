@@ -23,13 +23,14 @@
 #
 
 [Sources]
-  IppCryptoSupport.c
+  IppCryptoSupportX64.c
   hmac.c
   rsa_verify.c
   sha256.c
   sha384.c
   sm3.c
   intrin.h
+  assert.h
   $(IPP_PATH)/include/ippcpdefs.h
   $(IPP_PATH)/sources/include/owndefs.h
   $(IPP_PATH)/sources/ippcp/owncp.h
@@ -46,7 +47,6 @@
   $(IPP_PATH)/sources/ippcp/gsmod_enginegetsize.c
   $(IPP_PATH)/sources/ippcp/gsmod_montfactor.c
   $(IPP_PATH)/sources/ippcp/pcpngmontexpstuff_bin.c
-  $(IPP_PATH)/sources/ippcp/pcpmontred.c
 
   # BigNum source files
   $(IPP_PATH)/sources/ippcp/pcpbngetsize.c
@@ -55,17 +55,11 @@
   $(IPP_PATH)/sources/ippcp/pcpbngetoctstr.c
   $(IPP_PATH)/sources/ippcp/pcpbnu_setoctstr.c
   $(IPP_PATH)/sources/ippcp/pcpbnu_getoctstr.c
-  $(IPP_PATH)/sources/ippcp/pcpbnu_arith_mul_adc.c
-  $(IPP_PATH)/sources/ippcp/pcpbnu_arith_sqr_adc.c
-  $(IPP_PATH)/sources/ippcp/pcpbnu_arith_add.c
   $(IPP_PATH)/sources/ippcp/pcpbnu32_arith_add.c
-  $(IPP_PATH)/sources/ippcp/pcpbnu_arith_addmuldigit.c
-  $(IPP_PATH)/sources/ippcp/pcpbnu_arith_sub.c
   $(IPP_PATH)/sources/ippcp/pcpbnu32_arith_sub.c
   $(IPP_PATH)/sources/ippcp/pcpbnu32_arith_submuldigit.c
   $(IPP_PATH)/sources/ippcp/pcpbnu_nlz.c
   $(IPP_PATH)/sources/ippcp/pcpbnu32_nlz.c
-  $(IPP_PATH)/sources/ippcp/pcpbnu32_arith_div.c
 
   # RSA Source files
   $(IPP_PATH)/sources/ippcp/pcprsa_getsizepublickey.c
@@ -81,6 +75,7 @@
   $(IPP_PATH)/sources/ippcp/pcprsa_gsmethod__gpr_public.c
 
   # Hash source files
+  $(IPP_PATH)/sources/ippcp/hash/sha3/pcpsha3ca.c
   $(IPP_PATH)/sources/ippcp/hash/pcphashmessage_rmf.c
   $(IPP_PATH)/sources/ippcp/hash/pcphashinit_rmf.c
   $(IPP_PATH)/sources/ippcp/hash/pcphashupdate_rmf.c
@@ -89,6 +84,11 @@
   $(IPP_PATH)/sources/ippcp/hash/sm3/pcpsm3stuff.h
   $(IPP_PATH)/sources/ippcp/hash/sha512/pcpsha512stuff.h
   $(IPP_PATH)/sources/ippcp/hash/sha256/pcpsha256stuff.h
+
+  # C fallbacks for SHA/SM3 (no matching E9-level asm; asm guards require == E9)
+  $(IPP_PATH)/sources/ippcp/hash/sha256/pcphashsha256px.c
+  $(IPP_PATH)/sources/ippcp/hash/sha1/pcphashsha1px.c
+  $(IPP_PATH)/sources/ippcp/hash/sm3/pcpsm3ca.c
 
   # HMAC source files
   $(IPP_PATH)/sources/ippcp/pcphmacmessage_rmf.c
@@ -110,6 +110,11 @@
   $(IPP_PATH)/sources/ippcp/pcpbnsetwords.c
   $(IPP_PATH)/sources/ippcp/pcprsasign_pkcs1v15_rmf.c
   $(IPP_PATH)/sources/ippcp/hash/sha256/pcphashmethodset_sha256_tt.c
+  $(IPP_PATH)/sources/ippcp/hash/sha224/pcphashmethodset_sha224_tt.c
+  $(IPP_PATH)/sources/ippcp/hash/sha384/pcphashmethodset_sha384_tt.c
+  $(IPP_PATH)/sources/ippcp/hash/sha512/pcphashmethodset_sha512_tt.c
+  $(IPP_PATH)/sources/ippcp/hash/sha512/pcphashmethodset_sha512_224_tt.c
+  $(IPP_PATH)/sources/ippcp/hash/sha512/pcphashmethodset_sha512_256_tt.c
   $(IPP_PATH)/sources/ippcp/pcprsa_gsmethod__gpr_private.c
   $(IPP_PATH)/sources/ippcp/pcprsa_gsprv_cipher_crt.c
   $(IPP_PATH)/sources/ippcp/pcprsa_gsprv_cipher.c
@@ -154,14 +159,17 @@
 
 [Sources.X64]
   $(IPP_PATH)/sources/ippcp/asm_ia32/pcpvariant_xmm7560.inc
-  # E9 files
+  # E9 asm files (target opt; guards require == _IPP32E_E9 or >= _IPP32E_E9)
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha256e9as.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsm3e9as.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha512e9as.nasm
-  # FIPS
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha1e9as.nasm
+  # Fallbacks: fire when NASM define resolves lower than E9 (Y8=128 < E9=256)
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha512m7as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsm3u8as.nasm
+  # FIPS / SHA-NI
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnumaconem7as.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/cpinitas.nasm
-  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha1e9as.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha1nias.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha256nias.nasm
   # M7 files
@@ -179,6 +187,9 @@
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha256e9as.asm         : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha256e9as.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsm3e9as.asm            : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsm3e9as.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha512e9as.asm         : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha512e9as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha1e9as.asm           : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha1e9as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha512m7as.asm         : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha512m7as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsm3u8as.asm            : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsm3u8as.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnuaddm7as.asm         : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnuaddm7as.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnudivm7as.asm         : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnudivm7as.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnuincm7as.asm         : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnuincm7as.nasm
@@ -189,7 +200,6 @@
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcppurgeblkm7as.asm       : $(IPP_PATH)/sources/ippcp/asm_intel64/pcppurgeblkm7as.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnumaconem7as.asm      : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnumaconem7as.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/cpinitas.asm              : $(IPP_PATH)/sources/ippcp/asm_intel64/cpinitas.nasm
-  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha1e9as.asm          : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha1e9as.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha1nias.asm          : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha1nias.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha256nias.asm        : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha256nias.nasm
 
@@ -212,7 +222,7 @@
 
 [BuildOptions]
   MSFT:*_*_*_CC_FLAGS = -D_ABL_ -D_E9 -DIPPCP_FIPS_MODE -D_ARCH_EM64T -D_NO_IPP_DEPRECATED /GL- /arch:AVX
-  MSFT:*_*_X64_NASM_FLAGS = -D_ABL_ -D_E9 -DWIN32E
-  GCC:*_*_X64_NASM_FLAGS = -D_ABL_ -D_E9 -DLINUX32E
+  MSFT:*_*_X64_NASM_FLAGS == -Ox -f win64 -D_ABL_ -D_E9 -D_Y8 -DWIN32E
+  GCC:*_*_X64_NASM_FLAGS = -D_ABL_ -D_E9 -D_Y8 -DLINUX32E
   GCC:*_*_*_CC_FLAGS  = -D_ABL_ -D_E9 -w -Wformat -Wformat-security -march=sandybridge -mavx -maes -mpclmul -msha -mrdrnd -mrdseed -DIPPCP_FIPS_MODE -D_ARCH_EM64T -D_NO_IPP_DEPRECATED -DMBX_FIPS_MODE
 
