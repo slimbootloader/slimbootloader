@@ -37,7 +37,6 @@
   BaseLib
   DebugLib
   ConfigDataLib
-  TccLib
   WatchDogTimerLib
 
 [Pcd]

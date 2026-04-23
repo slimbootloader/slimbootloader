@@ -78,7 +78,6 @@
 #include <LowPowerSupport.h>
 #include <TccConfigSubRegions.h>
 #include <Library/LocalApicLib.h>
-#include <Library/TccLib.h>
 #include <Library/WatchDogTimerLib.h>
 #include "Dts.h"
 #include "SerialIo.h"

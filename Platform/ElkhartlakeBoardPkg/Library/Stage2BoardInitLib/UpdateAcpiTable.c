@@ -20,7 +20,6 @@
 #include <CpuDataStruct.h>
 #include <CpuPowerMgmt.h>
 #include <GlobalNvsAreaDef.h>
-#include <Library/TccLib.h>
 #include <PowerMgmtNvsStruct.h>
 #include <Register/CpuRegs.h>
 #include <Library/PsdLib.h>

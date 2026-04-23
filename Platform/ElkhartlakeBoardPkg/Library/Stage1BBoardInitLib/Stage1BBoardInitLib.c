@@ -42,7 +42,6 @@
 #include <GpioConfig.h>
 #include <Library/GpioLib.h>
 #include <Library/WatchDogTimerLib.h>
-#include <Library/TccLib.h>
 
 CONST PLT_DEVICE  mPlatformDevices[]= {
   {{0x00001700}, OsBootDeviceSata  , 0 },

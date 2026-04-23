@@ -26,7 +26,6 @@
 #include <Library/ContainerLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <GpioPinsVer2Lp.h>
-#include <Library/TccLib.h>
 #include <Library/FusaConfigLib.h>
 #include <FirmwareInterfaceTable.h>
 #include <Library/TxtLib.h>

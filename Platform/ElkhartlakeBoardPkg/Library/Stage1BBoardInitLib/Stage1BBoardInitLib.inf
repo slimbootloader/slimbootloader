@@ -46,7 +46,6 @@
   SmbusLib
   PchSciLib
   WatchDogTimerLib
-  TccLib
 
 [Guids]
 

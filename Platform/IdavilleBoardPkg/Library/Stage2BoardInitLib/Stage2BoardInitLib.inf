@@ -59,7 +59,6 @@
   StageCommonBoardInitLib
   AspeedGfxLib
   UefiVariableLib
-  TccLib
   TmeVarLib
   BdatLib
   PsdLib

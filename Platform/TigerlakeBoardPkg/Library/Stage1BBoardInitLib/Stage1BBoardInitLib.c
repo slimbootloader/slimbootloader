@@ -40,7 +40,6 @@
 #include <Library/ResetSystemLib.h>
 #include <Library/WatchDogTimerLib.h>
 #include <Library/SocInitLib.h>
-#include <Library/TccLib.h>
 #include <FirmwareInterfaceTable.h>
 #include <Library/TxtLib.h>
 
