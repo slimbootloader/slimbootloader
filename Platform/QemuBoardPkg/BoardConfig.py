@@ -74,12 +74,18 @@ class Board(BaseBoard):
 
         # RSA2048 or RSA3072
         self._RSA_SIGN_TYPE          = 'RSA3072'
+
         # 'SHA2_256' or 'SHA2_384'
         self._SIGN_HASH              = 'SHA2_384'
+
         # 0x01 for SHA2_256 or 0x02 for SHA2_384
         self.SIGN_HASH_TYPE          = HASH_TYPE_VALUE[self._SIGN_HASH]
+
         # 0x0010  for SM3_256 | 0x0008 for SHA2_512 | 0x0004 for SHA2_384 | 0x0002 for SHA2_256 | 0x0001 for SHA1
-        self.IPP_HASH_LIB_SUPPORTED_MASK   = IPP_CRYPTO_ALG_MASK[self._SIGN_HASH]
+        self.IPP_HASH_LIB_SUPPORTED_MASK   = IPP_CRYPTO_ALG_MASK['SHA2_384'] | IPP_CRYPTO_ALG_MASK['SHA2_256']
+        # Y8 for SSE4.2 instructions
+        self.ENABLE_CRYPTO_SHA_OPT  = IPP_CRYPTO_OPTIMIZATION_MASK['X64_NO']
+
 
         self._MASTER_PRIVATE_KEY    = 'KEY_ID_MASTER' + '_' + self._RSA_SIGN_TYPE
         self._CFGDATA_PRIVATE_KEY   = 'KEY_ID_CFGDATA' + '_' + self._RSA_SIGN_TYPE
@@ -120,7 +126,7 @@ class Board(BaseBoard):
         self.KEYHASH_SIZE         = 0x00001000
         self.VARIABLE_SIZE        = 0x00002000
         self.SBLRSVD_SIZE         = 0x00001000
-        self.FWUPDATE_SIZE        = 0x00019000 if self.ENABLE_FWU else 0
+        self.FWUPDATE_SIZE        = 0x0001A000 if self.ENABLE_FWU else 0
         self.SETUP_SIZE           = 0x00020000 if self.ENABLE_SBL_SETUP else 0
 
         self._REDUNDANT_LAYOUT    = 1
@@ -153,7 +159,7 @@ class Board(BaseBoard):
         if not self.STAGE1B_XIP:
             # For Stage1B, it can be compressed if STAGE1B_XIP is 0
             # If so, STAGE1B_FD_BASE/STAGE1B_FD_SIZE need to be defined
-            self.STAGE1B_FD_SIZE      = 0x32000
+            self.STAGE1B_FD_SIZE      = 0x38000
             if self.NO_OPT_MODE:
                 self.STAGE1B_FD_SIZE += 0xE000
             self.STAGE1B_FD_BASE    = FREE_TEMP_RAM_TOP - self.STAGE1B_FD_SIZE
@@ -199,6 +205,20 @@ class Board(BaseBoard):
         }
         return version_dict
 
+    def GetIppCryptoInf(self):
+        ipp_crypto_opt_lvl = 0
+        ipp_crypto_opt_name = None
+        ipp_crypto_inf = ''
+        for k,v in IPP_CRYPTO_OPTIMIZATION_MASK.items():
+            if self.ENABLE_CRYPTO_SHA_OPT & v:
+                if v > ipp_crypto_opt_lvl:
+                    ipp_crypto_opt_lvl = v
+                    ipp_crypto_opt_name = k
+
+        if ipp_crypto_opt_name[-2:]:
+            ipp_crypto_inf = os.path.join('BootloaderCommonPkg', 'Library', 'IppCrypto2Lib', 'IppCrypto2Lib%s.inf' % ipp_crypto_opt_name[-2:])
+        return ipp_crypto_inf
+
     def PlatformBuildHook (self, build, phase):
         if phase == 'post-build:before':
           # Create PTEST.bin
@@ -218,11 +238,13 @@ class Board(BaseBoard):
             'BootGuardLib|Silicon/CommonSocPkg/Library/BootGuardLibCBnT/BootGuardLibCBnT.inf',
             'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
             'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf',
-            'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf'
+            'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf',
+            'CryptoLib|%s' % self.GetIppCryptoInf()
         ]
         dsc['PcdsFeatureFlag.%s' % self.BUILD_ARCH] = [
             'gPlatformCommonLibTokenSpaceGuid.PcdMultiUsbBootDeviceEnabled | TRUE'
         ]
+        dsc['PcdsFixedAtBuild'] = ['gPlatformCommonLibTokenSpaceGuid.PcdIppcrypto2Lib | TRUE']
         return dsc
 
     def GetKeyHashList (self):
