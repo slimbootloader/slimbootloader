@@ -233,7 +233,7 @@ def single_sign_file (priv_key, hash_type, sign_scheme, in_file, out_file):
     hashdata_bytes = bytearray.fromhex(hashdata)
     open (hash_file, 'wb').write(hashdata_bytes)
 
-    print ("Key used for Singing %s !!" % priv_key)
+    print ("Key used for Signing %s !!" % priv_key)
 
     # sign using Openssl pkeyutl
     cmdargs = [get_openssl_path(), 'pkeyutl', '-sign', '-in', '%s' % hash_file, '-inkey', '%s' % priv_key,
