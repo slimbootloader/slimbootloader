@@ -149,6 +149,7 @@ typedef  VOID (EFIAPI *DRIVER_ENTRY) (VOID *Params);
 
   @param[out] FwBuffer        The firmware update capsule image.
   @param[out] FwSize          The capsule image size.
+  @param[in]  IsCsmeRecovery  TRUE to try CSME capsule tag (0x081) first; FALSE for standard SBL update (tag 0x080).
 
   @retval  EFI_SUCCESS        Get the capsule image successfully.
   @retval  others             Error happening when getting capsule image.
@@ -157,7 +158,8 @@ EFI_STATUS
 EFIAPI
 GetCapsuleImage (
   OUT  VOID                      **FwBuffer,
-  OUT  UINT32                    *FwSize
+  OUT  UINT32                    *FwSize,
+  IN   BOOLEAN                   IsCsmeRecovery
   );
 
 /**

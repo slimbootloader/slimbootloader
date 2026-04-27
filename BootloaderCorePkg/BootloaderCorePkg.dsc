@@ -432,9 +432,10 @@
 
   BootloaderCorePkg/Stage2/Stage2.inf {
     <LibraryClasses>
-      FspApiLib    | BootloaderCorePkg/Library/FspApiLib/FspsApiLib.inf
-      SocInitLib   | $(SOC_INIT_STAGE2_LIB_INF_FILE)
-      BoardInitLib | $(BRD_INIT_STAGE2_LIB_INF_FILE)
+      FspApiLib             | BootloaderCorePkg/Library/FspApiLib/FspsApiLib.inf
+      FirmwareResiliencyLib | BootloaderCorePkg/Library/FirmwareResiliencyLib/FirmwareResiliencyLib.inf
+      SocInitLib            | $(SOC_INIT_STAGE2_LIB_INF_FILE)
+      BoardInitLib          | $(BRD_INIT_STAGE2_LIB_INF_FILE)
   }
 
   PayloadPkg/OsLoader/OsLoader.inf {
@@ -463,6 +464,7 @@
       BootloaderLib           | PayloadPkg/Library/PayloadLib/PayloadLib.inf
       PlatformHookLib         | PayloadPkg/Library/PlatformHookLib/PlatformHookLib.inf
       FirmwareUpdateLib       | $(SOC_FWU_LIB_INF_FILE)
+      FirmwareResiliencyLib   | BootloaderCorePkg/Library/FirmwareResiliencyLib/FirmwareResiliencyLib.inf
   }
 !endif
 

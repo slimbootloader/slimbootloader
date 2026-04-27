@@ -397,8 +397,9 @@ GetOsImageList (
 EFI_STATUS
 EFIAPI
 GetCapsuleImage (
-  OUT VOID     **CapsuleImage,
-  OUT UINT32   *CapsuleImageSize
+  OUT VOID      **CapsuleImage,
+  OUT UINT32    *CapsuleImageSize,
+  IN  BOOLEAN   IsCsmeRecovery
   )
 {
   EFI_STATUS              Status;
@@ -416,10 +417,13 @@ GetCapsuleImage (
 
   DEBUG ((DEBUG_INFO, "\n=================Read Capsule Image==============\n"));
 
-  //
-  // Get capsule configuration data
-  //
-  CapsuleInfo = (CAPSULE_INFO_CFG_DATA *) FindConfigDataByTag (CDATA_CAPSULE_INFO_TAG);
+  // Get capsule config: CSME recovery tries tag 0x081 first, falls back to 0x080.
+  if (IsCsmeRecovery) {
+    CapsuleInfo = (CAPSULE_INFO_CFG_DATA *) FindConfigDataByTag (CDATA_CSME_CAPSULE_INFO_TAG);
+  }
+  if (CapsuleInfo == NULL) {
+    CapsuleInfo = (CAPSULE_INFO_CFG_DATA *) FindConfigDataByTag (CDATA_CAPSULE_INFO_TAG);
+  }
   //
   // If we do not find capsule information, return error
   //

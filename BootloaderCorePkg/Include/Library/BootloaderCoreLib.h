@@ -9,6 +9,7 @@
 #define _BOOTLOADER_CORE_LIB_H_
 
 #include <Library/BootloaderCommonLib.h>
+#include <FirmwareUpdateStatus.h>
 
 typedef enum {
   EnumMemInfoTom,     // Total system memory size

@@ -22,8 +22,10 @@
 #include <Library/DebugDataLib.h>
 #include <Library/MpInitLib.h>
 #include <Library/FirmwareUpdateLib.h>
+#include <Library/PciLib.h>
 #include <Guid/BootLoaderVersionGuid.h>
 #include <BootloaderCoreGlobal.h>
+#include <Register/HeciRegs.h>
 #include "AcpiInitLibInternal.h"
 
 STATIC

@@ -10,6 +10,7 @@
 #define _BOOTLOADER_CORE_GLOBAL_H_
 
 #include <Library/BootloaderCoreLib.h>
+#include <FirmwareUpdateStatus.h>
 
 #define  MPLD_SIGNATURE               SIGNATURE_32 ('$', 'P', 'L', 'D')
 #define  IS_MULTI_PAYLOAD(x)          (*(UINT32 *)(x) == MPLD_SIGNATURE)

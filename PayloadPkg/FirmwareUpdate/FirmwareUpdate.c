@@ -31,7 +31,10 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/BootGuardLib.h>
 #include <Library/WatchDogTimerLib.h>
 #include <Library/TcoTimerLib.h>
+#include <Library/FirmwareResiliencyLib.h>
+#include <FirmwareUpdateStatus.h>
 #include "FirmwareUpdateHelper.h"
+#include <PlatformBase.h>
 
 UINT32   mSblImageBiosRgnOffset;
 
@@ -1376,7 +1379,7 @@ IsRedundantComponent (
 **/
 EFI_STATUS
 InitFirmwareUpdate (
-  VOID
+  IN BOOLEAN  IsCsmeRecovery
 )
 {
   EFI_STATUS                    Status;
@@ -1399,10 +1402,8 @@ InitFirmwareUpdate (
   FwPolicy.Data = 0;
   CapsuleImage = NULL;
 
-  //
-  // Get capsule image.
-  //
-  Status = GetCapsuleImage (&CapsuleImage, &CapsuleSize);
+  // Get capsule image (IsCsmeRecovery selects tag 0x081/CsmeFwuImage.bin vs 0x080/FwuImage.bin).
+  Status = GetCapsuleImage (&CapsuleImage, &CapsuleSize, IsCsmeRecovery);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "GetCapsuleImage failed with status = %r\n", Status));
   }
@@ -1816,9 +1817,8 @@ EndFirmwareUpdate (
 {
   EFI_STATUS  Status;
 
+  // Clear trigger and mark SM_DONE; if ME is still corrupt next boot, Stage1B boots degraded (no re-trigger).
   ClearFwUpdateTrigger ();
-
-  // Clear state machine anyway to prevent FWU loop.
   SetStateMachineFlag (FW_UPDATE_SM_DONE);
 
   Status = PlatformEndFirmwareUpdate ();
@@ -1892,12 +1892,19 @@ PayloadMain (
   EFI_STATUS    Status;
   UINT32        BiosRgnSize;
   UINT8         StateMachine;
+  BOOLEAN       IsMeRecovery;
 
   //
   // Prepare Console Print
   //
   InitConsole ();
   ConsolePrint ("Starting Firmware Update/Recovery\n");
+
+  // Detect ME corruption; select CSME recovery capsule if found.
+  IsMeRecovery = IsMeCorrupt ();
+  if (IsMeRecovery) {
+    DEBUG ((DEBUG_WARN, "ME corruption detected - running CSME capsule update\n"));
+    ConsolePrint ("ME Firmware Corruption Detected - Starting CSME Recovery\n");  }
 
   //
   // Initialize boot media to look for the capsule image
@@ -1971,7 +1978,7 @@ PayloadMain (
     }
   } else {
     DEBUG((DEBUG_INFO, "Triggered FW update!\n"));
-    Status = InitFirmwareUpdate ();
+    Status = InitFirmwareUpdate (IsMeRecovery);
     if (EFI_ERROR (Status)) {
       if (Status != EFI_ALREADY_STARTED) {
         DEBUG((DEBUG_ERROR, "Firmware update failed with Status = %r\n", Status));

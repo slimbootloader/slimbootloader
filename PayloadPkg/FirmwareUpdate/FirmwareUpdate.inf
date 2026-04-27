@@ -55,6 +55,7 @@
   BootGuardLib
   WatchDogTimerLib
   TcoTimerLib
+  FirmwareResiliencyLib
 
 [Guids]
   gLoaderMemoryMapInfoGuid

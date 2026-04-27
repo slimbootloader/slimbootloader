@@ -415,6 +415,9 @@ SecStartup2 (
     CheckForAcmFailures ();
   }
 
+  // Check for ME firmware corruption
+  CheckForMeCodeFailures ();
+
   Status = AppendHashStore (LdrGlobal, &Stage1bParam);
   DEBUG ((DEBUG_INFO,  "Append public key hash into store: %r\n", Status));
 

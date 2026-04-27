@@ -37,3 +37,6 @@
   TopSwapLib
   PcdLib
   WatchDogTimerLib
+  IoLib
+  PciLib
+  BaseMemoryLib
