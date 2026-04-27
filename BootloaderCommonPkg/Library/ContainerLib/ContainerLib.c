@@ -23,6 +23,37 @@
 
 #define  IS_FLASH_ADDRESS(x)   (((UINT32)(UINTN)(x)) >= 0xF0000000)
 
+STATIC
+BOOLEAN
+GetNextComponentEntryBounded (
+  IN  CONTAINER_HDR     *ContainerHdr,
+  IN  COMPONENT_ENTRY   *CurrEntry,
+  OUT COMPONENT_ENTRY   **NextEntry
+  );
+
+STATIC
+BOOLEAN
+IsComponentEntryReadable (
+  IN  CONTAINER_HDR     *ContainerHdr,
+  IN  COMPONENT_ENTRY   *CurrEntry
+  );
+
+STATIC
+BOOLEAN
+GetComponentDataPointer (
+  IN  CONTAINER_ENTRY   *ContainerEntry,
+  IN  CONTAINER_HDR     *ContainerHdr,
+  IN  COMPONENT_ENTRY   *CompEntry,
+  OUT UINT8             **CompData
+  );
+
+STATIC
+BOOLEAN
+ValidateContainerBounds (
+  IN  CONTAINER_HDR     *ContainerHdr,
+  IN  UINT32             ContainerSize
+  );
+
 /**
   Get the container pointer by the container signature
 
@@ -80,7 +111,10 @@ GetContainerHeaderSize (
       return 0;
     }
     for (Index = 0; Index < ContainerHdr->Count; Index++) {
-      CompEntry = (COMPONENT_ENTRY *)((UINT8 *)(CompEntry + 1) + CompEntry->HashSize);
+      if (!GetNextComponentEntryBounded (ContainerHdr, CompEntry, &CompEntry)) {
+        Offset = 0;
+        break;
+      }
       Offset = (UINT8 *)CompEntry - (UINT8 *)ContainerHdr;
       if ((Offset < 0) || (Offset > ContainerHdr->DataOffset)) {
         Offset = 0;
@@ -90,6 +124,126 @@ GetContainerHeaderSize (
   }
 
   return (UINT32)Offset;
+}
+
+/**
+  Get the next component entry while enforcing container-header bounds.
+
+  @param[in]  ContainerHdr   Container header pointer.
+  @param[in]  CurrEntry      Current component entry pointer.
+  @param[out] NextEntry      Next component entry pointer.
+
+  @retval TRUE               Next entry is valid and within DataOffset.
+  @retval FALSE              Next entry would exceed header bounds.
+**/
+STATIC
+BOOLEAN
+GetNextComponentEntryBounded (
+  IN  CONTAINER_HDR     *ContainerHdr,
+  IN  COMPONENT_ENTRY   *CurrEntry,
+  OUT COMPONENT_ENTRY   **NextEntry
+  )
+{
+  UINT64  HeaderLimit;
+  UINT64  CurrOffset;
+  UINT64  NextOffset;
+
+  if ((ContainerHdr == NULL) || (CurrEntry == NULL) || (NextEntry == NULL)) {
+    return FALSE;
+  }
+
+  // Validate current entry fixed header before reading HashSize.
+  if (!IsComponentEntryReadable (ContainerHdr, CurrEntry)) {
+    return FALSE;
+  }
+
+  HeaderLimit = ContainerHdr->DataOffset;
+  CurrOffset  = (UINT64)((UINT8 *)CurrEntry - (UINT8 *)ContainerHdr);
+
+  NextOffset = CurrOffset + sizeof (COMPONENT_ENTRY) + CurrEntry->HashSize;
+  if (NextOffset > HeaderLimit) {
+    return FALSE;
+  }
+
+  *NextEntry = (COMPONENT_ENTRY *)((UINT8 *)ContainerHdr + (UINTN)NextOffset);
+  return TRUE;
+}
+
+/**
+  Check that the fixed-size portion of a component entry is readable within
+  the container header cache.
+
+  @param[in]  ContainerHdr   Container header pointer.
+  @param[in]  CurrEntry      Current component entry pointer.
+
+  @retval TRUE               COMPONENT_ENTRY fixed header is readable.
+  @retval FALSE              Entry starts outside DataOffset bounds.
+**/
+STATIC
+BOOLEAN
+IsComponentEntryReadable (
+  IN  CONTAINER_HDR     *ContainerHdr,
+  IN  COMPONENT_ENTRY   *CurrEntry
+  )
+{
+  UINT64  HeaderLimit;
+  UINT64  CurrOffset;
+
+  if ((ContainerHdr == NULL) || (CurrEntry == NULL)) {
+    return FALSE;
+  }
+
+  HeaderLimit = ContainerHdr->DataOffset;
+  CurrOffset  = (UINT64)((UINT8 *)CurrEntry - (UINT8 *)ContainerHdr);
+  if (CurrOffset > HeaderLimit) {
+    return FALSE;
+  }
+
+  if ((HeaderLimit - CurrOffset) < sizeof (COMPONENT_ENTRY)) {
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+/**
+  Resolve component data pointer with overflow and range validation.
+
+  @param[in]  ContainerEntry  Container entry metadata.
+  @param[in]  ContainerHdr    Container header pointer.
+  @param[in]  CompEntry       Component entry pointer.
+  @param[out] CompData        Resolved component data pointer.
+
+  @retval TRUE                Component data address is valid.
+  @retval FALSE               Component metadata/address is invalid.
+**/
+STATIC
+BOOLEAN
+GetComponentDataPointer (
+  IN  CONTAINER_ENTRY   *ContainerEntry,
+  IN  CONTAINER_HDR     *ContainerHdr,
+  IN  COMPONENT_ENTRY   *CompEntry,
+  OUT UINT8             **CompData
+  )
+{
+  UINT64  CompAddr;
+
+  if ((ContainerEntry == NULL) || (ContainerHdr == NULL) || (CompEntry == NULL) || (CompData == NULL)) {
+    return FALSE;
+  }
+
+  if ((CompEntry->Offset > ContainerHdr->DataSize) ||
+      (CompEntry->Size > (ContainerHdr->DataSize - CompEntry->Offset))) {
+    return FALSE;
+  }
+
+  CompAddr = (UINT64)ContainerEntry->Base + (UINT64)ContainerHdr->DataOffset + (UINT64)CompEntry->Offset;
+  if (CompAddr > MAX_UINT32) {
+    return FALSE;
+  }
+
+  *CompData = (UINT8 *)(UINTN)(UINT32)CompAddr;
+  return TRUE;
 }
 
 /**
@@ -107,7 +261,8 @@ GetContainerHeaderSize (
 STATIC
 EFI_STATUS
 RegisterContainerInternal (
-  IN UINT32    ContainerBase
+  IN UINT32    ContainerBase,
+  IN UINT32    ContainerSize
   )
 {
   CONTAINER_LIST       *ContainerList;
@@ -117,12 +272,21 @@ RegisterContainerInternal (
   VOID                 *Buffer;
   UINT32                MaxHdrSize;
 
+  if (ContainerSize == 0) {
+    DEBUG ((DEBUG_ERROR, "Unknown container size not allowed\n"));
+    return EFI_SECURITY_VIOLATION;
+  }
+
   ContainerList = (CONTAINER_LIST *)GetContainerListPtr ();
   if (ContainerList == NULL) {
     return EFI_NOT_READY;
   }
 
   ContainerHdr   = (CONTAINER_HDR *)(UINTN)ContainerBase;
+  if (!ValidateContainerBounds (ContainerHdr, ContainerSize)) {
+    return EFI_SECURITY_VIOLATION;
+  }
+
   ContainerEntry = GetContainerBySignature (ContainerHdr->Signature);
   if (ContainerEntry != NULL) {
     return EFI_UNSUPPORTED;
@@ -138,11 +302,18 @@ RegisterContainerInternal (
     MaxHdrSize = ContainerHdr->DataOffset;
   }
 
+  if (MaxHdrSize > ContainerSize) {
+    DEBUG ((DEBUG_ERROR, "Invalid container header cache size (0x%x) exceeds container region (0x%x)\n",
+            MaxHdrSize, ContainerSize));
+    return EFI_SECURITY_VIOLATION;
+  }
+
   Buffer  = AllocatePool (MaxHdrSize);
   if (Buffer == NULL) {
     return  EFI_OUT_OF_RESOURCES;
   }
 
+  DEBUG ((DEBUG_INFO, "Registering container %4a\n", &ContainerHdr->Signature));
   ContainerList->Entry[Index].Signature   = ContainerHdr->Signature;
   ContainerList->Entry[Index].HeaderCache = (UINT32)(UINTN)Buffer;
   ContainerList->Entry[Index].HeaderSize  = MaxHdrSize ;
@@ -151,6 +322,41 @@ RegisterContainerInternal (
   ContainerList->Count++;
 
   return EFI_SUCCESS;
+}
+
+/**
+  Validate container header ranges against known container region size.
+
+  @param[in]  ContainerHdr    Container header pointer.
+  @param[in]  ContainerSize   Container region size in bytes.
+
+  @retval TRUE                Header ranges are within container region.
+  @retval FALSE               Header ranges are invalid.
+**/
+STATIC
+BOOLEAN
+ValidateContainerBounds (
+  IN  CONTAINER_HDR     *ContainerHdr,
+  IN  UINT32             ContainerSize
+  )
+{
+  if ((ContainerHdr == NULL) || (ContainerSize < sizeof (CONTAINER_HDR))) {
+    return FALSE;
+  }
+
+  if (ContainerHdr->DataOffset < sizeof (CONTAINER_HDR)) {
+    return FALSE;
+  }
+
+  if (ContainerHdr->DataOffset > ContainerSize) {
+    return FALSE;
+  }
+
+  if (ContainerHdr->DataSize > (ContainerSize - ContainerHdr->DataOffset)) {
+    return FALSE;
+  }
+
+  return TRUE;
 }
 
 
@@ -224,20 +430,34 @@ LocateComponentEntryFromContainer (
   )
 {
   UINT32                Index;
-  COMPONENT_ENTRY      *CompEntry;
   COMPONENT_ENTRY      *CurrEntry;
 
-  CompEntry = NULL;
-  CurrEntry = (COMPONENT_ENTRY *)&ContainerHdr[1];
-  for (Index = 0; Index < ContainerHdr->Count; Index++) {
-    if (CurrEntry->Name == ComponentName) {
-      CompEntry = CurrEntry;
-      break;
-    }
-    CurrEntry = (COMPONENT_ENTRY *)((UINT8 *)(CurrEntry + 1) + CurrEntry->HashSize);
+  if ((ContainerHdr == NULL) || (ContainerHdr->Count == 0) || (ContainerHdr->Count > MAX_CONTAINER_SUB_IMAGE)) {
+    return NULL;
   }
 
-  return CompEntry;
+  CurrEntry = (COMPONENT_ENTRY *)&ContainerHdr[1];
+  for (Index = 0; Index < ContainerHdr->Count; Index++) {
+    if (!IsComponentEntryReadable (ContainerHdr, CurrEntry)) {
+      DEBUG ((DEBUG_ERROR, "Malformed container header while traversing component list\n"));
+      return NULL;
+    }
+
+    if (CurrEntry->Name == ComponentName) {
+      return CurrEntry;
+    }
+
+    if (Index == (((UINT32)ContainerHdr->Count) - 1U)) {
+      break;
+    }
+
+    if (!GetNextComponentEntryBounded (ContainerHdr, CurrEntry, &CurrEntry)) {
+      DEBUG ((DEBUG_ERROR, "Malformed container header while traversing component list\n"));
+      return NULL;
+    }
+  }
+
+  return NULL;
 }
 
 /**
@@ -275,6 +495,7 @@ GetHashAlg(
   @param[in] Length       Data length to be authenticated.
   @param[in] AuthType     Authentication type.
   @param[in] AuthData     Authentication data buffer.
+  @param[in] AuthDataLen  Authentication data length.
   @param[in] HashData     Hash data buffer.
   @param[in] Usage        Hash usage.
 
@@ -290,14 +511,19 @@ AuthenticateComponent (
   IN  UINT32    Length,
   IN  UINT8     AuthType,
   IN  UINT8    *AuthData,
+  IN  UINT32    AuthDataLen,
   IN  UINT8    *HashData,
   IN  UINT32    Usage
   )
 {
-  EFI_STATUS  Status;
-  UINT8                    *SigPtr;
-  UINT8                    *KeyPtr;
-  SIGNATURE_HDR            *SignHdr;
+  EFI_STATUS      Status;
+  UINT8          *KeyPtr;
+  SIGNATURE_HDR  *SignHdr;
+  PUB_KEY_HDR    *PubKeyHdr;
+  UINT16          ExpectedSigSize;
+  UINT16          ExpectedKeySize;
+  UINT64          SigBlockSize;
+  UINT64          AuthBlockSize;
 
   if (!FeaturePcdGet (PcdVerifiedBootEnabled)) {
     Status = EFI_SUCCESS;
@@ -308,11 +534,54 @@ AuthenticateComponent (
       Status = DoHashVerify (Data, Length, Usage, HASH_TYPE_SHA384, HashData);
     } else if ((AuthType == AUTH_TYPE_SIG_RSA2048_PKCSI1_SHA256) || ( AuthType == AUTH_TYPE_SIG_RSA3072_PKCSI1_SHA384)
            || (AuthType == AUTH_TYPE_SIG_RSA2048_PSS_SHA256) || ( AuthType == AUTH_TYPE_SIG_RSA3072_PSS_SHA384)) {
-      SigPtr   = (UINT8 *) AuthData;
-      SignHdr  = (SIGNATURE_HDR *) SigPtr;
-      KeyPtr   = (UINT8 *)SignHdr + sizeof(SIGNATURE_HDR) + SignHdr->SigSize ;
+      // Derive expected fixed signature/key sizes from AuthType.
+      if ((AuthType == AUTH_TYPE_SIG_RSA2048_PKCSI1_SHA256) || (AuthType == AUTH_TYPE_SIG_RSA2048_PSS_SHA256)) {
+        ExpectedSigSize = RSA2048_NUMBYTES;
+        ExpectedKeySize = RSA2048_MOD_SIZE + RSA_E_SIZE;
+      } else {
+        ExpectedSigSize = RSA3072_NUMBYTES;
+        ExpectedKeySize = RSA3072_MOD_SIZE + RSA_E_SIZE;
+      }
+
+      // AuthData comes from untrusted container content. Validate boundaries
+      // before reading SignHdr/PubKeyHdr fields or advancing pointers.
+      if ((AuthData == NULL) || (AuthDataLen < (sizeof (SIGNATURE_HDR) + sizeof (PUB_KEY_HDR)))) {
+        DEBUG ((DEBUG_ERROR, "Invalid auth data: too small for signature/public-key headers\n"));
+        return EFI_SECURITY_VIOLATION;
+      }
+
+      SignHdr = (SIGNATURE_HDR *)AuthData;
+      if (SignHdr->SigSize != ExpectedSigSize) {
+        DEBUG ((DEBUG_ERROR, "Invalid signature size: got 0x%x expected 0x%x\n", SignHdr->SigSize, ExpectedSigSize));
+        return EFI_SECURITY_VIOLATION;
+      }
+
+      SigBlockSize = (UINT64)sizeof (SIGNATURE_HDR) + (UINT64)SignHdr->SigSize;
+      if (SigBlockSize > AuthDataLen) {
+        DEBUG ((DEBUG_ERROR, "Invalid auth data: signature block exceeds auth-data length\n"));
+        return EFI_SECURITY_VIOLATION;
+      }
+
+      if ((AuthDataLen - SigBlockSize) < sizeof (PUB_KEY_HDR)) {
+        DEBUG ((DEBUG_ERROR, "Invalid auth data: insufficient space for public-key header\n"));
+        return EFI_SECURITY_VIOLATION;
+      }
+
+      KeyPtr    = AuthData + (UINTN)SigBlockSize;
+      PubKeyHdr = (PUB_KEY_HDR *)KeyPtr;
+      if (PubKeyHdr->KeySize != ExpectedKeySize) {
+        DEBUG ((DEBUG_ERROR, "Invalid public key size: got 0x%x expected 0x%x\n", PubKeyHdr->KeySize, ExpectedKeySize));
+        return EFI_SECURITY_VIOLATION;
+      }
+
+      AuthBlockSize = SigBlockSize + sizeof (PUB_KEY_HDR) + (UINT64)PubKeyHdr->KeySize;
+      if (AuthBlockSize > AuthDataLen) {
+        DEBUG ((DEBUG_ERROR, "Invalid auth data: public-key block exceeds auth-data length\n"));
+        return EFI_SECURITY_VIOLATION;
+      }
+
       Status   = DoRsaVerify (Data, Length, Usage, SignHdr,
-                             (PUB_KEY_HDR *) KeyPtr, GetHashAlg(AuthType), HashData, NULL);
+                             PubKeyHdr, GetHashAlg(AuthType), HashData, NULL);
     } else if (AuthType == AUTH_TYPE_NONE) {
       Status = EFI_SUCCESS;
     } else {
@@ -363,7 +632,7 @@ GetContainerKeyUsageBySig (
 
 **/
 EFI_STATUS
-AutheticateContainerInternal (
+AuthenticateContainerInternal (
   IN  CONTAINER_HDR            *ContainerHeader,
   IN  LOAD_COMPONENT_CALLBACK  ContainerCallback
   )
@@ -378,6 +647,9 @@ AutheticateContainerInternal (
   UINT8                    *CompData;
   UINT32                    DataLen;
   UINT32                    SignedDataLen;
+  UINT64                    SignedDataLen64;
+  UINT32                    AuthDataOffset;
+  UINT32                    AuthDataLen;
   UINT32                    Index;
   LOADER_COMPRESSED_HEADER *CompressHdr;
   EFI_STATUS                Status;
@@ -392,15 +664,26 @@ AutheticateContainerInternal (
     ContainerHdrSize = GetContainerHeaderSize (ContainerHdr);
     if (ContainerHdrSize > 0) {
       AuthType = ContainerHdr->AuthType;
-      AuthData = (UINT8 *)ContainerHdr + ALIGN_UP(ContainerHdrSize, AUTH_DATA_ALIGN);
+      AuthDataOffset = ALIGN_UP (ContainerHdrSize, AUTH_DATA_ALIGN);
+      Status = EFI_SUCCESS;
       if ((AuthType == AUTH_TYPE_NONE) && FeaturePcdGet (PcdVerifiedBootEnabled)) {
         // Enforce header authentication if verified boot is enabled.
         Status = EFI_SECURITY_VIOLATION;
-      } else {
+      }
+
+      if (!EFI_ERROR (Status) && (AuthDataOffset > ContainerEntry->HeaderSize)) {
+        DEBUG ((DEBUG_ERROR, "Invalid container header auth-data offset (0x%x) > header cache size (0x%x)\n",
+                AuthDataOffset, ContainerEntry->HeaderSize));
+        Status = EFI_SECURITY_VIOLATION;
+      }
+
+      if (!EFI_ERROR (Status)) {
+        AuthData    = (UINT8 *)ContainerHdr + AuthDataOffset;
+        AuthDataLen = ContainerEntry->HeaderSize - AuthDataOffset;
         Status = AuthenticateComponent ((UINT8 *)ContainerHdr, ContainerHdrSize,
-                                        AuthType, AuthData, NULL,
+                                        AuthType, AuthData, AuthDataLen, NULL,
                                         GetContainerKeyUsageBySig (ContainerHeader->Signature));
-        if ((!EFI_ERROR(Status)) && (ContainerCallback != NULL)) {
+        if ((!EFI_ERROR (Status)) && (ContainerCallback != NULL)) {
           // Update component Call back info after container header authenticaton is done
           // This info will used by firmware stage to extend to TPM
           CbInfo.ComponentType    = ContainerHeader->Signature;
@@ -423,30 +706,84 @@ AutheticateContainerInternal (
         // Use the last entry to verify all other combined components
         CompEntry = (COMPONENT_ENTRY *)&ContainerHdr[1];
         for (Index = 0; Index < (UINT32)(ContainerHdr->Count - 1); Index++) {
-          CompEntry = (COMPONENT_ENTRY *)((UINT8 *)(CompEntry + 1) + CompEntry->HashSize);
+          if (!GetNextComponentEntryBounded (ContainerHdr, CompEntry, &CompEntry)) {
+            DEBUG ((DEBUG_ERROR, "Malformed monolithic container component list\n"));
+            Status = EFI_SECURITY_VIOLATION;
+            break;
+          }
         }
-        CompData    = (UINT8 *)(UINTN)(ContainerEntry->Base + ContainerHdr->DataOffset + CompEntry->Offset);
-        CompressHdr = (LOADER_COMPRESSED_HEADER *)CompData;
-        if (CompressHdr->Signature == LZDM_SIGNATURE) {
-          if ((CompEntry->AuthType == AUTH_TYPE_NONE) && FeaturePcdGet (PcdVerifiedBootEnabled)) {
-            // Enforce component authentication if verified boot is enabled.
-            Status =  EFI_SECURITY_VIOLATION;
-          } else {
-            SignedDataLen = sizeof (LOADER_COMPRESSED_HEADER) + CompressHdr->CompressedSize;
-            AuthData = CompData + ALIGN_UP(SignedDataLen, AUTH_DATA_ALIGN);
-            DataBuf  = (UINT8 *)(UINTN)(ContainerEntry->Base + ContainerHdr->DataOffset);
-            DataLen  = CompEntry->Offset;
-            Status   = AuthenticateComponent (DataBuf, DataLen, CompEntry->AuthType,
-                                              AuthData, CompEntry->HashData, 0);
 
-            if ((!EFI_ERROR(Status)) && (ContainerCallback != NULL)) {
-              // Update component Call back info after authenticaton is done
-              // This info will used by firmware stage to extend to TPM
-              CbInfo.ComponentType    = ContainerHeader->Signature;
-              CbInfo.CompBuf          = DataBuf;
-              CbInfo.CompLen          = DataLen;
-              CbInfo.HashAlg          = GetHashAlg(CompEntry->AuthType);
-              CbInfo.HashData         = CompEntry->HashData;
+        if (!EFI_ERROR (Status)) {
+          if (!GetComponentDataPointer (ContainerEntry, ContainerHdr, CompEntry, &CompData)) {
+            DEBUG ((DEBUG_ERROR, "Invalid monolithic component data bounds/address\n"));
+            Status = EFI_SECURITY_VIOLATION;
+          }
+        }
+
+        if (!EFI_ERROR (Status)) {
+          if (CompEntry->Size < sizeof (LOADER_COMPRESSED_HEADER)) {
+            DEBUG ((DEBUG_ERROR, "Invalid monolithic component: too small for compressed header (0x%x < 0x%x)\n",
+                    CompEntry->Size, sizeof (LOADER_COMPRESSED_HEADER)));
+            Status = EFI_SECURITY_VIOLATION;
+          }
+        }
+
+        if (!EFI_ERROR (Status)) {
+          CompressHdr = (LOADER_COMPRESSED_HEADER *)CompData;
+          if (CompressHdr->Signature == LZDM_SIGNATURE) {
+            if ((CompEntry->AuthType == AUTH_TYPE_NONE) && FeaturePcdGet (PcdVerifiedBootEnabled)) {
+              // Enforce component authentication if verified boot is enabled.
+              Status = EFI_SECURITY_VIOLATION;
+            }
+
+            if (!EFI_ERROR (Status)) {
+              SignedDataLen64 = (UINT64)sizeof (LOADER_COMPRESSED_HEADER) + (UINT64)CompressHdr->CompressedSize;
+              if (SignedDataLen64 > MAX_UINT32) {
+                DEBUG ((DEBUG_ERROR, "Invalid monolithic component signed length overflow\n"));
+                Status = EFI_SECURITY_VIOLATION;
+              }
+            }
+
+            if (!EFI_ERROR (Status)) {
+              SignedDataLen = (UINT32)SignedDataLen64;
+              AuthDataOffset = ALIGN_UP (SignedDataLen, AUTH_DATA_ALIGN);
+              if ((SignedDataLen > CompEntry->Size) || (AuthDataOffset > CompEntry->Size)) {
+                DEBUG ((DEBUG_ERROR, "Invalid monolithic component auth-data bounds (CompSize=0x%x Signed=0x%x Offset=0x%x)\n",
+                        CompEntry->Size, SignedDataLen, AuthDataOffset));
+                Status = EFI_SECURITY_VIOLATION;
+              }
+            }
+
+            if (!EFI_ERROR (Status)) {
+              AuthData    = CompData + AuthDataOffset;
+              AuthDataLen = CompEntry->Size - AuthDataOffset;
+              if (((UINT64)ContainerEntry->Base + (UINT64)ContainerHdr->DataOffset) > MAX_UINT32) {
+                DEBUG ((DEBUG_ERROR, "Invalid monolithic container data base address overflow\n"));
+                Status = EFI_SECURITY_VIOLATION;
+              }
+            }
+
+            if (!EFI_ERROR (Status)) {
+              DataBuf = (UINT8 *)(UINTN)((UINT32)((UINT64)ContainerEntry->Base + (UINT64)ContainerHdr->DataOffset));
+              // Validate that monolithic component offset is at least past the header.
+              if (CompEntry->Offset < ContainerHdrSize) {
+                DEBUG ((DEBUG_ERROR, "Invalid monolithic component offset (0x%x < header size 0x%x)\n",
+                        CompEntry->Offset, ContainerHdrSize));
+                Status = EFI_SECURITY_VIOLATION;
+              } else {
+                DataLen = CompEntry->Offset;
+                Status  = AuthenticateComponent (DataBuf, DataLen, CompEntry->AuthType,
+                                                AuthData, AuthDataLen, CompEntry->HashData, 0);
+              }
+            }
+
+            if ((!EFI_ERROR (Status)) && (ContainerCallback != NULL)) {
+              // Update component Call back info after authenticaton is done.
+              CbInfo.ComponentType = ContainerHeader->Signature;
+              CbInfo.CompBuf       = DataBuf;
+              CbInfo.CompLen       = DataLen;
+              CbInfo.HashAlg       = GetHashAlg (CompEntry->AuthType);
+              CbInfo.HashData      = CompEntry->HashData;
               ContainerCallback (PROGESS_ID_AUTHENTICATE, &CbInfo);
             }
           }
@@ -455,7 +792,13 @@ AutheticateContainerInternal (
     } else if (FeaturePcdGet (PcdVerifiedBootEnabled)) {
       // For non-Mono signing all components must have auth data when verified boot is enabled
       DEBUG((DEBUG_INFO, "Verify Container %4a AuthTypes\n", (CHAR8 *)&ContainerHdr->Signature));
-      for (Index = 0 , CompEntry = (COMPONENT_ENTRY *)(ContainerHdr+1); Index < ContainerHdr->Count; Index++) {
+      for (Index = 0 , CompEntry = (COMPONENT_ENTRY *)(ContainerHdr + 1); Index < ContainerHdr->Count; Index++) {
+        if (!IsComponentEntryReadable (ContainerHdr, CompEntry)) {
+          DEBUG ((DEBUG_ERROR, "Malformed container header while validating component auth types\n"));
+          Status = EFI_SECURITY_VIOLATION;
+          break;
+        }
+
         SignatureBuf = CompEntry->Name;
         DEBUG((DEBUG_INFO, "Component %4a AuthType %X\n", (CHAR8 *)&SignatureBuf, CompEntry->AuthType));
         if (CompEntry->AuthType == AUTH_TYPE_NONE) {
@@ -463,7 +806,16 @@ AutheticateContainerInternal (
           Status =  EFI_SECURITY_VIOLATION;
           break;
         }
-        CompEntry = (COMPONENT_ENTRY *)((UINT8 *)(CompEntry + 1) + CompEntry->HashSize);
+
+        if (Index == (((UINT32)ContainerHdr->Count) - 1U)) {
+          break;
+        }
+
+        if (!GetNextComponentEntryBounded (ContainerHdr, CompEntry, &CompEntry)) {
+          DEBUG ((DEBUG_ERROR, "Malformed container header while validating component auth types\n"));
+          Status = EFI_SECURITY_VIOLATION;
+          break;
+        }
       }
     }
   }
@@ -475,7 +827,8 @@ AutheticateContainerInternal (
   This function registers a container.
 
   @param[in]  ContainerBase      Container base address to register.
-  @param[in]  ContainerCallback  Callback regsiterd to notify container buf info
+  @param[in]  ContainerSize      Container size in bytes, 0 if unknown.
+  @param[in]  ContainerCallback  Callback registered to notify container buf info
 
   @retval EFI_NOT_READY          Not ready for register yet.
   @retval EFI_BUFFER_TOO_SMALL   Insufficant max container entry number.
@@ -486,21 +839,42 @@ AutheticateContainerInternal (
 EFI_STATUS
 RegisterContainer (
   IN  UINT32                    ContainerBase,
+  IN  UINT32                    ContainerSize,
   IN  LOAD_COMPONENT_CALLBACK   ContainerCallback
   )
 {
   EFI_STATUS                Status;
+  EFI_STATUS                CompStatus;
   CONTAINER_HDR            *ContainerHdr;
+  UINT32                    FlashCompBase;
+  UINT32                    FlashCompSize;
+  UINT32                    EffectiveContainerSize;
   UINT64                    SignatureBuffer;
 
   ContainerHdr     = (CONTAINER_HDR *)(UINTN)ContainerBase;
   SignatureBuffer  = ContainerHdr->Signature;
   DEBUG ((DEBUG_INFO, "Registering container %4a\n", (CHAR8 *)&SignatureBuffer));
 
+  // Use caller-provided size for RAM-backed containers. If unknown (0),
+  // best-effort derive it from flash map only when base addresses match.
+  EffectiveContainerSize = ContainerSize;
+  if (EffectiveContainerSize == 0) {
+    CompStatus = GetComponentInfo (ContainerHdr->Signature, &FlashCompBase, &FlashCompSize);
+    if (!EFI_ERROR (CompStatus) && (FlashCompBase == ContainerBase)) {
+      EffectiveContainerSize = FlashCompSize;
+    }
+  }
+
+  // Reject containers with unknown or unresolvable size to prevent pre-auth buffer overread.
+  if (EffectiveContainerSize == 0) {
+    DEBUG ((DEBUG_ERROR, "Unknown container size not allowed for security validation\n"));
+    return EFI_SECURITY_VIOLATION;
+  }
+
   // Register container
-  Status = RegisterContainerInternal (ContainerBase);
+  Status = RegisterContainerInternal (ContainerBase, EffectiveContainerSize);
   if (!EFI_ERROR (Status)) {
-    Status = AutheticateContainerInternal (ContainerHdr, ContainerCallback);
+    Status = AuthenticateContainerInternal (ContainerHdr, ContainerCallback);
     if (EFI_ERROR (Status)) {
       // Unregister the container since authentication failed
       UnregisterContainer (ContainerHdr->Signature);
@@ -555,7 +929,13 @@ LocateComponentEntry (
     }
 
     // Register container temporarily
-    Status = RegisterContainer (ContainerBase, NULL);
+    Status = RegisterContainerInternal (ContainerBase, ContainerSize);
+    if (!EFI_ERROR (Status)) {
+      Status = AuthenticateContainerInternal ((CONTAINER_HDR *)(UINTN)ContainerBase, NULL);
+      if (EFI_ERROR (Status)) {
+        UnregisterContainer (((CONTAINER_HDR *)(UINTN)ContainerBase)->Signature);
+      }
+    }
     if (EFI_ERROR (Status)) {
       return EFI_UNSUPPORTED;
     }
@@ -606,10 +986,10 @@ GetNextAvailableComponent (
 )
 {
   EFI_STATUS         Status;
+  BOOLEAN            FoundCurrent;
   CONTAINER_HDR     *ContainerHdr;
   CONTAINER_ENTRY   *ContainerEntry;
   COMPONENT_ENTRY   *CurrEntry;
-  COMPONENT_ENTRY   *NextEntry;
   UINT32             Index;
 
   if (ComponentName == NULL) {
@@ -624,31 +1004,41 @@ GetNextAvailableComponent (
   }
 
   ContainerHdr = (CONTAINER_HDR *)(UINTN)ContainerEntry->HeaderCache;
-  if (ContainerHdr->Count == 0) {
+  if ((ContainerHdr->Count == 0) || (ContainerHdr->Count > MAX_CONTAINER_SUB_IMAGE)) {
     return Status;
   }
 
+  FoundCurrent = FALSE;
   CurrEntry = (COMPONENT_ENTRY *)&ContainerHdr[1];
-   if ((*ComponentName == 0) && ((CurrEntry->Attribute & COMPONENT_ENTRY_ATTR_RESERVED) == 0)){
-    *ComponentName = CurrEntry->Name;
-    Status = EFI_SUCCESS;
-  } else {
-    NextEntry = (COMPONENT_ENTRY *)((UINT8 *)(CurrEntry + 1) + CurrEntry->HashSize);
-    for (Index = 0; Index < (UINT32)(ContainerHdr->Count-1); Index++) {
-      if ((CurrEntry->Attribute & COMPONENT_ENTRY_ATTR_RESERVED) == 0) {
-        if (*ComponentName == CurrEntry->Name) {
-          if ((NextEntry->Attribute & COMPONENT_ENTRY_ATTR_RESERVED) == 0) {
-            *ComponentName = NextEntry->Name;
-            Status = EFI_SUCCESS;
-            break;
-          } else {
-            NextEntry = (COMPONENT_ENTRY *)((UINT8 *)(NextEntry + 1) + NextEntry->HashSize);
-            continue;
-          }
-        }
+  for (Index = 0; Index < ContainerHdr->Count; Index++) {
+    if (!IsComponentEntryReadable (ContainerHdr, CurrEntry)) {
+      DEBUG ((DEBUG_ERROR, "Malformed container header while enumerating components\n"));
+      return EFI_NOT_FOUND;
+    }
+
+    if ((CurrEntry->Attribute & COMPONENT_ENTRY_ATTR_RESERVED) == 0) {
+      if (*ComponentName == 0) {
+        *ComponentName = CurrEntry->Name;
+        return EFI_SUCCESS;
       }
-      CurrEntry = NextEntry;
-      NextEntry = (COMPONENT_ENTRY *)((UINT8 *)(CurrEntry + 1) + CurrEntry->HashSize);
+
+      if (FoundCurrent) {
+        *ComponentName = CurrEntry->Name;
+        return EFI_SUCCESS;
+      }
+
+      if (*ComponentName == CurrEntry->Name) {
+        FoundCurrent = TRUE;
+      }
+    }
+
+    if (Index == (((UINT32)ContainerHdr->Count) - 1U)) {
+      break;
+    }
+
+    if (!GetNextComponentEntryBounded (ContainerHdr, CurrEntry, &CurrEntry)) {
+      DEBUG ((DEBUG_ERROR, "Malformed container header while enumerating components\n"));
+      return EFI_NOT_FOUND;
     }
   }
 
@@ -679,6 +1069,7 @@ LocateComponent (
   )
 {
   EFI_STATUS                Status;
+  UINT8                    *CompData;
   CONTAINER_HDR            *ContainerHdr;
   CONTAINER_ENTRY          *ContainerEntry;
   COMPONENT_ENTRY          *CompEntry;
@@ -686,7 +1077,7 @@ LocateComponent (
   if (ContainerSig < COMP_TYPE_INVALID) {
     // It is a component type, so get the info from flash map
     Status = GetComponentInfo (ComponentName, (UINT32 *)Buffer, Length);
-    return EFI_NOT_FOUND;
+    return Status;
   }
 
   Status = LocateComponentEntry (ContainerSig, ComponentName, &ContainerEntry, &CompEntry);
@@ -697,7 +1088,11 @@ LocateComponent (
   if ((ContainerEntry != NULL) && (CompEntry != NULL)) {
     ContainerHdr = (CONTAINER_HDR *)(UINTN)ContainerEntry->HeaderCache;
     if (Buffer != NULL) {
-      *Buffer = (VOID *)(UINTN)(ContainerEntry->Base + ContainerHdr->DataOffset + CompEntry->Offset);
+      if (!GetComponentDataPointer (ContainerEntry, ContainerHdr, CompEntry, &CompData)) {
+        DEBUG ((DEBUG_ERROR, "Invalid component data bounds/address\n"));
+        return EFI_SECURITY_VIOLATION;
+      }
+      *Buffer = (VOID *)CompData;
     }
     if (Length != NULL) {
       *Length = CompEntry->Size;
@@ -754,7 +1149,11 @@ LoadComponentWithCallback (
   UINT32                    CompLen;
   UINT32                    CompLoc;
   UINT32                    AllocLen;
+  UINT64                    AllocLen64;
   UINT32                    SignedDataLen;
+  UINT64                    SignedDataLen64;
+  UINT32                    AuthDataOffset;
+  UINT32                    AuthDataLen;
   UINT32                    DstLen;
   UINT32                    ScrLen;
   BOOLEAN                   IsInFlash;
@@ -815,7 +1214,10 @@ LoadComponentWithCallback (
     AuthType  = CompEntry->AuthType;
     HashData  = CompEntry->HashData;
     Usage     = 0;
-    CompData  = (UINT8 *)(UINTN)(ContainerEntry->Base + ContainerHdr->DataOffset + CompEntry->Offset);
+    if (!GetComponentDataPointer (ContainerEntry, ContainerHdr, CompEntry, &CompData)) {
+      DEBUG ((DEBUG_ERROR, "Invalid component data bounds/address\n"));
+      return EFI_SECURITY_VIOLATION;
+    }
     CompLen   = CompEntry->Size;
   }
 
@@ -824,27 +1226,50 @@ LoadComponentWithCallback (
   }
 
   // Component must have LOADER_COMPRESSED_HEADER
-  Status = EFI_UNSUPPORTED;
-  CompressHdr  = (LOADER_COMPRESSED_HEADER *)CompData;
-  if (CompressHdr == NULL) {
-    return EFI_NOT_FOUND;
+  if (CompLen < sizeof (LOADER_COMPRESSED_HEADER)) {
+    DEBUG ((DEBUG_ERROR, "Invalid component: too small for compressed header (0x%x < 0x%x)\n",
+            CompLen, sizeof (LOADER_COMPRESSED_HEADER)));
+    return EFI_SECURITY_VIOLATION;
   }
 
-  if (IS_COMPRESSED (CompressHdr)) {
-    SignedDataLen = sizeof (LOADER_COMPRESSED_HEADER) + CompressHdr->CompressedSize;
-    if (CompressHdr->Size == 0) {
-      Status = EFI_SUCCESS;
-      DstLen = 0;
-      ScrLen = 0;
-    } else {
-      if (SignedDataLen <= CompLen) {
-        Status = DecompressGetInfo (CompressHdr->Signature, CompressHdr->Data,
-                                    CompressHdr->CompressedSize, &DstLen, &ScrLen);
-      }
-    }
-  }
-  if (EFI_ERROR (Status)) {
+  CompressHdr  = (LOADER_COMPRESSED_HEADER *)CompData;
+  if (!IS_COMPRESSED (CompressHdr)) {
     return EFI_UNSUPPORTED;
+  }
+
+  // Validate signed data length (LOADER_COMPRESSED_HEADER + compressed payload)
+  SignedDataLen64 = (UINT64)sizeof (LOADER_COMPRESSED_HEADER) + (UINT64)CompressHdr->CompressedSize;
+  if (SignedDataLen64 > MAX_UINT32) {
+    DEBUG ((DEBUG_ERROR, "Invalid signed component length overflow\n"));
+    return EFI_SECURITY_VIOLATION;
+  }
+
+  SignedDataLen = (UINT32)SignedDataLen64;
+  if (SignedDataLen > CompLen) {
+    DEBUG ((DEBUG_ERROR, "Invalid signed component length (0x%x > 0x%x)\n", SignedDataLen, CompLen));
+    return EFI_UNSUPPORTED;
+  }
+
+  // Handle zero-size components: no payload to decompress, skip DecompressGetInfo
+  // entirely so ScrLen stays 0 and no scratch buffer is allocated.
+  if (CompressHdr->Size == 0) {
+    DstLen = 0;
+    ScrLen = 0;
+    Status = EFI_SUCCESS;
+  } else {
+    Status = DecompressGetInfo (CompressHdr->Signature, CompressHdr->Data,
+                                CompressHdr->CompressedSize, &DstLen, &ScrLen);
+    if (EFI_ERROR (Status)) {
+      return EFI_UNSUPPORTED;
+    }
+
+    // Ensure the decompressor-reported output length matches the signed header.
+    // This keeps destination sizing deterministic before decompression.
+    if (DstLen != CompressHdr->Size) {
+      DEBUG ((DEBUG_ERROR, "Invalid decompression length mismatch (Hdr=0x%x, Dst=0x%x)\n",
+              CompressHdr->Size, DstLen));
+      return EFI_SECURITY_VIOLATION;
+    }
   }
 
   // If it is required to use an existing buffer, verify the size
@@ -860,16 +1285,29 @@ LoadComponentWithCallback (
   // If it is on flash, the data needs to be copied into memory first
   // before authentication for security concern.
   IsInFlash = IS_FLASH_ADDRESS (CompData);
-  AllocLen  = ScrLen + TEMP_BUF_ALIGN * 2;
+  AllocLen64 = (UINT64)ScrLen + ((UINT64)TEMP_BUF_ALIGN * 2);
   if (IsInFlash) {
-    AllocLen += SignedDataLen;
+    AllocLen64 += (UINT64)SignedDataLen;
   }
+  if (AllocLen64 > MAX_UINT32) {
+    DEBUG ((DEBUG_ERROR, "Invalid temporary allocation length overflow (Scr=0x%x Signed=0x%x)\n",
+            ScrLen, SignedDataLen));
+    return EFI_SECURITY_VIOLATION;
+  }
+  AllocLen = (UINT32)AllocLen64;
+
   AllocBuf = AllocateTemporaryMemory (AllocLen);
   if (AllocBuf == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
+
   if (IsInFlash) {
     // Authenticate component and decompress it if required
+    if (SignedDataLen > AllocLen) {
+      DEBUG ((DEBUG_ERROR, "Invalid copy length (Signed=0x%x Alloc=0x%x)\n", SignedDataLen, AllocLen));
+      FreeTemporaryMemory (AllocBuf);
+      return EFI_SECURITY_VIOLATION;
+    }
     CompBuf = AllocBuf;
     ScrBuf  = (UINT8 *)AllocBuf + ALIGN_UP (SignedDataLen, TEMP_BUF_ALIGN);
     CopyMem (CompBuf, CompData, SignedDataLen);
@@ -881,9 +1319,18 @@ LoadComponentWithCallback (
     ScrBuf  = AllocBuf;
   }
 
+  AuthDataOffset = ALIGN_UP (SignedDataLen, AUTH_DATA_ALIGN);
+  if (AuthDataOffset > CompLen) {
+    DEBUG ((DEBUG_ERROR, "Invalid component auth-data offset (0x%x) > component size (0x%x)\n",
+            AuthDataOffset, CompLen));
+    FreeTemporaryMemory (AllocBuf);
+    return EFI_SECURITY_VIOLATION;
+  }
+  AuthDataLen = CompLen - AuthDataOffset;
+
   // Verify the component
   Status = AuthenticateComponent (CompBuf, SignedDataLen, AuthType,
-             CompData + ALIGN_UP(SignedDataLen, AUTH_DATA_ALIGN),  HashData, Usage);
+             CompData + AuthDataOffset, AuthDataLen, HashData, Usage);
   if (LoadComponentCallback != NULL) {
     if(Status == EFI_SUCCESS){
       // Update component Call back info after authenticaton is done
@@ -898,6 +1345,7 @@ LoadComponentWithCallback (
       LoadComponentCallback (PROGESS_ID_AUTHENTICATE, NULL);
     }
   }
+
   if (!EFI_ERROR (Status)) {
     CompressHdr = (LOADER_COMPRESSED_HEADER *)CompBuf;
     if (ReqCompBase == NULL) {
