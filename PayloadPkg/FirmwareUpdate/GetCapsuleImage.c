@@ -23,6 +23,11 @@
 #include <Library/BootOptionLib.h>
 #include <ConfigDataCommonStruct.h>
 
+// Tag for CSME recovery capsule CfgData
+#ifndef CDATA_CSME_CAPSULE_INFO_TAG
+#define CDATA_CSME_CAPSULE_INFO_TAG  0x081
+#endif
+
 /**
   Initialize Boot Device (Media)
 
