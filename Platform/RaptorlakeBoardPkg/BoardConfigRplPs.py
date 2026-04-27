@@ -38,7 +38,7 @@ class Board(AlderlakeBoardConfig.Board):
         self._MULTI_VBT_FILE      = {1:'VbtRplPsRvp.dat', 2:'VbtRplPsCrb.dat'}
         self._LP_SUPPORT          = True
         self.EPAYLOAD_SIZE        = 0x240000
-        self.OS_LOADER_FD_SIZE    = 0x0005C000
+        self.OS_LOADER_FD_SIZE    = 0x0005D000
         self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         # TXT (Trusted Execution Technology) support
