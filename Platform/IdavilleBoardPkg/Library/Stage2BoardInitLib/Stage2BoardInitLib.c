@@ -62,9 +62,11 @@ CONST EFI_ACPI_DESCRIPTION_HEADER  mAcpiTccRtctTableTemplate = {
   // Other fields will be updated in runtime
 };
 
+extern EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER mAcpiMadtTableTemplate;
 STATIC
 CONST EFI_ACPI_COMMON_HEADER *mPlatformAcpiTables[] = {
   (EFI_ACPI_COMMON_HEADER *)&mAcpiTccRtctTableTemplate,
+  (EFI_ACPI_COMMON_HEADER *)&mAcpiMadtTableTemplate,
   NULL
 };
 
@@ -987,6 +989,9 @@ PlatformUpdateAcpiTable (
         DEBUG ( (DEBUG_INFO, "Updated Psd Table in AcpiTable Entries\n") );
       }
     }
+    break;
+  case EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE:
+    MadtTableUpdate(Table);
     break;
   }
 

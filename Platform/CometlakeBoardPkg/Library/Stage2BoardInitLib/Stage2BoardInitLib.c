@@ -63,8 +63,11 @@
 #include <VerInfo.h>
 #include <Library/S3SaveRestoreLib.h>
 #include "GpioTables.h"
+#include <Library/MadtLib.h>
 
 #define DEFAULT_GPIO_IRQ_ROUTE                      14
+
+#define ICH_IOAPIC_ID         0x02
 
 //
 // The EC implements an embedded controller interface at ports 0x60/0x64 and a ACPI compliant
@@ -89,6 +92,14 @@
 
 FVID_TABLE                  *mFvidPointer    = NULL;
 SILICON_CFG_DATA            *mSiliconCfgData = NULL;
+
+extern EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER mAcpiMadtTableTemplate;
+STATIC
+CONST EFI_ACPI_COMMON_HEADER *mPlatformAcpiTables[] = {
+  (EFI_ACPI_COMMON_HEADER *)&mAcpiMadtTableTemplate,
+  NULL
+};
+
 ///
 /// Overcurrent pins, the values match the setting of EDS, please refer to EDS for more details
 ///
@@ -252,6 +263,38 @@ EnableLegacyRegions (
   VOID
 );
 
+/**
+  Update the MADT table
+
+  @param[in, out] AcpiHeader         - The table to be set
+**/
+VOID
+MadtTableUpdate (
+  IN OUT   EFI_ACPI_DESCRIPTION_HEADER       *AcpiHeader
+  )
+{
+  EFI_STATUS                                 Status;
+
+  Status = AddAcpiMadtHdr (AcpiHeader, LOCAL_APIC_BASE_ADDRESS, EFI_ACPI_6_4_PCAT_COMPAT);
+  if (EFI_ERROR (Status)) {
+    return;
+  }
+
+  if (FeaturePcdGet (PcdMadtUsePlatformLapic)) {
+    // Add all Local APICs if platform isn't using AcpiInitLib to do it.
+    AddMadtAllLocalApics(AcpiHeader);
+  }
+
+  // Add IO APIC entry
+  AddMadtIoApic (AcpiHeader, ICH_IOAPIC_ID, IO_APIC_BASE_ADDRESS, 0x18 * 0);
+
+  // Add Interrupt Source Override entries
+  AddMadtIntSrcOverride (AcpiHeader, 0, 0, 2, 0);   // IRQ0=>IRQ2
+  AddMadtIntSrcOverride (AcpiHeader, 0, 9, 9, 0xD); // SCI Level-tiggered, Active High
+
+  // NMI Entry for all processors, edge triggered, active high, on LINT 1
+  AddLocalApicNmi (AcpiHeader, 0xFF, 0x5, 1);
+}
 
 /**
   Clear SMI sources
@@ -1122,6 +1165,7 @@ BoardInit (
     }
     break;
   case PrePciEnumeration:
+    Status = PcdSet32S (PcdAcpiTableTemplatePtr, (UINT32)(UINTN)mPlatformAcpiTables);
     break;
   case PostPciEnumeration:
     if (GetBootMode() == BOOT_ON_S3_RESUME) {
@@ -2259,9 +2303,10 @@ PlatformUpdateAcpiTable (
     PatchCpuSsdtTable (Table, GlobalNvs);
   } else if (Table->OemTableId == SIGNATURE_64 ('C', 'p', 'u', '0', 'I', 's', 't', 0)) {
     PatchCpuIstTable (Table, GlobalNvs);
-  }
-
-  if (Table->Signature == EFI_BDAT_TABLE_SIGNATURE) {
+  } else if (Table->Signature == EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE) {
+    DEBUG ((DEBUG_INFO, "Updating MADT Table entries\n"));
+    MadtTableUpdate (Table);
+  } else if (Table->Signature == EFI_BDAT_TABLE_SIGNATURE) {
     FspHobList = GetFspHobListPtr ();
     if (FspHobList != NULL) {
       UpdateBdatAcpiTable (Table, FspHobList);
