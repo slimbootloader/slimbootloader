@@ -144,10 +144,6 @@
   FirmwareResiliencyLib|BootloaderCorePkg/Library/FirmwareResiliencyLib/FirmwareResiliencyLib.inf
 
 ################################################################################
-#
-# Pcd Section - list of all EDK II PCD Entries defined by this Platform
-#
-################################################################################
 [PcdsFixedAtBuild]
 !if $(TARGET) == RELEASE
   # Use this PCD to control the debug message that goes into binary image
@@ -427,6 +423,8 @@
       FspApiLib             | BootloaderCorePkg/Library/FspApiLib/FspmApiLib.inf
       BaseMemoryLib         | MdePkg/Library/BaseMemoryLibRepStr/BaseMemoryLibRepStr.inf
       FirmwareResiliencyLib | BootloaderCorePkg/Library/FirmwareResiliencyLib/FirmwareResiliencyLib.inf
+      TopSwapLib            | Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf
+      TcoTimerLib           | Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf
       SocInitLib            | $(SOC_INIT_STAGE1B_LIB_INF_FILE)
       BoardInitLib          | $(BRD_INIT_STAGE1B_LIB_INF_FILE)
   }
