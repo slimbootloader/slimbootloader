@@ -224,7 +224,7 @@ ReadInode (
     return EFI_INVALID_PARAMETER;
   }
 
-  if (INOTOCG(FileSystem, INumber) >= (UINT32)FileSystem->Ext2FsNumCylinder) {
+  if (INOTOCG(FileSystem, INumber) >= FileSystem->Ext2FsNumCylinder) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -804,11 +804,15 @@ ReadSBlock (
              FileSystem->Ext2Fs.Ext2FsBlocksPerGroup);
 
   //
-  // Validate number of groups to prevent integer overflow in allocation size
-  // and excessive memory usage. Limit to ~1 million groups (32MB descriptor table).
+  // Validate number of groups: must be > 0 and within safe allocation limit.
   //
+  if (FileSystem->Ext2FsNumCylinder == 0) {
+    DEBUG ((DEBUG_ERROR, "Ext2: Zero block groups\n"));
+    return EFI_UNSUPPORTED;
+  }
+
   if (FileSystem->Ext2FsNumCylinder > EXT2_MAX_BLOCK_GROUPS) {
-    DEBUG ((DEBUG_ERROR, "Ext2: Too many groups %d (Max %d)\n", FileSystem->Ext2FsNumCylinder, EXT2_MAX_BLOCK_GROUPS));
+    DEBUG ((DEBUG_ERROR, "Ext2: Too many groups %u (Max %u)\n", FileSystem->Ext2FsNumCylinder, EXT2_MAX_BLOCK_GROUPS));
     return EFI_UNSUPPORTED;
   }
 
