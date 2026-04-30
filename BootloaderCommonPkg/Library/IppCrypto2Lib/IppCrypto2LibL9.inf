@@ -23,13 +23,14 @@
 #
 
 [Sources]
-  IppCryptoSupport.c
+  IppCryptoSupportX64.c
   hmac.c
   rsa_verify.c
   sha256.c
   sha384.c
   sm3.c
   intrin.h
+  assert.h
   $(IPP_PATH)/include/ippcpdefs.h
   $(IPP_PATH)/sources/include/owndefs.h
   $(IPP_PATH)/sources/ippcp/owncp.h
@@ -83,6 +84,7 @@
   $(IPP_PATH)/sources/ippcp/pcprsa_gsmethod__gpr_public.c
 
   # Hash source files
+  $(IPP_PATH)/sources/ippcp/hash/sha3/pcpsha3ca.c
   $(IPP_PATH)/sources/ippcp/hash/pcphashmessage_rmf.c
   $(IPP_PATH)/sources/ippcp/hash/pcphashinit_rmf.c
   $(IPP_PATH)/sources/ippcp/hash/pcphashupdate_rmf.c
@@ -112,6 +114,11 @@
   $(IPP_PATH)/sources/ippcp/pcpbnsetwords.c
   $(IPP_PATH)/sources/ippcp/pcprsasign_pkcs1v15_rmf.c
   $(IPP_PATH)/sources/ippcp/hash/sha256/pcphashmethodset_sha256_tt.c
+  $(IPP_PATH)/sources/ippcp/hash/sha224/pcphashmethodset_sha224_tt.c
+  $(IPP_PATH)/sources/ippcp/hash/sha384/pcphashmethodset_sha384_tt.c
+  $(IPP_PATH)/sources/ippcp/hash/sha512/pcphashmethodset_sha512_tt.c
+  $(IPP_PATH)/sources/ippcp/hash/sha512/pcphashmethodset_sha512_224_tt.c
+  $(IPP_PATH)/sources/ippcp/hash/sha512/pcphashmethodset_sha512_256_tt.c
   $(IPP_PATH)/sources/ippcp/pcprsa_gsmethod__gpr_private.c
   $(IPP_PATH)/sources/ippcp/pcprsa_gsprv_cipher_crt.c
   $(IPP_PATH)/sources/ippcp/pcprsa_gsprv_cipher.c
@@ -170,7 +177,10 @@
   $(IPP_PATH)/sources/ippcp/asm_intel64/cpinitas.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha256l9as.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha512l9as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha512m7as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha512l9ni.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsm3l9_ni_as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsm3e9as.nasm
   #M7 FIles
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnuaddm7as.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnudivm7as.nasm
@@ -186,7 +196,10 @@
   $(IPP_PATH)/sources/ippcp/asm_intel64/cpinitas.asm              : $(IPP_PATH)/sources/ippcp/asm_intel64/cpinitas.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha256l9as.asm         : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha256l9as.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha512l9as.asm         : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha512l9as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha512m7as.asm         : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha512m7as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha512l9ni.asm         : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsha512l9ni.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsm3l9_ni_as.asm        : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsm3l9_ni_as.nasm
+  $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsm3e9as.asm             : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpsm3e9as.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnuaddm7as.asm         : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnuaddm7as.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnudivm7as.asm         : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnudivm7as.nasm
   $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnuincm7as.asm         : $(IPP_PATH)/sources/ippcp/asm_intel64/pcpbnuincm7as.nasm
@@ -208,6 +221,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
 
 [LibraryClasses]
   BaseLib
@@ -220,10 +234,36 @@
   gPlatformCommonLibTokenSpaceGuid.PcdCompSignSchemeSupportedMask
   gPlatformCommonLibTokenSpaceGuid.PcdCompSignHashAlg
   gPlatformCommonLibTokenSpaceGuid.PcdCompSignType
+  gPlatformModuleTokenSpaceGuid.PcdFlashBaseAddress
+  gPlatformModuleTokenSpaceGuid.PcdFlashSize
 
 [BuildOptions]
-  MSFT:*_*_X64_CC_FLAGS = -D_ABL_ -D_L9 -D_ARCH_EM64T -DIPPCP_FIPS_MODE -D_NO_IPP_DEPRECATED /GL- /arch:AVX2
-  MSFT:*_*_X64_NASM_FLAGS = -D_ABL_ -D_L9 -DWIN32E
-  GCC:*_*_X64_NASM_FLAGS = -D_ABL_ -D_L9 -DLINUX32E
-  GCC:*_*_*_CC_FLAGS  = -D_ABL_ -D_L9 -w -Wformat -Wformat-security -march=haswell -mavx2 -maes -mvaes -mpclmul -mvpclmulqdq -msha -mrdrnd -mrdseed -DIPPCP_FIPS_MODE -DMBX_FIPS_MODE -D_NO_IPP_DEPRECATED
+  # CAUTION: IPPCP_CUSTOM_BUILD + IPP_CUSTOM_ENABLED_FEATURES bypass the runtime CPUID
+  # feature cache (cpFeaturesMask) which is a ROM-mapped static in XIP builds and cannot
+  # be written at runtime. Without this, IsFeatureEnabled() always returns 0 and the L9
+  # AVX2 sha256_hashUpdate path (vmovdqa ymm, requires 32-byte alignment) is selected,
+  # causing #GP(13) on unaligned flash-mapped data during FIPS selftests.
+  #
+  # IPP_CUSTOM_ENABLED_FEATURES=0x80000 = ippCPUID_SHA. This unconditionally selects the
+  # SHA-NI path (sha256_ni_hashUpdate / sha512_hashUpdate_ni) at compile time.
+  #
+  # IPP_CUSTOM_CPU_FEATURES__ is defined here to suppress the conflicting definition of
+  # IPP_CUSTOM_ENABLED_FEATURES in ippcpdefs.h (which covers only AES/CLMUL/VAES/VCLMUL
+  # and would otherwise cause a C4005 macro-redefinition error on MSVC).
+  #
+  # _SHA_NI_ENABLING_=_FEATURE_ON_ tells sha256.c to select sha256_ni_hashUpdate at
+  # compile time (required for the condition in ippsHashMethod_SHA256Sbl to work).
+  #
+  # *** PLATFORM COMPATIBILITY WARNING ***
+  # SHA-NI (ippCPUID_SHA) is only present on: Ice Lake, Tiger Lake, Alder Lake, Raptor
+  # Lake, Meteor Lake, and Goldmont/Tremont Atom cores (2016+).
+  # It is NOT present on: Haswell, Broadwell, Skylake, Kaby Lake, Coffee Lake.
+  # Using this INF on a platform without SHA-NI will cause an #UD (invalid opcode) fault.
+  # Platforms without SHA-NI that require XIP-safe L9-class builds must use
+  # IppCrypto2LibE9.inf instead (AVX1, vmovdqu, no alignment requirement).
+  # See IppCrypto2Lib/README.md for the full platform compatibility table.
+  MSFT:*_*_X64_CC_FLAGS = -D_ABL_ -D_L9 -D_ARCH_EM64T -DIPPCP_FIPS_MODE -D_NO_IPP_DEPRECATED /DIPPCP_CUSTOM_BUILD /DIPP_CUSTOM_CPU_FEATURES__ /DIPP_CUSTOM_ENABLED_FEATURES=0x80000ULL /D_SHA_NI_ENABLING_=_FEATURE_ON_ /GL- /arch:AVX2
+  MSFT:*_*_X64_NASM_FLAGS == -Ox -f win64 -D_ABL_ -D_L9 -DWIN32E
+  GCC:*_*_X64_NASM_FLAGS = -D_ABL_ -D_L9 -DLINUX32E -D_SHA512_ENABLING_=0 -D_SM3_ENABLING_=0
+  GCC:*_*_*_CC_FLAGS  = -D_ABL_ -D_L9 -D_ARCH_EM64T -DIPPCP_CUSTOM_BUILD -DIPP_CUSTOM_CPU_FEATURES__ -DIPP_CUSTOM_ENABLED_FEATURES=0x80000ULL -D_SHA_NI_ENABLING_=_FEATURE_ON_ -D_SM3_ENABLING_=0 -w -Wformat -Wformat-security -march=haswell -mavx2 -maes -mvaes -mpclmul -mvpclmulqdq -msha -mrdrnd -mrdseed -DIPPCP_FIPS_MODE -DMBX_FIPS_MODE -D_NO_IPP_DEPRECATED
 

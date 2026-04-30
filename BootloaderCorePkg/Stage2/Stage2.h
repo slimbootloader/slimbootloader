@@ -11,6 +11,7 @@
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/PcdLib.h>
+#include <Library/ExtraBaseLib.h>
 #include <Library/HobLib.h>
 #include <Library/BootloaderCoreLib.h>
 #include <Library/BootloaderCommonLib.h>
