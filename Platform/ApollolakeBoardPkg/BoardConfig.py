@@ -213,6 +213,7 @@ class Board(BaseBoard):
             'BaseIpcLib|Silicon/$(SILICON_PKG_NAME)/Library/BaseIpcLib/BaseIpcLib.inf',
             'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
             'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf',
+            'P2sbLib|Silicon/CommonSocPkg/Library/P2sbLib/P2sbLib.inf',
             'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf'
         ]
         dsc['LibraryClasses.%s' % self.BUILD_ARCH] = common_libs

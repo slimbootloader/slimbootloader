@@ -11,83 +11,28 @@
 #include <Library/IoLib.h>
 #include <Library/PcdLib.h>
 #include <Library/BaseLib.h>
+#include <Library/P2sbLib.h>
+#include <Register/P2sbRegs.h>
+#include <Library/PciLib.h>
+#include <Library/BootloaderCommonLib.h>
+#include <Guid/OsBootOptionGuid.h>
 
-#define PCI_DEVICE_NUMBER_PCH_LPC       31
-#define PID_RTC_HOST                    0xC3
 #define R_RTC_PCR_BUC                   0x3414
 
 /**
-  Get the address of P2sb register.
+  Get P2SB device address
 
-  This function get the address of the P2sb register.
+  @retval     Device address for P2SB device. If the device could not be
+              found in the device table, a default P2SB device address is
+              returned.
 
-  @retval  UINTN  The base address of the P2sb register.
 **/
 UINTN
-GetP2sbBase (
+GetP2sbDeviceAddr (
   VOID
   )
 {
-  return MM_PCI_ADDRESS (0, PCI_DEVICE_NUMBER_PCH_LPC, 1, 0);
-}
-
-/**
-  Get the address of the top swap register.
-
-  This function get the address of the top swap register and reports
-  if P2sbBar was unhidden in the process.
-
-  @param[out] TopSwapBase   The base address of the top swap register.
-  @param[out] P2sbWasHidden If P2sbBar needed to be unhidden to get
-                            the address.
-  @retval  EFI_SUCCESS      Address successfully found.
-  @retval  others           Error occurred.
-**/
-EFI_STATUS
-GetTopSwapBase (
-  OUT UINT32    *TopSwapBase,
-  OUT BOOLEAN   *P2sbWasHidden
-  )
-{
-  UINTN   P2sbBase;
-  UINT32  P2sbBar;
-  BOOLEAN P2sbIsHidden;
-
-  if (TopSwapBase == NULL || P2sbWasHidden == NULL) {
-    return EFI_INVALID_PARAMETER;
-  }
-
-  P2sbBase = GetP2sbBase ();
-  P2sbIsHidden = FALSE;
-  if (MmioRead16 (P2sbBase) == 0xFFFF) {
-    MmioWrite8 (P2sbBase + 0xE1, 0);
-    DEBUG ((DEBUG_INFO, "P2sbBar is hidden, unhide it\n"));
-    P2sbIsHidden = TRUE;
-  }
-
-
-  P2sbBar = MmioRead32 (P2sbBase + 0x10);
-  P2sbBar  &= 0xFFFFFFF0;
-  if (P2sbBar == 0xFFFFFFF0) {
-    DEBUG ((DEBUG_ERROR, "P2sbBar could not be unhidden!\n"));
-    return EFI_ACCESS_DENIED;
-  }
-
-  *TopSwapBase    = P2sbBar | ((PID_RTC_HOST) << 16) | (UINT16)(R_RTC_PCR_BUC);
-  *P2sbWasHidden  = P2sbIsHidden;
-
-  return EFI_SUCCESS;
-}
-
-/**
-  Hide P2sbBar.
-**/
-VOID
-HideP2sbBar (
-  VOID
-  )
-{
-  MmioWrite8 (GetP2sbBase () + 0xE1, BIT0);
+  return PCI_LIB_ADDRESS(PcdGet8 (PcdP2sbBusNumber), PCI_DEVICE_NUMBER_PCH_P2SB, PCI_FUNCTION_NUMBER_PCH_P2SB, 0);
 }
 
 /**
@@ -106,23 +51,30 @@ SetBootPartition (
   IN BOOT_PARTITION  Partition
   )
 {
-  EFI_STATUS  Status;
-  UINT32      TopSwapBase;
-  BOOLEAN     P2sbIsHidden;
+  BOOLEAN             P2sbIsHidden;
+  UINT32              AndData;
+  UINT32              OrData;
+  UINTN               P2sbBase;
 
-  Status = GetTopSwapBase (&TopSwapBase, &P2sbIsHidden);
-  if (EFI_ERROR (Status)) {
-    return Status;
+  P2sbBase = GetP2sbDeviceAddr ();
+  P2sbIsHidden = FALSE;
+  if (PciRead16 (P2sbBase) == 0xFFFF) {
+    PciWrite8 (P2sbBase + R_P2SB_CFG_P2SBC + 1, 0);
+    DEBUG ((DEBUG_INFO, "P2SB is hidden, Read VID_DID(0x%x) after unhiding.\n", PciRead32 (P2sbBase)));
+    P2sbIsHidden = TRUE;
   }
 
+  AndData = (UINT32)~BIT0;
   if (Partition == BackupPartition) {
-    MmioOr32 (TopSwapBase, BIT0);
+    OrData = BIT0;
   } else {
-    MmioAnd32 (TopSwapBase, (UINT32)~BIT0);
+    OrData = 0;
   }
+
+  P2SbAndThenOr32 (P2sbBase, PcdGet8 (PcdPidRtcHostNumber), 0, R_RTC_PCR_BUC, AndData, OrData);
 
   if (P2sbIsHidden) {
-    HideP2sbBar ();
+    PciWrite8 (P2sbBase + R_P2SB_CFG_P2SBC + 1, B_P2SB_CFG_P2SBC_HIDE >> 8);
   }
 
   return EFI_SUCCESS;
@@ -144,28 +96,30 @@ GetBootPartition (
   OUT BOOT_PARTITION *Partition
   )
 {
-  EFI_STATUS  Status;
-  UINT32      TopSwapBase;
-  BOOLEAN     P2sbIsHidden;
+  BOOLEAN             P2sbIsHidden;
+  UINT32              RegValue;
+  UINTN               P2sbBase;
 
   if (Partition == NULL) {
     DEBUG ((DEBUG_ERROR, "Partition not initialized!\n"));
     return EFI_INVALID_PARAMETER;
   }
 
-  Status = GetTopSwapBase (&TopSwapBase, &P2sbIsHidden);
-  if (EFI_ERROR (Status)) {
-    return Status;
+  P2sbBase = GetP2sbDeviceAddr ();
+  P2sbIsHidden = FALSE;
+  if (PciRead16 (P2sbBase) == 0xFFFF) {
+    PciWrite8 (P2sbBase + R_P2SB_CFG_P2SBC + 1, 0);
+    DEBUG ((DEBUG_INFO, "P2SB is hidden, Read VID_DID(0x%x) after unhide.\n", PciRead32 (P2sbBase)));
+    P2sbIsHidden = TRUE;
   }
 
-  if (MmioRead32 (TopSwapBase) & BIT0) {
-    *Partition = BackupPartition;
-  } else {
-    *Partition = PrimaryPartition;
-  }
+  RegValue = P2sbRead32 (P2sbBase, PcdGet8 (PcdPidRtcHostNumber), 0, R_RTC_PCR_BUC);
+  *Partition = (BOOT_PARTITION)(RegValue & BIT0);
+
+  DEBUG ((DEBUG_INFO, "*Partition = 0x%x\n", *Partition));
 
   if (P2sbIsHidden) {
-    HideP2sbBar ();
+    PciWrite8(P2sbBase + R_P2SB_CFG_P2SBC + 1, B_P2SB_CFG_P2SBC_HIDE >> 8);
   }
 
   return EFI_SUCCESS;

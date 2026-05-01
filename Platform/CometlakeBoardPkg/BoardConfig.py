@@ -164,6 +164,7 @@ class Board(BaseBoard):
             'ShellExtensionLib|Platform/$(BOARD_PKG_NAME)/Library/ShellExtensionLib/ShellExtensionLib.inf',
             'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
             'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf',
+            'P2sbLib|Silicon/CommonSocPkg/Library/P2sbLib/P2sbLib.inf',
             'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf'
         ]
         if self.BUILD_CSME_UPDATE_DRIVER:

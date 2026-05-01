@@ -131,6 +131,11 @@
   # USB command timeout in milliseconds
   gPlatformCommonLibTokenSpaceGuid.PcdUsbCmdTimeout               |     0x1000 | UINT16 | 0x20000441
 
+  # PID number to access RTC PCR registers
+  gPlatformCommonLibTokenSpaceGuid.PcdPidRtcHostNumber            |       0xC3 | UINT8  | 0x20000442
+  # P2sb controller bus number
+  gPlatformCommonLibTokenSpaceGuid.PcdP2sbBusNumber               |        0x0 | UINT8  | 0x20000443
+
   # Options to limit framebuffer console size (it will be centered if smaller than screen resolution)
   gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleWidth  | 0xFFFFFFFF | UINT32 | 0x20000501
   gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleHeight | 0xFFFFFFFF | UINT32 | 0x20000502

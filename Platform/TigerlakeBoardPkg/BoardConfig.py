@@ -293,6 +293,7 @@ class Board(BaseBoard):
             'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf',
             'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
             'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf',
+            'P2sbLib|Silicon/CommonSocPkg/Library/P2sbLib/P2sbLib.inf',
             'TxtLib|Silicon/$(SILICON_PKG_NAME)/Library/TxtLib/TxtLib.inf'
         ]
 
