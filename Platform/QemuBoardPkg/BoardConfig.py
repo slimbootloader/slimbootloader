@@ -218,6 +218,7 @@ class Board(BaseBoard):
             'BootGuardLib|Silicon/CommonSocPkg/Library/BootGuardLibCBnT/BootGuardLibCBnT.inf',
             'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
             'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf',
+            'P2sbLib|Silicon/CommonSocPkg/Library/P2sbLib/P2sbLib.inf',
             'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf'
         ]
         dsc['PcdsFeatureFlag.%s' % self.BUILD_ARCH] = [

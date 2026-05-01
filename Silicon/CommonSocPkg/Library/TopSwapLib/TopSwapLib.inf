@@ -28,6 +28,10 @@
   IoLib
   BootloaderCommonLib
   PcdLib
+  P2sbLib
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+
+[FixedPcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdPidRtcHostNumber
