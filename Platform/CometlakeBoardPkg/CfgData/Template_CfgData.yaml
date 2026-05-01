@@ -18,19 +18,7 @@
 
 
 
-CFGHDR_TMPL: >
-
-  - CfgHeader    :
-
-      length       : 0x04
-
-      value        : {0x01:2b, ((_LENGTH_$(1)_)/4):10b, $(3):4b, $(4):4b, $(2):12b}
-
-  - CondValue    :
-
-      length       : 0x04
-
-      value        : 0x00000000
+- !include Platform/CommonBoardPkg/CfgData/Template_CfgHdr.yaml
 
 
 

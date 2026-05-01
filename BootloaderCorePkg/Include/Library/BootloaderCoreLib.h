@@ -33,6 +33,18 @@ GetFspHobListPtr (
   );
 
 /**
+  Returns the pointer to the patched FSPM UPD data.
+
+  @return The pointer to the FSPM UPD data, or NULL if not available.
+
+**/
+VOID *
+EFIAPI
+GetFspmUpdPtr (
+  VOID
+  );
+
+/**
   This function retrieves current boot mode.
 
   @retval    The current boot mode.

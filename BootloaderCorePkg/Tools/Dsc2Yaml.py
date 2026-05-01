@@ -319,7 +319,7 @@ class dsc_to_yaml ():
             find = '((_LENGTH_$(1)_+8)/4):10b, $(2):4b, $(3):4b, _TAG_$(1)_:12b'
             for each in tmp_list:
                 if each['cname'] == 'CfgHeader':
-                    each['value'] = each['value'].replace(find, '((_LENGTH_$(1)_)/4):10b, $(3):4b, $(4):4b, $(2):12b')
+                    each['value'] = each['value'].replace(find, '((_LENGTH_$(1)_)/4):11b, $(3):3b, $(4):4b, $(2):12b')
 
         else:
             fix_dict = self.get_fixup_dict()
