@@ -75,6 +75,18 @@ Lz4DecompressGetInfo (
   OUT UINT32      *ScratchSize
   )
 {
+  // Validate preconditions before any dereference
+  if (Source == NULL) {
+    DEBUG ((DEBUG_ERROR, "LZ4 source buffer is NULL\n"));
+    return RETURN_INVALID_PARAMETER;
+  }
+
+  if (SourceSize < sizeof(UINT32)) {
+    DEBUG ((DEBUG_ERROR, "LZ4 source size too small (0x%x < 0x%x)\n",
+            SourceSize, (UINT32)sizeof(UINT32)));
+    return RETURN_INVALID_PARAMETER;
+  }
+
   if (DestinationSize) {
     *DestinationSize = * (UINT32 *)Source;
   }

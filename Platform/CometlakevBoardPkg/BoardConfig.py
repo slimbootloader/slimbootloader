@@ -71,9 +71,6 @@ class Board(BaseBoard):
         if self.HAVE_FIT_TABLE:
             self.FIT_ENTRY_MAX_NUM  = 12
 
-        self.OS_LOADER_FD_SIZE    = 0x00058000
-        self.OS_LOADER_FD_NUMBLK   = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
-
         self.STAGE1A_SIZE         = 0x00010000
         self.STAGE1B_SIZE         = 0x00100000
         self.STAGE2_SIZE          = 0x000EA000
@@ -92,9 +89,6 @@ class Board(BaseBoard):
 
         self.STAGE2_FD_BASE       = 0x01000000
         self.STAGE2_FD_SIZE       = 0x000E0000
-
-        self.OS_LOADER_FD_SIZE    = 0x00058000
-        self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         self.STAGE1_STACK_SIZE    = 0x00020000
         self.STAGE1_DATA_SIZE     = 0x0000E000
@@ -124,7 +118,7 @@ class Board(BaseBoard):
             self.NON_REDUNDANT_SIZE + self.NON_VOLATILE_SIZE
 
         # OS Loader FD/FV sizes
-        self.OS_LOADER_FD_SIZE     = 0x00058000
+        self.OS_LOADER_FD_SIZE     = 0x00059000
         self.OS_LOADER_FD_NUMBLK   = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         self.PLD_HEAP_SIZE        = 0x04000000

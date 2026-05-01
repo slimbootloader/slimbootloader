@@ -278,7 +278,7 @@ FusaConfigPostMem (
   DEBUG((DEBUG_VERBOSE, "Copy FuSa FW Container to Mem Status: %r\n", Status));
   DEBUG((DEBUG_VERBOSE, "Signature: 0x%X\n",((CONTAINER_HDR*)FusaCompInMem)->Signature));
 
-  Status = RegisterContainer((UINT32)FusaCompInMem, NULL);
+  Status = RegisterContainer((UINT32)FusaCompInMem, FusaCompLength, NULL);
   DEBUG((DEBUG_VERBOSE, "Register Fusa FW Container Status: %r\n", Status));
 
   if (EFI_ERROR(Status)) {

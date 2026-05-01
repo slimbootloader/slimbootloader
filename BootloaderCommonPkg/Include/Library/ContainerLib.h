@@ -249,6 +249,7 @@ GetNextAvailableComponent (
   This function registers a container.
 
   @param[in]  ContainerBase      Container base address to register.
+  @param[in]  ContainerSize      Container size in bytes, 0 if unknown.
   @param[in]  ContainerCallback  Callback regsiterd to notify container buf info
 
   @retval EFI_NOT_READY          Not ready for register yet.
@@ -260,6 +261,7 @@ GetNextAvailableComponent (
 EFI_STATUS
 RegisterContainer (
   IN  UINT32                    ContainerBase,
+  IN  UINT32                    ContainerSize,
   IN  LOAD_COMPONENT_CALLBACK   ContainerCallback
   );
 
