@@ -34,3 +34,5 @@ class Board(ArrowlakeBoardConfig.Board):
                                     0xF3FFA06B,
                                     0xF3FFA06C
         ]
+
+        self.PID_RTC_HOST_NUM       = 0x6C

@@ -77,6 +77,8 @@ class Board(BaseBoard):
         # 0: Disable 1: Enable IPP Crypto performance mesurement
         self.ENABLE_IPP_CRYPTO_PERF = 0
         self.ENABLE_FIPS_SELFTEST   = 0
+        self.PID_RTC_HOST_NUM       = 0xC3
+        self.P2SB_BUS_NUM           = 0x80
 
         # 0 - PCH UART0, 1 - PCH UART1, 2 - PCH UART2, 0xFF - EC UART 0x3F8
         self.DEBUG_PORT_NUMBER = 0x2
@@ -334,7 +336,8 @@ class Board(BaseBoard):
             'CpuPcieHsPhyInitLib|Silicon/$(SILICON_PKG_NAME)/Library/CpuPcieHsPhyInitLib/CpuPcieHsPhyInitLib.inf',
             'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf',
             'TcoTimerLib|Silicon/$(SILICON_PKG_NAME)/Library/TcoTimerLib/TcoTimerLib.inf',
-            'TopSwapLib|Silicon/$(SILICON_PKG_NAME)/Library/TopSwapLib/TopSwapLib.inf',
+            'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf',
+            'P2sbLib|Silicon/CommonSocPkg/Library/P2sbLib/P2sbLib.inf',
             'CryptoLib|%s' % self.GetIppCryptoInf()
         ]
 

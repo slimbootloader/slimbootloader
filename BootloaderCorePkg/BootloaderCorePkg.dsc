@@ -283,6 +283,9 @@
   gPlatformCommonLibTokenSpaceGuid.PcdHandOffFdtEnable          | $(ENABLE_UPL_HANDOFF_FDT)
   gPayloadTokenSpaceGuid.PcdIoeCsmeUpdateEnabled                | $(ENABLE_IOE_CSME_UPDATE)
 
+  gPlatformCommonLibTokenSpaceGuid.PcdPidRtcHostNumber          | $(PID_RTC_HOST_NUM)
+  gPlatformCommonLibTokenSpaceGuid.PcdP2sbBusNumber             | $(P2SB_BUS_NUM)
+
 [PcdsPatchableInModule]
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel   | 0x8000004F
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress  | $(PCI_EXPRESS_BASE)
