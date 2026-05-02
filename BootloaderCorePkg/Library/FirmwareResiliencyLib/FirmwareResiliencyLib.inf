@@ -30,10 +30,11 @@
   BootloaderCorePkg/BootloaderCorePkg.dec
 
 [LibraryClasses]
-  TcoTimerLib
   BootloaderCommonLib
   ResetSystemLib
   DebugLib
-  TopSwapLib
   PcdLib
   WatchDogTimerLib
+  IoLib
+  PciLib
+  BaseMemoryLib

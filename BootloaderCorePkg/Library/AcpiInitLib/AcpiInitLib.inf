@@ -35,6 +35,7 @@
   IntelFsp2Pkg/IntelFsp2Pkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
 
 [LibraryClasses]
   BaseLib
@@ -42,12 +43,14 @@
   BootloaderCoreLib
   DebugDataLib
   MpInitLib
+  PciLib
   TimeStampLib
   MemoryAllocationLib
 
 [Guids]
   gEsrtSystemFirmwareGuid
   gCsmeFWUDriverImageFileGuid
+  gCsmeFWUpdateImageFileGuid
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdAcpiTablesRsdp

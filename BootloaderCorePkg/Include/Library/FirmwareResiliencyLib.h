@@ -40,4 +40,30 @@ CheckForTcoTimerFailures (
   IN UINT8 BootFailureThreshold
   );
 
+/** Checks HFSTS1/2 via HECI PCI config space in Stage1B.
+    Triggers CSME capsule FWU (BIT16 + cold reset) on first corruption detection,
+    or boots degraded if FWU already completed. **/
+VOID
+EFIAPI
+CheckForMeCodeFailures (
+  VOID
+  );
+
+/** Returns TRUE if HFSTS1/2 via HECI PCI config space indicate ME recovery/FtBupLdFlr/FwUpdIpu; FALSE if healthy or not present. **/
+BOOLEAN
+EFIAPI
+IsMeCorrupt (
+  VOID
+  );
+
+/** Reads HFSTS1 and HFSTS2 from HECI PCI config space.
+    Both outputs are zeroed if HECI device is not present. **/
+VOID
+EFIAPI
+GetMeHfsts (
+  OUT UINT32  *Hfsts1,
+  OUT UINT32  *Hfsts2
+  );
+
+
 #endif
