@@ -1,0 +1,24 @@
+## @file
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+[Defines]
+  INF_VERSION          = 0x00010005
+  BASE_NAME            = Actm
+  FILE_GUID            = 3A2E3E5C-7C6D-4B2F-9F8A-1D5C6E7F8A9B
+  MODULE_TYPE          = USER_DEFINED
+  VERSION_STRING       = 1.0
+
+[Sources]
+  BHS_ACTM_REL_NT_O1_ACTM_GNRD_03.00_PW_signed.bin
+
+[UserExtensions.SBL."CloneRepo"]
+  REPO   = https://github.com/slimbootloader/firmwareblob.git
+  COMMIT = aeab761001c6fff26bcb4efbb98109f71c32b4e5
+
+[UserExtensions.SBL."CopyList"]
+  ACTM/Kaseyville/BHS_ACTM_REL_NT_O1_ACTM_GNRD_03.00_PW_signed.bin  : Silicon/KaseyvillePkg/Ksv/Actm/BHS_ACTM_REL_NT_O1_ACTM_GNRD_03.00_PW_signed.bin

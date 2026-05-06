@@ -1,0 +1,26 @@
+## @file
+#  File to describe FSP repo information
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+
+[UserExtensions.SBL."CloneRepo"]
+  REPO    = https://github.com/intel/FSP.git
+  COMMIT  = 52c0837e3fea8c49c61298d8bc8ca2d2014bb25b
+
+[UserExtensions.SBL."CopyList"]
+  KaseyvilleFspBinPkg/FspBin/FspDbg.bin                     : Silicon/KaseyvillePkg/Ksv/FspBin/FspDbg.bin
+  KaseyvilleFspBinPkg/FspBin/FspRel.bin                     : Silicon/KaseyvillePkg/Ksv/FspBin/FspRel.bin
+  KaseyvilleFspBinPkg/Include/FspmUpd.h                     : Silicon/KaseyvillePkg/Ksv/Include/FspmUpd.h
+  KaseyvilleFspBinPkg/Include/FspsUpd.h                     : Silicon/KaseyvillePkg/Ksv/Include/FspsUpd.h
+  KaseyvilleFspBinPkg/Include/FsptUpd.h                     : Silicon/KaseyvillePkg/Ksv/Include/FsptUpd.h
+  KaseyvilleFspBinPkg/Include/FspUpd.h                      : Silicon/KaseyvillePkg/Ksv/Include/FspUpd.h
+  KaseyvilleFspBinPkg/Include/FspGlobals.h                  : Silicon/KaseyvillePkg/Ksv/Include/FspGlobals.h
+  KaseyvilleFspBinPkg/Include/FspExtSystemMemoryMapHob.h    : Silicon/KaseyvillePkg/Ksv/Include/FspExtSystemMemoryMapHob.h
+  KaseyvilleFspBinPkg/Include/IioPcieConfigUpd.h            : Silicon/KaseyvillePkg/Ksv/Include/IioPcieConfigUpd.h
+  KaseyvilleFspBinPkg/Include/IioUniversalDataHob.h         : Silicon/KaseyvillePkg/Ksv/Include/IioUniversalDataHob.h
