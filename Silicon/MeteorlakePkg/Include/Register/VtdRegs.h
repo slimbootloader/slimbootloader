@@ -12,9 +12,7 @@
 ///
 /// Vt-d Engine base address.
 ///
-#define R_MCHBAR_VTD1_OFFSET                 0x5400  ///< HW UNIT1 for IGD
-#define R_MCHBAR_VTD2_LOW_OFFSET             0x7880  ///< HW UNIT2 for IPU
-#define R_MCHBAR_VTD3_OFFSET                 0x5410  ///< HW UNIT3 for all other - PEG, USB, SATA etc
+#define R_MCHBAR_VTD1_OFFSET                 0x5410  // VT IOMMU VC0
 
 
 #endif
