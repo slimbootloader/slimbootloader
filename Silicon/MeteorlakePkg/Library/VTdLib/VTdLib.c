@@ -39,9 +39,6 @@ GetVtdBarSize (
   Read VTD Engine Base Address from VTD BAR Offsets.
 
   @param[in]  VtdEngineNumber        - Engine number for which VTD Base Adderess is required.
-                                        0 = IGD VT-d (VTD1_OFFSET)
-                                        1 = IPU VT-d (VTD2_LOW_OFFSET) - may not exist on all SKUs
-                                        2 = IOP VT-d (VTD3_OFFSET)
 
   @retval   VTD Engine Base Address
 **/
@@ -57,14 +54,11 @@ ReadVtdBaseAddress (
   MchBar          = PciRead32 ((UINTN)McD0BaseAddress + R_SA_MCHBAR) & (~BIT0);
 
   switch (VtdEngineNumber) {
-    case 0:
-      return (MmioRead32 (MchBar + 0x5400) & (~BIT0));
+    case IGD_VTD:
+      return (MmioRead32 (MchBar + R_MCHBAR_VTD1_OFFSET) & (~BIT0));
       break;
-    case 1:
-      return (MmioRead32 (MchBar + R_MCHBAR_VTD2_LOW_OFFSET) & (~BIT0));
-      break;
-    case 2:
-      return (MmioRead32 (MchBar + 0x5410) & (~BIT0));
+    case IOP_VTD:
+      return ((MmioRead32 (MchBar + R_MCHBAR_VTD1_OFFSET) & (~BIT0)) + GetVtdBarSize());
       break;
     default:
       return 0x0;
