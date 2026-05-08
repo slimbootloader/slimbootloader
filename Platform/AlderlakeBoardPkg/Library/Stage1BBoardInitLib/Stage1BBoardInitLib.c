@@ -248,13 +248,24 @@ FwuTopSwapSetting (
   EFI_STATUS        Status;
   UINT32            RsvdBase;
   UINT32            RsvdSize;
-  FW_UPDATE_STATUS  *FwUpdStatus;
+  FW_UPDATE_STATUS  FwUpdStatus;
 
   Status = GetComponentInfoByPartition (FLASH_MAP_SIG_BLRESERVED, FALSE, &RsvdBase, &RsvdSize);
   if (EFI_ERROR (Status)) {
     DEBUG((DEBUG_ERROR, "Could not get component information for bootloader reserved region\n"));
   }
-  FwUpdStatus = (FW_UPDATE_STATUS *)(UINTN)RsvdBase;
+
+  RsvdBase -= PcdGet32(PcdFlashBaseAddress);
+  Status = SpiFlashRead(
+             FlashRegionBios,
+             RsvdBase,
+             sizeof(FW_UPDATE_STATUS),
+             (UINT8*)&FwUpdStatus
+             );
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "Could not get FW Update status from flash\n"));
+    return;
+  }
 
 
   // If in a recovery path, stay on current partition
@@ -262,7 +273,7 @@ FwuTopSwapSetting (
     return;
   }
 
-  switch (FwUpdStatus->StateMachine) {
+  switch (FwUpdStatus.StateMachine) {
     case FW_UPDATE_SM_RECOVERY:
       // This indicates that recovery is in progress
       ASSERT (PcdGetBool (PcdSblResiliencyEnabled));
