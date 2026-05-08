@@ -67,6 +67,7 @@ class Board(BaseBoard):
         self.SKIP_STAGE1A_SOURCE_DEBUG = 1
         # 3: Enable NOSMRR (for edk2-stable202411 and newer UEFI payload)  4: Auto NOSMRR
         self.ENABLE_SMM_REBASE    = 4
+        self.PID_RTC_HOST_NUM     = 0x6C
 
         # 0 - PCH UART0, 1 - PCH UART1, 2 - PCH UART2, 0xFF - EC UART 0x3F8
         self.DEBUG_PORT_NUMBER = 0x0
@@ -271,7 +272,8 @@ class Board(BaseBoard):
             'CpuPcieHsPhyInitLib|Silicon/$(SILICON_PKG_NAME)/Library/CpuPcieHsPhyInitLib/CpuPcieHsPhyInitLib.inf',
             'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf',
             'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
-            'TopSwapLib|Silicon/$(SILICON_PKG_NAME)/Library/TopSwapLib/TopSwapLib.inf'
+            'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf',
+            'P2sbLib|Silicon/CommonSocPkg/Library/P2sbLib/P2sbLib.inf'
         ]
 
         if self.BUILD_CSME_UPDATE_DRIVER:
