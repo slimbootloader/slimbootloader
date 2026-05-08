@@ -95,7 +95,7 @@
   gPlatformAlderLakeTokenSpaceGuid.PcdDisplayId
   gPlatformAlderLakeTokenSpaceGuid.PcdBoardRev
   gPlatformAlderLakeTokenSpaceGuid.PcdMemConfigId
-
+  gPlatformModuleTokenSpaceGuid.PcdFlashBaseAddress
 
 [FixedPcd]
   gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport
