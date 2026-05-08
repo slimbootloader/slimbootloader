@@ -275,6 +275,7 @@ CheckStateMachine (
   EFI_STATUS          Status;
   UINT32              RsvdBase;
   UINT32              RsvdSize;
+  FW_UPDATE_STATUS    TempFwUpdStatus;
 
   if (pFwUpdStatus == NULL) {
     Status = GetComponentInfoByPartition (FLASH_MAP_SIG_BLRESERVED, FALSE, &RsvdBase, &RsvdSize);
@@ -282,7 +283,18 @@ CheckStateMachine (
       DEBUG((DEBUG_ERROR, "Could not get component information for bootloader reserved region\n"));
       return Status;
     }
-    pFwUpdStatus = (FW_UPDATE_STATUS *)(UINTN)RsvdBase;
+    RsvdBase -= PcdGet32(PcdFlashBaseAddress);
+    Status = SpiFlashRead(
+              FlashRegionBios,
+              RsvdBase,
+              sizeof(FW_UPDATE_STATUS),
+              (UINT8*)&TempFwUpdStatus
+              );
+    if (EFI_ERROR (Status)) {
+      DEBUG((DEBUG_ERROR, "Could not get FW Update status from flash\n"));
+      return EFI_UNSUPPORTED;
+    }
+    pFwUpdStatus = &TempFwUpdStatus;
   }
 
   //
