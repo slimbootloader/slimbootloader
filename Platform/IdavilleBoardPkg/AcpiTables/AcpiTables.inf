@@ -40,7 +40,6 @@
   Fwst/Fwst.aslc
   Wddt/Wddt1.0.aslc
   Wsmt/Wsmt.aslc
-  Platform/CommonBoardPkg/AcpiTables/Fpdt/Fpdt.aslc
   PsdTable/PsdTable.aslc
   # runtime generation tables
   Dmar/Dmar.aslc

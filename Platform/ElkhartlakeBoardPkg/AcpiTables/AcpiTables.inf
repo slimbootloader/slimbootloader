@@ -29,7 +29,6 @@
   Fwst/Fwst.aslc
   Mcfg/Mcfg.aslc
   Hpet/Hpet.act
-  Platform/CommonBoardPkg/AcpiTables/Fpdt/Fpdt.aslc
   Ssdt/SaSsdt.asl
   Ssdt/Thermal.asl
   SsdtRtd3/EhlCrbRtd3.asl

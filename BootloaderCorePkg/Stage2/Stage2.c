@@ -388,7 +388,9 @@ NormalBootPath (
   PrintStackHeapInfo ();
   DEBUG_CODE_END ();
 
-  UpdateFpdtSblTable ();
+  if (ACPI_ENABLED ()) {
+    UpdateFpdtSblTable (GetPerfDataPtr ());
+  }
   // FWU payload is the only payload in SBL scope, so stop TCO
   // timer if another payload is set to be launched
   if (PcdGetBool (PcdSblResiliencyEnabled) && GetBootMode () != BOOT_ON_FLASH_UPDATE) {

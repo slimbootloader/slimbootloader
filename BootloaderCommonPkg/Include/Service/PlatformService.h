@@ -9,9 +9,11 @@
 #define __PLATFORM_SERVICE_H__
 
 #include <Guid/BootLoaderServiceGuid.h>
+#include <Library/BootloaderCommonLib.h>
 
 #define PLATFORM_SERVICE_SIGNATURE  SIGNATURE_32 ('S', 'P', 'L', 'T')
-#define PLATFORM_SERVICE_VERSION    1
+#define PLATFORM_SERVICE_VERSION    2
+#define PLATFORM_SERVICE_PERFORMANCE_VERSION  2
 
 typedef enum {
   PreTempRamInit     = 0x10,
@@ -74,11 +76,28 @@ VOID
   IN BOARD_INIT_PHASE   Phase
   );
 
+/**
+  Publish the caller's live performance timestamps to the ACPI SBLT.
+
+  @param[in] PerfData  Performance data to publish.
+
+  @retval EFI_SUCCESS            Timestamps published.
+  @retval EFI_INVALID_PARAMETER  Performance data is missing.
+  @retval EFI_NOT_FOUND          FPDT is unavailable.
+  @retval EFI_UNSUPPORTED        SBLT format is not supported.
+**/
+typedef
+EFI_STATUS
+(EFIAPI *UPDATE_PERFORMANCE) (
+  IN CONST BL_PERF_DATA  *PerfData
+  );
+
 typedef struct {
   SERVICE_COMMON_HEADER              Header;
   NOTIFY_PHASE                       NotifyPhase;
   ACPI_TABLE_UPDATE                  AcpiTableUpdate;
   RESET_SYSTEM                       ResetSystem;
+  UPDATE_PERFORMANCE                 UpdatePerformance;
 } PLATFORM_SERVICE;
 
 #endif
