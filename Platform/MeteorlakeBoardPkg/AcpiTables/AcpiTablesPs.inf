@@ -48,7 +48,6 @@
   CpuSsdt/ApTst.asl
   CpuSsdt/ApPsd.asl
   CpuSsdt/CpuSsdt.asl
-  Platform/CommonBoardPkg/AcpiTables/Fpdt/Fpdt.aslc
   Platform/CommonBoardPkg/AcpiTables/Tpm/Tpm2.aslc
   Platform/CommonBoardPkg/AcpiTables/Tpm/TpmSsdt.asl
   BdatTable/BdatTable.aslc

@@ -72,10 +72,6 @@ BoardNotifyPhase (
     }
   }
 
-  // Update Osloader boot time in FPDT
-  if ((Phase == EndOfFirmware) && (GetBootMode () != BOOT_ON_S3_RESUME)) {
-    UpdateFpdtSblTable ();
-  }
 }
 
 /**

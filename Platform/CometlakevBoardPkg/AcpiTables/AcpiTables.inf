@@ -39,7 +39,6 @@
   Bdat/Bdat.aslc
   Fwst/Fwst.aslc
   Platform/CommonBoardPkg/AcpiTables/Tpm/Tpm2.aslc
-  Platform/CommonBoardPkg/AcpiTables/Fpdt/Fpdt.aslc
   Ssdt/TpmSsdt.asl
   Ssdt/Thermal.asl
   CpuSsdt/Cpu0Cst.asl

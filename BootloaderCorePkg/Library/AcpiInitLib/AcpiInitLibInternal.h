@@ -38,6 +38,17 @@ extern  CHAR8           WakeUp;
 extern  UINT32          WakeUpSize;
 
 extern  CONST EFI_ACPI_5_0_BOOT_GRAPHICS_RESOURCE_TABLE mBootGraphicsResourceTableTemplate;
+extern  CONST FIRMWARE_PERFORMANCE_TABLES               mFpdtTemplate;
+
+/**
+  Get the total ACPI reclaim size needed for all FPDT tables.
+
+  @retval  Total size in bytes.
+**/
+UINT32
+GetFpdtTablesSize (
+  VOID
+  );
 
 typedef struct {
   UINT8   Type;

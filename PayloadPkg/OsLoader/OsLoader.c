@@ -695,6 +695,12 @@ BeforeOSJump (
   }
   AddMeasurePoint (0x4100);
 
+  if ((PlatformService != NULL) &&
+      (PlatformService->Header.Version >= PLATFORM_SERVICE_PERFORMANCE_VERSION) &&
+      (PlatformService->UpdatePerformance != NULL)) {
+    PlatformService->UpdatePerformance (GetPerfDataPtr ());
+  }
+
   // De-init boot devices before OS boot.
   DeinitBootDevices ();
 
