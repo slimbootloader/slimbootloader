@@ -1,0 +1,42 @@
+## @file
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = PsdLib
+  FILE_GUID                      = bd844a7b-9de1-482e-9c51-ef7c4bcee7b5
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = PsdLib
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC ARM
+#
+
+[Sources]
+  PsdLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  HeciLib
+
+[Guids]
+  gMeBiosPayloadHobGuid
+
+[Pcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultOemId
+  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultOemTableId
+  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultOemRevision
+  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultCreatorId
+  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultCreatorRevision
