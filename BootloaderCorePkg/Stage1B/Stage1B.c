@@ -6,6 +6,7 @@
 **/
 
 #include "Stage1B.h"
+#include <IndustryStandard/PeImage.h>
 
 /**
   Callback function to add performance measure point during component loading.
@@ -68,10 +69,17 @@ PrepareStage2 (
   EFI_STATUS                Status;
   UINT32                    Delta;
   STAGE_HDR                *StageHdr;
+  EFI_TE_IMAGE_HEADER      *Te;
+  UINT32                    Adjust;
+  UINT32                    Misalign;
 
 
   if (FixedPcdGetBool (PcdStage2LoadHigh)) {
-    DstAdr = NULL;
+    //
+    // Allocate one extra page for AVX2 alignment fixup (see below).
+    //
+    DstLen = 0;
+    DstAdr = AllocatePages (EFI_SIZE_TO_PAGES (FixedPcdGet32 (PcdStage2FdSize)) + 1);
   } else {
     DstAdr = (VOID *)(UINTN)PCD_GET32_WITH_ADJUST (PcdStage2FdBase);
   }
@@ -86,6 +94,41 @@ PrepareStage2 (
   AddMeasurePoint (0x20C0);
 
   Dst = (UINT32)(UINTN)DstAdr;
+
+  //
+  // AVX2 alignment fixup for IppCrypto2Lib L9 SHA384/SHA512.
+  //
+  // L9 uses vmovdqa ymm (256-bit aligned load) on .data tables; the target
+  // address must be 32-byte aligned or a #GP(13) fault occurs.
+  //
+  // FD layout (fixed 0x70-byte offset to TE image):
+  //   [FvHdr 0x48][FfsHdr 0x18][VerSec 0x0C][TeSecHdr 0x04][TE image ...]
+  //   |<--------------------- 0x70 bytes ------------------>|
+  //
+  // A .data symbol with link-time VA 'v' lands at runtime address:
+  //   addr = TeAddr + v - Adjust        (Adjust = StrippedSize - sizeof(TE_HDR))
+  //
+  // Need: (TeAddr - Adjust) % 32 == 0
+  //
+  // If misaligned, shift the entire FD forward by (32 - misalignment) bytes
+  // into the extra page allocated above.
+  //
+  if (FixedPcdGetBool (PcdStage2LoadHigh)) {
+    StageHdr = (STAGE_HDR *)(UINTN)Dst;
+    Te       = (EFI_TE_IMAGE_HEADER *)(UINTN)(Dst + StageHdr->Base
+               - PCD_GET32_WITH_ADJUST (PcdStage2FdBase));
+    if (Te->Signature == EFI_TE_IMAGE_HEADER_SIGNATURE) {
+      Adjust   = Te->StrippedSize - sizeof (EFI_TE_IMAGE_HEADER);
+      Misalign = ((UINT32)(UINTN)Te - Adjust) & 0x1F;
+      if (Misalign != 0) {
+        Misalign = 32 - Misalign;
+        CopyMem ((VOID *)(UINTN)(Dst + Misalign), (VOID *)(UINTN)Dst, DstLen);
+        Dst   += Misalign;
+        DstAdr = (VOID *)(UINTN)Dst;
+        DEBUG ((DEBUG_INFO, "Shifted Stage2 FD by %d bytes for AVX2 alignment\n", Misalign));
+      }
+    }
+  }
 
   // Rebase Stage2 if required
   if (Dst != PCD_GET32_WITH_ADJUST (PcdStage2FdBase)) {

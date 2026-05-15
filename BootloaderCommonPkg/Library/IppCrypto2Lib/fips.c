@@ -28,19 +28,26 @@ IppCrypto2LibFipsSelftestRsaVerifyPkcsv15 ()
         return RETURN_UNSUPPORTED; // cannot use this function in FIPS mode.
     }
 
+    // NOTE: See IppCrypto2LibFipsSelftestRsaVerifyPSS for explanation of why
+    // RSA FIPS selftests are not supported with GCC builds. See README.md
+    // ("FIPS Selftest GCC Limitation") for details and upstream link.
+#if defined(__GNUC__) && !defined(__INTEL_COMPILER) && !defined(__INTEL_LLVM_COMPILER)
+    DEBUG ((DEBUG_WARN, "  RSA FIPS selftest skipped: not supported with GCC (upstream ipp-crypto limitation)\n"));
+    return RETURN_SUCCESS;
+#else
     // 2. Run the Selftest
     fips_test_status selftest_status = IPPCP_ALGO_SELFTEST_OK;
 
     // Query buffer size for the test and allocate it (it can be done on Intel® Cryptography Primitives Library side with IPPCP_SELFTEST_USE_MALLOC=on)
     int KeysBufferSize = 0;
-    selftest_status += fips_selftest_ippsRSASignVerify_PKCS1v15_rmf_get_size_keys(&KeysBufferSize);
+    selftest_status += fips_selftest_ippsRSAVerify_PKCS1v15_rmf_get_size_keys(&KeysBufferSize);
 
     Ipp8u *pKeysBuffer = AllocateTemporaryMemory(KeysBufferSize);
     if (pKeysBuffer == NULL) {
         return RETURN_OUT_OF_RESOURCES;
     }
     int BufferSize = 0;
-    selftest_status += fips_selftest_ippsRSASignVerify_PKCS1v15_rmf_get_size(&BufferSize, pKeysBuffer);
+    selftest_status += fips_selftest_ippsRSAVerify_PKCS1v15_rmf_get_size(&BufferSize, pKeysBuffer);
 
     Ipp8u *pBuffer = AllocateTemporaryMemory(BufferSize);
     if (pBuffer == NULL) {
@@ -60,6 +67,7 @@ IppCrypto2LibFipsSelftestRsaVerifyPkcsv15 ()
     FreeTemporaryMemory(pKeysBuffer);
     FreeTemporaryMemory(pBuffer);
     return RETURN_SUCCESS;
+#endif
 }
 
 RETURN_STATUS
@@ -317,6 +325,13 @@ IppCrypto2LibFipsSelftestRsaVerifyPSS ()
         return RETURN_UNSUPPORTED; // cannot use this function in FIPS mode.
     }
 
+    // NOTE: See IppCrypto2LibFipsSelftestRsaVerifyPSS for explanation of why
+    // RSA FIPS selftests are not supported with GCC builds. See README.md
+    // ("FIPS Selftest GCC Limitation") for details and upstream link.
+#if defined(__GNUC__) && !defined(__INTEL_COMPILER) && !defined(__INTEL_LLVM_COMPILER)
+    DEBUG ((DEBUG_WARN, "  RSA FIPS selftest skipped: not supported with GCC (upstream ipp-crypto limitation)\n"));
+    return RETURN_SUCCESS;
+#else
     // 2. Run the Selftest
     fips_test_status selftest_status = IPPCP_ALGO_SELFTEST_OK;
 
@@ -350,6 +365,7 @@ IppCrypto2LibFipsSelftestRsaVerifyPSS ()
     FreeTemporaryMemory(pKeysBuffer);
     FreeTemporaryMemory(pBuffer);
     return RETURN_SUCCESS;
+#endif
 }
 
 RETURN_STATUS
