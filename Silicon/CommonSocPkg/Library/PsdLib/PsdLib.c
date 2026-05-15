@@ -75,7 +75,7 @@ GetMeBiosPayloadHobData (
   @param[in,out] EomState         Pointer to The EOM state value.
 
   @retval EFI_SUCCESS             The EOM state was retrieved successfully.
-  @retval Others                  An error occured.
+  @retval Others                  An error occurred.
 
  **/
 EFI_STATUS
@@ -210,6 +210,7 @@ UpdateAcpiPsdTable (
   EFI_STATUS              Status;
 
   if (Table == NULL) {
+    DEBUG ((DEBUG_WARN, "Table is not a valid pointer\n"));
     return EFI_INVALID_PARAMETER;
   }
 
@@ -223,21 +224,21 @@ UpdateAcpiPsdTable (
   // Populate EOM state
   Status = GetEomState (&Psdt->EomState);
   if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, " GetEomState failed =%x\n", Status));
+    DEBUG ((DEBUG_ERROR, " GetEomState failed =%x\n", Status));
     return Status;
   }
 
   // Populate Sec capabilities
   Status = GetSecCapability (&Psdt->CsmeSecCapabilities);
   if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, " GetSecCapability failed =%x\n", Status));
+    DEBUG ((DEBUG_ERROR, " GetSecCapability failed =%x\n", Status));
     return Status;
   }
 
   // Populate Sec FW version
   Status = GetSecFwVersion (&Psdt->FwVer);
   if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, " GetSecFwVersion failed =%x\n", Status));
+    DEBUG ((DEBUG_ERROR, " GetSecFwVersion failed =%x\n", Status));
     return Status;
   }
 
