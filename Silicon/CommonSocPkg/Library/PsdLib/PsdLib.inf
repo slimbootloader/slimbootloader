@@ -30,6 +30,10 @@
   BaseLib
   DebugLib
   HeciLib
+  HobLib
+  PcdLib
+  BaseMemoryLib
+  BootloaderCoreLib
 
 [Guids]
   gMeBiosPayloadHobGuid
