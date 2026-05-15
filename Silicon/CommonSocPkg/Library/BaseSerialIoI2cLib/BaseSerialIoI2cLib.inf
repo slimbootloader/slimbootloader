@@ -28,10 +28,8 @@
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
-  Silicon/AlderlakePkg/AlderlakePkg.dec
   Silicon/CommonSocPkg/CommonSocPkg.dec
 
 [Sources]
   SerialIoI2cLib.c
   SerialIoI2cPrivateLib.c
-

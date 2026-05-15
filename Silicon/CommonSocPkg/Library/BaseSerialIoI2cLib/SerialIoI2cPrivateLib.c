@@ -14,9 +14,7 @@
 #include <Library/SerialIoI2cLib.h>
 #include <Library/TimerLib.h>
 
-#include <PchReservedResources.h>
-#include <Register/SerialIoRegs.h>
-
+#include "SerialIoRegs.h"
 #include "SerialIoI2cRegs.h"
 #include "SerialIoI2cPrivateLib.h"
 #include "SerialIoI2cRegsVer2.h"
@@ -178,7 +176,7 @@ SerialIoI2cPciEnable (
   SERIAL_IO_I2C_MEM_RESETS  I2cResets;
   SERIAL_IO_I2C_GENERAL     I2cGeneral;
 
-  *BaseAddress = (UINT64) ((PciSegmentRead32 ((UINTN) (PciCfgBase + 0x10)) & 0xFFFFF000) + LShiftU64 (PciSegmentRead32 ((UINTN) (PciCfgBase + 0x10 + 4)), 32));
+  *BaseAddress = (UINT64) ((PciSegmentRead32 ((UINTN) (PciCfgBase + PCI_BASE_ADDRESSREG_OFFSET)) & 0xFFFFF000) + LShiftU64 (PciSegmentRead32 ((UINTN) (PciCfgBase + PCI_BASE_ADDRESSREG_OFFSET + 4)), 32));
   if ((*BaseAddress == 0xFFFFFFFFFFFFF000) || (*BaseAddress == 0x0)) {
     DEBUG ((DEBUG_ERROR, "SerialIoI2cPciEnable Device is still not enabled, or there is no BAR assigned\n"));
     return FALSE;
@@ -228,7 +226,7 @@ SerialIoI2cPciDisable (
 
   BaseAddress = 0;
 
-  BaseAddress = (UINT64) ((PciSegmentRead32 ((UINTN) (PciCfgBase + 0x10)) & 0xFFFFF000) + LShiftU64 (PciSegmentRead32 ((UINTN) (PciCfgBase + 0x10 + 4)), 32));
+  BaseAddress = (UINT64) ((PciSegmentRead32 ((UINTN) (PciCfgBase + PCI_BASE_ADDRESSREG_OFFSET)) & 0xFFFFF000) + LShiftU64 (PciSegmentRead32 ((UINTN) (PciCfgBase + PCI_BASE_ADDRESSREG_OFFSET + 4)), 32));
   if ((BaseAddress == 0xFFFFFFFFFFFFF000) || (BaseAddress == 0x0)) {
     return; // no MMIO access/unknown I2C state
   }
