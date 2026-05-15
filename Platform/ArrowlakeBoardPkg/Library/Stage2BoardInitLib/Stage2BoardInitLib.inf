@@ -119,3 +119,4 @@
 [FeaturePcd]
   gPlatformCommonLibTokenSpaceGuid.PcdMadtUsePlatformLapic
   gPlatformCommonLibTokenSpaceGuid.PcdCpuX2ApicEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled

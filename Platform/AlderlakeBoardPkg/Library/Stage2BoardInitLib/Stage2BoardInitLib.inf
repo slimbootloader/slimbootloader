@@ -129,6 +129,7 @@
 
 [FeaturePcd]
   gPlatformCommonLibTokenSpaceGuid.PcdTxtEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
 
 [FixedPcd]
   gPlatformAlderLakeTokenSpaceGuid.PcdAdlLpSupport
