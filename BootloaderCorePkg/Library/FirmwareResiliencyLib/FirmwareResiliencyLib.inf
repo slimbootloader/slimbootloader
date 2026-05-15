@@ -37,3 +37,7 @@
   TopSwapLib
   PcdLib
   WatchDogTimerLib
+  SpiFlashLib
+
+[Pcd]
+  gPlatformModuleTokenSpaceGuid.PcdFlashBaseAddress
