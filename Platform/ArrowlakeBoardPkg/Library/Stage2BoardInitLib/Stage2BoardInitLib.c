@@ -9,7 +9,7 @@
 #include <PlatformData.h>
 #include <Library/MeExtMeasurementLib.h>
 #include "Stage2BoardInitLib.h"
-#include "PsdLib.h"
+#include <Library/PsdLib.h>
 #include <GpioV2PinsMtlPchS.h>
 #include <Library/TimerLib.h>
 #include <GpioV2PinsMtlSoc.h>
@@ -60,12 +60,14 @@ GLOBAL_REMOVE_IF_UNREFERENCED SERIAL_IO_CONTROLLER_DESCRIPTOR mMtlPchLpssUartFix
   { 0x12000,  0x13000}
 };
 
-extern EFI_ACPI_DMAR_HEADER mAcpiDmarTableTemplate;
-extern EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER mAcpiMadtTableTemplate;
+extern CONST EFI_ACPI_DMAR_HEADER mAcpiDmarTableTemplate;
+extern CONST EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER mAcpiMadtTableTemplate;
+extern CONST EFI_ACPI_PSD_TABLE mAcpiPsdTableTemplate;
 STATIC
 CONST EFI_ACPI_COMMON_HEADER *mPlatformAcpiTables[] = {
-  (EFI_ACPI_COMMON_HEADER *)&mAcpiDmarTableTemplate,
-  (EFI_ACPI_COMMON_HEADER *)&mAcpiMadtTableTemplate,
+  (CONST EFI_ACPI_COMMON_HEADER *)&mAcpiDmarTableTemplate,
+  (CONST EFI_ACPI_COMMON_HEADER *)&mAcpiMadtTableTemplate,
+  (CONST EFI_ACPI_COMMON_HEADER *)&mAcpiPsdTableTemplate,
   NULL
 };
 
@@ -985,6 +987,51 @@ MtlPchGetLpssUartFixedPciCfgOffset (
 }
 
 /**
+  Update Platform Service Discovery Table.
+
+  This serves as the main entry point for building the PSD table at runtime.
+  It initializes the table based on platform configuration.
+
+  @param[in, out] AcpiTable   Pointer to the ACPI table buffer.
+
+**/
+VOID
+PsdTableUpdate (
+  IN OUT EFI_ACPI_DESCRIPTION_HEADER  *AcpiTable
+  )
+{
+  EFI_STATUS                          Status;
+  EFI_ACPI_PSD_TABLE                  *PsdTable;
+  PLATFORM_DATA                       *PlatformData;
+
+  if (AcpiTable == NULL) {
+    return;
+  }
+
+  // Initialize the table
+  PsdTable = (EFI_ACPI_PSD_TABLE *)AcpiTable;
+  Status = UpdateAcpiPsdTable (PsdTable);
+  if (EFI_ERROR (Status)) {
+    return;
+  }
+
+  PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
+  if (PlatformData == NULL) {
+    DEBUG(( DEBUG_ERROR, "GetPlatformDataPtr Failed\n"));
+    return;
+  }
+
+  // Check if verified boot is reflected in BtG profile as well as in SBL
+  // BIT0: UEFI secure boot is enabled, BIT1: Boot Guard is enabled, BIT2: Bootloader verified boot is enabled
+  PsdTable->SecureBoot = (UINT8)(((PlatformData->BtGuardInfo.VerifiedBoot) << 1) | (FeaturePcdGet (PcdVerifiedBootEnabled)) << 2);
+
+  // Check if measured boot is reflected in BtG profile
+  PsdTable->MeasuredBoot = (UINT8)((PlatformData->BtGuardInfo.MeasuredBoot));
+
+  DumpHex (2, 0, sizeof(EFI_ACPI_PSD_TABLE), (VOID *)PsdTable);
+}
+
+/**
   Update the MADT table
 
   @param[in, out] AcpiHeader         - The table to be set
@@ -1295,8 +1342,7 @@ PlatformUpdateAcpiTable (
       PsdCfgData = (PSD_CFG_DATA *)FindConfigDataByTag (CDATA_PSD_TAG);
       if (PsdCfgData != NULL) {
         if (PsdCfgData->EnablePsd == 1) {
-          Status = UpdateAcpiPsdTable ( (VOID* )Current);
-          DEBUG ( (DEBUG_INFO, "Updated Psd Table in AcpiTable Entries\n") );
+          PsdTableUpdate (Table);
         }
       }
     }
