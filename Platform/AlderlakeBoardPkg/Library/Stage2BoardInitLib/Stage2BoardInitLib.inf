@@ -126,6 +126,7 @@
   gPlatformModuleTokenSpaceGuid.PcdCpuMaxLogicalProcessorNumber
   gPlatformCommonLibTokenSpaceGuid.PcdCpuX2ApicEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdMadtUsePlatformLapic
+  gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
 
 [FeaturePcd]
   gPlatformCommonLibTokenSpaceGuid.PcdTxtEnabled

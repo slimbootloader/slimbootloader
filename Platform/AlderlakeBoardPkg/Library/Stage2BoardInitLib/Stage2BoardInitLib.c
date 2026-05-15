@@ -34,12 +34,14 @@ STATIC S3_SAVE_REG mS3SaveReg = {
   { { REG_TYPE_IO, WIDE32, { 0, 0}, (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN), 0x00000000 } }
 };
 
-extern EFI_ACPI_DMAR_HEADER mAcpiDmarTableTemplate;
-extern EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER mAcpiMadtTableTemplate;
+extern CONST EFI_ACPI_DMAR_HEADER mAcpiDmarTableTemplate;
+extern CONST EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER mAcpiMadtTableTemplate;
+extern CONST EFI_ACPI_PSD_TABLE mAcpiPsdTableTemplate;
 STATIC
 CONST EFI_ACPI_COMMON_HEADER *mPlatformAcpiTables[] = {
-  (EFI_ACPI_COMMON_HEADER *)&mAcpiDmarTableTemplate,
-  (EFI_ACPI_COMMON_HEADER *)&mAcpiMadtTableTemplate,
+  (CONST EFI_ACPI_COMMON_HEADER *)&mAcpiDmarTableTemplate,
+  (CONST EFI_ACPI_COMMON_HEADER *)&mAcpiMadtTableTemplate,
+  (CONST EFI_ACPI_COMMON_HEADER *)&mAcpiPsdTableTemplate,
   NULL
 };
 

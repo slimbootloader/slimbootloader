@@ -54,7 +54,6 @@
   Ecdt/Ecdt.act
   Fwst/Fwst.aslc
   Platform/CommonBoardPkg/AcpiTables/Dsdt/AslInc.h
-  Psd/Psd.aslc
   Lpit/Lpit.act
   Bert/Bert.aslc
   Dptf/Dptf.asl
