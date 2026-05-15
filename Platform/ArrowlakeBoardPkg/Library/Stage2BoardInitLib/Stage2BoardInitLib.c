@@ -1005,6 +1005,7 @@ PsdTableUpdate (
   PLATFORM_DATA                       *PlatformData;
 
   if (AcpiTable == NULL) {
+    DEBUG ((DEBUG_WARN, "Table is not a valid pointer\n"));
     return;
   }
 
@@ -1012,12 +1013,13 @@ PsdTableUpdate (
   PsdTable = (EFI_ACPI_PSD_TABLE *)AcpiTable;
   Status = UpdateAcpiPsdTable (PsdTable);
   if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "UpdateAcpiPsdTable Failed\n"));
     return;
   }
 
   PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
   if (PlatformData == NULL) {
-    DEBUG(( DEBUG_ERROR, "GetPlatformDataPtr Failed\n"));
+    DEBUG ((DEBUG_ERROR, "GetPlatformDataPtr Failed\n"));
     return;
   }
 
