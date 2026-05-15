@@ -95,7 +95,7 @@
 
 #define MAXSYMLINKS 1
 #define MAXPATHLEN 260
-#define EXT2_MAX_BLOCK_GROUPS 0x100000
+#define EXT2_MAX_BLOCK_GROUPS 0x1000
 
 #undef  EXT2FS_DEBUG
 
@@ -228,7 +228,7 @@ typedef struct {
   INT32    Ext2FsBlockOffset;        // ``blkoff'' calc of blk offsets
   INT64    Ext2FsQuadBlockOffset;    // ~fs_bmask - for use with quad size
   INT32    Ext2FsFsbtobd;            // FSBTODB and DBTOFSB shift constant
-  INT32    Ext2FsNumCylinder;        // number of cylinder groups
+  UINT32   Ext2FsNumCylinder;        // number of cylinder groups
   INT32    Ext2FsNumGrpDesBlock;     // number of group descriptor block
   INT32    Ext2FsInodesPerBlock;     // number of inodes per block
   INT32    Ext2FsInodesTablePerGrp;  // number of inode table per group

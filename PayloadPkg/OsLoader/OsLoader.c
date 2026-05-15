@@ -337,7 +337,7 @@ ParseContainerImage (
     return EFI_UNSUPPORTED;
   }
 
-  Status = RegisterContainer ((UINT32)(UINTN)ContainerHdr, LoadComponentCallback);
+  Status = RegisterContainer ((UINT32)(UINTN)ContainerHdr, LoadedImage->ImageData.Size, LoadComponentCallback);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "Image given is not a valid CONTAINER image\n"));
     return EFI_LOAD_ERROR;
