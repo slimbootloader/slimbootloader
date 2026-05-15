@@ -8,6 +8,10 @@
 #ifndef _SERIAL_IO_I2C_PRIVATE_LIB_H_
 #define _SERIAL_IO_I2C_PRIVATE_LIB_H_
 
+#ifndef PCH_SERIAL_IO_BASE_ADDRESS
+#define PCH_SERIAL_IO_BASE_ADDRESS      0xFE020000     ///< SerialIo MMIO base address
+#endif
+
 /**
   Speed definitions for I2C Control Register
 **/

@@ -350,12 +350,6 @@ SerialIoI2cBlockWriteRead (
   }
 
   if (DisableI2cAfterTransaction) {
-    //
-    // If I2cNumber is provided, override PciCfgBase
-    //
-    // if (I2cNumber) {
-    //   PciCfgBase = (UINTN) SerialIoI2cPciCfgBase (*I2cNumber);
-    // }
     SerialIoI2cPciDisable (PciCfgBase);
   }
 
