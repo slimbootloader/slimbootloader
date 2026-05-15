@@ -13,6 +13,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/TopSwapLib.h>
 #include <Library/PcdLib.h>
 #include <Library/WatchDogTimerLib.h>
+#include <Library/SpiFlashLib.h>
 #include <FirmwareUpdateStatus.h>
 
 /**
@@ -26,15 +27,18 @@ GetFwuStateMachine (
   VOID
   )
 {
-  FW_UPDATE_STATUS    *FwUpdStatus;
+  FW_UPDATE_STATUS    FwUpdStatus;
   EFI_STATUS          Status;
   UINT32              RsvdBase;
   UINT32              RsvdSize;
 
   Status = GetComponentInfoByPartition (FLASH_MAP_SIG_BLRESERVED, FALSE, &RsvdBase, &RsvdSize);
-  if (!EFI_ERROR (Status)) {
-    FwUpdStatus = (FW_UPDATE_STATUS *)(UINTN)RsvdBase;
-    return FwUpdStatus->StateMachine;
+  if (!EFI_ERROR (Status) && RsvdBase >= PcdGet32(PcdFlashBaseAddress)) {
+    RsvdBase -= PcdGet32(PcdFlashBaseAddress);
+    Status = SpiFlashRead (FlashRegionBios, RsvdBase, sizeof (FwUpdStatus), (UINT8 *)&FwUpdStatus);
+    if (!EFI_ERROR (Status)) {
+      return FwUpdStatus.StateMachine;
+    }
   }
   return FW_UPDATE_SM_INIT;
 }
