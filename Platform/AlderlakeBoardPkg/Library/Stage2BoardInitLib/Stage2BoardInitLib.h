@@ -92,7 +92,7 @@
 #include <Register/PchRegsPcr.h>
 #include <Library/WatchDogTimerLib.h>
 #include <LowPowerSupport.h>
-#include <PsdLib.h>
+#include <Library/PsdLib.h>
 #include "GpioPinsVer4S.h"
 #include "GpioPinsVer2Lp.h"
 #include <Library/TimerLib.h>

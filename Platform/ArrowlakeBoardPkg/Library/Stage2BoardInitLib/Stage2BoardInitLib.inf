@@ -114,3 +114,4 @@
   gPlatformModuleTokenSpaceGuid.PcdPciResAllocTableBase
   gPlatformModuleTokenSpaceGuid.PcdEnablePciePm
   gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr
+  gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled

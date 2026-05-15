@@ -1,29 +1,22 @@
 /** @file
+  Library instances for ACPI Platform Security Discovery Table (PSD).
 
-  Copyright (c) 2020-2023, Intel Corporation. All rights reserved.<BR>
-  This program and the accompanying materials
-  are licensed and made available under the terms and conditions of the BSD License
-  which accompanies this distribution.  The full text of the license may be found at
-  http://opensource.org/licenses/bsd-license.php.
-
-  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
-
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <PiPei.h>
-#include <Library/PcdLib.h>
+#include <Base.h>
+#include <Uefi/UefiBaseType.h>
 #include <Library/DebugLib.h>
-#include <Library/BaseLib.h>
-#include <IndustryStandard/Acpi.h>
+#include <Library/PsdLib.h>
 #include <Library/BaseMemoryLib.h>
-#include <IndustryStandard/Acpi.h>
 #include <Library/HeciLib.h>
 #include <Library/PcdLib.h>
 #include <Library/HobLib.h>
-#include <PlatformData.h>
-#include <PsdLib.h>
+#include <IndustryStandard/Acpi.h>
 #include <MeBiosPayloadData.h>
+#include <Library/BootloaderCoreLib.h>
 
 #define PSD_VERSION_MAJOR                               0x0000
 #define PSD_VERSION_MINOR                               0x0003
@@ -34,6 +27,20 @@
 #define PSD_HROT_ACM                                    4
 #define PSD_HROT_TXT                                    5
 
+//
+// ACPI PSD table template
+//
+CONST
+EFI_ACPI_PSD_TABLE mAcpiPsdTableTemplate = {
+  .Header.Signature       = EFI_ACPI_PSD_SIGNATURE,
+  .Header.Length          = sizeof (EFI_ACPI_PSD_TABLE),
+  .Header.Revision        = EFI_ACPI_PSD_TABLE_REVISION,
+  .Header.OemTableId      = FixedPcdGet64 (PcdAcpiDefaultOemTableId),
+  .Header.OemRevision     = FixedPcdGet32 (PcdAcpiDefaultOemRevision),
+  .Header.CreatorId       = FixedPcdGet32 (PcdAcpiDefaultCreatorId),
+  .Header.CreatorRevision = FixedPcdGet32 (PcdAcpiDefaultCreatorRevision),
+};
+
 /**
  Get ME BIOS payload HOB data.
 
@@ -42,12 +49,12 @@
  **/
 ME_BIOS_PAYLOAD *
 GetMeBiosPayloadHobData (
-    VOID
-    )
+  VOID
+  )
 {
-  VOID                            *FspHobListPtr;
-  UINT32                          MbpDataHobLen;
-  UINT8                           *DataPtr;
+  VOID                    *FspHobListPtr;
+  UINT32                  MbpDataHobLen;
+  UINT8                   *DataPtr;
 
   // HOB is an FSP HOB
   FspHobListPtr = GetFspHobListPtr();
@@ -68,16 +75,16 @@ GetMeBiosPayloadHobData (
   @param[in,out] EomState         Pointer to The EOM state value.
 
   @retval EFI_SUCCESS             The EOM state was retrieved successfully.
-  @retval Others                  An error occurred.
+  @retval Others                  An error occured.
 
  **/
 EFI_STATUS
 GetEomState (
-    IN OUT UINT8 *EomState
-    )
+  IN OUT UINT8            *EomState
+  )
 {
-  EFI_STATUS    Status;
-  UINT16        MeManuMode;
+  EFI_STATUS              Status;
+  UINT16                  MeManuMode;
 
   if (EomState == NULL) {
     DEBUG ((DEBUG_ERROR, "EomState is not a valid pointer\n"));
@@ -105,8 +112,8 @@ GetEomState (
 **/
 EFI_STATUS
 GetSecFwVersion (
-    IN OUT SEC_VERSION_INFO *SecVersion
-    )
+  IN OUT SEC_VERSION_INFO *SecVersion
+  )
 {
   EFI_STATUS              Status;
   GEN_GET_FW_VER_ACK      MsgGenGetFwVersionAckData;
@@ -120,10 +127,10 @@ GetSecFwVersion (
   // Try with HOB first as HECI calls are costly
   MbpHobData = GetMeBiosPayloadHobData ();
   if (MbpHobData != NULL) {
-    SecVersion->CodeMajor   =  MbpHobData->FwVersionName.MajorVersion;
-    SecVersion->CodeMinor   =  MbpHobData->FwVersionName.MinorVersion;
-    SecVersion->CodeBuildNo =  MbpHobData->FwVersionName.BuildVersion;
-    SecVersion->CodeHotFix  =  MbpHobData->FwVersionName.HotfixVersion;
+    SecVersion->CodeMajor   = MbpHobData->FwVersionName.MajorVersion;
+    SecVersion->CodeMinor   = MbpHobData->FwVersionName.MinorVersion;
+    SecVersion->CodeBuildNo = MbpHobData->FwVersionName.BuildVersion;
+    SecVersion->CodeHotFix  = MbpHobData->FwVersionName.HotfixVersion;
     return EFI_SUCCESS;
   }
 
@@ -134,10 +141,10 @@ GetSecFwVersion (
     return Status;
   }
 
-  SecVersion->CodeMajor   =   MsgGenGetFwVersionAckData.Data.CodeMajor;
-  SecVersion->CodeMinor   =   MsgGenGetFwVersionAckData.Data.CodeMinor;
-  SecVersion->CodeBuildNo =   MsgGenGetFwVersionAckData.Data.CodeBuildNo;
-  SecVersion->CodeHotFix  =   MsgGenGetFwVersionAckData.Data.CodeHotFix;
+  SecVersion->CodeMajor    = MsgGenGetFwVersionAckData.Data.CodeMajor;
+  SecVersion->CodeMinor    = MsgGenGetFwVersionAckData.Data.CodeMinor;
+  SecVersion->CodeBuildNo  = MsgGenGetFwVersionAckData.Data.CodeBuildNo;
+  SecVersion->CodeHotFix   = MsgGenGetFwVersionAckData.Data.CodeHotFix;
   return EFI_SUCCESS;
 }
 
@@ -152,12 +159,12 @@ GetSecFwVersion (
 **/
 EFI_STATUS
 GetSecCapability (
-  UINT32    *SecCapability
+  UINT32                  *SecCapability
   )
 {
-  EFI_STATUS                      Status;
-  GEN_GET_FW_CAPS_SKU_ACK         MsgGenGetFwCapsSkuAck;
-  ME_BIOS_PAYLOAD                *MbpHobData;
+  EFI_STATUS              Status;
+  GEN_GET_FW_CAPS_SKU_ACK MsgGenGetFwCapsSkuAck;
+  ME_BIOS_PAYLOAD         *MbpHobData;
 
   if (SecCapability == NULL) {
     DEBUG ((DEBUG_ERROR, "SecCapability is not a valid pointer\n"));
@@ -183,82 +190,63 @@ GetSecCapability (
 }
 
 /**
-  Update Platform Service Discovery Table.
+  Initialize and add an ACPI PSD (Platform Security Discovery) table.
 
-  @param[in] Table      Pointer to ACPI Table Data.
+  This function initializes the ACPI PSD table with standard fields such as
+  signature, length, revision, OEM information, and creator details.
 
-  @retval EFI_SUCCESS   The PSD ACPI table was installed successfully.
-  @retval EFI_ ERROR    An error occurred.
+  @param[in]                   Table  Pointer to the ACPI table to be initialized.
 
+  @retval EFI_SUCCESS            The header was initialized successfully.
+  @retval EFI_INVALID_PARAMETER  Invalid parameter provided.
 **/
 EFI_STATUS
 EFIAPI
 UpdateAcpiPsdTable (
-  IN VOID* Table
+  IN VOID*               Table
   )
 {
-  EFI_ACPI_PSD_TABLE             *mPsdt;
-  PLATFORM_DATA                  *PlatformData;
-  EFI_STATUS                     Status;
+  EFI_ACPI_PSD_TABLE      *Psdt;
+  EFI_STATUS              Status;
 
-  DEBUG((DEBUG_VERBOSE, "UpdateAcpiPsdTable start\n"));
   if (Table == NULL) {
-    DEBUG((DEBUG_WARN, "Table is not a valid pointer\n"));
     return EFI_INVALID_PARAMETER;
   }
 
-  mPsdt = (EFI_ACPI_PSD_TABLE*)Table;
-  mPsdt->Header.Signature         = EFI_ACPI_PSD_SIGNATURE;
-  mPsdt->Header.Length            = sizeof(EFI_ACPI_PSD_TABLE);
-  mPsdt->Header.Revision          = EFI_ACPI_PSD_TABLE_REVISION;
-  mPsdt->Header.Checksum          = 0;
+  Psdt = (EFI_ACPI_PSD_TABLE *)Table;
+  CopyMem (Psdt, &mAcpiPsdTableTemplate, sizeof (EFI_ACPI_PSD_TABLE));
+  CopyMem (Psdt->Header.OemId, FixedPcdGetPtr (PcdAcpiDefaultOemId), 6);
 
-  CopyMem (&mPsdt->Header.OemId, PSDS_EFI_ACPI_OEM_ID, sizeof(mPsdt->Header.OemId));
-
-  mPsdt->Header.OemTableId        = PSDS_EFI_ACPI_OEM_TABLE_ID;
-  mPsdt->Header.OemRevision       = PSDS_EFI_ACPI_OEM_REVISION;
-  mPsdt->Header.CreatorId         = PSDS_EFI_ACPI_CREATOR_ID;
-  mPsdt->Header.CreatorRevision   = PSDS_EFI_ACPI_CREATOR_REVISION;
-
-  mPsdt->PsdVersion.PsdVerMajor   = PSD_VERSION_MAJOR;
-  mPsdt->PsdVersion.PsdVerMinor   = PSD_VERSION_MINOR;
+  Psdt->PsdVersion.PsdVerMajor = PSD_VERSION_MAJOR;
+  Psdt->PsdVersion.PsdVerMinor = PSD_VERSION_MINOR;
 
   // Populate EOM state
-  Status = GetEomState (&mPsdt->EomState);
+  Status = GetEomState (&Psdt->EomState);
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, " GetEomState failed =%x\n", Status));
+    return Status;
   }
 
   // Populate Sec capabilities
-  Status = GetSecCapability (&mPsdt->CsmeSecCapabilities);
+  Status = GetSecCapability (&Psdt->CsmeSecCapabilities);
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, " GetSecCapability failed =%x\n", Status));
+    return Status;
   }
 
   // Populate Sec FW version
-  Status = GetSecFwVersion (&mPsdt->FwVer);
+  Status = GetSecFwVersion (&Psdt->FwVer);
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, " GetSecFwVersion failed =%x\n", Status));
+    return Status;
   }
 
-  CopyMem (&mPsdt->FwVendor, EFI_ACPI_PSD_FW_VENDOR, EFI_ACPI_PSD_FW_VENDOR_SIZE);
+  CopyMem (&Psdt->FwVendor, EFI_ACPI_PSD_FW_VENDOR, EFI_ACPI_PSD_FW_VENDOR_SIZE);
 
-  PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
-  if (PlatformData == NULL) {
-    DEBUG(( DEBUG_ERROR, "GetPlatformDataPtr Failed\n"));
-    return EFI_UNSUPPORTED;
-  }
+  // Platform supports ACM as HWRoT
+  // 0 - No HWRoT; 1 - ROM based RoT; 2 - TXE; 3 - CSE; 4 - ACM; 5 - TXT
+  Psdt->HwrotType = PSD_HROT_ACM;
 
-  // Check if verifed boot is reflected in BtG profile as well as in SBL
-  mPsdt->SecureBoot = (UINT8)(((PlatformData->BtGuardInfo.VerifiedBoot) << 1) | (FeaturePcdGet (PcdVerifiedBootEnabled)) << 2);
-
-  // Check if measured boot is reflected in BtG profile
-  mPsdt->MeasuredBoot = (UINT8)((PlatformData->BtGuardInfo.MeasuredBoot));
-
-  // SBL always uses an ACM HWROT
-  mPsdt->HwrotType              = PSD_HROT_ACM;
-  DumpHex (2, 0, sizeof(EFI_ACPI_PSD_TABLE), (VOID *)Table);
-  DEBUG( (DEBUG_VERBOSE, "UpdateAcpiPsdTable() end\n") );
-
-  return  EFI_SUCCESS;
+  DEBUG ((DEBUG_INFO, "PSD table initialized\n"));
+  return EFI_SUCCESS;
 }
