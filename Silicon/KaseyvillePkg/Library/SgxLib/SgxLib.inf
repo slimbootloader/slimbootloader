@@ -1,0 +1,55 @@
+## @file
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = SgxLib
+  FILE_GUID                      = d62c90b3-ae80-41f1-95b3-998724466300
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = SgxLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF
+#
+
+[Sources]
+  SgxLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  IntelFsp2Pkg/IntelFsp2Pkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/KaseyvillePkg/KaseyvillePkg.dec
+  Platform/KaseyvilleBoardPkg/KaseyvilleBoardPkg.dec
+  Platform/CommonBoardPkg/CommonBoardPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  IoLib
+  ConfigDataLib
+  UefiVariableLib
+  HobLib
+  HobBuildLib
+  BaseMemoryLib
+  MemoryAllocationLib
+
+[Guids]
+  gSgxSblDataInfoHobGuid
+  gSgxUefiDisabledScenarioGuid
+  gSgxAcpiVarGuid
+  gSgxVariableManifestGuid
+  gSgxMetaHobGuid
+  gSgxSblVariableHobGuid
+
+
+[Pcd]
+gPlatformModuleTokenSpaceGuid.PcdAcpiGnvsAddress
