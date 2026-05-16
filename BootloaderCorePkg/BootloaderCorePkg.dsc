@@ -141,11 +141,8 @@
   CrashLogLib|Silicon/CommonSocPkg/Library/CrashLogLibNull/CrashLogLibNull.inf
   FusaConfigLib|Silicon/CommonSocPkg/Library/FusaConfigLibNull/FusaConfigLibNull.inf
   IppCryptoPerfLib|BootloaderCommonPkg/Library/IppCryptoPerfLib/IppCryptoPerfLib.inf
+  FirmwareResiliencyLib|BootloaderCorePkg/Library/FirmwareResiliencyLib/FirmwareResiliencyLib.inf
 
-################################################################################
-#
-# Pcd Section - list of all EDK II PCD Entries defined by this Platform
-#
 ################################################################################
 [PcdsFixedAtBuild]
 !if $(TARGET) == RELEASE
@@ -429,15 +426,18 @@
       FspApiLib             | BootloaderCorePkg/Library/FspApiLib/FspmApiLib.inf
       BaseMemoryLib         | MdePkg/Library/BaseMemoryLibRepStr/BaseMemoryLibRepStr.inf
       FirmwareResiliencyLib | BootloaderCorePkg/Library/FirmwareResiliencyLib/FirmwareResiliencyLib.inf
+      TopSwapLib            | Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf
+      TcoTimerLib           | Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf
       SocInitLib            | $(SOC_INIT_STAGE1B_LIB_INF_FILE)
       BoardInitLib          | $(BRD_INIT_STAGE1B_LIB_INF_FILE)
   }
 
   BootloaderCorePkg/Stage2/Stage2.inf {
     <LibraryClasses>
-      FspApiLib    | BootloaderCorePkg/Library/FspApiLib/FspsApiLib.inf
-      SocInitLib   | $(SOC_INIT_STAGE2_LIB_INF_FILE)
-      BoardInitLib | $(BRD_INIT_STAGE2_LIB_INF_FILE)
+      FspApiLib             | BootloaderCorePkg/Library/FspApiLib/FspsApiLib.inf
+      FirmwareResiliencyLib | BootloaderCorePkg/Library/FirmwareResiliencyLib/FirmwareResiliencyLib.inf
+      SocInitLib            | $(SOC_INIT_STAGE2_LIB_INF_FILE)
+      BoardInitLib          | $(BRD_INIT_STAGE2_LIB_INF_FILE)
   }
 
   PayloadPkg/OsLoader/OsLoader.inf {
@@ -466,6 +466,7 @@
       BootloaderLib           | PayloadPkg/Library/PayloadLib/PayloadLib.inf
       PlatformHookLib         | PayloadPkg/Library/PlatformHookLib/PlatformHookLib.inf
       FirmwareUpdateLib       | $(SOC_FWU_LIB_INF_FILE)
+      FirmwareResiliencyLib   | BootloaderCorePkg/Library/FirmwareResiliencyLib/FirmwareResiliencyLib.inf
   }
 !endif
 

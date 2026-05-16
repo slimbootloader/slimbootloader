@@ -13,7 +13,14 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/TopSwapLib.h>
 #include <Library/PcdLib.h>
 #include <Library/WatchDogTimerLib.h>
+#include <Library/IoLib.h>
+#include <Library/PciLib.h>
+#include <Library/BaseMemoryLib.h>
+#include <Guid/OsBootOptionGuid.h>
 #include <FirmwareUpdateStatus.h>
+#include <Register/HeciRegs.h>
+#include <IndustryStandard/Pci22.h>
+#include <PlatformBase.h>
 
 /**
   Retrieve FW update state from the reserved region
@@ -116,4 +123,94 @@ CheckForTcoTimerFailures (
       ResetSystem (EfiResetCold);
     }
   }
+}
+
+/** Check HFSTS1/2 via HECI PCI config space in Stage1B.
+    Triggers CSME capsule FWU (BIT16 + cold reset) on first corruption detection,
+    or boots degraded if FWU already completed. **/
+VOID
+EFIAPI
+CheckForMeCodeFailures (
+  VOID
+  )
+{
+  if (!IsMeCorrupt ()) {
+    return;
+  }
+
+  // FWU already triggered on a prior boot — let the FWU payload proceed.
+  if (WdtGetScratchpad (BIT16) != 0) {
+    DEBUG ((DEBUG_INFO, "ME corrupt but CSME FWU already triggered - letting FWU payload proceed\n"));
+    return;
+  }
+
+  // FWU completed but ME still corrupt — boot degraded, avoid infinite loop.
+  if (GetFwuStateMachine () != FW_UPDATE_SM_INIT) {
+    DEBUG ((DEBUG_WARN, "ME still corrupt after CSME FWU (SM=0x%02X) - booting degraded\n",
+            GetFwuStateMachine ()));
+    return;
+  }
+
+  // First detection — trigger CSME capsule FWU.
+  DEBUG ((DEBUG_WARN, "ME corruption detected - triggering CSME capsule FWU and resetting\n"));
+  WdtSetScratchpad (BIT16);
+  ResetSystem (EfiResetCold);
+}
+
+/** Reads HFSTS1 and HFSTS2 from HECI PCI config space into caller-supplied pointers. Both are zeroed if HECI device is not present. **/
+VOID
+EFIAPI
+GetMeHfsts (
+  OUT UINT32  *Hfsts1,
+  OUT UINT32  *Hfsts2
+  )
+{
+  UINTN         HeciBase;
+  UINT32        MeDeviceAddr;
+  PLT_PCI_DEVICE MeDev;
+
+  *Hfsts1 = 0;
+  *Hfsts2 = 0;
+
+  MeDeviceAddr = GetDeviceAddr (PlatformDeviceMe, 0);
+  if (MeDeviceAddr == 0) {
+    MeDev.PciBusNumber    = 0;
+    MeDev.PciDeviceNumber = HECI_DEV;
+  } else {
+    CopyMem (&MeDev, &MeDeviceAddr, sizeof (UINT32));
+  }
+
+  HeciBase = PCI_LIB_ADDRESS (MeDev.PciBusNumber, MeDev.PciDeviceNumber, HECI_FUN, 0);
+  if (PciRead16 (HeciBase + PCI_DEVICE_ID_OFFSET) == 0xFFFF) {
+    return;  // HECI device not present
+  }
+
+  *Hfsts1 = PciRead32 (HeciBase + R_ME_HFS);
+  *Hfsts2 = PciRead32 (HeciBase + R_ME_HFS_2);
+}
+
+/** Returns TRUE if HFSTS1/2 indicate ME recovery/FtBupLdFlr/FwUpdIpu; FALSE otherwise**/
+BOOLEAN
+EFIAPI
+IsMeCorrupt (
+  VOID
+  )
+{
+  HECI_FWS_REGISTER      MeFwSts;
+  HECI_GS_SHDW_REGISTER  MeFwSts2;
+
+  GetMeHfsts (&MeFwSts.ul, &MeFwSts2.ul);
+
+  if ((MeFwSts.ul == 0) && (MeFwSts2.ul == 0)) {
+    return FALSE;  // HECI not present
+  }
+
+  if ((MeFwSts.r.CurrentState == ME_STATE_RECOVERY) ||
+      (MeFwSts.r.FtBupLdFlr   == 1) ||
+      (MeFwSts2.r.FwUpdIpu    == 1)) {
+    DEBUG ((DEBUG_INFO, "ME corruption detected (HFSTS1=0x%08X HFSTS2=0x%08X)\n", MeFwSts.ul, MeFwSts2.ul));
+    return TRUE;
+  }
+
+  return FALSE;
 }
