@@ -57,9 +57,11 @@ STATIC S3_SAVE_REG mS3SaveReg = {
 };
 
 extern EFI_ACPI_DMAR_HEADER mAcpiDmarTableTemplate;
+extern EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER mAcpiMadtTableTemplate;
 STATIC
 CONST EFI_ACPI_COMMON_HEADER *mPlatformAcpiTables[] = {
   (EFI_ACPI_COMMON_HEADER *)&mAcpiDmarTableTemplate,
+  (EFI_ACPI_COMMON_HEADER *)&mAcpiMadtTableTemplate,
   NULL
 };
 
@@ -361,9 +363,7 @@ BoardInit (
 
     break;
   case PrePciEnumeration:
-    if (FeaturePcdGet (PcdVtdEnabled)) {
-      Status = PcdSet32S (PcdAcpiTableTemplatePtr, (UINT32)(UINTN)mPlatformAcpiTables);
-    }
+    Status = PcdSet32S (PcdAcpiTableTemplatePtr, (UINT32)(UINTN)mPlatformAcpiTables);
     break;
   case PostPciEnumeration:
     Status = SetFrameBufferWriteCombining (0, MAX_UINT32);
@@ -944,6 +944,43 @@ VOID UpdLpiStat (
 }
 
 /**
+  Update the MADT table
+
+  @param[in, out] AcpiHeader         - The table to be set
+**/
+VOID
+MadtTableUpdate (
+  IN OUT   EFI_ACPI_DESCRIPTION_HEADER       *AcpiHeader
+  )
+{
+  EFI_STATUS                                 Status;
+
+  Status = AddAcpiMadtHdr (AcpiHeader, LOCAL_APIC_BASE_ADDRESS, EFI_ACPI_6_4_PCAT_COMPAT);
+  if (EFI_ERROR (Status)) {
+    return;
+  }
+
+  if (FeaturePcdGet (PcdMadtUsePlatformLapic)) {
+    // Add all Local APICs if platform isn't using AcpiInitLib to do it.
+    AddMadtAllLocalApics(AcpiHeader);
+  }
+
+  // Add IO APIC entry
+  AddMadtIoApic (AcpiHeader, ICH_IOAPIC_ID, IO_APIC_BASE_ADDRESS, 0x18 * 0);
+
+  // Add Interrupt Source Override entries
+  AddMadtIntSrcOverride (AcpiHeader, 0, 0, 2, 0);   // IRQ0=>IRQ2
+  AddMadtIntSrcOverride (AcpiHeader, 0, 9, 9, 0xD); // SCI Level-tiggered, Active High
+
+  // NMI Entry for all processors, edge triggered, active high, on LINT 1
+  if (FeaturePcdGet (PcdCpuX2ApicEnabled)) {
+    AddLocalX2ApicNmi (AcpiHeader, 0x5, 0xFFFFFFFF, 1);
+  } else {
+    AddLocalApicNmi (AcpiHeader, 0xFF, 0x5, 1);
+  }
+}
+
+/**
   Update the DMAR table
 
   @param[in, out] TableHeader         - The table to be set
@@ -1208,12 +1245,17 @@ PlatformUpdateAcpiTable (
         FadtPointer->Flags &= ~(EFI_ACPI_6_3_PWR_BUTTON); // clear indicates the power button is handled as a fixed feature programming model
       }
     }
-  } else if (FeaturePcdGet (PcdVtdEnabled) && Table->Signature == EFI_ACPI_6_4_DMA_REMAPPING_TABLE_SIGNATURE) {
+  } else if (Table->Signature == EFI_ACPI_6_4_DMA_REMAPPING_TABLE_SIGNATURE) {
     DEBUG ((DEBUG_INFO, "Updated DMAR Table entries\n"));
     PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
-    if ((PlatformData != NULL) && (PlatformData->PlatformFeatures.VtdEnable == 1)) {
+    if (FeaturePcdGet (PcdVtdEnabled) && (PlatformData != NULL) && (PlatformData->PlatformFeatures.VtdEnable == 1)) {
       DmarTableUpdate (Table);
+    } else {
+      return EFI_UNSUPPORTED;
     }
+  } else if (Table->Signature == EFI_ACPI_6_4_MULTIPLE_APIC_DESCRIPTION_TABLE_SIGNATURE) {
+    DEBUG ((DEBUG_INFO, "Updating MADT Table entries\n"));
+    MadtTableUpdate (Table);
   }
 
   if (MEASURED_BOOT_ENABLED()) {

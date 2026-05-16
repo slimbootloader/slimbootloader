@@ -31,6 +31,7 @@
 #include <Library/PlatformHookLib.h>
 #include <Library/SmbiosInitLib.h>
 #include <Library/PrintLib.h>
+#include <Library/MadtLib.h>
 #include <Guid/GraphicsInfoHob.h>
 #include <Guid/SmmInformationGuid.h>
 #include <FspsUpd.h>
@@ -56,6 +57,7 @@ typedef struct {
 
 #pragma pack ()
 
+#define  ICH_IOAPIC_ID             0x01
 
 #define  GRAPHICS_DATA_SIG         SIGNATURE_32 ('Q', 'G', 'F', 'X')
 

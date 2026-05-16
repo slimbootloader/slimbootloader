@@ -584,3 +584,36 @@ PatchSpsNmSsdtTable (
 
   return EFI_SUCCESS;
 }
+
+/**
+  Update the MADT table
+
+  @param[in, out] AcpiHeader         - The table to be set
+**/
+VOID
+MadtTableUpdate (
+  IN OUT   EFI_ACPI_DESCRIPTION_HEADER       *AcpiHeader
+  )
+{
+  EFI_STATUS                                 Status;
+
+  Status = AddAcpiMadtHdr (AcpiHeader, EFI_ACPI_LOCAL_APIC_ADDRESS, EFI_ACPI_6_4_PCAT_COMPAT);
+  if (EFI_ERROR (Status)) {
+    return;
+  }
+
+  if (FeaturePcdGet (PcdMadtUsePlatformLapic)) {
+    // Add all Local APICs if platform isn't using AcpiInitLib to do it.
+    AddMadtAllLocalApics(AcpiHeader);
+  }
+
+  // Add IO APIC entry
+  AddMadtIoApic (AcpiHeader, PCH_IOAPIC_ID, PCH_IOAPIC_ADDRESS, PCH_INTERRUPT_BASE);
+
+  // Add Interrupt Source Override entries
+  AddMadtIntSrcOverride (AcpiHeader, 0, 0, 2, 0);   // IRQ0=>IRQ2
+  AddMadtIntSrcOverride (AcpiHeader, 0, 9, 9, 0xD); // SCI Level-tiggered, Active High
+
+  // NMI Entry for all processors, edge triggered, active high, on LINT 1
+  AddLocalApicNmi (AcpiHeader, 0xFF, 0x5, 1);
+}

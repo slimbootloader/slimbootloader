@@ -17,7 +17,6 @@
 
 [sources.common]
   AcpiTablePlatform.h
-  Madt/Madt.h
   Dsdt/PlatformBoardId.h
   Dmar/Dmar.h
   Dsdt/GpioAcpiDefinesVer3.h
@@ -28,7 +27,6 @@
   Facs/Facs.aslc
   Fadt/Fadt6.1.act
   Fwst/Fwst.aslc
-  Madt/Madt30.aslc
   Mcfg/Mcfg.aslc
   Hpet/Hpet.act
   Platform/CommonBoardPkg/AcpiTables/Fpdt/Fpdt.aslc

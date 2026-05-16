@@ -65,6 +65,7 @@
   SgxLib
   WatchDogTimerLib
   PchSbiAccessLib
+  MadtLib
 
 [Guids]
   gOsConfigDataGuid
@@ -101,3 +102,6 @@
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
   gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr
   gPlatformModuleTokenSpaceGuid.PcdFuncCpuInitHook
+
+[FeaturePcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdMadtUsePlatformLapic
