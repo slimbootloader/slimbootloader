@@ -714,8 +714,9 @@ BoardInit (
   case ReadyToBoot:
     if (FeaturePcdGet (PcdTxtEnabled)) {
       FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
-      if ((FeaturesCfgData->Features.TxtEnabled == 1)
-                  && (GetBootMode() == BOOT_ON_S3_RESUME)) {
+      if ((FeaturesCfgData != NULL) &&
+          (FeaturesCfgData->Features.TxtEnabled == 1) &&
+          (GetBootMode() == BOOT_ON_S3_RESUME)) {
           // Disable APMC SMI around TxtS3Resume
           // Rationale:
           // - Re-enabling APMC before the ACPI wake vector causes repeated SW SMI
