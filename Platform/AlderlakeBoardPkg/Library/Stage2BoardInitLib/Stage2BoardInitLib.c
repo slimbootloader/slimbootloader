@@ -625,7 +625,7 @@ BoardInit (
       /// This will update the correct TXT enabled state in ACPI table.
       ///
       FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
-      if (FeaturesCfgData->Features.TxtEnabled == 1) {
+      if ((FeaturesCfgData != NULL) && (FeaturesCfgData->Features.TxtEnabled == 1)) {
         if (GetBootMode() != BOOT_ON_S3_RESUME) {
           DEBUG ((DEBUG_INFO, "TXT: Calling InitTxt\n"));
           InitTxt();
