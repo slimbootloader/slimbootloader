@@ -785,7 +785,7 @@ UpdateFspConfig (
 
   if (FeaturePcdGet (PcdTxtEnabled)) {
     FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
-    if (FeaturesCfgData->Features.TxtEnabled == 1) {
+    if ((FeaturesCfgData != NULL) && (FeaturesCfgData->Features.TxtEnabled == 1)) {
       DEBUG((DEBUG_INFO, "Enabling TXT in FSP-S UPD's\n"));
       FspsConfig->TxtEnable = 0x1;
     }
