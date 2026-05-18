@@ -358,7 +358,7 @@ UpdateFspConfig (
 
   // TXT Configuration
   FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
-  if ((FeaturesCfgData->Features.TxtEnabled == 1) &&
+  if ((FeaturesCfgData != NULL) && (FeaturesCfgData->Features.TxtEnabled == 1) &&
       (FeaturePcdGet (PcdTxtEnabled))) {
     DEBUG((DEBUG_INFO, "Enabling TXT in FSP-M UPD's\n"));
     Fspmcfg->Txt                  = 0x1;
