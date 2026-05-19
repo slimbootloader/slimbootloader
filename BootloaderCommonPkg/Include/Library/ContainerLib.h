@@ -249,7 +249,10 @@ GetNextAvailableComponent (
   This function registers a container.
 
   @param[in]  ContainerBase      Container base address to register.
-  @param[in]  ContainerSize      Container size in bytes, 0 if unknown.
+  @param[in]  ContainerSize      Container size in bytes. A value of 0 is only
+                                 allowed when the container can be found in the
+                                 flash map at the same base address; otherwise
+                                 callers must provide a non-zero size.
   @param[in]  ContainerCallback  Callback regsiterd to notify container buf info
 
   @retval EFI_NOT_READY          Not ready for register yet.
