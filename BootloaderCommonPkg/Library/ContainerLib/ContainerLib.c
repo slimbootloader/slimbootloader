@@ -765,16 +765,9 @@ AuthenticateContainerInternal (
 
             if (!EFI_ERROR (Status)) {
               DataBuf = (UINT8 *)(UINTN)((UINT32)((UINT64)ContainerEntry->Base + (UINT64)ContainerHdr->DataOffset));
-              // Validate that monolithic component offset is at least past the header.
-              if (CompEntry->Offset < ContainerHdrSize) {
-                DEBUG ((DEBUG_ERROR, "Invalid monolithic component offset (0x%x < header size 0x%x)\n",
-                        CompEntry->Offset, ContainerHdrSize));
-                Status = EFI_SECURITY_VIOLATION;
-              } else {
-                DataLen = CompEntry->Offset;
-                Status  = AuthenticateComponent (DataBuf, DataLen, CompEntry->AuthType,
-                                                AuthData, AuthDataLen, CompEntry->HashData, 0);
-              }
+              DataLen = CompEntry->Offset;
+              Status  = AuthenticateComponent (DataBuf, DataLen, CompEntry->AuthType,
+                                               AuthData, AuthDataLen, CompEntry->HashData, 0);
             }
 
             if ((!EFI_ERROR (Status)) && (ContainerCallback != NULL)) {
@@ -849,11 +842,8 @@ RegisterContainer (
   UINT32                    FlashCompBase;
   UINT32                    FlashCompSize;
   UINT32                    EffectiveContainerSize;
-  UINT64                    SignatureBuffer;
 
   ContainerHdr     = (CONTAINER_HDR *)(UINTN)ContainerBase;
-  SignatureBuffer  = ContainerHdr->Signature;
-  DEBUG ((DEBUG_INFO, "Registering container %4a\n", (CHAR8 *)&SignatureBuffer));
 
   // Use caller-provided size for RAM-backed containers. If unknown (0),
   // best-effort derive it from flash map only when base addresses match.
@@ -1247,7 +1237,7 @@ LoadComponentWithCallback (
   SignedDataLen = (UINT32)SignedDataLen64;
   if (SignedDataLen > CompLen) {
     DEBUG ((DEBUG_ERROR, "Invalid signed component length (0x%x > 0x%x)\n", SignedDataLen, CompLen));
-    return EFI_UNSUPPORTED;
+    return EFI_SECURITY_VIOLATION;
   }
 
   // Handle zero-size components: no payload to decompress, skip DecompressGetInfo
