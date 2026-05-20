@@ -770,6 +770,12 @@ DEBUG_CODE_END();
       (UINT8) ~((B_PMC_PWRM_GEN_PMCON_A_MS4V | B_PMC_PWRM_GEN_PMCON_A_SUS_PWR_FLR) >> 16),
       B_PMC_PWRM_GEN_PMCON_A_DISB >> 16
     );
+
+    MemCfgData = (MEMORY_CFG_DATA *)FindConfigDataByTag (CDATA_MEMORY_TAG);
+    if (MemCfgData == NULL) {
+      CpuHalt ("Failed to find memory CFGDATA!");
+    }
+
     switch (GetPlatformId ()) {
     case PLATFORM_ID_ADL_S_ADP_S_CRB:
     case 0x18:
@@ -784,6 +790,11 @@ DEBUG_CODE_END();
       break;
     case PLATFORM_ID_ADL_P_LP5_RVP:
       ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePreMemAdlPLp5Rvp) / sizeof (mGpioTablePreMemAdlPLp5Rvp[0]), (UINT8*)mGpioTablePreMemAdlPLp5Rvp);
+      break;
+    case PLATFORM_ID_RPL_P_DDR5_CRB:
+      if (MemCfgData->I2cPostCode) {
+        MaxLedInit ();
+      }
       break;
     case PLATFORM_ID_RPLP_LP5_AUTO_RVP:
     case PLATFORM_ID_RPLP_LP5_AUTO_CRB:
@@ -806,13 +817,8 @@ DEBUG_CODE_END();
       break;
     case PLATFORM_ID_ADL_N_DDR5_CRB:
       ConfigureGpio (CDATA_NO_TAG, sizeof (mGpioTablePreMemAdlNDdr5Crb) / sizeof (mGpioTablePreMemAdlNDdr5Crb[0]), (UINT8*)mGpioTablePreMemAdlNDdr5Crb);
-      MemCfgData = (MEMORY_CFG_DATA *)FindConfigDataByTag (CDATA_MEMORY_TAG);
-      if (MemCfgData == NULL) {
-        CpuHalt ("Failed to find memory CFGDATA!");
-      } else {
-        if (MemCfgData->I2cPostCode) {
-          MaxLedInit ();
-        }
+      if (MemCfgData->I2cPostCode) {
+        MaxLedInit ();
       }
       break;
     case PLATFORM_ID_ADL_N_LPDDR5_RVP:
