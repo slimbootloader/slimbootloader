@@ -69,7 +69,7 @@ MEMORY_CFG_DATA.PcieClkSrcUsage                 | { 0x80, 0x0, 0x1, 0x2, 0x4, 0x
 MEMORY_CFG_DATA.RMT                             | 0x1
 MEMORY_CFG_DATA.RMC                             | 0x1
 MEMORY_CFG_DATA.UsbTcPortEnPreMem               | 0x3
-MEMORY_CFG_DATA.I2cPostCodeEnable               | 0x1
+MEMORY_CFG_DATA.I2cPostCodeEnable               | 0x0
 MEMORY_CFG_DATA.DqMapCpu2DramMc0Ch0             | { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 MEMORY_CFG_DATA.DqMapCpu2DramMc0Ch1             | { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 MEMORY_CFG_DATA.DqMapCpu2DramMc0Ch2             | { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
