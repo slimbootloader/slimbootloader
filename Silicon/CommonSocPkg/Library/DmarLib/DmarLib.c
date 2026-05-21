@@ -278,6 +278,121 @@ AddSidpHdr (
   return &SidpHeader->Header;
 }
 
+/**
+  Create and append an ATSR (Root Port ATS Capability reporting) structure
+  to DMAR ACPI table.
+
+  This function creates an ATSR structure and appends it to the provided ACPI table.
+  The ATSR structure is provided only for platforms supporting Device-TLBs as reported through
+  the Extended Capability Register.
+
+  @param[in, out] AcpiHeader    Pointer to the ACPI table header to which the ATSR
+                                structure will be appended.
+  @param[in]      Flags         Flags for the ATSR structure, indicating specific properties
+                                or behaviors.
+  @param[in]      SegmentNumber PCI Segment number associated with the ATSR structure.
+
+  @retval Pointer to the newly added ATSR structure header if successful.
+  @retval NULL                  A parameter is invalid (e.g., AcpiHeader is NULL).
+**/
+EFI_ACPI_DMAR_STRUCTURE_HEADER *
+EFIAPI
+AddAtsrHdr (
+  IN OUT EFI_ACPI_DESCRIPTION_HEADER  *AcpiHeader,
+  IN     UINT8                        Flags,
+  IN     UINT16                       SegmentNumber
+  )
+{
+  EFI_ACPI_DMAR_ATSR_HEADER           *Atsr;
+  UINT32                              AtsrSize;
+
+  if (AcpiHeader == NULL) {
+    return NULL;
+  }
+
+  AtsrSize = (UINT32)sizeof(EFI_ACPI_DMAR_ATSR_HEADER);
+
+  // Check for length overflow before calculating the append location and
+  // updating the ACPI table length.
+  // Also, ensure that the existing table length is at least large enough
+  // to accommodate the ACPI header.
+  ASSERT (AcpiHeader->Length >= sizeof(EFI_ACPI_DESCRIPTION_HEADER));
+  if (AcpiHeader->Length > (MAX_UINT32 - AtsrSize)) {
+    DEBUG((DEBUG_ERROR, "Cannot append ATSR structure: table length would overflow!\n"));
+    return NULL;
+  }
+  Atsr = (EFI_ACPI_DMAR_ATSR_HEADER *) ((UINT8 *)AcpiHeader + AcpiHeader->Length);
+
+  // Initialize the Atsr structure
+  Atsr->Header.Type       = EFI_ACPI_DMAR_TYPE_ATSR;
+  Atsr->Header.Length     = (UINT16)AtsrSize;
+  Atsr->Flags             = Flags;
+  Atsr->SegmentNumber     = SegmentNumber;
+  Atsr->Reserved          = 0;
+
+  // Update the ACPI table length.
+  AcpiHeader->Length += AtsrSize;
+
+  return &Atsr->Header;
+}
+
+/**
+  Create and append RHSA (Remapping Hardware Static Affinity) structure
+  to DMAR ACPI table.
+
+  This function creates a RHSA structure and appends it to the provided ACPI table.
+  This is intended to be used only on NUMA platforms with remapping hardware units and
+  memory spanned across multiple nodes.
+
+  @param[in, out] AcpiHeader          Pointer to the ACPI table header to which
+                                      the RHSA structure will be appended.
+  @param[in]      RegisterBaseAddress Base address of this Remap hardware unit.
+  @param[in]      ProximityDomain     Proximity Domain to which the Remap hardware
+                                      unit identified by Register Base Address field belongs.
+
+  @retval Pointer to the newly added RHSA structure header if successful.
+  @retval NULL                      A parameter is invalid (e.g., AcpiHeader is NULL).
+**/
+EFI_ACPI_DMAR_STRUCTURE_HEADER *
+EFIAPI
+AddRhsaHdr (
+  IN OUT EFI_ACPI_DESCRIPTION_HEADER  *AcpiHeader,
+  IN     UINT64                       RegisterBaseAddress,
+  IN     UINT32                       ProximityDomain
+  )
+{
+  EFI_ACPI_DMAR_RHSA_HEADER           *Rhsa;
+  UINT32                              RhsaSize;
+
+  if (AcpiHeader == NULL) {
+    return NULL;
+  }
+
+  RhsaSize = (UINT32)sizeof(EFI_ACPI_DMAR_RHSA_HEADER);
+
+  // Check for length overflow before calculating the append location and
+  // updating the ACPI table length.
+  // Also, ensure that the existing table length is at least large enough
+  // to accommodate the ACPI header.
+  ASSERT (AcpiHeader->Length >= sizeof(EFI_ACPI_DESCRIPTION_HEADER));
+  if (AcpiHeader->Length > (MAX_UINT32 - RhsaSize)) {
+    DEBUG((DEBUG_ERROR, "Cannot append RHSA structure: table length would overflow!\n"));
+    return NULL;
+  }
+  Rhsa = (EFI_ACPI_DMAR_RHSA_HEADER *) ((UINT8 *)AcpiHeader + AcpiHeader->Length);
+
+  // Initialize the Rhsa structure
+  Rhsa->Header.Type           = EFI_ACPI_DMAR_TYPE_RHSA;
+  Rhsa->Header.Length         = (UINT16)RhsaSize;
+  Rhsa->ProximityDomain       = ProximityDomain;
+  Rhsa->RegisterBaseAddress   = RegisterBaseAddress;
+  ZeroMem (Rhsa->Reserved, sizeof(Rhsa->Reserved));
+
+  // Update the ACPI table length.
+  AcpiHeader->Length += RhsaSize;
+
+  return &Rhsa->Header;
+}
 
 /**
   Add a device scope structure to an ACPI DMAR table.

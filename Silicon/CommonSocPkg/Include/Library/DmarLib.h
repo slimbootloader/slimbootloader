@@ -139,6 +139,56 @@ AddSidpHdr (
   );
 
 /**
+  Create and append an ATSR (Root Port ATS Capability reporting) structure
+  to DMAR ACPI table.
+
+  This function creates an ATSR structure and appends it to the provided ACPI table.
+  The ATSR structure is provided only for platforms supporting Device-TLBs as reported through
+  the Extended Capability Register.
+
+  @param[in, out] AcpiHeader    Pointer to the ACPI table header to which the ATSR
+                                structure will be appended.
+  @param[in]      Flags         Flags for the ATSR structure, indicating specific properties
+                                or behaviors.
+  @param[in]      SegmentNumber PCI Segment number associated with the ATSR structure.
+
+  @retval Pointer to the newly added ATSR structure header if successful.
+  @retval NULL                  A parameter is invalid (e.g., AcpiHeader is NULL).
+**/
+EFI_ACPI_DMAR_STRUCTURE_HEADER *
+EFIAPI
+AddAtsrHdr (
+  IN OUT EFI_ACPI_DESCRIPTION_HEADER  *AcpiHeader,
+  IN     UINT8                        Flags,
+  IN     UINT16                       SegmentNumber
+  );
+
+/**
+  Create and append RHSA (Remapping Hardware Static Affinity) structure
+  to DMAR ACPI table.
+
+  This function creates a RHSA structure and appends it to the provided ACPI table.
+  This is intended to be used only on NUMA platforms with remapping hardware units and
+  memory spanned across multiple nodes.
+
+  @param[in, out] AcpiHeader          Pointer to the ACPI table header to which
+                                      the RHSA structure will be appended.
+  @param[in]      RegisterBaseAddress Base address of this Remap hardware unit.
+  @param[in]      ProximityDomain     Proximity Domain to which the Remap hardware
+                                      unit identified by Register Base Address field belongs.
+
+  @retval Pointer to the newly added RHSA structure header if successful.
+  @retval NULL                      A parameter is invalid (e.g., AcpiHeader is NULL).
+**/
+EFI_ACPI_DMAR_STRUCTURE_HEADER *
+EFIAPI
+AddRhsaHdr (
+  IN OUT EFI_ACPI_DESCRIPTION_HEADER  *AcpiHeader,
+  IN     UINT64                       RegisterBaseAddress,
+  IN     UINT32                       ProximityDomain
+  );
+
+/**
   Add a device scope structure to an ACPI DMAR table.
 
   This function appends a device scope structure to an ACPI DMAR table. The device scope
