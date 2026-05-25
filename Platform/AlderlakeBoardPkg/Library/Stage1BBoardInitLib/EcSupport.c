@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2020 - 2026, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -459,6 +459,9 @@ SendEcCommandTimeout (
   // Wait for EC to be ready (with a timeout)
   //
   ReceiveEcStatus (&EcStatus);
+  if (EcStatus == 0xFF) {
+    return EFI_DEVICE_ERROR;
+  }
   //
   // Check if output buffer bit(OBF) is set.
   // Read and discard the output buffer data so that next BIOS-EC cmd is in sync
@@ -629,9 +632,8 @@ GetBoardId (
     return;
 #endif
 
-#if !defined(PLATFORM_ADLN) && !defined(PLATFORM_ASL)
   GetBoardIdFromEC(&BoardID);
-#endif
+
   if (BoardID == 0xFF) {
     GetBoardIdFromSmbus(PlatformId);
     if (*PlatformId == 0xFF) {

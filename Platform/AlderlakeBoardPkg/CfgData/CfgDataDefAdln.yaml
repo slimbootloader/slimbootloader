@@ -59,7 +59,7 @@ configs:
 
   - !include CfgData_PepConstraints.yaml
 
-  - !include CfgData_FuSa.yaml
+  - !include CfgData_FuSa_Adln.yaml
 
   - $ACTION      :
       page         : GFX

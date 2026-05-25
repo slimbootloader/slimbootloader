@@ -1,7 +1,7 @@
 ## @ StitchIfwi.py
 #  This is a python stitching script for Slim Bootloader ADL build
 #
-# Copyright (c) 2020 - 2023, Intel Corporation. All rights reserved. <BR>
+# Copyright (c) 2020 - 2026, Intel Corporation. All rights reserved. <BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -232,7 +232,7 @@ def main():
     curr_dir = os.getcwd()
     sbl_file = os.path.abspath(os.path.join (curr_dir, args.sbl_file))
 
-    if 'tsn' in plt_params_list or 'tcc' in plt_params_list:
+    if 'tsn' in plt_params_list or 'tcc' in plt_params_list or 'fusa' in plt_params_list or 'posc' in plt_params_list:
       if args.key_dir:
           os.environ['SBL_KEY_DIR'] = os.path.abspath(args.key_dir)
       else:
@@ -247,6 +247,15 @@ def main():
     generated_ifwi_file = os.path.join(work_dir, 'Temp', 'Ifwi.bin')
     if not os.path.exists (generated_ifwi_file):
         generated_ifwi_file = os.path.join(work_dir, 'Temp', 'Temp', 'Ifwi.bin')
+
+    if args.platform == 'adln' and 'fusa' in plt_params_list:
+        filename = 'Fusa_softstrap_patch.csv'
+        print ("patch IFWI to enable softstraps for Fusa from %s" % filename)
+        fusa_patch_cfg = os.path.join(os.path.dirname (os.path.realpath(__file__)), filename)
+        patch_tool = os.path.join(os.path.dirname (os.path.realpath(__file__)), 'IFWI_StrapsOverrideBits.py')
+        if os.path.exists (fusa_patch_cfg) and os.path.exists (patch_tool):
+            cmd_arg = [sys.executable, patch_tool, '-c', fusa_patch_cfg, '-i', generated_ifwi_file]
+            run_process (cmd_arg)
 
     ifwi_file_name = os.path.join(args.outpath,'sbl_ifwi_%s.bin' % (args.platform))
     shutil.copy(generated_ifwi_file, ifwi_file_name)

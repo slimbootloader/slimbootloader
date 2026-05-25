@@ -15,7 +15,7 @@
   - Registers / bits of new devices introduced in a SA generation will be just named
     as "_SA_" without [generation_name] inserted.
 
-  Copyright (c) 2021-2025, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2021-2026, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -108,6 +108,10 @@
 #define V_SA_DEVICE_ID_INDU_ULX_15   0x4674   ///< ASL (0+4) 4C IOT_INDU
 #define V_SA_DEVICE_ID_INDU_ULX_16   0x4675   ///< ASL (0+8) 2C IOT_INDU
 #define V_SA_DEVICE_ID_INDU_ULX_17   0x4632   ///< ASL (0+8) 2C IOT_INDU IPU Defeature SKU
+
+#define V_SA_DEVICE_ID_INDU_ULX_19   0x4646   ///< ASL QS 12W 8C EMB_INDU  CNVi Defeature(QS WW32'24) W/ FUSA
+#define V_SA_DEVICE_ID_INDU_ULX_20   0x464A   ///< ASL QS 12W 8C EMB_INDU  CNVi Defeature(QS WW32'24) W/ FUSA_TTD
+#define V_SA_DEVICE_ID_INDU_ULX_21   0x4652   ///< ASL QS  9W 4C EMB_INDU  CNVi Defeature(QS WW32'24) W/ FUSA
 
 #define V_SA_DEVICE_ID_MB_ULX_17   0x4672   ///< ArizonaBeach (0+8+0) SA DID
 #define V_SA_DEVICE_ID_MB_ULX_18   0x4676   ///< ArizonaBeach (0+4+0) SA DID
