@@ -79,11 +79,26 @@ def get_component_replace_list(plt_params_list):
       ('IFWI/BIOS/TS1/ACM0',      'Input/acm0.bin',        'dummy',    '',                            ''),
        ]
 
+    if 'fusa' in plt_params_list:
+        # Replace FUFW/FSBP with FuSa Startup BIST Pattern
+        if os.path.exists('FUFW/FusaStartupBist.ffs'):
+            print ("FusaStartupBist.ffs found")
+            replace_list.append (
+                ('IFWI/BIOS/NRD/FUFW/FSBP', 'FUFW/FusaStartupBist.ffs',  'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0)   # FuSa Startup BIST Pattern file
+            )
+
     if 'tsn' in plt_params_list:
         if os.path.exists('IPFW/TsnSubRegion.bin'):
             print ("TsnSubRegion.bin found")
             replace_list.append (
                 ('IFWI/BIOS/NRD/IPFW/TMAC', 'IPFW/TsnSubRegion.bin',     'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # TSN MAC Address
+            )
+
+    if 'posc' in plt_params_list:
+        if os.path.exists('IPFW/PreOsChecker.bin'):
+            print ("PreOsChecker.bin found")
+            replace_list.append (
+                ('IFWI/BIOS/NRD/IPFW/POSC', 'IPFW/PreOsChecker.bin',     'lz4',     'KEY_ID_CONTAINER_COMP_RSA3072', 0),   # Pre-OS Checker binary
             )
 
     return replace_list
@@ -94,7 +109,10 @@ def check_parameter(para_list):
         'crb'    : {},
         'quad'   : {},
         'debug'  : {},
-        'tsn'    : {}
+        'tsn'    : {},
+        '64MB'   : {},
+        'posc'   : {},
+        'fusa'   : {}
        }
 
     para_help = \
@@ -103,6 +121,9 @@ def check_parameter(para_list):
         'quad'   -- Stitch IFWI with SPI QUAD mode
         'debug'  -- Enable DAM and DCI configuration (Only use for debug purpose but not for final production!)
         'tsn'    -- Stitch sample Tsn Mac address binary along with TSN AIC softstraps
+        '64MB'   -- Build for 64MB component to allow space for FuSa BIST pattern data
+        'posc'   -- Stitch POSC binary into BIOS region.
+        'fusa'   -- Stitch FuSa Startup BIST Pattern (FSBP) into BIOS region and patch the FuSa SKU softstraps
         """
     for para in para_list:
         if para == '':
@@ -174,13 +195,15 @@ def get_xml_change_list (platform, plt_params_list):
         ('./Gpio/GpioVccioVoltageControl/GppH15voltSelect',                          '3.3Volts'),
         ('./Gpio/GpioVccioVoltageControl/GppA7voltSelect',                           '1.8Volts'),
         ('./Gpio/GpioVccioVoltageControl/GppA11voltSelect',                          '1.8Volts'),
+        ('./IntelUniquePlatformId/EntitlementsConfiguration/IcmEntitlement',         'Yes'),
     ])
 
     if 'crb' in plt_params_list:
         print ("Applying changes to enable crb board")
         xml_change_list.append ([
-          ('./BuildSettings/HarnessGlobalData/HarnessLabel',                           'v0.4 ADP-P w/TWL and ADL-N CPU'),
-          ('./BuildSettings/HarnessGlobalData/HarnessRevision',                        '#25'),
+          ('./BuildSettings/HarnessGlobalData/HarnessProject',                         'ADP-P PCH (w/ADL-N CPU) RDL v1.0.2.5'),
+          ('./BuildSettings/HarnessGlobalData/HarnessLabel',                           'v0.39 ADP-P w/TWL and ADL-N CPU'),
+          ('./BuildSettings/HarnessGlobalData/HarnessRevision',                        '#54'),
           ('./BuildSettings/HarnessGlobalData/SelectedRvp',                            'TWL / ADL-N DDR5 (ADP-P + ADL-N / TWL)'),
           ('./FlashLayout/EcRegion/Enabled',                                           'Disabled'),
           ('./IntelMeKernel/IntelMeFirmwareUpdate/HmrfpoEnable',                       'Yes'),
@@ -244,5 +267,11 @@ def get_xml_change_list (platform, plt_params_list):
             ('./Debug/DirectConnectInterfaceConfiguration/Usb3DciOobEnable',                      'Yes'),
             ('./Debug/DirectConnectInterfaceConfiguration/Usb4DciOobEnable',                      'Yes'),
             ])
+
+    if '64MB' in plt_params_list:
+        xml_change_list.append ([
+            ('./BuildSettings/BuildResults/FlashComponentsSizes',                    '64'),
+    ])
+
 
     return xml_change_list

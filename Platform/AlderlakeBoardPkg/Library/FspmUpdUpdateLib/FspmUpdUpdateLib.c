@@ -644,6 +644,7 @@ UpdateFspConfig (
         Fspmcfg->FirstDimmBitMask = 0x0;
         Fspmcfg->FirstDimmBitMaskEcc = 0x0;
         Fspmcfg->Lp5BankMode = 0x0;
+        Fspmcfg->PrmrrSize = MemCfgData->PrmrrSize;
         break;
       case PLATFORM_ID_ADL_N_LPDDR5_RVP:
       case PLATFORM_ID_ADL_N_UP7EN50:
