@@ -658,6 +658,7 @@ UpdateFspConfig (
         DEBUG ((DEBUG_ERROR, "TSN MAC subregion not found! %r\n", Status));
       }
     }
+    FspsConfig->CpuCrashLogEnable     = SiCfgData->CpuCrashLogEnable;
     FspsConfig->IehMode               = SiCfgData->IehMode;
     FspsConfig->OpioRecenter          = SiCfgData->OpioRecenter;
     FspsConfig->D3HotEnable           = SiCfgData->D3HotEnable;
@@ -779,9 +780,6 @@ UpdateFspConfig (
   // Force Eiss and BiosLock off for now.
   // Enable it later in OS loader/EndofStages
   FspsConfig->PchLockDownBiosLock = 0x0;
-
-  // Disable IEH
-  FspsConfig->IehMode = 0x0;
 
   if (FeaturePcdGet (PcdTxtEnabled)) {
     FeaturesCfgData = (FEATURES_CFG_DATA *) FindConfigDataByTag(CDATA_FEATURES_TAG);
@@ -1005,7 +1003,6 @@ UpdateFspConfig (
     FspsConfig->SaPcieItbtRpSnoopLatencyOverrideValue[2] = 0xc8;
     FspsConfig->TdcTimeWindow[0] = 0x3e8;
     FspsConfig->TdcTimeWindow[1] = 0x3e8;
-    FspsConfig->IehMode = 0x0;
     FspsConfig->PortResetMessageEnable[0] = 0x1;
     FspsConfig->PortResetMessageEnable[1] = 0x1;
     FspsConfig->PortResetMessageEnable[2] = 0x1;
