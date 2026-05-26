@@ -114,13 +114,13 @@ class Board(BaseBoard):
         self.STAGE1_STACK_SIZE    = 0x00002000
         self.STAGE1_DATA_SIZE     = 0x00014000
         self.FSP_M_STACK_TOP      = 0xFEF7FF00
-        self.STAGE1B_SIZE         = 0x000DB000
+        self.STAGE1B_SIZE         = 0x000DD000
         self.STAGE2_SIZE          = 0x000A0000
         self.STAGE2_FD_BASE       = 0x000B0000
         self.STAGE2_FD_SIZE       = 0x001F0000
 
         self.EPAYLOAD_SIZE        = 0x00161000
-        self.PAYLOAD_SIZE         = 0x0002D000
+        self.PAYLOAD_SIZE         = 0x0002E000
 
         self.OS_LOADER_FD_SIZE    = 0x0005B000
         self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
@@ -295,7 +295,8 @@ class Board(BaseBoard):
             'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf',
             'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
             'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf',
-            'P2sbLib|Silicon/CommonSocPkg/Library/P2sbLib/P2sbLib.inf'
+            'P2sbLib|Silicon/CommonSocPkg/Library/P2sbLib/P2sbLib.inf',
+            'TxtLib|Silicon/CommonSocPkg/Library/TxtLib/TxtLibNull.inf'
         ]
 
         if self.BUILD_CSME_UPDATE_DRIVER:
