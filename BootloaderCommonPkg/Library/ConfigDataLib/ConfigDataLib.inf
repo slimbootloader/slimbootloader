@@ -32,6 +32,8 @@
   DebugLib
   BaseMemoryLib
   BootloaderCommonLib
+  VariableLib
 
 [Guids]
+  gUiSetupCfgDeltaGuid
 

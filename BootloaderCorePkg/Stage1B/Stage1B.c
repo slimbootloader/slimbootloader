@@ -428,6 +428,10 @@ SecStartup2 (
     SetPlatformId (PidCfgData->PlatformId);
   }
 
+  if (FeaturePcdGet (PcdUiSetupEnabled)) {
+    ApplyCfgDeltaToConfigData ();
+  }
+
   BoardInit (PostConfigInit);
 
   //Get Platform ID and Boot Mode

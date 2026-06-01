@@ -28,6 +28,8 @@
 
 #define CDATA_NO_TAG            0x000
 #define CDATA_PLATFORMID_TAG    0x0F0
+#define CDATA_FSPM_UPD_TAG      0x500
+#define CDATA_FSPS_UPD_TAG      0x520
 
 typedef struct {
   UINT16   PlatformId;
@@ -252,6 +254,40 @@ BuildConfigData (
 UINT32
 EFIAPI
 GetConfigDataSize (
+  VOID
+  );
+
+/**
+  Apply UiSetup CfgDelta variable entries for an FSP UPD base tag directly to
+  a caller-provided live UPD buffer.
+
+  This is intended for FSP-M/FSP-S buffers that are not part of the CFGDATA
+  database. Matching entries are selected by Entry->TagId == BaseTag and then
+  patched into UpdPtr using the saved bit offset/length.
+
+  @param[in]      BaseTag    Base UiSetup tag ID for the FSP UPD region.
+  @param[in,out]  UpdPtr     Pointer to the live FSP UPD buffer to patch.
+  @param[in]      UpdSize    Size of the UPD buffer in bytes.
+
+**/
+VOID
+EFIAPI
+ApplyCfgDeltaToFspUpd (
+  IN      UINT32  BaseTag,
+  IN OUT  VOID    *UpdPtr,
+  IN      UINT32  UpdSize
+  );
+
+/**
+  Apply UiSetup CfgDelta variable entries to non-FSP CFGDATA tags.
+
+  This is intended for runtime CFGDATA tags stored in the config database.
+  FSP UPD tags are skipped here and handled by ApplyCfgDeltaToFspUpd().
+
+**/
+VOID
+EFIAPI
+ApplyCfgDeltaToConfigData (
   VOID
   );
 
