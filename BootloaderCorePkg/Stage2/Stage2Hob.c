@@ -280,6 +280,8 @@ BuildBaseInfoHob (
   if (LoaderFspInfo != NULL) {
     LoaderFspInfo->FspsBase   = PCD_GET32_WITH_ADJUST (PcdFSPSBase);
     LoaderFspInfo->FspHobList = (UINT32)(UINTN)LdrGlobal->FspHobList;
+    LoaderFspInfo->FspmUpdPtr = (UINT32)(UINTN)LdrGlobal->FspmUpdPtr;
+    LoaderFspInfo->FspsUpdPtr = PcdGet32 (PcdFspsUpdPtr);
   }
 
   // Build graphic info hob

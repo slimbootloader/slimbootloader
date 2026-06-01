@@ -19,6 +19,8 @@ typedef struct {
   UINT8          Reserved0[3];
   UINT32         FspsBase;
   UINT32         FspHobList;
+  UINT32         FspmUpdPtr;
+  UINT32         FspsUpdPtr;
 } LOADER_FSP_INFO;
 
 #endif
