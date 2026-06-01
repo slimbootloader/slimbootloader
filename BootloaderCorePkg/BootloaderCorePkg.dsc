@@ -88,6 +88,7 @@
   PartitionLib|BootloaderCommonPkg/Library/PartitionLib/PartitionLib.inf
   Ext23Lib|BootloaderCommonPkg/Library/Ext23Lib/Ext23Lib.inf
   ShellLib|BootloaderCommonPkg/Library/ShellLib/ShellLib.inf
+  UiSetupLib|PayloadPkg/Library/UiSetupLib/UiSetupLib.inf
   SpiBlockIoLib|BootloaderCommonPkg/Library/SpiBlockIoLib/SpiBlockIoLib.inf
   UfsBlockIoLib|BootloaderCommonPkg/Library/UfsBlockIoLib/UfsBlockIoLib.inf
   MmcAccessLib|BootloaderCommonPkg/Library/MmcAccessLib/MmcAccessLib.inf
@@ -361,6 +362,7 @@
   gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled          | $(ENABLE_SMBIOS)
   gPlatformModuleTokenSpaceGuid.PcdLinuxPayloadEnabled    | $(ENABLE_LINUX_PAYLOAD)
   gPayloadTokenSpaceGuid.PcdCsmeUpdateEnabled             | $(ENABLE_CSME_UPDATE)
+  gPlatformCommonLibTokenSpaceGuid.PcdUiSetupEnabled      | $(ENABLE_UI_SETUP)
   gPlatformModuleTokenSpaceGuid.PcdLegacyEfSegmentEnabled | $(ENABLE_LEGACY_EF_SEG)
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcHs400SupportEnabled | $(ENABLE_EMMC_HS400)
   gPlatformCommonLibTokenSpaceGuid.PcdDmaProtectionEnabled | $(ENABLE_DMA_PROTECTION)

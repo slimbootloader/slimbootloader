@@ -237,6 +237,7 @@ class BaseBoard(object):
         self.ENABLE_MULTIBOOT2_SUPPORT = 1
         self.ENABLE_EXTRA_IMAGE_SUPPORT = 1
         self.ENABLE_SHELL           = 1
+        self.ENABLE_UI_SETUP        = 0
 
         #     0: Direct access from flash
         # other: Load image into memory address
@@ -378,6 +379,29 @@ class Build(object):
             os.environ.get('PLT_SOURCE',
                            os.environ.get('SBL_SOURCE', '')),
             self._board._FSP_PATH_NAME)
+
+    def _gen_ui_setup_desc (self):
+        if not getattr(self._board, 'ENABLE_UI_SETUP', 0):
+            return
+
+        cfgdata_def_file_name = self._board._CFGDATA_DEF_FILE if self._board._CFGDATA_DEF_FILE != '' else 'CfgDataDef.yaml'
+        cfg_def_file = os.path.join(self._fv_dir, cfgdata_def_file_name)
+        if not os.path.exists(cfg_def_file):
+            # gen_config_file() always emits the normalized combined YAML as CfgDataDef.yaml in FV.
+            # Some boards use a board-specific source name (for example CfgDataDefNvlp.yaml),
+            # but that exact name might not exist in FV output.
+            cfg_def_file = os.path.join(self._fv_dir, 'CfgDataDef.yaml')
+        if not os.path.exists(cfg_def_file):
+            raise Exception ('Could not find generated %s (or fallback CfgDataDef.yaml) for UiSetup descriptor generation!' % cfgdata_def_file_name)
+
+        sbl_dir = os.environ.get('SBL_SOURCE', os.path.dirname(os.path.abspath(__file__)))
+        gen_tool = os.path.join(sbl_dir, 'BootloaderCorePkg', 'Tools', 'GenUiDescBin.py')
+        out_hdr  = os.path.join(sbl_dir, 'PayloadPkg', 'Library', 'UiSetupLib', 'UiDescData.h')
+
+        cmdline = [sys.executable, gen_tool, cfg_def_file, out_hdr]
+        ret = subprocess.call(cmdline)
+        if ret:
+            raise Exception ('Failed to generate UiSetup descriptor header!')
 
     def update_fit_table (self):
 
@@ -1410,6 +1434,9 @@ class Build(object):
                              self._board._CFGDATA_DEF_FILE, self._board._CFGDATA_INT_FILE, self._board._CFGDATA_EXT_FILE,
                              self._board._SIGNING_SCHEME, HASH_VAL_STRING[self._board.SIGN_HASH_TYPE], svn, self._board.BOARD_NAME,
                              fsp_path=fsp_upd_path)
+
+            # Keep UiSetup descriptor aligned with current board CfgDataDef.
+            self._gen_ui_setup_desc ()
 
         # rebuild reset vector
         vtf_dir = os.path.join('BootloaderCorePkg', 'Stage1A', 'Ia32', 'Vtf0')

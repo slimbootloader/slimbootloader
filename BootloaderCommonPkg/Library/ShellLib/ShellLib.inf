@@ -52,11 +52,13 @@
   Shell.c
   CmdAcpi.c
   CmdSetup.c
+  CmdUi.c
   CmdFlashmap.c
 
 [Packages]
   MdePkg/MdePkg.dec
   BootloaderCommonPkg/BootloaderCommonPkg.dec
+  PayloadPkg/PayloadPkg.dec
   Silicon/CommonSocPkg/CommonSocPkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
 
@@ -85,6 +87,7 @@
   RngLib
   LoaderPerformanceLib
   IppCryptoPerfLib
+  UiSetupLib
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
@@ -93,6 +96,9 @@
   gPlatformCommonLibTokenSpaceGuid.PcdBootPerformanceMask
   gPlatformCommonLibTokenSpaceGuid.PcdEnableCryptoPerfTest
   gPlatformModuleTokenSpaceGuid.PcdEnableSetup
+
+[FeaturePcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdUiSetupEnabled
 
 [Guids]
   gLoaderPerformanceInfoGuid
