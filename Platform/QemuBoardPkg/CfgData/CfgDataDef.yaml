@@ -192,6 +192,80 @@ configs:
         length       : 0x08
         value        : {0:0D, 0x11112222, 0x33334444}
 
+  - QEMU_TYPE_TEST_CFG_DATA :
+    - !expand { CFGHDR_TMPL : [ QEMU_TYPE_TEST_CFG_DATA, 0x2F0, 0, 0 ] }
+    - ScalarU8     :
+        name         : Scalar UINT8 Test
+        type         : EditNum, HEX, (0x00,0xFF)
+        help         : >
+                       Scalar UINT8 test field.
+        length       : 0x01
+        value        : 0x11
+    - ScalarU16    :
+        name         : Scalar UINT16 Test
+        type         : EditNum, HEX, (0x0000,0xFFFF)
+        help         : >
+                       Scalar UINT16 test field.
+        length       : 0x02
+        value        : 0x2222
+    - ScalarU32    :
+        name         : Scalar UINT32 Test
+        type         : EditNum, HEX, (0x00000000,0xFFFFFFFF)
+        help         : >
+                       Scalar UINT32 test field.
+        length       : 0x04
+        value        : 0x33334444
+    - ScalarU64    :
+        name         : Scalar UINT64 Test
+        type         : EditNum, HEX, (0x0,0xFFFFFFFFFFFFFFFF)
+        help         : >
+                       Scalar UINT64 test field.
+        length       : 0x08
+        value        : 0x5555666677778888
+    - TableU8      :
+        name         : Table UINT8[16]
+        type         : Table
+        option       :  0x0-0xF:1:HEX
+        help         : >
+                       Table UINT8[16] test field.
+        length       : 0x10
+        value        : 0
+    - TableU16     :
+        name         : Table UINT16[8]
+        type         : Table
+        option       :  0x0-0x7:2:HEX
+        help         : >
+                       Table UINT16[8] test field.
+        struct       : UINT16
+        length       : 0x10
+        value        : 0
+    - TableU32     :
+        name         : Table UINT32[4]
+        type         : Table
+        option       :  0x0-0x3:4:HEX
+        help         : >
+                       Table UINT32[4] test field.
+        struct       : UINT32
+        length       : 0x10
+        value        : 0
+    - TableU64     :
+        name         : Table UINT64[4]
+        type         : Table
+        option       :  0x0-0x3:8:HEX
+        help         : >
+                       Table UINT64[4] test field.
+        struct       : UINT64
+        length       : 0x20
+        value        : 0
+    - ArrayU8_512  :
+        name         : Table UINT8[512]
+        type         : Table
+        option       :  0x0-0x1FF:1:HEX
+        help         : >
+                       Large UINT8[512] array-style table test field.
+        length       : 0x200
+        value        : 0
+
   - $ACTION      :
       page         : GEN
 
