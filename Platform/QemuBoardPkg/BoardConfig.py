@@ -68,6 +68,7 @@ class Board(BaseBoard):
 
         self.ENABLE_SMBIOS            = 1
         self.ENABLE_SBL_SETUP         = 0
+        self.ENABLE_UI_SETUP          = 1
         self.ENABLE_UPL_HANDOFF_FDT   = 0
 
         self.CPU_MAX_LOGICAL_PROCESSOR_NUMBER = 255
@@ -173,6 +174,14 @@ class Board(BaseBoard):
             self.OS_LOADER_FD_SIZE   += 0x23000
             self.FWUPDATE_SIZE       += 0x8000
             self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
+
+        if self.ENABLE_UI_SETUP:
+            self.PAYLOAD_SIZE            += 0x00005000
+            self.OS_LOADER_FD_SIZE       += 0x00010000
+            self.CONSOLE_OUT_DEVICE_MASK  = 0x00000003
+            self.CONSOLE_IN_DEVICE_MASK   = 0x00000003
+            self.ENABLE_USB_KB            = 1
+            self.OS_LOADER_FD_NUMBLK      = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         self.STAGE1_STACK_SIZE    = 0x00002000
         self.STAGE1_DATA_SIZE     = 0x0000E000
