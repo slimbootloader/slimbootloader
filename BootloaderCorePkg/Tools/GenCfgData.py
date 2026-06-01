@@ -878,8 +878,19 @@ class CGenCfgData:
                 opt_list = item['option'].split(',')
                 for option in opt_list:
                     option = option.strip()
+                    match = re.match(r'^([0-9A-Fa-f]+)-([0-9A-Fa-f]+):(\d+):(.+)$', option)
+                    if match:
+                        start = int(match.group(1), 16)
+                        end   = int(match.group(2), 16)
+                        op_str = match.group(4)
+                        if end < start:
+                            raise SystemExit ("Exception: Invalid option range '%s' for item '%s' !" % (option, item['cname']))
+                        for idx in range(start, end + 1):
+                            tmp_list.append(("0x%X" % idx, op_str))
+                        continue
+
                     try:
-                        (op_val, op_str) = option.split(':')
+                        (op_val, op_str) = option.split(':', 1)
                     except:
                         raise SystemExit ("Exception: Invalid option format '%s' for item '%s' !" % (option, item['cname']))
                     tmp_list.append((op_val, op_str))
@@ -1395,6 +1406,21 @@ class CGenCfgData:
             dlt_fd.write ('%s\n' % line)
         dlt_fd.close()
 
+    @staticmethod
+    def normalize_dlt_path(path):
+        # Support shell-style indexed path in DLT, e.g. Foo.Bar[0] -> Foo.Bar_0.
+        path = path.strip()
+        path_nodes = path.split('.')
+        if len(path_nodes) == 0:
+            return path
+
+        idx_match = re.match(r'^([A-Za-z_][A-Za-z0-9_]*)\[(\d+)\]$', path_nodes[-1])
+        if idx_match:
+            path_nodes[-1] = '%s_%d' % (idx_match.group(1), int(idx_match.group(2)))
+            return '.'.join(path_nodes)
+
+        return path
+
 
     def override_default_value(self, dlt_file):
         error = 0
@@ -1405,28 +1431,118 @@ class CGenCfgData:
             line = line.strip()
             if not line or line.startswith('#'):
                 continue
-            match = re.match("\\s*([\\w\\.]+)\\s*\\|\\s*(.+)", line)
+            match = re.match(r"\s*([A-Za-z0-9_\.\[\]]+)\s*\|\s*(.+)", line)
             if not match:
                 raise Exception("Unrecognized line '%s' (File:'%s' Line:%d) !" %
                                 (line, file_path, line_num + 1))
 
-            path      = match.group(1)
+            path      = self.normalize_dlt_path (match.group(1))
             value_str = match.group(2)
-            top  = self.locate_cfg_item (path)
-            if not top:
-                raise Exception(
-                    "Invalid configuration '%s' (File:'%s' Line:%d) !" %
-                    (path, file_path, line_num + 1))
+            top  = self.locate_cfg_item (path, False)
+            if top:
+                if 'indx' in top:
+                    act_cfg = self.get_item_by_index (top['indx'])
+                    bit_len = act_cfg['length']
+                else:
+                    struct_info = top[CGenCfgData.STRUCT]
+                    bit_len     = struct_info['length']
 
-            if 'indx' in top:
-                act_cfg = self.get_item_by_index (top['indx'])
-                bit_len = act_cfg['length']
+                value_bytes = self.parse_value (value_str, bit_len)
+                self.set_field_value (top, value_bytes, True)
             else:
-                struct_info = top[CGenCfgData.STRUCT]
-                bit_len     = struct_info['length']
+                # Fallback compatibility for array overrides in either format.
+                # 1) Aggregate path -> split element items.
+                path_nodes = path.split('.')
+                if len(path_nodes) < 2:
+                    raise Exception(
+                        "Invalid configuration '%s' (File:'%s' Line:%d) !" %
+                        (path, file_path, line_num + 1))
 
-            value_bytes = self.parse_value (value_str, bit_len)
-            self.set_field_value (top, value_bytes, True)
+                parent_path = '.'.join(path_nodes[:-1])
+                base_name   = path_nodes[-1]
+                parent      = self.locate_cfg_item (parent_path, False)
+                if not parent:
+                    raise Exception(
+                        "Invalid configuration '%s' (File:'%s' Line:%d) !" %
+                        (path, file_path, line_num + 1))
+
+                child_nodes = []
+                for key, child in parent.items():
+                    if type(child) is not OrderedDict:
+                        continue
+                    if not key.startswith(base_name + '_'):
+                        continue
+                    if 'indx' not in child:
+                        continue
+                    child_nodes.append((key, child))
+
+                # 2) Split element path -> aggregate array item.
+                if not child_nodes:
+                    idx_match = re.match(r'^(.+?)_(\d+)$', base_name)
+                    if idx_match:
+                        agg_name = idx_match.group(1)
+                        elem_idx = int(idx_match.group(2))
+                        agg_path = parent_path + '.' + agg_name
+                        agg_top = self.locate_cfg_item (agg_path, False)
+                        if agg_top and 'indx' in agg_top:
+                            agg_cfg = self.get_item_by_index (agg_top['indx'])
+                            if agg_cfg.get('type') == 'Table' and 'option' in agg_cfg:
+                                col_infos = []
+                                for opt in agg_cfg['option'].split(','):
+                                    opt = opt.strip()
+                                    match_rng = re.match(r'^([0-9A-Fa-f]+)-([0-9A-Fa-f]+):(\d+):', opt)
+                                    if match_rng:
+                                        start = int(match_rng.group(1), 16)
+                                        end = int(match_rng.group(2), 16)
+                                        col_size = int(match_rng.group(3))
+                                        if end >= start:
+                                            for col_idx in range(start, end + 1):
+                                                col_infos.append((col_idx, col_size))
+                                        continue
+                                    match_col = re.match(r'^([0-9A-Fa-f]+):(\d+):', opt)
+                                    if not match_col:
+                                        continue
+                                    col_idx = int(match_col.group(1), 16)
+                                    col_size = int(match_col.group(2))
+                                    col_infos.append((col_idx, col_size))
+                                col_infos.sort(key=lambda x: x[0])
+                                off = 0
+                                elem_size = None
+                                for col_idx, col_size in col_infos:
+                                    if col_idx == elem_idx:
+                                        elem_size = col_size
+                                        break
+                                    off += col_size
+                                if elem_size is not None:
+                                    agg_bytes = self.parse_value (agg_cfg['value'], agg_cfg['length'])
+                                    elem_bytes = self.parse_value (value_str, elem_size * 8)
+                                    if off + elem_size <= len(agg_bytes):
+                                        agg_bytes[off:off + elem_size] = elem_bytes[:elem_size]
+                                        self.set_field_value (agg_top, agg_bytes, True)
+                                        if path == 'PLATFORMID_CFG_DATA.PlatformId':
+                                            platform_id = value_str
+                                        continue
+
+                    raise Exception(
+                        "Invalid configuration '%s' (File:'%s' Line:%d) !" %
+                        (path, file_path, line_num + 1))
+
+                value_list = []
+                value_str  = value_str.strip()
+                if value_str.startswith('{') and value_str.endswith('}'):
+                    value_list = [each.strip() for each in value_str[1:-1].split(',') if each.strip()]
+                else:
+                    value_list = [value_str]
+
+                for idx, (_, child) in enumerate(child_nodes):
+                    act_cfg = self.get_item_by_index (child['indx'])
+                    bit_len = act_cfg['length']
+                    if idx < len(value_list):
+                        elem_str = value_list[idx]
+                    else:
+                        elem_str = '0'
+                    value_bytes = self.parse_value (elem_str, bit_len)
+                    self.set_field_value (child, value_bytes, True)
 
             if path == 'PLATFORMID_CFG_DATA.PlatformId':
                 platform_id = value_str
