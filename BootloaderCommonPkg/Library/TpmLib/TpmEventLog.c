@@ -246,6 +246,7 @@ AddEventTCGLog (
 {
   TPMI_ALG_HASH HashAlg;
   UINT32 Idx;
+  UINT64 HashBytes;
 
   DEBUG ((DEBUG_INFO, "Adding event in TCG event log at : 0x%08X \n", Loc));
 
@@ -265,7 +266,9 @@ AddEventTCGLog (
 
     // Copy the hash
     CopyMem (Loc, & (EventHdr->Digests.digests[Idx].digest), GetHashSizeFromAlgo (HashAlg));
-    DEBUG ((DEBUG_INFO, "HASH Extended %llx\n", EventHdr->Digests.digests[Idx].digest));
+    // Show first 8 bytes of digest
+    CopyMem (&HashBytes, & (EventHdr->Digests.digests[Idx].digest), sizeof (HashBytes));
+    DEBUG ((DEBUG_INFO, "HASH Extended %llx\n", HashBytes));
     Loc += GetHashSizeFromAlgo (HashAlg);
   }
 

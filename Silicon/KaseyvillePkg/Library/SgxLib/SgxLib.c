@@ -135,7 +135,7 @@ SgxGetStorageVariables (
     }
 
     ZeroMem (CctVsTempNode, sizeof(CCT_VS_METADATA_NODE));
-    CctVsTempNode->Descriptor = SgxManifest->DescriptorArray[Index];
+    CopyMem (&CctVsTempNode->Descriptor, &SgxManifest->DescriptorArray[Index], sizeof (CctVsTempNode->Descriptor));
     DataSize = 0;
     Data = NULL;
 
