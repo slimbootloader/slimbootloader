@@ -1,0 +1,58 @@
+## @file
+#  UiSetup library -- real implementation.
+#
+#  The INF and the private UiSetup implementation live together under
+#  PayloadPkg/Library/UiSetupLib.
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION    = 0x00010005
+  BASE_NAME      = UiSetupLib
+  FILE_GUID      = 3BFD3187-D6C9-4C54-9DAB-4DA00FD1775B
+  MODULE_TYPE    = BASE
+  VERSION_STRING = 1.0
+  LIBRARY_CLASS  = UiSetupLib
+
+[Sources]
+  UiSetup.c
+  FormEngine.c
+  Renderer.c
+  InputHandler.c
+  ConfigBridge.c
+  ShellConfig.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  PayloadPkg/PayloadPkg.dec
+  Platform/CommonBoardPkg/CommonBoardPkg.dec
+  IntelFsp2Pkg/IntelFsp2Pkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  MemoryAllocationLib
+  PrintLib
+  BootloaderCommonLib
+  HobLib
+  ConfigDataLib
+  VariableLib
+  GraphicsLib
+  ConsoleInLib
+  ConsoleOutLib
+
+[Guids]
+  gUiSetupCfgDeltaGuid
+
+[Pcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdConsoleInDeviceMask
+  gPlatformCommonLibTokenSpaceGuid.PcdConsoleOutDeviceMask
+  gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleWidth
+  gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleHeight
+
+[FeaturePcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdUiSetupEnabled
