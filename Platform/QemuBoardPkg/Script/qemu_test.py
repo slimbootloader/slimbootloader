@@ -39,6 +39,7 @@ def main():
       ('linux_boot.py'     ,  [tst_img, img_dir]),
       ('uefi_upld_boot.py' ,  [tst_img, tmp_dir]),
       ('cfgdata_update.py' ,  [tst_img, tmp_dir]),
+      ('ui_cfgdata_test.py',  [tst_img, tmp_dir]),
     ]
 
     for test_file, test_args in test_cases:
