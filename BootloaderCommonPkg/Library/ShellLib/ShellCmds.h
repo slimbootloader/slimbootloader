@@ -32,6 +32,10 @@ extern CONST SHELL_COMMAND ShellCommandUsbDev;
 extern CONST SHELL_COMMAND ShellCommandCorruptComp;
 extern CONST SHELL_COMMAND ShellCommandAcpi;
 extern CONST SHELL_COMMAND ShellCommandSetup;
+extern CONST SHELL_COMMAND ShellCommandUi;
+extern CONST SHELL_COMMAND ShellCommandCfgSet;
+extern CONST SHELL_COMMAND ShellCommandCfgGet;
+extern CONST SHELL_COMMAND ShellCommandCfgFind;
 extern CONST SHELL_COMMAND ShellCommandFlashmap;
 
 /**

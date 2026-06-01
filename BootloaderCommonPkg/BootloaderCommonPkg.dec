@@ -392,6 +392,8 @@
   gPlatformCommonLibTokenSpaceGuid.PcdMadtUsePlatformLapic        | FALSE  | BOOLEAN | 0x20000231
   # Control if platform MCFG base address should be used as is or get updated by AcpiInitLib
   gPlatformCommonLibTokenSpaceGuid.PcdMcfgUsePlatformBaseAddr     | FALSE  | BOOLEAN | 0x20000232
+  # Control if UiSetup and UiSetup-backed shell commands are enabled.
+  gPlatformCommonLibTokenSpaceGuid.PcdUiSetupEnabled              | FALSE  | BOOLEAN | 0x20000233
   # Enable ELF payload support
   gPlatformCommonLibTokenSpaceGuid.PcdElfSupportEnabled           | TRUE   | BOOLEAN | 0x2000022A
   # Enable FV payload support

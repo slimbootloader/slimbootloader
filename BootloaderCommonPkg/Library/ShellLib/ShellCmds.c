@@ -61,6 +61,13 @@ LoadShellCommands (
     if (FeaturePcdGet (PcdEnableSetup)) {
       ShellCommandRegister (Shell, &ShellCommandSetup);;
     }
+
+    if (FeaturePcdGet (PcdUiSetupEnabled)) {
+      ShellCommandRegister (Shell, &ShellCommandUi);
+      ShellCommandRegister (Shell, &ShellCommandCfgSet);
+      ShellCommandRegister (Shell, &ShellCommandCfgGet);
+      ShellCommandRegister (Shell, &ShellCommandCfgFind);
+    }
   }
 
   return EFI_SUCCESS;
