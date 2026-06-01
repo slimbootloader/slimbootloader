@@ -91,6 +91,14 @@ class validating_entry(tkinter.Entry):
         self.config({"background": "#c0c0c0"})
         self.bind("<Return>", self.move_next)
         self.bind("<Tab>", self.move_next)
+        for key in ["<Right>", "<Key-Right>"]:
+            self.bind(key, self.move_right)
+        for key in ["<Left>", "<Key-Left>"]:
+            self.bind(key, self.move_left)
+        for key in ["<Up>", "<Key-Up>"]:
+            self.bind(key, self.move_up)
+        for key in ["<Down>", "<Key-Down>"]:
+            self.bind(key, self.move_down)
         self.bind("<Escape>", self.cancel)
         for each in ['BackSpace', 'Delete']:
             self.bind("<%s>" % each, self.ignore)
@@ -103,8 +111,36 @@ class validating_entry(tkinter.Entry):
         if self.row < 0:
             return
         row, col = self.row, self.col
-        txt, row_id, col_id = self.parent.get_next_cell (row, col)
+        txt, row_id, col_id = self.parent.get_neighbor_cell (row, col, 'right')
         self.display (txt, row_id, col_id)
+        return "break"
+
+    def move_right(self, event):
+        if self.row < 0:
+            return "break"
+        txt, row_id, col_id = self.parent.get_neighbor_cell(self.row, self.col, 'right')
+        self.display(txt, row_id, col_id)
+        return "break"
+
+    def move_left(self, event):
+        if self.row < 0:
+            return "break"
+        txt, row_id, col_id = self.parent.get_neighbor_cell(self.row, self.col, 'left')
+        self.display(txt, row_id, col_id)
+        return "break"
+
+    def move_up(self, event):
+        if self.row < 0:
+            return "break"
+        txt, row_id, col_id = self.parent.get_neighbor_cell(self.row, self.col, 'up')
+        self.display(txt, row_id, col_id)
+        return "break"
+
+    def move_down(self, event):
+        if self.row < 0:
+            return "break"
+        txt, row_id, col_id = self.parent.get_neighbor_cell(self.row, self.col, 'down')
+        self.display(txt, row_id, col_id)
         return "break"
 
     def cancel (self, event):
@@ -163,13 +199,45 @@ class validating_entry(tkinter.Entry):
 class custom_table(ttk.Treeview):
     _Padding   = 20
     _Char_width = 6
+    _Max_cols_per_row_u8 = 16
+    _Max_cols_per_row_other = 8
+
+    @staticmethod
+    def expand_col_hdr(col_hdr):
+        expanded = []
+        for token in col_hdr:
+            tok = token.strip()
+            match = re.match(r'^((?:0[xX])?[0-9A-Fa-f]+)-((?:0[xX])?[0-9A-Fa-f]+):(\d+):(.+)$', tok)
+            if match:
+                start = int(match.group(1), 0)
+                end = int(match.group(2), 0)
+                size = match.group(3)
+                fmt = match.group(4)
+                if end >= start:
+                    for idx in range(start, end + 1):
+                        expanded.append(f'{idx:X}:{size}:{fmt}')
+                    continue
+            expanded.append(tok)
+        return expanded
 
     def __init__(self, parent, col_hdr, bins):
+        col_hdr = self.expand_col_hdr(col_hdr)
         cols = len(col_hdr)
 
         col_byte_len = []
         for col in range(cols):  #Columns
             col_byte_len.append(int(col_hdr[col].split(':')[1]))
+
+        # For very wide uniform tables (typical array fields), wrap into
+        # multiple display rows so all elements remain visible/editable.
+        # UINT8 arrays show 16 items/row. Other widths show 8 items/row.
+        if cols > 1 and len(set(col_byte_len)) == 1:
+            elem_len = col_byte_len[0]
+            max_cols = custom_table._Max_cols_per_row_u8 if elem_len == 1 else custom_table._Max_cols_per_row_other
+            if cols > max_cols:
+                cols = max_cols
+                col_byte_len = [elem_len] * cols
+                col_hdr = [f'{idx:X}:{elem_len}:HEX' for idx in range(cols)]
 
         byte_len = sum(col_byte_len)
         rows = (len(bins) + byte_len - 1) // byte_len
@@ -187,6 +255,15 @@ class custom_table(ttk.Treeview):
         ttk.Treeview.__init__(self, parent, height=rows, columns=[''] + col_hdr, show='headings', style="Custom.Treeview", selectmode='none')
         self.bind("<Button-1>", self.click)
         self.bind("<FocusOut>", self.focus_out)
+        # If focus lands on the table widget, forward arrow navigation
+        # to the inline editor logic.
+        for key, handler in [
+            ("<Right>", self.entry_move_right), ("<Key-Right>", self.entry_move_right),
+            ("<Left>",  self.entry_move_left),  ("<Key-Left>",  self.entry_move_left),
+            ("<Up>",    self.entry_move_up),    ("<Key-Up>",    self.entry_move_up),
+            ("<Down>",  self.entry_move_down),  ("<Key-Down>",  self.entry_move_down),
+        ]:
+            self.bind(key, handler)
         self.entry = validating_entry(self, width=4,  justify=tkinter.CENTER)
 
         self.heading(0, text='LOAD')
@@ -223,7 +300,24 @@ class custom_table(ttk.Treeview):
         return (cell_width - custom_table._Padding) // (2 * custom_table._Char_width)
 
     def focus_out (self, event):
+        # Do not hide the inline editor when focus is transitioning from
+        # the table widget to the editor itself.
+        cur_focus = self.focus_get()
+        if cur_focus == self.entry:
+            return
         self.entry.display (None)
+
+    def entry_move_right(self, event):
+        return self.entry.move_right(event)
+
+    def entry_move_left(self, event):
+        return self.entry.move_left(event)
+
+    def entry_move_up(self, event):
+        return self.entry.move_up(event)
+
+    def entry_move_down(self, event):
+        return self.entry.move_down(event)
 
     def refresh_bin (self, bins):
         if not bins:
@@ -251,18 +345,52 @@ class custom_table(ttk.Treeview):
         return txt
 
     def get_next_cell (self, row, col):
-        rows  = self.get_children()
-        col  += 1
-        if col > self.cols:
-          col = 1
-          row +=1
-        cnt = row * sum(self.col_byte_len) + sum(self.col_byte_len[:col])
-        if cnt > self.size:
-          # Reached the last cell, so roll back to beginning
-          row  = 0
-          col  = 1
+        return self.get_neighbor_cell(row, col, 'right')
 
-        txt   = self.get_cell(row, col)
+    def _is_valid_cell(self, row, col):
+        if row < 0 or row >= self.rows or col < 1 or col > self.cols:
+            return False
+        idx = row * sum(self.col_byte_len) + sum(self.col_byte_len[:col - 1])
+        byte_len = self.col_byte_len[col - 1]
+        return (idx + byte_len) <= self.size
+
+    def get_neighbor_cell(self, row, col, direction):
+        rows = self.get_children()
+        new_row = row
+        new_col = col
+        max_steps = max(1, self.rows * self.cols)
+
+        for _ in range(max_steps):
+            if direction == 'right':
+                new_col += 1
+                if new_col > self.cols:
+                    new_col = 1
+                    new_row += 1
+                    if new_row >= self.rows:
+                        new_row = 0
+            elif direction == 'left':
+                new_col -= 1
+                if new_col < 1:
+                    new_col = self.cols
+                    new_row -= 1
+                    if new_row < 0:
+                        new_row = self.rows - 1
+            elif direction == 'up':
+                new_row -= 1
+                if new_row < 0:
+                    new_row = self.rows - 1
+            elif direction == 'down':
+                new_row += 1
+                if new_row >= self.rows:
+                    new_row = 0
+
+            if self._is_valid_cell(new_row, new_col):
+                txt = self.get_cell(new_row, new_col)
+                row_id = rows[new_row]
+                col_id = '#%d' % (new_col + 1)
+                return (txt, row_id, col_id)
+
+        txt = self.get_cell(row, col)
         row_id = rows[row]
         col_id = '#%d' % (col + 1)
         return (txt, row_id, col_id)
@@ -331,6 +459,7 @@ class custom_table(ttk.Treeview):
               values = value_to_bytes (int(hex, 16) & ((1 << byte_len * 8) - 1), byte_len)
               bins.extend(values)
         return bins
+
 
 class state:
     def __init__(self):
