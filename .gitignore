@@ -12,4 +12,5 @@ ResetVector.*.raw
 /Build
 /Conf
 /PayloadPkg/PayloadBins
+/PayloadPkg/Library/UiSetupLib/UiDescData.h
 PayloadModPkg
