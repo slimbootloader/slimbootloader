@@ -214,5 +214,5 @@
   MSFT:*_*_*_CC_FLAGS = -D_ABL_ -D_E9 -DIPPCP_FIPS_MODE -D_ARCH_EM64T -D_NO_IPP_DEPRECATED /GL- /arch:AVX
   MSFT:*_*_X64_NASM_FLAGS = -D_ABL_ -D_E9 -DWIN32E
   GCC:*_*_X64_NASM_FLAGS = -D_ABL_ -D_E9 -DLINUX32E
-  GCC:*_*_*_CC_FLAGS  = -D_ABL_ -D_E9 -w -Wformat -Wformat-security -march=sandybridge -mavx -maes -mpclmul -msha -mrdrnd -mrdseed -DIPPCP_FIPS_MODE -D_ARCH_EM64T -D_NO_IPP_DEPRECATED -DMBX_FIPS_MODE
+  GCC:*_*_*_CC_FLAGS  = -D_ABL_ -D_E9 -w -Wformat -Wformat-security -march=sandybridge -mavx -maes -mpclmul -msha -mrdrnd -mrdseed -DIPPCP_FIPS_MODE -D_ARCH_EM64T -D_NO_IPP_DEPRECATED -DMBX_FIPS_MODE -U_WIN64 -U_WIN32
 
