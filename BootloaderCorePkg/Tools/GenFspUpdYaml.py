@@ -44,6 +44,7 @@ FSPS_RUNTIME_FIELDS = {
     'TerminatorReserved', 'UpdTerminator',
 }
 
+DEFAULT_MAX_ITEMS_PER_PAGE = 30
 
 # ---------------------------------------------------------------
 # Parser
@@ -310,13 +311,11 @@ def parse_fsp_upd_header(header_path, struct_name):
 def make_yaml_type_and_option(field):
     """Generate YAML type and option strings for a field."""
     if field.array_len > 0:
-        # Array fields always use Table type with byte-level columns,
-        # even if they have options (options are per-element but ConfigEditor
-        # evaluates the whole multi-byte value against the option list).
-        cols = []
-        for idx in range(field.total_size):
-            cols.append(f'{idx:X}:1:HEX')
-        return 'Table', ', '.join(cols)
+        # Represent arrays as one compact Table item using native element
+        # width so ConfigEditor can render one cell per element.
+        if field.array_len <= 1:
+            return 'Table', f'0:{field.elem_size}:HEX'
+        return 'Table', f'0-{field.array_len - 1:X}:{field.elem_size}:HEX'
     elif field.options:
         if field.options.startswith('$'):
             return 'Combo', field.options
@@ -336,28 +335,49 @@ def make_yaml_type_and_option(field):
 
 def field_default_value(field, upd_data, base_offset):
     """Extract the default value from UPD binary data."""
+    unit_map = {1: 'B', 2: 'W', 4: 'D', 8: 'Q'}
+
+    def _array_zero_value():
+        return '{0}'
+
     rel_offset = field.offset - base_offset
     if rel_offset < 0 or rel_offset + field.total_size > len(upd_data):
         # Fallback
         if field.array_len > 0:
-            return '{ ' + ', '.join(['0x00'] * field.total_size) + ' }'
+            return _array_zero_value()
         return '0x0'
 
     raw = upd_data[rel_offset:rel_offset + field.total_size]
 
     if field.array_len > 0:
-        # For Table type, GenCfgData.py { } notation expects raw bytes.
-        # Always emit byte-level values for arrays regardless of elem_size.
-        vals = [f'0x{b:02X}' for b in raw]
-        return '{ ' + ', '.join(vals) + ' }'
+        if all(b == 0 for b in raw):
+            return '{0}'
+        unit = unit_map.get(field.elem_size)
+        if not unit:
+            vals = [f'0x{b:02X}' for b in raw]
+            return '{ ' + ', '.join(vals) + ' }'
+        vals = []
+        for idx in range(field.array_len):
+            start = idx * field.elem_size
+            elem_raw = raw[start:start + field.elem_size]
+            elem_val = int.from_bytes(elem_raw, 'little')
+            vals.append(f'0x{elem_val:X}')
+        return '{ 0:0%s, %s }' % (unit, ', '.join(vals))
     else:
         v = int.from_bytes(raw, 'little')
         return f'0x{v:0{field.elem_size * 2}X}'
 
 
+def field_zero_value(field):
+    """Generate a zero default value string for a field."""
+    if field.array_len > 0:
+        return '{0}'
+    return '0x' + '0' * (field.elem_size * 2)
+
+
 def generate_yaml(fields, tag_name, tag_id, page_name, page_title,
                   upd_data=None, base_offset=0, runtime_fields=None,
-                  flags=0, max_items_per_page=60):
+                  flags=0, max_items_per_page=DEFAULT_MAX_ITEMS_PER_PAGE):
     """Generate YAML content for a set of UPD fields.
 
     Automatically splits into multiple CFGDATA tags if the total data
@@ -451,10 +471,7 @@ def generate_yaml(fields, tag_name, tag_id, page_name, page_title,
                 if upd_data:
                     yaml_lines.append(f'      value        : {field_default_value(field, upd_data, base_offset)}')
                 else:
-                    if field.array_len > 0:
-                        yaml_lines.append(f'      value        : {{ {", ".join(["0x00"] * field.total_size)} }}')
-                    else:
-                        yaml_lines.append(f'      value        : 0x{"00" * field.total_size}')
+                    yaml_lines.append(f'      value        : {field_zero_value(field)}')
                 continue
 
             # Insert sub-page boundary when item count reaches threshold
@@ -502,10 +519,7 @@ def generate_yaml(fields, tag_name, tag_id, page_name, page_title,
             if upd_data:
                 yaml_lines.append(f'      value        : {field_default_value(field, upd_data, base_offset)}')
             else:
-                if field.array_len > 0:
-                    yaml_lines.append(f'      value        : {{ {", ".join(["0x00"] * field.total_size)} }}')
-                else:
-                    yaml_lines.append(f'      value        : 0x{"00" * field.elem_size}')
+                yaml_lines.append(f'      value        : {field_zero_value(field)}')
 
     yaml_lines.append('')
     return '\n'.join(yaml_lines)
@@ -537,7 +551,8 @@ def get_fsp_cfg_region(fsp_bin_path):
 # ---------------------------------------------------------------
 # High-level API
 # ---------------------------------------------------------------
-def gen_fsp_upd_yaml_files(fsp_path, fv_dir, cfg_dir):
+def gen_fsp_upd_yaml_files(fsp_path, fv_dir, cfg_dir,
+                           max_items_per_page=DEFAULT_MAX_ITEMS_PER_PAGE):
     """Generate CfgData_FspM.yaml and CfgData_FspS.yaml.
 
     Parses FSP UPD headers and extracts defaults from rebased FSP
@@ -575,12 +590,14 @@ def gen_fsp_upd_yaml_files(fsp_path, fv_dir, cfg_dir):
         fspm_fields, 'FSPM_UPD_CFG_DATA', '0x500',
         'FUPM', 'FSP-M UPD Settings',
         upd_data=fspm_data, base_offset=0,
-        runtime_fields=FSPM_RUNTIME_FIELDS, flags=4)
+        runtime_fields=FSPM_RUNTIME_FIELDS, flags=4,
+        max_items_per_page=max_items_per_page)
     fsps_yaml_text = generate_yaml(
         fsps_fields, 'FSPS_UPD_CFG_DATA', '0x520',
         'FUPS', 'FSP-S UPD Settings',
         upd_data=fsps_data, base_offset=0,
-        runtime_fields=FSPS_RUNTIME_FIELDS, flags=4)
+        runtime_fields=FSPS_RUNTIME_FIELDS, flags=4,
+        max_items_per_page=max_items_per_page)
 
     fspm_yaml = os.path.join(cfg_dir, 'CfgData_FspM.yaml')
     fsps_yaml = os.path.join(cfg_dir, 'CfgData_FspS.yaml')
@@ -621,6 +638,9 @@ def main():
                         help='Page definition for FSP-S')
     parser.add_argument('--flags', type=int, default=0,
                         help='CFGHDR Flags value (e.g. 4 for delta-only)')
+    parser.add_argument('--max-items-per-page', type=int,
+                        default=DEFAULT_MAX_ITEMS_PER_PAGE,
+                        help='Max visible items per generated sub-page (0 to disable splitting)')
     args = parser.parse_args()
 
     # Parse FSP-M
@@ -660,14 +680,16 @@ def main():
         fspm_page_name, 'FSP-M UPD Settings',
         upd_data=fspm_data, base_offset=fspm_config_base,
         runtime_fields=FSPM_RUNTIME_FIELDS,
-        flags=args.flags
+        flags=args.flags,
+        max_items_per_page=args.max_items_per_page
     )
     fsps_yaml = generate_yaml(
         fsps_fields, 'FSPS_UPD_CFG_DATA', args.fsps_tag,
         fsps_page_name, 'FSP-S UPD Settings',
         upd_data=fsps_data, base_offset=fsps_config_base,
         runtime_fields=FSPS_RUNTIME_FIELDS,
-        flags=args.flags
+        flags=args.flags,
+        max_items_per_page=args.max_items_per_page
     )
 
     # Write output
