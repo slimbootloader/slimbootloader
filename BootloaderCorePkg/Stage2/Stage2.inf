@@ -133,6 +133,7 @@
   gPlatformModuleTokenSpaceGuid.PcdAcpiEnabled
   gPlatformModuleTokenSpaceGuid.PcdPciEnumEnabled
   gPlatformModuleTokenSpaceGuid.PcdFSPSBase
+  gPlatformModuleTokenSpaceGuid.PcdFspsUpdPtr
   gPlatformModuleTokenSpaceGuid.PcdFlashBaseAddress
   gPlatformModuleTokenSpaceGuid.PcdFlashSize
   gPlatformModuleTokenSpaceGuid.PcdSplashEnabled
