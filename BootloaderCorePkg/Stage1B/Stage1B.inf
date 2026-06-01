@@ -110,5 +110,8 @@
   gPlatformModuleTokenSpaceGuid.PcdTcoTimeout
   gPlatformCommonLibTokenSpaceGuid.PcdEnableCryptoPerfTest
 
+[FeaturePcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdUiSetupEnabled
+
 [Depex]
   TRUE

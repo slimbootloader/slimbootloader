@@ -44,6 +44,7 @@
   BaseLib
   DebugLib
   BaseMemoryLib
+  ConfigDataLib
   ResetSystemLib
   ThunkLib
   PcdLib
@@ -61,3 +62,6 @@
 [FixedPcd]
   gPlatformModuleTokenSpaceGuid.PcdFSPM64Bit
   gPlatformModuleTokenSpaceGuid.PcdEnableFspSFvRebase
+
+[FeaturePcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdUiSetupEnabled

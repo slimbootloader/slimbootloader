@@ -8,8 +8,10 @@
 #include <FspApiLibInternal.h>
 #include <Library/BoardInitLib.h>
 #include <Library/BlMemoryAllocationLib.h>
+#include <Library/ConfigDataLib.h>
 #include <Library/FspApiLib.h>
 #include <Library/BootloaderCoreLib.h>
+#include <FspUpdCfgRegion.h>
 
 
 /**
@@ -50,6 +52,10 @@ CallFspSiliconInit (
 
   /* Update architectural UPD fields */
   UpdateFspConfig (FspsUpdptr);
+  if (FeaturePcdGet (PcdUiSetupEnabled)) {
+    UINT32  CfgOffset = (UINT32) GetFspsUpdCfgRegionOffset (FspHeader);
+    ApplyCfgDeltaToFspUpd (CDATA_FSPS_UPD_TAG, (UINT8 *)FspsUpdptr + CfgOffset, FspHeader->CfgRegionSize - CfgOffset);
+  }
 
   DEBUG ((DEBUG_INFO, "Dumping FSPS_UPD - Size: 0x%08X\n", FspHeader->CfgRegionSize));
   DumpHex (0, 0, FspHeader->CfgRegionSize, FspsUpdptr);

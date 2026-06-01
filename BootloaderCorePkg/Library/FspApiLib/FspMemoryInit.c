@@ -9,8 +9,10 @@
 #include <Library/FspApiLib.h>
 #include <Library/BoardInitLib.h>
 #include <Library/BootloaderCoreLib.h>
+#include <Library/ConfigDataLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <BootloaderCoreGlobal.h>
+#include <FspUpdCfgRegion.h>
 
 /**
   This FSP API is called after TempRamInit and initializes the memory.
@@ -94,6 +96,10 @@ CallFspMemoryInit (
   }
 
   UpdateFspConfig (FspmUpdPtr);
+  if (FeaturePcdGet (PcdUiSetupEnabled)) {
+    UINT32  CfgOffset = (UINT32) GetFspmUpdCfgRegionOffset (FspHeader);
+    ApplyCfgDeltaToFspUpd (CDATA_FSPM_UPD_TAG, FspmUpdPtr + CfgOffset, FspHeader->CfgRegionSize - CfgOffset);
+  }
 
   DEBUG ((DEBUG_INFO, "Dumping FSPM_UPD - Size: 0x%08X\n", FspHeader->CfgRegionSize));
   DumpHex (0, 0, FspHeader->CfgRegionSize, FspmUpdPtr);
