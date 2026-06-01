@@ -213,5 +213,5 @@
   # IppCrypto2LibM7.inf and IppCrypto2LibE9.inf). CC_FLAGS uses only -D_U8.
   MSFT:*_*_X64_NASM_FLAGS = -f win64 -D_ABL_ -D_U8 -D_Y8 -DWIN32E
   GCC:*_*_X64_NASM_FLAGS = -D_ABL_ -D_U8 -D_Y8 -DLINUX32E
-  GCC:*_*_*_CC_FLAGS  = -D_ABL_ -D_U8 -w -Wformat -Wformat-security -DIPPCP_FIPS_MODE -DMBX_FIPS_MODE -D_ARCH_EM64T -D_NO_IPP_DEPRECATED
+  GCC:*_*_*_CC_FLAGS  = -D_ABL_ -D_U8 -w -Wformat -Wformat-security -DIPPCP_FIPS_MODE -DMBX_FIPS_MODE -D_ARCH_EM64T -D_NO_IPP_DEPRECATED -U_WIN64 -U_WIN32
 

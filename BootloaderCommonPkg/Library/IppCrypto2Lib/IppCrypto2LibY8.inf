@@ -219,5 +219,5 @@
   MSFT:*_*_*_CC_FLAGS = -D_ABL_ -D_Y8 -DIPPCP_FIPS_MODE -D_ARCH_EM64T -D_NO_IPP_DEPRECATED /GL-
   MSFT:*_*_X64_NASM_FLAGS = -f win64 -D_ABL_ -D_Y8 -DWIN32E
   GCC:*_*_X64_NASM_FLAGS = -D_ABL_ -D_Y8 -DLINUX32E
-  GCC:*_*_*_CC_FLAGS  = -D_ABL_ -D_Y8  -DIPPCP_FIPS_MODE -DMBX_FIPS_MODE -D_ARCH_EM64T -D_NO_IPP_DEPRECATED -w -Wformat -Wformat-security -march=nehalem -msse4.2 -maes -mpclmul -msha -U__INTEL_COMPILER
+  GCC:*_*_*_CC_FLAGS  = -D_ABL_ -D_Y8  -DIPPCP_FIPS_MODE -DMBX_FIPS_MODE -D_ARCH_EM64T -D_NO_IPP_DEPRECATED -w -Wformat -Wformat-security -march=nehalem -msse4.2 -maes -mpclmul -msha -U__INTEL_COMPILER -U_WIN64 -U_WIN32
 

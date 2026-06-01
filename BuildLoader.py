@@ -41,7 +41,11 @@ def rebuild_basetools ():
 
         if not check_files_exist (exe_list, os.path.join(sblsource, 'BaseTools', 'Bin', 'Win32'), '.exe'):
             print ("Could not find pre-built BaseTools binaries, try to rebuild BaseTools ...")
-            ret = run_process (['BaseTools\\toolsetup.bat', 'forcerebuild', os.environ['TOOL_CHAIN']])
+            tool_setup_cmd = ['BaseTools\\toolsetup.bat', 'forcerebuild']
+            # if using LLVM toolchain, still need VS for nmake and building BaseTools. Let script decide BaseTools toolchain.
+            if os.environ['TOOL_CHAIN'] != 'CLANGPDB':
+                tool_setup_cmd.append (os.environ['TOOL_CHAIN'])
+            ret = run_process (tool_setup_cmd)
 
     if ret:
         print ("Build BaseTools failed, please check required build environment and utilities !")

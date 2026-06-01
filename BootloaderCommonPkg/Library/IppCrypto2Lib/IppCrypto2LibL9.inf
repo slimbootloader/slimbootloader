@@ -269,5 +269,5 @@
   # Y8/U8 variants don't hit this bug because they compile different .nasm source sets.
   MSFT:*_*_X64_NASM_FLAGS == -f win64 -D_ABL_ -D_L9 -DWIN32E
   GCC:*_*_X64_NASM_FLAGS = -D_ABL_ -D_L9 -DLINUX32E -D_SHA512_ENABLING_=0 -D_SM3_ENABLING_=0
-  GCC:*_*_*_CC_FLAGS  = -D_ABL_ -D_L9 -D_ARCH_EM64T -DIPPCP_CUSTOM_BUILD -DIPP_CUSTOM_CPU_FEATURES__ -DIPP_CUSTOM_ENABLED_FEATURES=0x80000ULL -D_SHA_NI_ENABLING_=_FEATURE_ON_ -D_SM3_ENABLING_=0 -w -Wformat -Wformat-security -march=haswell -mavx2 -maes -mvaes -mpclmul -mvpclmulqdq -msha -mrdrnd -mrdseed -DIPPCP_FIPS_MODE -DMBX_FIPS_MODE -D_NO_IPP_DEPRECATED
+  GCC:*_*_*_CC_FLAGS  = -D_ABL_ -D_L9 -D_ARCH_EM64T -DIPPCP_CUSTOM_BUILD -DIPP_CUSTOM_CPU_FEATURES__ -DIPP_CUSTOM_ENABLED_FEATURES=0x80000ULL -D_SHA_NI_ENABLING_=_FEATURE_ON_ -D_SM3_ENABLING_=0 -w -Wformat -Wformat-security -march=haswell -mavx2 -maes -mvaes -mpclmul -mvpclmulqdq -msha -mrdrnd -mrdseed -DIPPCP_FIPS_MODE -DMBX_FIPS_MODE -D_NO_IPP_DEPRECATED -U_WIN64 -U_WIN32
 
