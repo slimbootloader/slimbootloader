@@ -84,6 +84,7 @@
   SynchronizationLib
   MpServiceLib
   ConsoleInLib
+  CompilerIntrinsicsLib
 
 [Guids]
   gOsConfigDataGuid
