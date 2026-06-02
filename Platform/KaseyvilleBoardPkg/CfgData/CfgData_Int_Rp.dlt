@@ -1,0 +1,71 @@
+## @file
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+#
+# Delta configuration values
+#
+PLATFORMID_CFG_DATA.PlatformId            | 0x000E
+PLAT_NAME_CFG_DATA.PlatformName           | 'KsvRp'
+GEN_CFG_DATA.PayloadId                    | 'AUTO'
+# PLDSEL is valid only when PayloadId is 'AUTO'
+PLDSEL_CFG_DATA.PldSelGpio.PinNumber     | 18
+PLDSEL_CFG_DATA.PldSelGpio.Enable        | 1
+PLDSEL_CFG_DATA.PldSelGpio.PinPolarity   | 1
+# GPIO C18 (UART_ESPI_USB_GPIO_LVC18) is used for payload selection
+# J3K11 jumper, pin 1 and 2 should be shorted for UEFI payload
+# J3K11 jumper, pin 2 and 3 should be shorted for Osloader Payload
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C18.GPIOPADMode_GPP_C18         | 1
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C18.GPIODirection_GPP_C18       | 7
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C18.GPIOOutputState_GPP_C18     | 1
+GPIO_CFG_DATA.GpioPinConfig0_GPP_C18.GPIOInterruptConfig_GPP_C18 | 1
+GPIO_CFG_DATA.GpioPinConfig1_GPP_C18.GPIOSkip_GPP_C18            | 0
+
+FEATURES_CFG_DATA.Features.VtdSupport       | 0x01
+FEATURES_CFG_DATA.Features.BiosInterface    | 0x01
+FEATURES_CFG_DATA.Features.mmiohBase        | 0xFF
+MEMORY_CFG_DATA.ParameterConfig.ProcessorMsrLockControl | 0x01
+MEMORY_CFG_DATA.ParameterConfig.EnforcePopulationPor    | 0x01
+MEMORY_CFG_DATA.RMTPerDisplayPlots       | 0x00
+SEC_CFG_DATA.SecurityCctPrmrrSafSize     | 0x8000000
+SEC_CFG_DATA.SecurityCctPrmrrSbftSize    | 0x10000000
+MEMORY_CFG_DATA.EnableRMT                | 0
+MEMORY_CFG_DATA.TestSignalBitMaskRMT     | 0x00000100
+MEMORY_CFG_DATA.ParameterConfig.serialDebugMsgLvl   | 0x01
+MEMORY_CFG_DATA.ParameterConfig.DirectoryModeEn     | 0x01
+MEMORY_CFG_DATA.ParameterConfig.KtiCrcMode          | 0x02
+MEMORY_CFG_DATA.ParameterConfig.UmaClustering       | 0x02
+MEMORY_CFG_DATA.ParameterConfig.KtiLinkSpeedPerPort | { 0x07, 0x07, 0x07, 0x07, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f }
+MEMORY_CFG_DATA.ParameterConfig.DfxL0pEnable        | { 0x02, 0x02, 0x02, 0x02, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x02, 0x02, 0x02, 0x02, 0x02 }
+MEMORY_CFG_DATA.ParameterConfig.DfxL1Enable         | { 0x02, 0x02, 0x02, 0x02, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 }
+MEMORY_CFG_DATA.ParameterConfig.RefreshMode         | 0x01
+PCIE_CFG_DATA.DeEmphasisNumber           | 0x00000018
+PCIE_CFG_DATA.PcieCommonClockNumber      | 0x00000018
+PCIE_CFG_DATA.DfxCxlDebugModeNumber      | 0x18
+PCIE_CFG_DATA.Gen5LinkDegradation        | 0x00
+PCIE_CFG_DATA.MemIOLoopCount             | 0x00
+PCIE_CFG_DATA.DelayAfterPCIeLinkTraining | 0x3e8
+FEATURES_CFG_DATA.Features.PlatformDataAreaBase  | 0xFF001000
+FEATURES_CFG_DATA.Features.PlatformDataAreaSize  | 0x1000
+MEMORY_CFG_DATA.ParameterConfig.MemIOHealthCheck | 0x00
+PCIE_CFG_DATA.DfxAdvDebugJumper           | 0x01
+FEATURES_CFG_DATA.Features.BiosRegionBase | 0xFF000000
+FEATURES_CFG_DATA.Features.BiosRegionSize | 0x01000000
+FEATURES_CFG_DATA.Features.LegacyVgaStack | 0x05
+MEMORY_CFG_DATA.ParameterConfig.CriticalRxDqsDelayLeftEdge  | 0x03
+MEMORY_CFG_DATA.ParameterConfig.CriticalRxDqsDelayRightEdge | 0x03
+MEMORY_CFG_DATA.ParameterConfig.CriticalRxVrefLeftEdge      | 0x04
+MEMORY_CFG_DATA.ParameterConfig.CriticalRxVrefRightEdge     | 0x04
+MEMORY_CFG_DATA.ParameterConfig.CriticalTxDqDelayLeftEdge   | 0x03
+MEMORY_CFG_DATA.ParameterConfig.CriticalTxDqDelayRightEdge  | 0x03
+MEMORY_CFG_DATA.ParameterConfig.CriticalTxVrefLeftEdge      | 0x04
+MEMORY_CFG_DATA.ParameterConfig.CriticalTxVrefRightEdge     | 0x03
+MEMORY_CFG_DATA.ParameterConfig.CriticalCaTimingLeftEdge    | 0x03
+MEMORY_CFG_DATA.ParameterConfig.CriticalCaTimingRightEdge   | 0x03
+MEMORY_CFG_DATA.ParameterConfig.CriticalCtlTimingLeftEdge   | 0x03
+MEMORY_CFG_DATA.ParameterConfig.CriticalCtlTimingRightEdge  | 0x03
+MEMORY_CFG_DATA.ParameterConfig.CriticalCaVrefLeftEdge      | 0x04
+MEMORY_CFG_DATA.ParameterConfig.CriticalCaVrefRightEdge     | 0x04
