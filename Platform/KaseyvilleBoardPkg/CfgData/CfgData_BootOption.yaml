@@ -1,0 +1,18 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+# Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : OS
+# ------------------------------Index,  ImageType, BootFlags, DevType, DevInstance, HWPart, SwPart, FsType
+# nvme
+- !expand { BOOT_OPTION_TMPL : [ 0 ,        0   ,  0 ,      6   ,       0   ,    0     ,   0 ,   0 , '/EFI/BOOT/sbl' ] }
+# USB
+- !expand { BOOT_OPTION_TMPL : [ 1 ,        0   ,  0 ,      5   ,       0   ,    0     ,   0 ,   0 , '/EFI/BOOT/sbl' ] }
+- !expand { BOOT_OPTION_TMPL : [ 2 ,        0   ,  0 ,      5   ,       1   ,    0     ,   0 ,   0 , '/EFI/BOOT/sbl' ] }

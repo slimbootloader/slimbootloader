@@ -1,0 +1,259 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : PCI
+- PCIE_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ PCIE_CFG_DATA, 0xA00, 0, 0 ] }
+  - !expand { PCI_TMPL : [ IIO_RP ] }
+  - IioPE0Bifurcation :
+      name         : IIO IioPE0Bifurcation
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                      IioPE0Bifurcation[MAX_SOCKET]- MAX_SOCKET=8, 0x00:x4x4x4x4, 0x01:x4x4xxx8, 0x02:xxx8x4x4, 0x03:xxx8xxx8, 0x04:xxxxxx16, <b>0xFF:AUTO(Default)</b>
+      option       : 0xFF:Auto, 0:X4X4X4X4, 1:x4x4xxx8, 2:xxx8x4x4, 3:xxx8xxx8, 4:xxxxxx16
+      length       : 0x08
+      value        : {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+  - IioPE1Bifurcation :
+      name         : IIO IioPE1Bifurcation
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                      IioPE1Bifurcation[MAX_SOCKET]- MAX_SOCKET=8, 0x00:x4x4x4x4, 0x01:x4x4xxx8, 0x02:xxx8x4x4, 0x03:xxx8xxx8, 0x04:xxxxxx16, <b>0xFF:AUTO(Default)</b>
+      option       : 0xFF:Auto, 0:X4X4X4X4, 1:x4x4xxx8, 2:xxx8x4x4, 3:xxx8xxx8, 4:xxxxxx16
+      length       : 0x08
+      value        : {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+  - IioPE2Bifurcation :
+      name         : IIO IioPE2Bifurcation
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                      IioPE2Bifurcation[MAX_SOCKET]- MAX_SOCKET=8, 0x00:x4x4x4x4, 0x01:x4x4xxx8, 0x02:xxx8x4x4, 0x03:xxx8xxx8, 0x04:xxxxxx16, <b>0xFF:AUTO(Default)</b>
+      option       : 0xFF:Auto, 0:X4X4X4X4, 1:x4x4xxx8, 2:xxx8x4x4, 3:xxx8xxx8, 4:xxxxxx16
+      length       : 0x08
+      value        : {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+  - IioPE3Bifurcation :
+      name         : IIO IioPE3Bifurcation
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                      IioPE3Bifurcation[MAX_SOCKET]- MAX_SOCKET=8, 0x00:x4x4x4x4, 0x01:x4x4xxx8, 0x02:xxx8x4x4, 0x03:xxx8xxx8, 0x04:xxxxxx16, <b>0xFF:AUTO(Default)</b>
+      option       : 0xFF:Auto, 0:X4X4X4X4, 1:x4x4xxx8, 2:xxx8x4x4, 3:xxx8xxx8, 4:xxxxxx16
+      length       : 0x08
+      value        : {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+  - IioPE4Bifurcation :
+      name         : IIO IioPE4Bifurcation
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                      IioPE4Bifurcation[MAX_SOCKET]- MAX_SOCKET=8, 0x00:x4x4x4x4, 0x01:x4x4xxx8, 0x02:xxx8x4x4, 0x03:xxx8xxx8, 0x04:xxxxxx16, <b>0xFF:AUTO(Default)</b>
+      option       : 0xFF:Auto, 0:X4X4X4X4, 1:x4x4xxx8, 2:xxx8x4x4, 3:xxx8xxx8, 4:xxxxxx16
+      length       : 0x08
+      value        : {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+  - IioPE5Bifurcation :
+      name         : IIO IioPE5Bifurcation
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                      IioPE5Bifurcation[MAX_SOCKET]- MAX_SOCKET=8, 0x00:x4x4x4x4, 0x01:x4x4xxx8, 0x02:xxx8x4x4, 0x03:xxx8xxx8, 0x04:xxxxxx16, <b>0xFF:AUTO(Default)</b>
+      option       : 0xFF:Auto, 0:X4X4X4X4, 1:x4x4xxx8, 2:xxx8x4x4, 3:xxx8xxx8, 4:xxxxxx16
+      length       : 0x08
+      value        : {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+  - IioPEaBifurcation :
+      name         : IIO IioPEaBifurcation
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                      IioPEaBifurcation[MAX_SOCKET]- MAX_SOCKET=8, 0x00:x4x4x4x4, 0x01:x4x4xxx8, 0x02:xxx8x4x4, 0x03:xxx8xxx8, 0x04:xxxxxx16, <b>0xFF:AUTO(Default)</b>
+      option       : 0xFF:Auto, 0:X4X4X4X4, 1:x4x4xxx8, 2:xxx8x4x4, 3:xxx8xxx8, 4:xxxxxx16
+      length       : 0x08
+      value        : {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+  - IioPEbBifurcation :
+      name         : IIO IioPEbBifurcation
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                      IioPEbBifurcation[MAX_SOCKET]- MAX_SOCKET=8, 0x00:x4x4x4x4, 0x01:x4x4xxx8, 0x02:xxx8x4x4, 0x03:xxx8xxx8, 0x04:xxxxxx16, <b>0xFF:AUTO(Default)</b>
+      option       : 0xFF:Auto, 0:X4X4X4X4, 1:x4x4xxx8, 2:xxx8x4x4, 3:xxx8xxx8, 4:xxxxxx16
+      length       : 0x08
+      value        : {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+  - IioPEcBifurcation :
+      name         : IIO IioPEcBifurcation
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                      IioPEcBifurcation[MAX_SOCKET]- MAX_SOCKET=8, 0x00:x4x4x4x4, 0x01:x4x4xxx8, 0x02:xxx8x4x4, 0x03:xxx8xxx8, 0x04:xxxxxx16, <b>0xFF:AUTO(Default)</b>
+      option       : 0xFF:Auto, 0:X4X4X4X4, 1:x4x4xxx8, 2:xxx8x4x4, 3:xxx8xxx8, 4:xxxxxx16
+      length       : 0x08
+      value        : {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+  - IioPEdBifurcation :
+      name         : IIO IioPEdBifurcation
+      type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFF)
+      help         : >
+                      IioPEdBifurcation[MAX_SOCKET]- MAX_SOCKET=8, 0x00:x4x4x4x4, 0x01:x4x4xxx8, 0x02:xxx8x4x4, 0x03:xxx8xxx8, 0x04:xxxxxx16, <b>0xFF:AUTO(Default)</b>
+      option       : 0xFF:Auto, 0:X4X4X4X4, 1:x4x4xxx8, 2:xxx8x4x4, 3:xxx8xxx8, 4:xxxxxx16
+      length       : 0x08
+      value        : {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+  - IIoPcieHotPlugEnable :
+      name         : IIO PCIe Hot Plug
+      type         : Combo
+      option       : 0:Disable, 1:Enable
+      help         : >
+                      Enable/Disable PCIe Hot Plug globally.
+      length       : 0x01
+      condition    : $(COND_IIO_PCIE_HP_EN)
+      value        : 0x00
+  - IIoPcieHotPlugOnPortPtr :
+      name         : IIO Hot Plug Capable Array Ptr
+      type         : EditNum, HEX, (0x00000000,0xFFFFFFFF)
+      help         : >
+                      Pointer to array of Hot Plug Capable
+      length       : 0x04
+      value        : 0x00
+  - PcieHotPlugOnPortNumber :
+      name         : IIO Hot Plug Capable Number
+      type         : EditNum, HEX, (0x00000000,0xFFFFFFFF)
+      help         : >
+                      Number of elements in Hot Plug Capable array.
+      length       : 0x04
+      value        : 0x00000000
+  - DeEmphasisPtr :
+      name         : IIO DeEmphasis Array Ptr
+      type         : EditNum, HEX, (0x00000000,0xFFFFFFFF)
+      help         : >
+                      Pointer to array of DeEmphasis
+      length       : 0x04
+      value        : 0x00
+  - DeEmphasisNumber :
+      name         : IIO DeEmphasis Array Number
+      type         : EditNum, HEX, (0x00000000,0xFFFFFFFF)
+      help         : >
+                      Number of elements in DeEmphasis array.
+      length       : 0x04
+      value        : 0x00000000
+  - PcieAspmPtr :
+      name         : IIO ASPM Support Array Ptr
+      type         : EditNum, HEX, (0x00000000,0xFFFFFFFF)
+      help         : >
+                      Pointer to array of ASPM Support
+      length       : 0x04
+      value        : 0x00
+  - PcieAspmNumber :
+      name         : IIO ASPM Support Array Number
+      type         : EditNum, HEX, (0x00000000,0xFFFFFFFF)
+      help         : >
+                      Number of elements in ASPM Support array.
+      length       : 0x04
+      value        : 0x00000000
+  - PcieAerCorrErrEn :
+      name         : PCIE AER Corrected Errors
+      type         : Combo
+      option       : 0:Disable, 1:Enable
+      help         : >
+                      Enable or Disable PCIE AER Corrected Errors
+      length       : 0x01
+      value        : 0x01
+  - PcieAerEcrcEn :
+      name         : PCIE ECRC Error
+      type         : Combo
+      option       : 0:Disable, 1:Enable
+      help         : >
+                      Enable/Disable PCIE ECRC Error
+      length       : 0x01
+      value        : 0x00
+  - PcieGlobalAspm :
+      name         : ASPM Support (Global)
+      type         : Combo
+      option       : 0:Disable, 1:Per-Port
+      help         : >
+                      This option can disable ASPM support for all PCIe root ports.
+      length       : 0x01
+      value        : 0x01
+  - DelayAfterPCIeLinkTraining :
+      name         : DelayAfterPCIeLinkTraining
+      type         : EditNum, HEX, (0x0000,0xFFFF)
+      help         : >
+                      Custom delay after PCI-E link training on IIO ports
+      length       : 0x02
+      value        : 0x00
+  - DfxEvMode :
+      name         : DFX Ev Mode
+      type         : Combo
+      option       : 0:Disable, 1:Enable
+      help         : >
+                      When Enabled, Expose IIO DFX devices and other CPU devices like PMON in FSP
+      length       : 0x01
+      value        : 0x00
+  - DfxAdvDebugJumper :
+      name         : Advanced Debug Function
+      type         : Combo
+      option       : 0:Disable, 1:Enable, 2:Auto
+      help         : >
+                      Select Advanced Debug Function, 0- Disable, 1- Enable, 2- Auto
+      length       : 0x01
+      value        : 0x02
+  - PcieCommonClockNumber :
+      name         : IIO PCIe Common Clock Array Number
+      type         : EditNum, HEX, (0x00000000,0xFFFFFFFF)
+      help         : >
+                      Number of elements in PCIe Common Clock array.
+      length       : 0x04
+      value        : 0x00000000
+  - DfxCxlDebugModeNumber :
+      name         : DfxCxl Debug Mode Number
+      type         : EditNum, HEX, (0x00000000,0xFFFFFFFF)
+      length       : 0x04
+      value        : 0x00
+  - Gen5LinkDegradation :
+      name         : Gen5LinkDegradation
+      type         : Combo
+      option       : 0:Disable, 1:Enable
+      help         : >
+                      Enable or disable Gen5 link degradation.
+      length       : 0x01
+      value        : 0x01
+  - MemIOLoopCount :
+      name         : Memory I/O Health Check Loop Count
+      type         : EditNum, HEX, (0x00,0xFF)
+      help         : >
+                      CPGC Test Loop Count for Memory IO Health Test.
+      length       : 0x01
+      value        : 0x10
+  - !expand { PCI_TMPL : [ PCH_RP ] }
+  - PchRpConfig :
+    - $STRUCT      :
+        name         : Pcie Rp Configuration
+        help         : >
+                       Configure Pcie Root Port
+        struct       : PCH_RP_CFG
+    - PcieRootPortDeEmphasis :
+        name         : PCIe Root Port DeEmphasis
+        type         : EditNum, HEX, (0x00,0xFF)
+        option       : 0:6dB, 1:3.5dB
+        help         : >
+                        Desired DeEmphasis level for PCIE root port ( 0 - 7 )
+        length       : 0x08
+        value        : {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+    - PcieRootPortAspm :
+        name         : PCIe Root Port ASPM Support
+        type         : EditNum, HEX, (0x00,0xFF)
+        option       : 0:Disable, 4:Auto
+        help         : >
+                        This option can disable ASPM support in PCIe root ports ( 0 - 7). 'Auto' keeps hardware default.
+        length       : 0x08
+        value        : {0x04, 0x04, 0x04, 0x04, 0x04, 0x00, 0x00, 0x00}
+    - PcieRootPortHotPlugOnPort :
+        name         : PCIe Root Port Hot Plug Capable
+        type         : EditNum, HEX, (0x00,0xFF)
+        option       : 0:Disable, 1:Enable, 2:Auto
+        help         : >
+                        This option specifies if the link is considered Hot Plug capable.
+        length       : 0x08
+        value        : {0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02}
+    - PtmEnable      :
+        name         : PTM Support
+        type         : Combo
+        option       : 0:Disable, 2:Auto
+        help         : >
+                        Enable PTM capability
+        length       : 0x01
+        value        : 0x02

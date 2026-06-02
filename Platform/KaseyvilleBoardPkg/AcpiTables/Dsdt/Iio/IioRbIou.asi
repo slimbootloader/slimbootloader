@@ -1,0 +1,40 @@
+/** @file
+
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+  Device(IIO_DEVICE_NAME(PC, SOCKET, PE_INDEX)) {
+    Method (_HID) {
+      if (LEqual (RBTY (), ROOTBRIDGE_CXL20)) {
+        Return ("ACPI0016")
+      } else {
+        Return (EISAID("PNP0A08"))
+      }
+    }
+
+    Method (_CID) {
+      if (LEqual(RBTY (), ROOTBRIDGE_CXL20)) {
+        Return (Package () { EISAID("PNP0A08"), EISAID("PNP0A03")})
+      } else {
+        Return (EISAID("PNP0A03"))
+      }
+    }
+
+    Method (_UID) {
+      Store (RBTY (), Local1)
+      if (LEqual (Local1, ROOTBRIDGE_CXL20)) {
+        Return (IIO_DEVICE_UID_ASL(C2_UID, SOCKET, PE_INDEX))
+      } else {
+        Return (IIO_DEVICE_UID_ASL(PC_UID, SOCKET, PE_INDEX))
+      }
+    }
+
+    Method (_PRT, 0) {
+      Return (AR01)
+    }
+
+    #include "Iio/IioRootBridge.asi"
+    #include "Iio/IioRbPorts.asi"
+  }

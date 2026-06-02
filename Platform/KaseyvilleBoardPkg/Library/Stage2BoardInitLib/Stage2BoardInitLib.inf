@@ -1,0 +1,90 @@
+## @file
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = Stage2BoardInitLib
+  FILE_GUID                      = 382FF3D3-6872-4737-9CD3-7232AF2C6748
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = BoardInitLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF
+#
+
+[Sources]
+  Stage2BoardInitLib.h
+  Stage2BoardInitLib.c
+  MiscInit.c
+  AcpiTablesInit.c
+  AcpiRuntimeUpdate/AcpiPlatformLibDsdt.c
+  AcpiRuntimeUpdate/IioSocketTopology.c
+  AcpiRuntimeUpdate/SiSubsysInfoLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  IntelFsp2Pkg/IntelFsp2Pkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/KaseyvillePkg/KaseyvillePkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+  Platform/CommonBoardPkg/CommonBoardPkg.dec
+  Platform/KaseyvilleBoardPkg/KaseyvilleBoardPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  BootloaderCoreLib
+  BoardSupportLib
+  SpiFlashLib
+  KsvVtdLib
+  DmarLib
+  MadtLib
+  PrintLib
+  AspeedGfxLib
+  UefiVariableLib
+  BdatLib
+  SgxLib
+  GpioV2Lib
+  P2sbLib
+  PchInfoLib
+  McfgLib
+  MediaAccessLib
+
+[Guids]
+  gFspVariableNvDataHobGuid
+  gUniversalPayloadPciRootBridgeInfoGuid
+  gIioUdsHobGuid
+  gEfiGlobalVariableGuid
+  gSubsysInfoHobGuid
+
+[Pcd]
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
+  gPlatformModuleTokenSpaceGuid.PcdPciResourceIoBase
+  gPlatformModuleTokenSpaceGuid.PcdPciResourceMem32Base
+  gPlatformModuleTokenSpaceGuid.PcdVariableRegionSize
+  gPlatformModuleTokenSpaceGuid.PcdAcpiGnvsAddress
+  gPlatformModuleTokenSpaceGuid.PcdSmbiosEnabled
+  gPlatformModuleTokenSpaceGuid.PcdVtdEnabled
+  gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr
+  gPlatformModuleTokenSpaceGuid.PcdPciResAllocTableBase
+  gPlatformModuleTokenSpaceGuid.PcdSplashEnabled
+  gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase
+  gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize
+  gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
+  gPlatformModuleTokenSpaceGuid.PcdPciEnumHookProc
+  gPlatformModuleTokenSpaceGuid.PcdFuncCpuInitHook
+  gPlatformModuleTokenSpaceGuid.PcdFspsUpdPtr
+
+[FeaturePcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdMadtUsePlatformLapic
+
+[FixedPcd]
+  gPlatformKaseyvilleTokenSpaceGuid.PcdSimicsEnv

@@ -1,0 +1,24 @@
+/** @file
+
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+Method (NNPR, 0) // NTPR == NoTify PRe
+{
+    External (\_SB.NVDR.NTPR, MethodObj)
+    Store(Package () {}, Local0)
+    if (CondRefOf (\_SB.NVDR.NTPR)) {
+        Store (\_SB.NVDR.NTPR (), Local0)  // Local0 == Opaque Package
+    }
+    Return (Local0)
+}
+
+Method (NNDO, 1) // Nvdimm Notify DO
+{
+    External (\_SB.NVDR.NTDO, MethodObj)
+    if (CondRefOf (\_SB.NVDR.NTDO)) {
+        \_SB.NVDR.NTDO (Arg0)
+    }
+}

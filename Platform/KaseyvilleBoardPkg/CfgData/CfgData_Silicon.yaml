@@ -1,0 +1,52 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : SIL
+- SILICON_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ SILICON_CFG_DATA, 0x500, 0, 0 ] }
+  - !expand { SIL_TMPL : [ FPRR ] }
+  - FprrConfig :
+    - $STRUCT      :
+        name         : FPRR Configuration
+        help         : >
+                       Configure Silicon Configuration Features
+        struct       : FPRR_CFG
+        length       : 0x20
+    - WriteEnable :
+        name         : PCH Flash Protection Ranges Write Enable
+        type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFF)
+        help         : >
+                        Write or erase is blocked by hardware.
+                        Each byte represents a WriteProtectionEnable for respective Ranges.
+        length       : 5
+        value        : { 0x1, 0x1, 0x1, 0x1, 0x1 }
+    - ReadEnable :
+        name         : PCH Flash Protection Ranges Read Enable
+        type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFF)
+        help         : >
+                        Each byte represents a ReadProtectionEnable for respective Range.
+        length       : 5
+        value        : { 0x0, 0x0, 0x0, 0x0, 0x0 }
+    - FprrRsvd :
+        name         : Reserved0
+        type         : Reserved
+        help         : >
+                        Reserved for padding.
+        length       : 2
+        value        : { 0x0, 0x0 }
+    - Range :
+        name         : Base and Limit for Range [0..4]
+        type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+        help         : >
+                       Left shifted address by 12 bits with address bits 11:0 are assumed to be 0.
+        struct       : UINT32
+        length       : 0x0A
+        value        : { 0:0W,  0x3000, 0x3700, 0x0000, 0x0000, 0x0000  }

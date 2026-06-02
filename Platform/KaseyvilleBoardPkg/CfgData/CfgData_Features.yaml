@@ -1,0 +1,112 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : FEATURES:PLT:"Features"
+- $ACTION      :
+    page         : FEATURES
+- FEATURES_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ FEATURES_CFG_DATA, 0x310, 0, 0 ] }
+  - Features     :
+    - $STRUCT      :
+        name         : PlatformFeatures
+        struct       : FEATURES_DATA
+        length       : 0x1C
+    - Acpi         :
+        name         : ACPI Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable ACPI feature. 1:ACPI Enabled (default), 0:ACPI Disabled
+        length       : 0x01
+        value        : 1
+    - MeasuredBoot :
+        name         : MeasuredBoot Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable MeasuredBoot feature. 1:MeasuredBoot Enabled (default), 0:MeasuredBoot Disabled
+        length       : 0x01
+        value        : 1
+    - VtdSupport   :
+        name         : Vtd Support
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable Vtd Support.
+        length       : 0x01
+        value        : 1
+    - DCI          :
+        name         : DCI Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/Disable DCI for CCA OOB.
+        length       : 0x01
+        value        : 0
+    - PlatformDataAreaBase :
+        name         : Platform Data Area Base
+        type         : EditNum, HEX, (0x0, 0xFFFFFFFF)
+        help         : >
+                        Pointer to the location of the Platform Data Area
+        length       : 0x04
+        value        : 0x0
+    - PlatformDataAreaSize :
+        name         : Platform Data Area Size
+        type         : EditNum, HEX, (0x0, 0xFFFFFFFF)
+        help         : >
+                        The size of the Platform Data Area in bytes
+        length       : 0x04
+        value        : 0x0
+    - BiosRegionBase :
+        name         : BIOS Region Base
+        type         : EditNum, HEX, (0x0, 0xFFFFFFFF)
+        help         : >
+                        Pointer to the location of the BIOS Region
+        length       : 0x04
+        value        : 0x0
+    - BiosRegionSize :
+        name         : BIOS Region Size
+        type         : EditNum, HEX, (0x0, 0xFFFFFFFF)
+        help         : >
+                        The size of the BIOS Region in bytes
+        length       : 0x04
+        value        : 0x0
+    - LegacyVgaStack :
+        name         : Legacy VGA Stack
+        type         : EditNum, HEX, (0x00,0x06)
+        help         : >
+                        Stack that claims the legacy VGA range
+        length       : 0x01
+        value        : 0x00
+    - mmiohSize    :
+        name         : MMIO High Size
+        type         : Combo
+        option       : 0:1GB, 1:4GB, 2:16GB, 3:64GB, 4:256GB, 5:1024GB, 6:32GB, 255:AUTO
+        help         : >
+                        MMIO High Size, Number of contiguous regions to be assigned for MMIOH space per CPU.
+        length       : 0x02
+        value        : 0xFF
+    - mmiohBase    :
+        name         : MMIO High Base Address
+        type         : Combo
+        option       : 0:56T, 1:40T, 2:32T, 3:24T, 4:16T, 5:4T, 6:2T, 7:1T, 8:512G, 9:3584T, 10:30T, 11:60T, 12:88T, 13:120T, 14:248T, 255:AUTO
+        help         : >
+                        MMIO High Base Address selection
+        length       : 0x04
+        value        : 0xFF
+    - BiosInterface :
+        name         : Bios Interface Unlock
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                        Enable(0x1)/Disable(0x0) Bios Interface Unlock.
+        length       : 0x01
+        value        : 0x00
