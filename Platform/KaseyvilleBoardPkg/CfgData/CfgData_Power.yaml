@@ -1,0 +1,181 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : PWR
+- PWR_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ PWR_CFG_DATA, 0xB00, 0, 0 ] }
+  - !expand { PWR_TMPL : [ MGMT ] }
+  - PState :
+    - $STRUCT      :
+        name         : P-State Power Mgmt Control Config
+        help         : >
+                       Control, Enabling/Disabling P-State Power Mgmt Features
+        struct       : P_STATE_CFG
+        length       : 0x04
+    - EistEnable :
+        name         : Enable EIST
+        help         : >
+                        Enable Speed Step (P-states)
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled
+        length       : 1b
+        value        : 1
+    - BootPState :
+        name         : Boot performance mode
+        help         : >
+                        Select Boot Performance State. EIST should be Enabled.
+        type         : Combo
+        option       : 0:Max Performance, 1:Max Efficient, 2:Set by Intel Node Manager
+        length       : 2b
+        value        : 0x0
+    - HWPMEnable :
+        name         : Hardware P-States
+        help         : >
+                        Select Hardware P-State control.
+        type         : Combo
+        option       : 0:Disable, 1:Native Mode, 2:Out of Band Mode, 3:Native Mode with No Legacy Support
+        length       : 2b
+        value        : 0x1
+    - HWPMInterrupt :
+        name         : Hardware PM Interrupt
+        help         : >
+                        Enable / Disable Hardware PM Interrupt. Hardware P-States should be Native mode.
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled
+        length       : 1b
+        value        : 0
+    - PsdFunction      :
+        name         : EIST PSD Function
+        type         : Combo
+        option       : 0:HW_ALL,1:SW_ALL
+        help         : >
+                       Choose HW_ALL/SW_ALL in _PSD return
+        length       : 1b
+        value        : 0
+    - EppProfile :
+        name         : Epp Profile
+        help         : >
+                        Select HWPM Profile (EPP). Hardware P-States should be OOB and EPP should be enabled.
+        type         : Combo
+        option       : 0:Performance, 128:Balanced Performance, 192:Balanced Power, 255:Power
+        length       : 8b
+        value        : 0x80
+    - ConfigTdpLevel :
+        name         : AVX P1 Level
+        help         : >
+                        AVX P1 level selection. EIST should be enabled.
+        type         : Combo
+        option       : 0:Nominal, 1:Level 1, 2:Level 2
+        length       : 2b
+        value        : 0x0
+    - AvxLicensePreGrant :
+        name         : AVX Licence Pre-Grant Override
+        help         : >
+                        Enables AVX ICCP pre-grant level override.
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled
+        length       : 1b
+        value        : 0
+    - AvxIccpLevel :
+        name         : AVX ICCP pre-grant level
+        help         : >
+                        Pre-grants an AVX level to the core. Base frequency is not updated. AVX Licence Pre-Grant Override should be enabled.
+        type         : Combo
+        option       : 1:128 Heavy , 2:256 Light , 3:256 Heavy , 4:512 Light , 5:512 Heavy , 6:AMX
+        length       : 3b
+        value        : 0x1
+    - TurboMode :
+        name         : Turbo Mode
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled
+        help         : >
+                        Enable/Disable Turbo Mode
+        length       : 1b
+        value        : 1
+    - PwrPerfTuning :
+        name         : Power Performance Tuning
+        type         : Combo
+        option       : 0:OS Controls EPB, 1:BIOS Controls EPB , 2:PECI Controls EPB
+        help         : >
+                        Options decides who Controls EPB. 0:In OS mode :IA32_ENERGY_PERF_BIAS is used
+                        (Option 0 is valid only if HWPMEnable is 0/1),
+                        1:In BIOS mode:ENERGY_PERF_BIAS_CONFIG is used, 2:In PECI mode: PCS53 is used.
+        length       : 2b
+        value        : 0
+    - Rsvd    :
+        name         : Reserved
+        type         : Reserved
+        help         : >
+                       reserved
+        length       : 8b
+        value        : 0
+  - CState :
+    - $STRUCT      :
+        name         : C-State Power Mgmt Control Config
+        help         : >
+                       Control, Enabling/Disabling C-State Power Mgmt Features
+        struct       : C_STATE_CFG
+        length       : 0x04
+    - PackageCState :
+        name         : Package C State
+        help         : >
+                        Package C State limit.
+        type         : Combo
+        option       : 0: C0/C1 state, 1: C2 state, 2: C6(non Retention) state, 3: C6(Retention) state, 7: No Limit, 0xFF: Auto
+        length       : 8b
+        value        : 0xFF
+    - EnableCstate     :
+        name         : Enable C-State
+        type         : Combo
+        option       : 0:Disabled,1:Enabled
+        help         : >
+                       Enable/Disable C-State
+        length       : 1b
+        value        : 1
+    - C1eEnable :
+        name         : Enhanced Halt State (C1E)
+        help         : >
+                        Enable / Disable Core C1E auto promotion Control.
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled
+        length       : 1b
+        value        : 1
+    - C2C3TT :
+        name         : C2 to C3 Transition Timer
+        option       : 0: Default, Bit[11:0] : C2 to C3 Transition Timer
+        help         : >
+                        Default = 0, means [AUTO]. C2 to C3 Transition Timer, PPDN_INIT = C2C3TT CSR Bit[11:0]
+        type         : EditNum, DEC, (0,255)
+        length       : 8b
+        value        : 0
+    - MonitorMWait :
+        name         : Enable Monitor MWAIT
+        help         : >
+                        Enable / Disable Monitor and MWAIT instructions.
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled
+        length       : 1b
+        value        : 1
+    - WakeOnLanSupport :
+        name         : WakeOnLanSupport
+        type         : Combo
+        option       : 0:Disabled, 1:Enabled
+        help         : >
+                        Enable/Disable Wake on Lan Support
+        length       : 1b
+        value        : 0
+    - Reserved2 :
+        name         : Reserved2
+        type         : Reserved
+        help         : >
+                       reserved
+        length       : 4b
+        value        : 0
