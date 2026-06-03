@@ -14,11 +14,11 @@
   VERSION_STRING       = 1.0
 
 [Sources]
- m_97_a06e1_01000307.mcb  # B0 SKU (production signed)
+ m_97_a06e1_01000309.mcb  # B0 SKU (production signed)
 
 [UserExtensions.SBL."CloneRepo"]
   REPO   = https://github.com/slimbootloader/firmwareblob.git
-  COMMIT = d357856553a8aeb32fdce7c64bec0da55b8d83bd
+  COMMIT = d2db0b956cc77155f9dd2d43bcac0636ea318010
 
 [UserExtensions.SBL."CopyList"]
-  Microcode/Kaseyville/m_97_a06e1_01000307.pdb  : Silicon/KaseyvillePkg/Ksv/Microcode/m_97_a06e1_01000307.mcb
+  Microcode/Kaseyville/m_97_a06e1_01000309.pdb  : Silicon/KaseyvillePkg/Ksv/Microcode/m_97_a06e1_01000309.mcb
