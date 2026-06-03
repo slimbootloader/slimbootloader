@@ -54,7 +54,12 @@
   TimeStampLib | BootloaderCommonPkg/Library/TimeStampLib/TimeStampLib.inf
   LoaderPerformanceLib | BootloaderCommonPkg/Library/LoaderPerformanceLib/LoaderPerformanceLib.inf
   BootloaderCommonLib | BootloaderCommonPkg/Library/BootloaderCommonLib/BootloaderCommonLib.inf
+  UsbInitLib | BootloaderCommonPkg/Library/UsbInitLib/UsbInitLib.inf
+!if $(ENABLE_USB_KB) == 1
+  UsbKbLib | BootloaderCommonPkg/Library/UsbKbLib/UsbKbLib.inf
+!else
   UsbKbLib | BootloaderCommonPkg/Library/UsbKbLib/UsbKbLibNull.inf
+!endif
   PayloadSupportLib | PayloadPkg/Library/PayloadSupportLib/PayloadSupportLib.inf
   DebugPrintErrorLevelLib | PayloadPkg/Library/DebugPrintErrorLevelLib/DebugPrintErrorLevelLib.inf
   BootloaderLib | PayloadPkg/Library/PayloadLib/PayloadLib.inf
