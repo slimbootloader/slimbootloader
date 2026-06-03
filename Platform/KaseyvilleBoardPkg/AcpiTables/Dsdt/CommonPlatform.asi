@@ -1,0 +1,207 @@
+/** @file
+  CommonPlatform.asl - Contains common objects for the platform
+
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+#include <Acpi/AcpiTablePlatform.h>
+
+  External(\_SB.OSPC, MethodObj)
+  External(\_SB.OSNC, MethodObj)
+  External(\_SB.OSNL, MethodObj)
+  External(\_SB.MFNH, MethodObj)
+  //
+  // External declarations
+  //
+  External(\_SB.MMBI.MPTS, MethodObj)
+  External(\_SB.MMBI.MWAK, MethodObj)
+  //
+  // System Sleep States
+  //
+  Name (\_S0,Package (){0,0,0,0})
+  Name (\_S3,Package (){5,0,0,0})   // Name changed to \DS3 if disabled in Setup
+  Name (\_S4,Package (){6,0,0,0})   // Name changed to \DS4 if disabled in Setup
+  Name (\_S5,Package (){7,0,0,0})
+
+  //
+  // Native OS hot plug support, 0->ACPI, 1->OS
+  //
+  Name (\OSHF, 0)
+
+  Name (\HWPS, 0)   // CPC capability from platform _OSC
+  //
+  // OS flag
+  //
+  #include "Os.asi"
+
+  //
+  // for determing PIC mode
+  //
+  Name (\PICM,Zero)
+  Method (\_PIC, 1, NotSerialized) {
+    Store(Arg0,\PICM)
+  }
+
+  OperationRegion (DBG0, SystemIO, 0x80, 2)
+  Field (DBG0, ByteAcc,NoLock,Preserve) {
+    IO80, 8,
+    IO81, 8
+  }
+
+  //
+  // Access CMOS range
+  //
+  OperationRegion (ACMS, SystemIO, 0x72, 2)
+  Field ( ACMS, ByteAcc, NoLock, Preserve) {
+    INDX, 8,
+    DATA, 8
+  }
+
+  //
+  // BIOS parameter BIOS_ACPI_PARAM
+  //
+  #include "BiosParameterRegion.asi"
+
+  //
+  // SWGPE_CTRL
+  //
+  OperationRegion (GPCT, SystemIO, Add (PMBA, 0x42), 1)
+  Field (GPCT, ByteAcc, NoLock, Preserve) {
+          ,   1,
+    SGPC  ,   1,
+  }
+
+  //
+  // GPE0 Enable
+  //
+  OperationRegion (GPE0, SystemIO, Add (PMBA, 0x7C), 4)
+  Field (GPE0, ByteAcc,NoLock,Preserve) {
+    ,1,
+    GPEH,1,
+    ,7,
+    PCIE,1,
+    ,1,
+    PMEE,1,
+    ,20,
+  }
+
+  //
+  // GPE0 Status
+  //
+  OperationRegion (GPES, SystemIO, Add (PMBA, 0x6C), 4)
+  Field (GPES, ByteAcc,NoLock,Preserve) {
+    ,1,
+    GPSH,1,
+    SGPS,1,
+    ,6,
+    PEES,1,
+    ,1,
+    PMES,1,
+    ,20,
+  }
+
+  //
+  // System sleep down
+  //
+  Method (_PTS, 1, NotSerialized)
+  {
+    Store (0x72, IO80)  // Sync with EfiPostCode.h
+
+    //
+    // Clear wake event status.
+    //
+    Store(1,PMES)
+    //
+    // Enable SCI and wake event sources.
+    //
+    Store(1,GPEH)
+    Store(1,PCIE)
+    Store(1,PMEE)
+
+    //
+    // MMBI _PTS
+    //
+    If (CondRefOf (\_SB.MMBI.MPTS)) {
+      \_SB.MMBI.MPTS (Arg0)
+    }
+  }
+
+  //
+  // System Wake up
+  //
+  Method (_WAK, 1, Serialized)
+  {
+    Store (0x73, IO80)  // Sync with EfiPostCode.h
+    Notify(\_SB.PWRB,0x02)
+
+    //
+    // MMBI _WAK
+    //
+    If (CondRefOf (\_SB.MMBI.MWAK)) {
+      \_SB.MMBI.MWAK (Arg0)
+    }
+
+    Return(Package(){0, 0})
+  }
+
+  Scope(\_SB) {
+    Name (\OSCP, 0)   // _OSC Capabilities
+
+    // Information on CPU for hotplug SKUs
+    #include "CpuHp.asi"
+
+    OperationRegion (IOB2, SystemIO, 0xB2, 2)  //MKF_SMIPORT
+    Field (IOB2, ByteAcc, NoLock, Preserve) {
+      SMIC, 8,                               // SW-SMI ctrl port
+      SMIS, 8,                               // SW-SMI status port
+    }
+
+    Method(_OSC , 4) {
+      Store(Arg3,Local0)
+      CreateDWordField(Local0,4,CPBF)
+      If(LEqual(Arg0, ToUUID("0811B06E-4A27-44F9-8D60-3CBBC22E7B48"))) {
+        Store(CPBF, OSCP)
+        //Save Platform OSC HWPM capabilities
+        If(LEqual(And(CPBF, 0x00000040), 0x00000040)) {
+          Store(1,HWPS)
+        }
+
+         If (CondRefOf (\_SB.PRMC)){
+          //Save Platform OSC PRM capabilities
+          External(\_SB.PRMC, FieldUnitObj)
+          If(LEqual(And(CPBF, 0x00200000), 0x00200000)) {
+             Store(1,PRMC)
+          }
+        }
+      }
+      If (CondRefOf (\_SB.OSPC)) {
+        Return (\_SB.OSPC(Arg0, Arg1, Arg2, Arg3))
+      }
+      Return (Local0)
+    }
+
+    // Control Method Power Button
+    Device(PWRB) {
+      Name(_HID,EISAID("PNP0C0C"))
+      Name(_PRW, Package() {0,0x4})
+    }
+
+    //
+    // SGX
+    //
+    #include "Sgx.asi"
+  }   // end _SB scope
+
+//
+//TxtAcm
+//
+  Scope(\_SB) {
+    If (LEqual(TXTE,1)) {
+      Device (ACM) {
+        Name (_HID, "INTC1025" )  // _HID: Hardware ID
+        Name (_CID, "INT_SPR_SINIT")  // _CID: Compatible ID
+      }
+    }
+  } // end Scope(\_SB) for TxtAcm

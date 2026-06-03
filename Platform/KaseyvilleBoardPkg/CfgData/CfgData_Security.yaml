@@ -1,0 +1,66 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : Security General:SEC:"Security General"
+- $ACTION      :
+    page         : Security General
+- SEC_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ SEC_CFG_DATA, 0xC00, 0, 0 ] }
+  - Hide         :
+      name         : Hide
+      type         : Reserved
+      length       : 0x1
+      value        : 0x1
+  - EnablePsd    :
+      name         : Platform Security Discovery (PSD)
+      type         : Reserved
+      length       : 0x04
+      value        : 0x0
+  - SecurityCctPrmrrSafSize :
+      name         : PRMRR SAF Size
+      type         : Combo
+      help         : >
+                    : PRMRR SAF Size
+      option       : 0x0:Invalid, 0x800000:8MB, 0x2000000:32MB, 0x4000000:64MB, 0x8000000:128MB, 0x10000000:256MB
+      length       : 0x08
+      value        : 0x00000000
+  - SecurityCctPrmrrSbftSize :
+      name         : PRMRR SBFT Size
+      type         : Combo
+      help         : >
+                    : PRMRR SBFT Size
+      option       : 0x0:Invalid, 0x10000000:256MB, 0x20000000:512MB
+      length       : 0x08
+      value        : 0x00000000
+  - SecurityCctTmeCryptoAlg :
+      name         : Select TME Crypto Algorithm
+      type         : Combo
+      help         : >
+                      Enable Global Integrity
+      option       : 0:Algo1,1:Algo2, 2:Algo3
+      length       : 0x1
+      value        : 0x0
+  - SecurityCctDfxTdxDisable1MbCmrExclude :
+      name         : Dfx TDX Disable 1MB CMR Exclude
+      type         : Combo
+      help         : >
+                    : Dfx TDX Disable 1MB CMR Exclude
+      option       : 1:Enabled, 0:Disabled, 2:Auto
+      length       : 0x1
+      value        : 0x2
+  - SecurityCctEnableSbft :
+      name         : Enable SBFT
+      type         : Combo
+      help         : >
+                    : Enable SBFT
+      option       : 1:Enabled, 0:Disabled, 4:IfsSbftSgxEnabled
+      length       : 0x1
+      value        : 0x0

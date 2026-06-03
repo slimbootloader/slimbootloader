@@ -1,0 +1,19 @@
+/** @file
+
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+  Device(IIO_DEVICE_NAME(C1, SOCKET, PE_INDEX)) {
+    Name (_HID, "ACPI0016")
+    Name (_CID, Package () { EISAID("PNP0A08"), EISAID("PNP0A03")})
+    Name (_UID, IIO_DEVICE_UID_ASL(C1_UID, SOCKET, PE_INDEX))
+
+    Method (_PRT, 0)
+    {
+      Return (AR01)
+    }
+
+    #include "IioRootBridgeCxl11.asi"
+  }

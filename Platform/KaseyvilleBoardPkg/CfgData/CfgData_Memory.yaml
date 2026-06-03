@@ -1,0 +1,516 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Option File.
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- $ACTION      :
+    page         : MEM
+- MEMORY_CFG_DATA :
+  - !expand { CFGHDR_TMPL : [ MEMORY_CFG_DATA, 0x200, 0, 0 ] }
+  - !expand { MEM_TMPL : [ General ] }
+  - GeneralConfig :
+    - $STRUCT      :
+        name         : General Configuration
+        help         : >
+                       Configure General Options
+        struct       : MEM_GENERAL_CFG
+        length       : 0x11
+    - DynamicEccModeSel :
+        name         : Dynamic ECC Mode Selection
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                        Enable/Disable Dynamic ECC Mode Selection in FSP.
+        length       : 0x01
+        value        : 0x01
+    - EccModeSel :
+        name         : ECC Mode Selection
+        type         : Combo
+        option       : 0:ECC standard mode, 1:Ecc 3 bit less mode
+        help         : >
+                        Select ECC Mode.
+        length       : 0x01
+        value        : 0x00
+    - MemTestOnColdFastBoot :
+        name         : MemTest On Cold Fast Boot
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                        Enable - Enables memory test during cold fast boot. Disable - Disables this feature.
+        length       : 0x01
+        value        : 0x00
+    - AttemptFastBootCold :
+        name         : Attempt Fast Cold Boot
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                        Enable - Portions of memory reference code will be skipped when possible to increase boot speed on cold boots. Disable - Disables this feature.
+        length       : 0x01
+        value        : 0x01
+    - AttemptFastBoot :
+        name         : Attempt Fast Boot
+        type         : Combo
+        option       : 0:Disabled,1:Enabled
+        help         : >
+                       Enable/Disable Fast Boot.
+        length       : 0x01
+        value        : 1
+    - MemoryThermalThrottling :
+        name         : Memory Thermal Throttling Mode
+        type         : Combo
+        option       : 0:Disable, 2:CLTT_ENABLE, 3:CLTT_PECI_ENABLE
+        help         : >
+                       Enable/disable Memory Thermal Throttling
+        length       : 0x01
+        value        : 2
+    - MemTest     :
+        name         : Enable Memory Test
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                       Enable/disable Memory Test Support.
+        length       : 0x01
+        value        : 1
+    - MemoryDown   :
+        name         : MemoryDown
+        type         : Combo
+        option       : 0x0:No, 0x1:Yes
+        help         : >
+                        Memory Down
+        length       : 0x01
+        value        : 0
+    - MemTestLoops :
+        name         : MemTest Loops
+        type         : EditNum, HEX, (0x00 ,0xFFFF)
+        help         : >
+                        Number of memory test loops during normal boot, set to 0 to run memtest infinitely in FSP.
+        length       : 0x04
+        value        : 0x01
+    - HwSpdRead   :
+        name         : HW SPD Read
+        type         : Combo
+        option       : 0x0:No, 0x1:Yes
+        help         : >
+                        Get SPD data from HW or Cfg Data
+        length       : 0x01
+        condition    : $(COND_MEM_DOWN)
+        value        : 0
+    - DimmConfigType :
+        name         : Dimm Configuration Type
+        type         : Combo
+        option       : 1:8x8x2 (XCC - 8 IMC 8 CH 2 DIMM), 2:4x4x2 (HCC - 4 IMC 4 CH 2 DIMM)
+        help         : >
+                        Select the DIMM Configuration
+        length       : 0x01
+        value        : 1
+    - TmeEnable   :
+        name         : Total Memory Encryption Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                        Total Memory Encryption enabling
+        length       : 0x01
+        value        : 0
+    - MkTmeEnable :
+        name         : Multi-Key Total Memory Encryption Enable
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                        Multi-Key Total Memory Encryption enabling
+        length       : 0x01
+        condition    : $(COND_TME_EN)
+        value        : 0
+    - EliminateWarmReset   :
+        name         : Warm Reset Elimination Enable
+        type         : Combo
+        option       : 0:Disable, 1:Enable, 2:Auto
+        help         : >
+                        Warm Reset Elimination Enable
+        length       : 0x01
+        value        : 2
+  - !expand { MEM_TMPL : [ Parameter ] }
+  - ParameterConfig :
+    - $STRUCT      :
+        name         : Memory Parameter Configuration
+        help         : >
+                       Configure Memory Parameter
+        struct       : MEM_PARAMETER_CFG
+        length       : 0xA2
+    - DdrFreq      :
+        name         : Memory Frequency
+        help         : >
+                       Set DDR Memory Frequency Limit
+        type         : EditNum, HEX, (0x00, 0x1F)
+        option       : 0:AUTO, 1:DDR_3200, 3:DDR_3600, 5:DDR_4000, 7:DDR_4400, 8:DDR_4800, 9:DDR_5200, A:DDR_5600, B:DDR_6000, C:DDR_6400
+        length       : 0x01
+        value        : 0x01
+    - XptPrefetchEn :
+        name         : XPT Prefetch Enable
+        type         : Combo
+        option       : 0:Disable, 1:Enable, 2:Auto
+        help         : >
+                        Enable or Disable XPT Prefetch
+        length       : 0x01
+        value        : 0x02
+    - ProcessorMsrLockControl :
+        name         : MSR Lock Control
+        type         : Combo
+        option       : 0:Disable, 1:Enable
+        help         : >
+                        Enable - MSR 3Ah and CSR 80h will be locked in FSP. Power Good reset is needed to remove lock bits
+        length       : 0x01
+        value        : 0x00
+    - EnforcePopulationPor :
+        name         : Enforce Population POR
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                        Enable Memory Population POR Enforcement.  Selecting Enforce Validated Populations will only allow populations that have been validated in FSP.
+        length       : 0x01
+        value        : 0x01
+    - serialDebugMsgLvl :
+        name         : Memory Serial Debug Message Level
+        type         : Combo
+        option       : 0:Disable, 1:Minimum, 2:Normal, 3:Maximum, 4:Auto, 5:Fixed PCD
+        help         : >
+                        Select Memory Serial Debug Message Level, 0- Disable, 1- Minimum, 2- Normal, 3- Maximum, <b>4- Auto(Default)</b>, 5- Fixed PCD
+        length       : 0x01
+        value        : 0x04
+    - EnforceDdrMemoryFreqPor :
+        name         : Enforce Memory POR
+        type         : Combo
+        option       : 0:POR, 1:Enforce Stretch Goals, 2:Disabled
+        help         : >
+                        Enforce POR (0x0) - Enforces Plan Of Record restrictions for DDR5 frequency and voltage programming. Enforce Stretch Goals (0x1) - Enforce DDR memory frequency stretch goal. <b>Disable (0x2 - Default)</b> - Disables this feature and user is able to run at higher frequencies, specified in the DDR Frequency Limit field (limited by processor support).
+        length       : 0x01
+        value        : 0x00
+    - DirectoryModeEn :
+        name         : Directory Mode
+        type         : Combo
+        option       : 0:Disable, 1:Enable, 2:Auto
+        help         : >
+                        Enable or Disable Directory Mode
+        length       : 0x01
+        value        : 0x02
+    - UmaClustering :
+        name         : UMA Clustering
+        type         : Combo
+        option       : 0:Disable, 2:Two Clusters
+        help         : >
+                        Set UMA Clusters
+        length       : 0x01
+        value        : 0x02
+    - KtiCrcMode   :
+        name         : KTI CRC Mode
+        type         : Combo
+        option       : 0:16bit, 1:32bit, 2:Auto
+        help         : >
+                        Select KTI CRC Mode
+        length       : 0x01
+        value        : 0x00
+    - CriticalRxDqsDelayLeftEdge :
+        name         : RxDqsDelay Left Edge
+        type         : EditNum, HEX, (0x00,0xFF)
+        help         : >
+                        Offset for RxDqsDelay Left Edge in FSP.
+        length       : 0x01
+        value        : 0x02
+    - CriticalRxDqsDelayRightEdge :
+        name         : RxDqsDelay Right Edge
+        type         : EditNum, HEX, (0x00,0xFF)
+        help         : >
+                        Offset for RxDqsDelay Right in FSP.
+        length       : 0x01
+        value        : 0x02
+    - CriticalRxVrefLeftEdge :
+        name         : RxVref Left Edge
+        type         : EditNum, HEX, (0x00,0xFF)
+        help         : >
+                        Offset for RxVref Left Edge in FSP.
+        length       : 0x01
+        value        : 0x02
+    - CriticalRxVrefRightEdge :
+        name         : RxVref Right Edge
+        type         : EditNum, HEX, (0x00,0xFF)
+        help         : >
+                        Offset for RxVref Right Edge in FSP.
+        length       : 0x01
+        value        : 0x02
+    - CriticalTxDqDelayLeftEdge :
+        name         : TxDqDelay Left Edge
+        type         : EditNum, HEX, (0x00,0xFF)
+        help         : >
+                        Offset for TxDqDelay Left Edge in FSP.
+        length       : 0x01
+        value        : 0x02
+    - CriticalTxDqDelayRightEdge :
+        name         : TxDqDelay Right Edge
+        type         : EditNum, HEX, (0x00,0xFF)
+        help         : >
+                        Offset for TxDqDelay Right Edge in FSP.
+        length       : 0x01
+        value        : 0x02
+    - CriticalTxVrefLeftEdge :
+        name         : TxVref Left Edge
+        type         : EditNum, HEX, (0x00,0xFF)
+        help         : >
+                        Offset for TxVref Left Edge in FSP.
+        length       : 0x01
+        value        : 0x02
+    - CriticalTxVrefRightEdge :
+        name         : TxVref Right Edge
+        type         : EditNum, HEX, (0x00,0xFF)
+        help         : >
+                        Offset for TxVref Right Edge in FSP.
+        length       : 0x01
+        value        : 0x02
+    - CriticalCaTimingLeftEdge :
+        name         : Critical CaTiming Left Edge
+        type         : EditNum, HEX, (0x00,0xFF)
+        help         : >
+                        Offset for Critical CaTiming Left Edge in FSP.
+        length       : 0x01
+        value        : 0x05
+    - CriticalCaTimingRightEdge :
+        name         : Critical CaTiming Right Edge
+        type         : EditNum, HEX, (0x00,0xFF)
+        help         : >
+                        Offset for Critical CaTiming Right Edge in FSP.
+        length       : 0x01
+        value        : 0x05
+    - CriticalCtlTimingLeftEdge :
+        name         : Critical CtlTiming Left Edge
+        type         : EditNum, HEX, (0x00,0xFF)
+        help         : >
+                        Offset for Critical CtlTiming Left Edge in FSP.
+        length       : 0x01
+        value        : 0x05
+    - CriticalCtlTimingRightEdge :
+        name         : Critical CtlTiming Right Edge
+        type         : EditNum, HEX, (0x00,0xFF)
+        help         : >
+                        Offset for Critical CtlTiming Right Edge in FSP.
+        length       : 0x01
+        value        : 0x05
+    - CriticalCaVrefLeftEdge :
+        name         : Critical CaVref Left Edge
+        type         : EditNum, HEX, (0x00,0xFF)
+        help         : >
+                        Offset for Critical CaVref Left Edge in FSP.
+        length       : 0x01
+        value        : 0x05
+    - CriticalCaVrefRightEdge :
+        name         : Critical CaVref Right Edge
+        type         : EditNum, HEX, (0x00,0xFF)
+        help         : >
+                        Offset for Critical CaVref Right Edge in FSP.
+        length       : 0x01
+        value        : 0x05
+    - RefreshMode :
+        name         : DDR 2x Refresh Enable
+        type         : Combo
+        option       : 0:Disable, 1:Enable, 2:Auto
+        help         : >
+                        Enable/Disable 2x Refresh. Auto = dynamically selected.
+        length       : 0x01
+        value        : 0x02
+    - MemHotIn     :
+        name         : MEMHOT INPUT Control
+        type         : Combo
+        option       : $EN_DIS
+        help         : >
+                        Enable/Disable MEMHOT INPUT in FSP.
+        length       : 0x01
+        value        : 0x01
+    - MemIOHealthCheck :
+        name         : Memory I/O Health Check
+        type         : Combo
+        option       : 0:Auto, 1:Manual, 2:Disable
+        help         : >
+                        Memory I/O Health Check - 0- Auto, 1- Manual, <b>2- Disable (Default)</b>. Select option Auto for default values. Manual for new values. Disable for disabling feature in FSP.
+        length       : 0x01
+        value        : 0x02
+    - KtiLinkSpeedPerPort :
+        name         : Kti Link Speed Per Port
+        type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+        help         : >
+                        Setup KTI Link Speed to be allocated for each port, 0:128GT, 1:144GT, 2:160GT, 3:200GT, 0X7f:Max KTI Link Speed
+        length       : 0x30
+        value        : {0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f}
+    - DfxL0pEnable :
+        name         : DfxL0p Enable
+        type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+        help         : >
+                        Indicates the DfxL0p Enable to be allocated for each port, 0:Disable, 1:Enable
+        length       : 0x30
+        value        : {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01}
+    - DfxL1Enable  :
+        name         : DfxL1 Enable
+        type         : EditNum, HEX, (0x00,0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+        help         : >
+                        Indicates the DfxL1 Enable to be allocated for each port, 0:Disable, 1:Enable
+        length       : 0x30
+        value        : {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01}
+  - !expand { MEM_TMPL : [ RMT ] }
+  - EnableRMT :
+      name         : Rank Margin Tool
+      type         : Combo
+      help         : >
+                    Enable/Disable two types of rank margin in FSP. 0 - Both normal RMT and turnaround RMT are disabled. 1 - Only normal RMT is enabled. 2 - Only turnaround RMT is enabled. 3 - Both normal RMT and turnaround RMT are enabled.
+      option       : 0:Normal RMT & Turnaround RMT Disabled, 1:Normal RMT Enabled, 2:Turnaround RMT Enabled, 3:Normal RMT & Turnaround RMT Enabled, 4:Auto RMT Enable/Disabled
+      length       : 0x01
+      value        : 0
+  - EnableRMTonFCB :
+      name         : RMT on Fast Cold Boot
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                      Enable/Disable the Rank Margin Tool on a Fast Cold Boot in FSP.
+      length       : 0x01
+      value        : 0x00
+  - JedecInitBeforeRMT :
+      name         : Execute Jedecinit before RMT
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                      Execute Jedecinit before Rank Margin Tool in FSP.
+      length       : 0x01
+      value        : 0x00
+  - RMTBacksideMargining :
+      name         : Backside Margining
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                      Enable/Disable margin test on the register or buffer backside in FSP.
+      length       : 0x01
+      value        : 0x00
+  - RMTCmdAll    :
+      name         : CmdAll
+      type         : Combo
+      option       : 1:Auto, 2:2, 4:4, 8:8
+      help         : >
+                      Step size of CmdAll. Auto- 1. Supported values- 1,2,4,8 in FSP.
+      length       : 0x01
+      value        : 0x01
+  - RMTDebugMessages :
+      name         : RMT Debug Messages
+      type         : Combo
+      option       : 0x2:Disable, 0x5:Enable
+      help         : >
+                      Enable/Disable the RMT debug messages in FSP.
+      length       : 0x01
+      value        : 0x02
+  - RMTDisplayTables :
+      name         : RMT Display Tables
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                      Enable/Disable displaying results as tables in FSP.
+      length       : 0x01
+      value        : 0x01
+  - RMTLoopCount :
+      name         : RMT Loop Count
+      type         : EditNum, HEX, (0x00,0x1F)
+      help         : >
+                      Exponential loop count for single rank test in FSP.
+      length       : 0x01
+      value        : 0x10
+  - TestSignalBitMaskRMT :
+      name         : Test Signal Bit Mask For RMT
+      type         : EditNum, HEX, (0x00000000,0xFFFFFFFF)
+      help         : >
+                      Test signal bit mask for RMT in FSP.
+      length       : 0x04
+      value        : 0x00000000
+  - RMTPerBitMargining :
+      name         : RMT Per Bit Margining
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                      Enable/Disable Per Bit Margining in FSP.
+      length       : 0x01
+      value        : 0x01
+  - RMTPerCaLaneMargining :
+      name         : RMT Per CA Lane Margining
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                      Enable/Disable Per CA Lane Margining in FSP.
+      length       : 0x01
+      value        : 0x01
+  - RMTPerCsLaneMargining :
+      name         : RMT Per CS Lane Margining
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                      Enable/Disable Per CS Lane Margining in FSP.
+      length       : 0x01
+      value        : 0x01
+  - RMTPerDisplayPlots :
+      name         : RMT Display Plots
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                      Enable/Disable the display of per-bit results as plots in FSP.
+      length       : 0x01
+      value        : 0x01
+  - RMTRxDqs     :
+      name         : RMT RxDqs
+      type         : Combo
+      option       : 1:Auto, 2:2, 4:4, 8:8
+      help         : >
+                      Step size of RxDqs. Auto- 1. Supported values- 1,2,4,8 in FSP.
+      length       : 0x01
+      value        : 0x01
+  - RMTRxVref    :
+      name         : RMT RxVref
+      type         : Combo
+      option       : 1:Auto, 2:2, 4:4, 8:8
+      help         : >
+                      Step size of RxVref. Auto- 1. Supported values- 1,2,4,8 in FSP.
+      length       : 0x01
+      value        : 0x01
+  - DfxScrambleEnRMT :
+      name         : Dfx RMT Scrambler
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                      Enable or Disable scrambler during RMT test in FSP.
+      length       : 0x01
+      value        : 0x01
+  - RMTStepSizeOverride :
+      name         : RMT Step Size Override
+      type         : Combo
+      option       : $EN_DIS
+      help         : >
+                      Enable or Disable overriding the default step sizes in FSP.
+      length       : 0x01
+      value        : 0x00
+  - RMTTxDq      :
+      name         : RMT TxDq
+      type         : Combo
+      option       : 1:Auto, 2:2, 4:4, 8:8
+      help         : >
+                      Step size of TxDq. Auto- 1. Supported values- 1,2,4,8 in FSP.
+      length       : 0x01
+      value        : 0x01
+  - RMTTxVref    :
+      name         : RMT TxVref
+      type         : Combo
+      option       : 1:Auto, 2:2, 4:4, 8:8
+      help         : >
+                      Step size of TxVref. Auto- 1. Supported values- 1,2,4,8 in FSP.
+      length       : 0x01
+      value        : 0x01
+  - Reserved2    :
+      name         : Reserved2
+      type         : Reserved
+      help         : >
+                     reserved
+      length       : 0x1
+      value        : 0

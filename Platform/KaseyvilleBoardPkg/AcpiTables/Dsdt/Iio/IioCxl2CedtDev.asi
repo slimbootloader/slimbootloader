@@ -1,0 +1,224 @@
+/** @file
+  This file is a copy of IioRootBridge.asi that creates second, simultaneous
+  host bridge device in ASL for CXL 2.0 endpoint devices. Downstream port in
+  CXL 2.0 mode in some bus N, together with CXL upstream port, when configured,
+  disappear from PCI config space and can be accessed only via RCRB region
+  in MMIO. But CXL 2.0 endpoint devices are visible in bus N+1. The DP/UP ports
+  not exposed in PCI config space are kind of invisible bridge, what breaks PCI
+  Enumeration. To expose the CXL 2.0 endpoint devices additional artificial PCI
+  host bridge needs to be created with bus base N+1. This file implements such
+  bridge.
+
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+  Device(CR00) {
+    Name (_HID, "ACPI0017")
+    Name (_UID, "CEDT")
+
+    //
+    // _STA is ACPI method called by OS to read status of CXL Platform Device
+    //
+    Method(_STA, 0, NotSerialized)  // _STA: Status
+    {
+      //
+      // Need to determine if the CEDT is enabled or disabled.
+      // For now just check if CXL 2.0 is enabled.
+      //
+      // To start assign the return value of 0 to Local0 to indicate CXL2.0 is disabled.
+      //
+      Store (Zero, Local0)
+      //
+      // Now test each socket to determine if CXL2.0 support is present.
+      //
+      if (LNotEqual(CXC0, 0))
+      {
+        //
+        // If not 0 then we know CXL2.0 support is present in some of stacks in this socket.
+        //
+        Store(0x0B, Local0)
+      }
+      if (LNotEqual(CXC1,0))
+      {
+        //
+        // If not 0 then we know CXL2.0 support is present in some of stacks in this socket.
+        //
+        Store(0x0B, Local0)
+      }
+      if (LNotEqual(CXC2,0))
+      {
+        //
+        // If not 0 then we know CXL2.0 support is present in some of stacks in this socket.
+        //
+        Store(0x0B, Local0)
+      }
+      if (LNotEqual(CXC3,0))
+      {
+        //
+        // If not 0 then we know CXL2.0 support is present in some of stacks in this socket.
+        //
+        Store(0x0B, Local0)
+      }
+      if (LNotEqual(CXC4,0))
+      {
+        //
+        // If not 0 then we know CXL2.0 support is present in some of stacks in this socket.
+        //
+        Store(0x0B, Local0)
+      }
+      if (LNotEqual(CXC5,0))
+      {
+        //
+        // If not 0 then we know CXL2.0 support is present in some of stacks in this socket.
+        //
+        Store(0x0B, Local0)
+      }
+      if (LNotEqual(CXC6,0))
+      {
+        //
+        // If not 0 then we know CXL2.0 support is present in some of stacks in this socket.
+        //
+        Store(0x0B, Local0)
+      }
+      if (LNotEqual(CXC7,0))
+      {
+        //
+        // If not 0 then we know CXL2.0 support is present in some of stacks in this socket.
+        //
+        Store(0x0B, Local0)
+      }
+      Return (Local0)
+    } // _STA Method
+
+
+    Method (QUTL, 2) { // how much does the input utilize the output?
+      If (!Arg1) {
+        Return (Ones)
+      }
+      Return (Divide (Multiply (Arg0, 100), Arg1))
+    }
+
+  // simple debug macro, until common debug infra is submitted
+  #undef SDEBUG
+  #define SDEBUG(X) Store (X, Debug)
+  //#define SDEBUG(X)
+
+    //
+    // Sort key:value pairs
+    //
+    // Input: package containing zero (or more) elements in the form of Package (2) { Integer-Key, Integer-Value }
+    // Output: package with elements sorted by value, ascending
+    //
+    Method (QSRT, 1) { // sort index:value pairs
+      Store (SizeOf (Arg0), Local2)
+      if (LLess (Local2, 2)) {
+        SDEBUG ("[QtgIdSort] Nothing to sort")
+        SDEBUG (Arg0)
+        Return (Arg0) // nothing to sort
+      }
+      Subtract (Local2, One, Local2);
+      Store (Zero, Local0) // target spot
+      While (LLess (Local0, Local2)) {
+        Store (DerefOf (Index (Arg0, Local0)), Local3) // (assumed) min
+        Store (Local0, Local4) // (assumed) min index
+        Add (Local0, 1, Local1)
+        While (LLessEqual (Local1, Local2)) {
+          Store (DerefOf (Index (Arg0, Local1)), Local7)
+          if (LLess (DerefOf (Index (Local7, 1)), DerefOf (Index (Local3, 1)))) { // ascending
+            Store (Local7, Local3)
+            Store (Local1, Local4)
+          }
+          Increment (Local1)
+        }
+        If (LNotEqual (Local0, Local4)) {
+          Store (DerefOf (Index (Arg0, Local0)), Index (Arg0, Local4))
+          Store (Local3, Index (Arg0, Local0))
+        }
+        Increment (Local0)
+        SDEBUG ("[QtgIdSort] Done")
+        SDEBUG (Arg0)
+      }
+      Return (Arg0)
+    }
+
+    // _DSM Function for Retrieving QTG ID
+    //
+    // Arg0: UUID: F365F9A6-A7DE-4071-A66A-B40C0B4F8E52
+    // Arg1: Revision ID: 1
+    // Arg2: Function Index: 01h
+    // Arg3: A package of memory device performance characteristic. The package consists of 4
+    // DWORDs.
+    //   Package {
+    //     Read Latency
+    //     Write Latency
+    //     Read Bandwidth
+    //     Write Bandwidth
+    //   }
+    //
+    External (CXQI)
+    Method (_DSM, 4) {
+      If (!LEqual (Arg0, ToUUID ("F365F9A6-A7DE-4071-A66A-B40C0B4F8E52"))) {
+        Return (Buffer () {Zero})
+      }
+      If (LEqual (Arg2, 0)) {
+        If (LEqual (Arg1, 1)) {
+          Return (Buffer () {0x03}) // revision 1: fn 0..1 supported
+        }
+        Return (Buffer () {0x00})
+      }
+      If (LEqual (Arg2, 1)) {
+        Store (Package (2) {}, Local0)
+        Store (Package (0) {}, Index (Local0, 1))
+        Store (0, Index (Local0, 0))
+        if (LNot (CondRefOf (CXQI))) {
+          SDEBUG ("[GetQtgId] CXQI not found, SSDT not installed?")
+          Return (Local0)
+        }
+        Store (Sizeof (CXQI), Local1)
+        Store (Local1, Index (Local0, 0))
+        if (SizeOf (Arg3) < 4) {
+          SDEBUG ("[GetQtgId] Package too small!")
+          Return (Local0)
+        }
+        SDEBUG ("[GetQtgId] Input valid")
+        Store (DerefOf (Index (Arg3, 3)), Local2) // write BW
+        Store (Zero, Local3)
+        Store (Zero, Local4)
+        While (LLess (Local3, Local1)) {
+          If (LLessEqual (QUTL (Local2, DerefOf (Index (CXQI, Local3))), 100)) {
+            SDEBUG ("[GetQtgId] Found matching CXQI index")
+            SDEBUG (Local3)
+            Increment (Local4)
+          }
+          Increment (Local3)
+        }
+        // 2nd iter
+        Store (Package (Local4) {}, Index (Local0, 1))
+        Store (Package (Local4) {}, Local5) // sort input
+        Store (Zero, Local3)
+        Store (Zero, Local4)
+        While (LLess (Local3, Local1)) {
+          If (LLessEqual (QUTL (Local2, DerefOf (Index (CXQI, Local3))), 100)) {
+            Store (Package (2) {}, Local6)
+            Store (Local3, Index (Local6, 0))
+            Store (DerefOf (Index (CXQI, Local3)), Index (Local6, 1))
+            Store (Local6, Index (Local5, Local4))
+            Increment (Local4)
+          }
+          Increment (Local3)
+        }
+        QSRT (Local5)
+        Store (Zero, Local3)
+        While (LLess (Local3, Local4)) {
+          Store (DerefOf (Index (DerefOf (Index (Local5, Local3)), 0)), Index (DerefOf (Index (Local0, 1)), Local3))
+          Increment (Local3)
+        }
+        SDEBUG (Local0)
+        SDEBUG ("[GetQtgId] Done")
+        Return (Local0)
+      }
+      Return (Buffer () {Zero})
+    } // _DSM Method
+  }

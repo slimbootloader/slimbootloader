@@ -1,0 +1,11 @@
+## @file
+#
+#  Slim Bootloader CFGDATA GPIO pad groups.
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+>
+0x0:GROUP_C, 0x1:GROUP_D, 0x2:GROUP_E, 0x3:GROUP_Virtual

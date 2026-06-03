@@ -1,0 +1,53 @@
+/** @file
+
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+#define IOAT_INDEX  0
+#include "IioRbHcta.asi"
+#undef IOAT_INDEX
+
+#define IOAT_INDEX  1
+#include "IioRbHcta.asi"
+#undef IOAT_INDEX
+
+#define IOAT_INDEX  2
+#include "IioRbHct.asi"
+#undef IOAT_INDEX
+
+#define IOAT_INDEX  3
+#include "IioRbHct.asi"
+#undef IOAT_INDEX
+
+#define IOAT_INDEX  4
+#include "IioRbNac.asi"
+#undef IOAT_INDEX
+
+#define IOAT_INDEX  5
+#include "IioRbNac.asi"
+#undef IOAT_INDEX
+
+#define IOAT_INDEX  6
+#include "IioRbNac.asi"
+#undef IOAT_INDEX
+
+#define IOAT_INDEX  7
+#include "IioRbNac.asi"
+#undef IOAT_INDEX
+
+#define PE_INDEX  0
+#include "IioRbIou.asi"
+#include "IioCxlRbIou.asi"
+#undef PE_INDEX
+
+#define PE_INDEX  1
+#include "IioRbIou.asi"
+#include "IioCxlRbIou.asi"
+#undef PE_INDEX
+
+#define PE_INDEX  2
+#include "IioRbIou.asi"
+#include "IioCxlRbIou.asi"
+#undef PE_INDEX
