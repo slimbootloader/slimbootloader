@@ -176,6 +176,7 @@ class BaseBoard(object):
         self.ENABLE_EMMC_HS400     = 1
         self.ENABLE_DMA_PROTECTION = 0
         self.ENABLE_MULTI_USB_BOOT_DEV = 1
+        self.ENABLE_USB_KB         = 0
         self.ENABLE_SBL_SETUP      = 0
         self.ENABLE_PAYLOD_MODULE  = 0
         self.ENABLE_FAST_BOOT      = 0
