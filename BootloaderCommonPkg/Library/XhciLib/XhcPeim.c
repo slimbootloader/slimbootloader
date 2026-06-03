@@ -1242,7 +1242,7 @@ XhcPeiBulkTransfer (
     //
     RecoveryStatus = XhcPeiDequeueTrbFromEndpoint(Xhc, Urb);
     if (EFI_ERROR(RecoveryStatus)) {
-      DEBUG((DEBUG_ERROR, "XhcPeiBulkTransfer: XhcPeiDequeueTrbFromEndpoint failed\n"));
+      DEBUG((DEBUG_VERBOSE, "XhcPeiBulkTransfer: XhcPeiDequeueTrbFromEndpoint failed\n"));
     }
   } else {
     if (*TransferResult == EFI_USB_NOERROR) {
