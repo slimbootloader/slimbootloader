@@ -554,7 +554,7 @@ XhcPeiDequeueTrbFromEndpoint (
   //
   Status = XhcPeiSetTrDequeuePointer (Xhc, SlotId, Dci, Urb);
   if (EFI_ERROR(Status)) {
-    DEBUG ((DEBUG_ERROR, "XhcPeiDequeueTrbFromEndpoint: Set Dequeue Pointer Failed, Status = %r\n", Status));
+    DEBUG ((DEBUG_VERBOSE, "XhcPeiDequeueTrbFromEndpoint: Set Dequeue Pointer Failed, Status = %r\n", Status));
     goto Done;
   }
 
@@ -721,7 +721,7 @@ XhcPeiCheckUrbResult (
         break;
 
       default:
-        DEBUG ((DEBUG_ERROR, "XhcPeiCheckUrbResult: Transfer Default Error Occur! Completecode = 0x%x!\n", EvtTrb->Completecode));
+        DEBUG ((DEBUG_VERBOSE, "XhcPeiCheckUrbResult: Transfer Default Error Occur! Completecode = 0x%x!\n", EvtTrb->Completecode));
         CheckedUrb->Result  |= EFI_USB_ERR_TIMEOUT;
         CheckedUrb->Finished = TRUE;
         goto EXIT;
@@ -2557,7 +2557,7 @@ XhcPeiSetTrDequeuePointer (
              (TRB_TEMPLATE **) (UINTN) &EvtTrb
              );
   if (EFI_ERROR(Status)) {
-    DEBUG ((DEBUG_ERROR, "XhcPeiSetTrDequeuePointer: Set TR Dequeue Pointer Failed, Status = %r\n", Status));
+    DEBUG ((DEBUG_VERBOSE, "XhcPeiSetTrDequeuePointer: Set TR Dequeue Pointer Failed, Status = %r\n", Status));
   }
 
   return Status;
