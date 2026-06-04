@@ -216,8 +216,11 @@ PeCoffRelocateImage (
     BlockSize = * (UINT32 *) (RelocDataPtr + 2);
     RelocDataPtr += 4;
 
-    if (BlockSize == 0) {
-      break;
+    // BlockSize must be >= 8 (4-byte PageRva + 4-byte BlockSize fields) to avoid
+    // unsigned underflow in (BlockSize - 8) used by the inner loop iteration count.
+    // Also reject blocks that exceed the remaining reloc section to prevent OOB reads.
+    if ((BlockSize == 0) || (BlockSize < sizeof (EFI_IMAGE_BASE_RELOCATION)) || (BlockSize > RelocSectionSize)) {
+      return RETURN_UNSUPPORTED;
     }
 
     RelocSectionSize -= sizeof (UINT32) * 2;

@@ -54,14 +54,20 @@ FitParseFirmwarePropertyData (
   }
 
   for (Index = 0; Index < sizeof (PropertyData32List) / sizeof (PROPERTY_DATA); Index++) {
-    PropertyPtr      = FdtGetProperty (Fdt, TianoNode, PropertyData32List[Index].Name, &TempLen);
+    PropertyPtr = FdtGetProperty (Fdt, TianoNode, PropertyData32List[Index].Name, &TempLen);
+    if ((PropertyPtr == NULL) || (TempLen < (INT32)sizeof (UINT32))) {
+      return EFI_NOT_FOUND;
+    }
     Data32           = (UINT32 *)(PropertyPtr->Data);
     ContextOffset32  = (UINT32 *)((UINTN)Context + PropertyData32List[Index].Offset);
     *ContextOffset32 = Fdt32ToCpu (*Data32);
   }
 
-  for (Index = 0; Index < sizeof (PropertyData64List)/sizeof (PROPERTY_DATA); Index++) {
-    PropertyPtr      = FdtGetProperty (Fdt, TianoNode, PropertyData64List[Index].Name, &TempLen);
+  for (Index = 0; Index < sizeof (PropertyData64List) / sizeof (PROPERTY_DATA); Index++) {
+    PropertyPtr = FdtGetProperty (Fdt, TianoNode, PropertyData64List[Index].Name, &TempLen);
+    if ((PropertyPtr == NULL) || (TempLen < (INT32)sizeof (UINT64))) {
+      return EFI_NOT_FOUND;
+    }
     Data64           = (UINT64 *)(PropertyPtr->Data);
     ContextOffset64  = (UINT64 *)((UINTN)Context + PropertyData64List[Index].Offset);
     *ContextOffset64 = Fdt64ToCpu (*Data64);
@@ -103,8 +109,11 @@ IsFitImage (
 
   Fdt         = ImageBase;
   PropertyPtr = FdtGetProperty (Fdt, 0, "size", &TempLen);
-  Data32      = (UINT32 *)(PropertyPtr->Data);
-  UplSize     = Fdt32ToCpu (*Data32);
+  if ((PropertyPtr == NULL) || (TempLen < (INT32)sizeof (UINT32))) {
+    return FALSE;
+  }
+  Data32  = (UINT32 *)(PropertyPtr->Data);
+  UplSize = Fdt32ToCpu (*Data32);
   ConfigNode  = FdtSubnodeOffsetNameLen (Fdt, 0, "configurations", (INT32)AsciiStrLen ("configurations"));
   if (ConfigNode <= 0) {
     return FALSE;
@@ -116,12 +125,34 @@ IsFitImage (
   }
 
   PropertyPtr = FdtGetProperty (Fdt, Config1Node, "firmware", &TempLen);
-  Firmware    = (CHAR8 *)(PropertyPtr->Data);
+  if ((PropertyPtr == NULL) || (TempLen <= 0)) {
+    return FALSE;
+  }
+  Firmware = (CHAR8 *)(PropertyPtr->Data);
 
-  FitParseFirmwarePropertyData (Fdt, Firmware, Context);
+  if (EFI_ERROR (FitParseFirmwarePropertyData (Fdt, Firmware, Context))) {
+    return FALSE;
+  }
 
-  Context->ImageBase          = (EFI_PHYSICAL_ADDRESS)(UINTN)ImageBase;
-  Context->PayloadSize        = UplSize;
+  Context->ImageBase   = (EFI_PHYSICAL_ADDRESS)(UINTN)ImageBase;
+  Context->PayloadSize = UplSize;
+
+  // Validate entry-start is within the loaded image bounds to prevent a crafted
+  // FIT payload from redirecting Stage2 execution to an arbitrary address.
+  {
+    EFI_PHYSICAL_ADDRESS  ImageEnd;
+
+    if (Context->PayloadSize > MAX_UINT64 - Context->ImageBase) {
+      return FALSE;
+    }
+
+    ImageEnd = Context->ImageBase + Context->PayloadSize;
+    if ((Context->PayloadEntryPoint < Context->ImageBase) ||
+        (Context->PayloadEntryPoint >= ImageEnd)) {
+      return FALSE;
+    }
+  }
+
   Context->RelocateTableCount = (Context->PayloadEntrySize - (Context->RelocateTableOffset - Context->PayloadEntryOffset)) / sizeof (FIT_RELOCATE_ITEM);
 
   return TRUE;

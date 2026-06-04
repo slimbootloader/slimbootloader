@@ -75,6 +75,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #define USB_HUB_REQ_SET_DEPTH               12
 
+#define USB_MAX_HUB_PORTS_SUPPORTED         15
+
 #define MAXBYTES  8
 #pragma pack(1)
 //

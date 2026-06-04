@@ -13,6 +13,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 USB_IO_CALLBACK        mUsbIoCb;
 
+#define USB_MAX_DEVICE_ADDRESS   127
+#define USB_MAX_ENUM_TIER        5
+
 //
 // UsbIo PPI interface function
 //
@@ -207,6 +210,14 @@ PeiHubEnumeration (
         NewPeiUsbDevice->Port             = (UINT8)Index;
         NewPeiUsbDevice->Parent           = &PeiUsbDevice->UsbIoPpi;
 
+        if (NewPeiUsbDevice->Tier > USB_MAX_ENUM_TIER) {
+          DEBUG ((DEBUG_ERROR, "PeiHubEnumeration: Tier %d exceeds max tier %d\n",
+            NewPeiUsbDevice->Tier,
+            USB_MAX_ENUM_TIER));
+          FreePages (NewPeiUsbDevice, MemPages);
+          continue;
+        }
+
         if (((PortStatus.PortChangeStatus & USB_PORT_STAT_C_RESET) == 0) ||
             ((PortStatus.PortStatus & (USB_PORT_STAT_CONNECTION | USB_PORT_STAT_ENABLE)) == 0)) {
           //
@@ -214,12 +225,16 @@ PeiHubEnumeration (
           //
           PeiResetHubPort (PeiServices, UsbIoPpi, (UINT8) (Index + 1));
 
-          PeiHubGetPortStatus (
-            PeiServices,
-            UsbIoPpi,
-            (UINT8) (Index + 1),
-            (UINT32 *) &PortStatus
-            );
+          Status = PeiHubGetPortStatus (
+                     PeiServices,
+                     UsbIoPpi,
+                     (UINT8) (Index + 1),
+                     (UINT32 *) &PortStatus
+                     );
+          if (EFI_ERROR (Status)) {
+            FreePages (NewPeiUsbDevice, MemPages);
+            continue;
+          }
         } else {
           PeiHubClearPortFeature (
             PeiServices,
@@ -262,56 +277,111 @@ PeiHubEnumeration (
                    );
 
         if (EFI_ERROR (Status)) {
+          FreePages (NewPeiUsbDevice, MemPages);
           continue;
         }
         DEBUG ((DEBUG_VERBOSE, "PeiHubEnumeration: PeiConfigureUsbDevice Success\n"));
-
-        Status = PeiServicesInstallPpi (&NewPeiUsbDevice->UsbIoPpiList);
 
         if (NewPeiUsbDevice->InterfaceDesc->InterfaceClass == 0x09) {
           NewPeiUsbDevice->IsHub  = 0x1;
 
           Status = PeiDoHubConfig (PeiServices, NewPeiUsbDevice);
           if (EFI_ERROR (Status)) {
+            FreePages (NewPeiUsbDevice, MemPages);
             return Status;
           }
 
-          PeiHubEnumeration (PeiServices, NewPeiUsbDevice, CurrentAddress);
+          Status = PeiHubEnumeration (PeiServices, NewPeiUsbDevice, CurrentAddress);
+          if (EFI_ERROR (Status)) {
+            FreePages (NewPeiUsbDevice, MemPages);
+            return Status;
+          }
         }
 
-        for (InterfaceIndex = 1; InterfaceIndex < NewPeiUsbDevice->ConfigDesc->NumInterfaces; InterfaceIndex++) {
-          //
-          // Begin to deal with the new device
-          //
-          MemPages = sizeof (PEI_USB_DEVICE) / EFI_PAGE_SIZE + 1;
-          Status = PeiServicesAllocatePages (
-                     EfiBootServicesCode,
-                     MemPages,
-                     &AllocateAddress
-                     );
-          if (EFI_ERROR (Status)) {
-            return EFI_OUT_OF_RESOURCES;
-          }
-          CopyMem ((VOID *) (UINTN)AllocateAddress, NewPeiUsbDevice, sizeof (PEI_USB_DEVICE));
-          NewPeiUsbDevice = (PEI_USB_DEVICE *) ((UINTN) AllocateAddress);
-          NewPeiUsbDevice->AllocateAddress  = (UINTN) AllocateAddress;
-          NewPeiUsbDevice->UsbIoPpiList.Ppi = &NewPeiUsbDevice->UsbIoPpi;
-          NewPeiUsbDevice->InterfaceDesc = NewPeiUsbDevice->InterfaceDescList[InterfaceIndex];
-          for (EndpointIndex = 0; EndpointIndex < NewPeiUsbDevice->InterfaceDesc->NumEndpoints; EndpointIndex++) {
-            NewPeiUsbDevice->EndpointDesc[EndpointIndex] = NewPeiUsbDevice->EndpointDescList[InterfaceIndex][EndpointIndex];
-          }
+        Status = PeiServicesInstallPpi (&NewPeiUsbDevice->UsbIoPpiList);
+        if (EFI_ERROR (Status)) {
+          FreePages (NewPeiUsbDevice, MemPages);
+          continue;
+        }
 
-          Status = PeiServicesInstallPpi (&NewPeiUsbDevice->UsbIoPpiList);
+        {
+          // Keep the original (first-interface) device pointer stable so that
+          // (a) the loop condition is never evaluated against freed memory, and
+          // (b) every clone is always made from the same source, giving a
+          //     constant DataDelta and avoiding chained-delta fragility.
+          PEI_USB_DEVICE  *BaseDevice    = NewPeiUsbDevice;
+          PEI_USB_DEVICE  *ClonedDevice;
+          UINTN            NumInterfaces = BaseDevice->ConfigDesc->NumInterfaces;
+          UINTN            IfIdx;
+          UINTN            EpIdx;
+          INTN             DataDelta;
 
-          if (NewPeiUsbDevice->InterfaceDesc->InterfaceClass == 0x09) {
-            NewPeiUsbDevice->IsHub  = 0x1;
-
-            Status = PeiDoHubConfig (PeiServices, NewPeiUsbDevice);
+          for (InterfaceIndex = 1; InterfaceIndex < NumInterfaces; InterfaceIndex++) {
+            //
+            // Clone the base (first-interface) device for each additional interface.
+            //
+            MemPages = sizeof (PEI_USB_DEVICE) / EFI_PAGE_SIZE + 1;
+            Status = PeiServicesAllocatePages (
+                       EfiBootServicesCode,
+                       MemPages,
+                       &AllocateAddress
+                       );
             if (EFI_ERROR (Status)) {
-              return Status;
+              return EFI_OUT_OF_RESOURCES;
             }
 
-            PeiHubEnumeration (PeiServices, NewPeiUsbDevice, CurrentAddress);
+            CopyMem ((VOID *) (UINTN)AllocateAddress, BaseDevice, sizeof (PEI_USB_DEVICE));
+            ClonedDevice = (PEI_USB_DEVICE *) ((UINTN) AllocateAddress);
+            ClonedDevice->AllocateAddress  = (UINTN) AllocateAddress;
+            ClonedDevice->UsbIoPpiList.Ppi = &ClonedDevice->UsbIoPpi;
+
+            // Relocate all ConfigurationData-relative pointers from the base
+            // allocation to the equivalent offset in the new copy.
+            DataDelta = (INTN)ClonedDevice->ConfigurationData -
+                        (INTN)BaseDevice->ConfigurationData;
+            if (ClonedDevice->ConfigDesc != NULL) {
+              ClonedDevice->ConfigDesc = (EFI_USB_CONFIG_DESCRIPTOR *)((UINT8 *)ClonedDevice->ConfigDesc + DataDelta);
+            }
+
+            for (IfIdx = 0; IfIdx < MAX_INTERFACE; IfIdx++) {
+              if (ClonedDevice->InterfaceDescList[IfIdx] != NULL) {
+                ClonedDevice->InterfaceDescList[IfIdx] =
+                  (EFI_USB_INTERFACE_DESCRIPTOR *)((UINT8 *)ClonedDevice->InterfaceDescList[IfIdx] + DataDelta);
+              }
+              for (EpIdx = 0; EpIdx < MAX_ENDPOINT; EpIdx++) {
+                if (ClonedDevice->EndpointDescList[IfIdx][EpIdx] != NULL) {
+                  ClonedDevice->EndpointDescList[IfIdx][EpIdx] =
+                    (EFI_USB_ENDPOINT_DESCRIPTOR *)((UINT8 *)ClonedDevice->EndpointDescList[IfIdx][EpIdx] + DataDelta);
+                }
+              }
+            }
+
+            ClonedDevice->InterfaceDesc = ClonedDevice->InterfaceDescList[InterfaceIndex];
+            for (EndpointIndex = 0; EndpointIndex < ClonedDevice->InterfaceDesc->NumEndpoints; EndpointIndex++) {
+              ClonedDevice->EndpointDesc[EndpointIndex] = ClonedDevice->EndpointDescList[InterfaceIndex][EndpointIndex];
+            }
+
+            if (ClonedDevice->InterfaceDesc->InterfaceClass == 0x09) {
+              ClonedDevice->IsHub  = 0x1;
+
+              Status = PeiDoHubConfig (PeiServices, ClonedDevice);
+              if (EFI_ERROR (Status)) {
+                FreePages (ClonedDevice, MemPages);
+                return Status;
+              }
+
+              Status = PeiHubEnumeration (PeiServices, ClonedDevice, CurrentAddress);
+              if (EFI_ERROR (Status)) {
+                FreePages (ClonedDevice, MemPages);
+                return Status;
+              }
+            }
+
+            Status = PeiServicesInstallPpi (&ClonedDevice->UsbIoPpiList);
+            if (EFI_ERROR (Status)) {
+              FreePages (ClonedDevice, MemPages);
+              continue;  // safe: BaseDevice is untouched; NumInterfaces is a local
+            }
           }
         }
       }
@@ -354,13 +424,13 @@ PeiUsbEnumeration (
 
   CurrentAddress = 0;
   if (Usb2HcPpi != NULL) {
-    Usb2HcPpi->GetRootHubPortNumber (
+    Status = Usb2HcPpi->GetRootHubPortNumber (
       PeiServices,
       Usb2HcPpi,
       (UINT8 *) &NumOfRootPort
       );
   } else if (UsbHcPpi != NULL) {
-    UsbHcPpi->GetRootHubPortNumber (
+    Status = UsbHcPpi->GetRootHubPortNumber (
       PeiServices,
       UsbHcPpi,
       (UINT8 *) &NumOfRootPort
@@ -370,6 +440,11 @@ PeiUsbEnumeration (
     return EFI_INVALID_PARAMETER;
   }
 
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "PeiUsbEnumeration: GetRootHubPortNumber failed: %r\n", Status));
+    return Status;
+  }
+
   DEBUG ((DEBUG_VERBOSE, "PeiUsbEnumeration: NumOfRootPort: %x\n", NumOfRootPort));
 
   for (Index = 0; Index < NumOfRootPort; Index++) {
@@ -377,20 +452,26 @@ PeiUsbEnumeration (
     // First get root port status to detect changes happen
     //
     if (Usb2HcPpi != NULL) {
-      Usb2HcPpi->GetRootHubPortStatus (
+      Status = Usb2HcPpi->GetRootHubPortStatus (
         PeiServices,
         Usb2HcPpi,
         (UINT8) Index,
         &PortStatus
         );
     } else {
-      UsbHcPpi->GetRootHubPortStatus (
+      Status = UsbHcPpi->GetRootHubPortStatus (
         PeiServices,
         UsbHcPpi,
         (UINT8) Index,
         &PortStatus
         );
     }
+
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "PeiUsbEnumeration: GetRootHubPortStatus failed on port %d: %r\n", Index, Status));
+      continue;
+    }
+
     DEBUG ((DEBUG_VERBOSE, "USB Status --- Port: %x ConnectChange[%04x] Status[%04x]\n", Index, PortStatus.PortChangeStatus,
             PortStatus.PortStatus));
     //
@@ -451,19 +532,24 @@ PeiUsbEnumeration (
             );
 
           if (Usb2HcPpi != NULL) {
-            Usb2HcPpi->GetRootHubPortStatus (
-              PeiServices,
-              Usb2HcPpi,
-              (UINT8) Index,
-              &PortStatus
-              );
+            Status = Usb2HcPpi->GetRootHubPortStatus (
+                       PeiServices,
+                       Usb2HcPpi,
+                       (UINT8) Index,
+                       &PortStatus
+                       );
           } else {
-            UsbHcPpi->GetRootHubPortStatus (
-              PeiServices,
-              UsbHcPpi,
-              (UINT8) Index,
-              &PortStatus
-              );
+            Status = UsbHcPpi->GetRootHubPortStatus (
+                       PeiServices,
+                       UsbHcPpi,
+                       (UINT8) Index,
+                       &PortStatus
+                       );
+          }
+
+          if (EFI_ERROR (Status)) {
+            FreePages (PeiUsbDevice, MemPages);
+            continue;
           }
         } else {
           if (Usb2HcPpi != NULL) {
@@ -507,56 +593,117 @@ PeiUsbEnumeration (
                    );
 
         if (EFI_ERROR (Status)) {
+          FreePages (PeiUsbDevice, MemPages);
           continue;
         }
         DEBUG ((DEBUG_VERBOSE, "PeiUsbEnumeration: PeiConfigureUsbDevice Success\n"));
-
-        Status = PeiServicesInstallPpi (&PeiUsbDevice->UsbIoPpiList);
 
         if (PeiUsbDevice->InterfaceDesc->InterfaceClass == 0x09) {
           PeiUsbDevice->IsHub = 0x1;
 
           Status = PeiDoHubConfig (PeiServices, PeiUsbDevice);
           if (EFI_ERROR (Status)) {
+            FreePages (PeiUsbDevice, MemPages);
             return Status;
           }
 
-          PeiHubEnumeration (PeiServices, PeiUsbDevice, &CurrentAddress);
+          Status = PeiHubEnumeration (PeiServices, PeiUsbDevice, &CurrentAddress);
+          if (EFI_ERROR (Status)) {
+            FreePages (PeiUsbDevice, MemPages);
+            return Status;
+          }
         }
 
-        for (InterfaceIndex = 1; InterfaceIndex < PeiUsbDevice->ConfigDesc->NumInterfaces; InterfaceIndex++) {
-          //
-          // Begin to deal with the new device
-          //
-          MemPages = sizeof (PEI_USB_DEVICE) / EFI_PAGE_SIZE + 1;
-          Status = PeiServicesAllocatePages (
-                     EfiBootServicesCode,
-                     MemPages,
-                     &AllocateAddress
-                     );
-          if (EFI_ERROR (Status)) {
-            return EFI_OUT_OF_RESOURCES;
-          }
-          CopyMem ((VOID *) (UINTN)AllocateAddress, PeiUsbDevice, sizeof (PEI_USB_DEVICE));
-          PeiUsbDevice = (PEI_USB_DEVICE *) ((UINTN) AllocateAddress);
-          PeiUsbDevice->AllocateAddress  = (UINTN) AllocateAddress;
-          PeiUsbDevice->UsbIoPpiList.Ppi = &PeiUsbDevice->UsbIoPpi;
-          PeiUsbDevice->InterfaceDesc = PeiUsbDevice->InterfaceDescList[InterfaceIndex];
-          for (EndpointIndex = 0; EndpointIndex < PeiUsbDevice->InterfaceDesc->NumEndpoints; EndpointIndex++) {
-            PeiUsbDevice->EndpointDesc[EndpointIndex] = PeiUsbDevice->EndpointDescList[InterfaceIndex][EndpointIndex];
-          }
+        //
+        // Install UsbIo PPI for the new device only after successful configuration and hub enumeration
+        //
+        Status = PeiServicesInstallPpi (&PeiUsbDevice->UsbIoPpiList);
+        if (EFI_ERROR (Status)) {
+          FreePages (PeiUsbDevice, MemPages);
+          continue;
+        }
 
-          Status = PeiServicesInstallPpi (&PeiUsbDevice->UsbIoPpiList);
+        {
+          // Keep the original (first-interface) device pointer stable so that
+          // (a) the loop condition is never evaluated against freed memory, and
+          // (b) every clone is always made from the same source, giving a
+          //     constant DataDelta and avoiding chained-delta fragility.
+          PEI_USB_DEVICE  *BaseDevice    = PeiUsbDevice;
+          PEI_USB_DEVICE  *ClonedDevice;
+          UINTN            NumInterfaces = BaseDevice->ConfigDesc->NumInterfaces;
+          UINTN            IfIdx;
+          UINTN            EpIdx;
+          INTN             DataDelta;
 
-          if (PeiUsbDevice->InterfaceDesc->InterfaceClass == 0x09) {
-            PeiUsbDevice->IsHub = 0x1;
-
-            Status = PeiDoHubConfig (PeiServices, PeiUsbDevice);
+          for (InterfaceIndex = 1; InterfaceIndex < NumInterfaces; InterfaceIndex++) {
+            //
+            // Clone the base (first-interface) device for each additional interface.
+            //
+            MemPages = sizeof (PEI_USB_DEVICE) / EFI_PAGE_SIZE + 1;
+            Status = PeiServicesAllocatePages (
+                       EfiBootServicesCode,
+                       MemPages,
+                       &AllocateAddress
+                       );
             if (EFI_ERROR (Status)) {
-              return Status;
+              return EFI_OUT_OF_RESOURCES;
             }
 
-            PeiHubEnumeration (PeiServices, PeiUsbDevice, &CurrentAddress);
+            CopyMem ((VOID *) (UINTN)AllocateAddress, BaseDevice, sizeof (PEI_USB_DEVICE));
+            ClonedDevice = (PEI_USB_DEVICE *) ((UINTN) AllocateAddress);
+            ClonedDevice->AllocateAddress  = (UINTN) AllocateAddress;
+            ClonedDevice->UsbIoPpiList.Ppi = &ClonedDevice->UsbIoPpi;
+
+            // Relocate all ConfigurationData-relative pointers from the base
+            // allocation to the equivalent offset in the new copy.
+            DataDelta = (INTN)ClonedDevice->ConfigurationData -
+                        (INTN)BaseDevice->ConfigurationData;
+            if (ClonedDevice->ConfigDesc != NULL) {
+              ClonedDevice->ConfigDesc = (EFI_USB_CONFIG_DESCRIPTOR *)((UINT8 *)ClonedDevice->ConfigDesc + DataDelta);
+            }
+
+            for (IfIdx = 0; IfIdx < MAX_INTERFACE; IfIdx++) {
+              if (ClonedDevice->InterfaceDescList[IfIdx] != NULL) {
+                ClonedDevice->InterfaceDescList[IfIdx] =
+                  (EFI_USB_INTERFACE_DESCRIPTOR *)((UINT8 *)ClonedDevice->InterfaceDescList[IfIdx] + DataDelta);
+              }
+              for (EpIdx = 0; EpIdx < MAX_ENDPOINT; EpIdx++) {
+                if (ClonedDevice->EndpointDescList[IfIdx][EpIdx] != NULL) {
+                  ClonedDevice->EndpointDescList[IfIdx][EpIdx] =
+                    (EFI_USB_ENDPOINT_DESCRIPTOR *)((UINT8 *)ClonedDevice->EndpointDescList[IfIdx][EpIdx] + DataDelta);
+                }
+              }
+            }
+
+            ClonedDevice->InterfaceDesc = ClonedDevice->InterfaceDescList[InterfaceIndex];
+            for (EndpointIndex = 0; EndpointIndex < ClonedDevice->InterfaceDesc->NumEndpoints; EndpointIndex++) {
+              ClonedDevice->EndpointDesc[EndpointIndex] = ClonedDevice->EndpointDescList[InterfaceIndex][EndpointIndex];
+            }
+
+            if (ClonedDevice->InterfaceDesc->InterfaceClass == 0x09) {
+              ClonedDevice->IsHub = 0x1;
+
+              Status = PeiDoHubConfig (PeiServices, ClonedDevice);
+              if (EFI_ERROR (Status)) {
+                FreePages (ClonedDevice, MemPages);
+                return Status;
+              }
+
+              Status = PeiHubEnumeration (PeiServices, ClonedDevice, &CurrentAddress);
+              if (EFI_ERROR (Status)) {
+                FreePages (ClonedDevice, MemPages);
+                return Status;
+              }
+            }
+
+            //
+            // Install UsbIo PPI for the new device only after successful configuration and hub enumeration
+            //
+            Status = PeiServicesInstallPpi (&ClonedDevice->UsbIoPpiList);
+            if (EFI_ERROR (Status)) {
+              FreePages (ClonedDevice, MemPages);
+              continue;  // safe: BaseDevice is untouched; NumInterfaces is a local
+            }
           }
         }
       } else {
@@ -594,6 +741,7 @@ PeiConfigureUsbDevice (
   EFI_USB_DEVICE_DESCRIPTOR   DeviceDescriptor;
   EFI_STATUS                  Status;
   PEI_USB_IO_PPI              *UsbIoPpi;
+  UINT8                       AssignedAddress;
   UINT8                       Retry;
   UINT8                       StrLoop;
   UINT32                      StrOffset;
@@ -634,12 +782,26 @@ PeiConfigureUsbDevice (
     PeiUsbDevice->MaxPacketSize0 = DeviceDescriptor.MaxPacketSize0;
   }
 
-  (*DeviceAddress) ++;
+  //
+  // MaxPacketSize0 = 0 is never valid per USB 2.0 §9.6.1
+  // (valid: 8, 16, 32, 64) and USB 3.0 §9.6.1 (valid: 512).
+  //
+  if (PeiUsbDevice->MaxPacketSize0 == 0) {
+    DEBUG ((DEBUG_ERROR, "PeiConfigureUsbDevice: MaxPacketSize0 is 0, rejecting device\n"));
+    return EFI_DEVICE_ERROR;
+  }
+
+  if (*DeviceAddress >= USB_MAX_DEVICE_ADDRESS) {
+    DEBUG ((DEBUG_ERROR, "PeiConfigureUsbDevice: USB device address exhausted\n"));
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  AssignedAddress = (UINT8) (*DeviceAddress + 1);
 
   Status = PeiUsbSetDeviceAddress (
              PeiServices,
              UsbIoPpi,
-             *DeviceAddress
+             AssignedAddress
              );
 
   if (EFI_ERROR (Status)) {
@@ -648,7 +810,8 @@ PeiConfigureUsbDevice (
   }
   MicroSecondDelay (USB_SET_DEVICE_ADDRESS_STALL);
 
-  PeiUsbDevice->DeviceAddress = *DeviceAddress;
+  *DeviceAddress = AssignedAddress;
+  PeiUsbDevice->DeviceAddress = AssignedAddress;
 
   //
   // Get whole USB device descriptor
@@ -685,7 +848,10 @@ PeiConfigureUsbDevice (
       StringDescriptor = (EFI_USB_STRING_DESCRIPTOR *)PeiUsbDevice->ConfigurationData;
       StrOffset = OFFSET_OF(EFI_USB_STRING_DESCRIPTOR, String);
       if (StringDescriptor->Length > StrOffset) {
-        WcharCnt = ARRAY_SIZE(PeiUsbDevice->ProductName) - 1;
+        //
+        // Pass the full buffer size (including null terminator slot) to StrnCatS/StrCatS.
+        //
+        WcharCnt = ARRAY_SIZE(PeiUsbDevice->ProductName);
         StrnCatS (PeiUsbDevice->ProductName, WcharCnt,
                   StringDescriptor->String,  (StringDescriptor->Length - StrOffset) / sizeof(CHAR16));
         StrCatS  (PeiUsbDevice->ProductName, WcharCnt, L" ");
@@ -769,6 +935,14 @@ PeiUsbGetAllConfiguration (
   ConfigDescLength  = ConfigDesc->TotalLength;
 
   //
+  // Reject TotalLength values that exceed the fixed ConfigurationData buffer (1024 bytes)
+  //
+  if (ConfigDescLength > sizeof (PeiUsbDevice->ConfigurationData)) {
+    DEBUG ((DEBUG_ERROR, "PeiUsbGetAllConfiguration: ConfigDescLength %d exceeds buffer size\n", ConfigDescLength));
+    return EFI_DEVICE_ERROR;
+  }
+
+  //
   // Then we get the total descriptors for this configuration
   //
   Status = PeiUsbGetDescriptor (
@@ -806,6 +980,20 @@ PeiUsbGetAllConfiguration (
   Ptr += sizeof (EFI_USB_CONFIG_DESCRIPTOR);
   LengthLeft = ConfigDescLength - SkipBytes - sizeof (EFI_USB_CONFIG_DESCRIPTOR);
 
+  //
+  // Reject NumInterfaces values that exceed MAX_INTERFACE or are zero
+  //
+  if (PeiUsbDevice->ConfigDesc->NumInterfaces == 0) {
+    DEBUG ((DEBUG_ERROR, "PeiUsbGetAllConfiguration: NumInterfaces is zero\n"));
+    return EFI_DEVICE_ERROR;
+  }
+
+  if (PeiUsbDevice->ConfigDesc->NumInterfaces > MAX_INTERFACE) {
+    DEBUG ((DEBUG_ERROR, "PeiUsbGetAllConfiguration: NumInterfaces %d exceeds MAX_INTERFACE\n",
+            PeiUsbDevice->ConfigDesc->NumInterfaces));
+    return EFI_DEVICE_ERROR;
+  }
+
   for (InterfaceIndex = 0; InterfaceIndex < PeiUsbDevice->ConfigDesc->NumInterfaces; InterfaceIndex++) {
 
     //
@@ -823,6 +1011,14 @@ PeiUsbGetAllConfiguration (
       return Status;
     }
 
+    //
+    // Guard against LengthLeft underflow before subtracting the skipped bytes and interface descriptor size.
+    //
+    if (LengthLeft < SkipBytes + sizeof (EFI_USB_INTERFACE_DESCRIPTOR)) {
+      DEBUG ((DEBUG_ERROR, "PeiUsbGetAllConfiguration: LengthLeft underflow at interface %d\n", InterfaceIndex));
+      return EFI_DEVICE_ERROR;
+    }
+
     Ptr += SkipBytes;
     if (InterfaceIndex == 0) {
       PeiUsbDevice->InterfaceDesc = (EFI_USB_INTERFACE_DESCRIPTOR *) Ptr;
@@ -837,7 +1033,10 @@ PeiUsbGetAllConfiguration (
     // Parse all the endpoint descriptor within this interface
     //
     NumOfEndpoint = PeiUsbDevice->InterfaceDescList[InterfaceIndex]->NumEndpoints;
-    ASSERT (NumOfEndpoint <= MAX_ENDPOINT);
+    if (NumOfEndpoint > MAX_ENDPOINT) {
+      DEBUG ((DEBUG_ERROR, "PeiUsbGetAllConfiguration: NumEndpoints %d exceeds MAX_ENDPOINT\n", NumOfEndpoint));
+      return EFI_DEVICE_ERROR;
+    }
 
     for (Index = 0; Index < NumOfEndpoint; Index++) {
       //
@@ -855,11 +1054,29 @@ PeiUsbGetAllConfiguration (
         return Status;
       }
 
+      //
+      // Guard against LengthLeft underflow before subtracting
+      // the skipped bytes and endpoint descriptor size.
+      //
+      if (LengthLeft < SkipBytes + sizeof (EFI_USB_ENDPOINT_DESCRIPTOR)) {
+        DEBUG ((DEBUG_ERROR, "PeiUsbGetAllConfiguration: LengthLeft underflow at endpoint %d\n", Index));
+        return EFI_DEVICE_ERROR;
+      }
+
       Ptr += SkipBytes;
       if (InterfaceIndex == 0) {
         PeiUsbDevice->EndpointDesc[Index] = (EFI_USB_ENDPOINT_DESCRIPTOR *) Ptr;
       }
       PeiUsbDevice->EndpointDescList[InterfaceIndex][Index] = (EFI_USB_ENDPOINT_DESCRIPTOR *) Ptr;
+
+      //
+      // MaxPacketSize = 0 is never valid for any endpoint type.
+      //
+      if (PeiUsbDevice->EndpointDescList[InterfaceIndex][Index]->MaxPacketSize == 0) {
+        DEBUG ((DEBUG_ERROR, "PeiUsbGetAllConfiguration: MaxPacketSize 0 at if %d ep %d\n",
+                InterfaceIndex, Index));
+        return EFI_DEVICE_ERROR;
+      }
 
       Ptr += sizeof (EFI_USB_ENDPOINT_DESCRIPTOR);
       LengthLeft -= SkipBytes;

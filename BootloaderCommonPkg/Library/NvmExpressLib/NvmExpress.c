@@ -117,9 +117,34 @@ EnumerateNvmeDevNamespace (
     Flbas     = NamespaceData->Flbas;
     LbaFmtIdx = Flbas & 0xF;
     Lbads     = NamespaceData->LbaFormat[LbaFmtIdx].Lbads;
+
+    //
+    // Lbads is device-controlled (UINT8, 0–255).
+    // NVMe spec defines valid sector sizes as 512B–64KB (Lbads 9–16).
+    // Lbads < 9 produces unreasonably small block sizes (1–256 bytes),
+    // causing extreme loop counts and UINT32 Bytes overflows in ReadSectors.
+    // Lbads > 31 would shift a UINT32 by >= 32 bits (undefined behaviour).
+    // Lbads 17–31 produces block sizes (128KB–2GB) that overflow DMA math.
+    //
+    if ((Lbads < 9) || (Lbads > 16)) {
+      DEBUG ((DEBUG_ERROR, "EnumerateNvmeDevNamespace: Invalid Lbads %d for namespace %d\n",
+              Lbads, NamespaceId));
+      Status = EFI_DEVICE_ERROR;
+      goto Exit;
+    }
     Device->Media.BlockSize = (UINT32)1 << Lbads;
 
-    Device->Media.LastBlock                     = NamespaceData->Nsze - 1;
+    //
+    // Nsze = 0 causes LastBlock = UINT64_MAX (wraps),
+    // bypassing the LBA out-of-bounds check in NvmeBlockIoReadBlocks and
+    // allowing reads from arbitrary LBA addresses.
+    //
+    if (NamespaceData->Nsze == 0) {
+      DEBUG ((DEBUG_ERROR, "EnumerateNvmeDevNamespace: Nsze is 0 for namespace %d\n", NamespaceId));
+      Status = EFI_DEVICE_ERROR;
+      goto Exit;
+    }
+    Device->Media.LastBlock = NamespaceData->Nsze - 1;
     Device->Media.LogicalBlocksPerPhysicalBlock = 1;
     Device->Media.LowestAlignedLba              = 1;
 
@@ -142,10 +167,25 @@ EnumerateNvmeDevNamespace (
     Device->StorageSecurity.SendData    = NvmeStorageSecuritySendData;
 
     //
+    // NamespaceId is 1-based and device-controlled via
+    // NvmeIdentifyController Nn field.  Guard the array index to prevent an
+    // out-of-bounds write into adjacent globals when a malicious or buggy
+    // device reports more namespaces than the fixed array can hold.
+    //
+    if (NamespaceId > ARRAY_SIZE (mMultiNvmeDrive)) {
+      DEBUG ((DEBUG_ERROR, "EnumerateNvmeDevNamespace: NamespaceId %d exceeds mMultiNvmeDrive capacity\n",
+              NamespaceId));
+      FreePool (Device);
+      Status = EFI_UNSUPPORTED;
+      goto Exit;
+    }
+
+    //
     // Create DiskInfo Protocol instance
     //
     CopyMem (&Device->NamespaceData, NamespaceData, sizeof (NVME_ADMIN_NAMESPACE_DATA));
     InitializeDiskInfo (Device);
+
     mMultiNvmeDrive[NamespaceId - 1] = Device; //NamespaceId is 1 based
 
     if ((Private->ControllerData->Oacs & SECURITY_SEND_RECEIVE_SUPPORTED) == 0) {
@@ -302,9 +342,13 @@ NvmeInitialize (
 
   if (NvmeInitMode == DevDeinit) {
     if (mNvmeCtrlPrivate != NULL) {
+      //
+      // Save PciBaseAddr before NvmeDeInitialize frees the Private structure.
+      //
+      UINTN SavedPciBase = mNvmeCtrlPrivate->PciBaseAddr;
       NvmeDeInitialize (mNvmeCtrlPrivate);
       // Disable Bus Master
-      MmioAnd16 (mNvmeCtrlPrivate->PciBaseAddr + PCI_COMMAND_OFFSET,
+      MmioAnd16 (SavedPciBase + PCI_COMMAND_OFFSET,
                  (UINT16)~(EFI_PCI_COMMAND_IO_SPACE | EFI_PCI_COMMAND_MEMORY_SPACE | EFI_PCI_COMMAND_BUS_MASTER));
       mNvmeCtrlPrivate = NULL;
     }

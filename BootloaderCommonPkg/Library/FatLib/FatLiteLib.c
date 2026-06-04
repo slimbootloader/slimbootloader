@@ -212,6 +212,10 @@ FatGetCacheBlock (
   CacheBuffer->Lba            = Lba;
   CacheBuffer->Size           = PrivateData->BlockDevice[BlockDeviceNo].BlockSize;
 
+  if ((CacheBuffer->Size == 0) || (CacheBuffer->Size > PEI_FAT_MAX_BLOCK_SIZE)) {
+     return EFI_DEVICE_ERROR;
+  }
+
   //
   // Read in the data
   //
