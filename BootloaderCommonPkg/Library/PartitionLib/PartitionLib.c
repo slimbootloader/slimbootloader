@@ -184,7 +184,7 @@ FindMbrPartitions (
   // We have a valid mbr - add each partition
   //
   for (Index = 0; Index < MAX_MBR_PARTITIONS; Index++) {
-    if (Mbr->Partition[Index].OSIndicator == 0x00 || UNPACK_INT32 (Mbr->Partition[Index].SizeInLBA) == 0) {
+    if (Mbr->Partition[Index].OSIndicator == 0x00 || UNPACK_UINT32 (Mbr->Partition[Index].SizeInLBA) == 0) {
       //
       // Don't use null MBR entries
       //
@@ -192,12 +192,15 @@ FindMbrPartitions (
     }
     //
     // Register this partition
+    // Use UNPACK_UINT32 (not UNPACK_INT32) for SizeInLBA to prevent
+    // sign-extension. A malicious MBR with SizeInLBA set to a large negative
+    // value via UNPACK_INT32 would wrap LastBlock to near UINT64_MAX.
     //
     if (PartBlockDev->BlockDeviceCount < PART_MAX_BLOCK_DEVICE) {
       Status                      = EFI_SUCCESS;
       BlockDev                    = & (PartBlockDev->BlockDevice[PartBlockDev->BlockDeviceCount]);
       BlockDev->StartBlock        = UNPACK_UINT32 (Mbr->Partition[Index].StartingLBA);
-      BlockDev->LastBlock         = BlockDev->StartBlock + UNPACK_INT32 (Mbr->Partition[Index].SizeInLBA) - 1;
+      BlockDev->LastBlock         = BlockDev->StartBlock + UNPACK_UINT32 (Mbr->Partition[Index].SizeInLBA) - 1;
       PartBlockDev->BlockDeviceCount++;
     }
   }
@@ -385,9 +388,67 @@ FindGptPartitions (
     }
   }
 
+  //
+  // Guard all device-controlled GPT header fields
+  // before using them in allocations or loops.
+  //
+  // SizeOfPartitionEntry must be >= sizeof(EFI_PARTITION_ENTRY) (128)
+  // per UEFI spec ("shall be set to 128 x 2^n, n >= 0").
+  //
+  if (Gpt->SizeOfPartitionEntry < sizeof (EFI_PARTITION_ENTRY)) {
+    DEBUG ((DEBUG_ERROR, "FindGptPartitions: SizeOfPartitionEntry %d < %d (invalid)\n",
+            Gpt->SizeOfPartitionEntry, (UINT32)sizeof (EFI_PARTITION_ENTRY)));
+    Status = EFI_UNSUPPORTED;
+    goto Done;
+  }
+
+  // Previously there was a guard for rejecting NumberOfPartitionEntries > 128,
+  // but the UEFI spec allows for more than 128 entries, so we need to allow for that but
+  // still guard against unreasonably large values. So we add back guard to reject unreasonably
+  // large NumberOfPartitionEntries.
+  // The UEFI spec (§5.3.2) requires at least 128 entries but potentially larger value,
+  // so a hard cap at 128 would reject legitimate disks (e.g. some ISO images like Ubuntu
+  // distro or tools that create larger tables).  We use 8192 as a practical upper
+  // bound: with SizeOfPartitionEntry >= 128 this caps the allocation at
+  // around 1 MB, which is still sane for a sbl memory pool, while covering all
+  // potential real-world partition tables.
+  //
+  if (Gpt->NumberOfPartitionEntries > 8192) {
+    DEBUG ((DEBUG_ERROR, "FindGptPartitions: NumberOfPartitionEntries %d > 8192 (unreasonable)\n",
+            Gpt->NumberOfPartitionEntries));
+    Status = EFI_UNSUPPORTED;
+    goto Done;
+  }
+
+  //
+  // Detect UINTN overflow in NumberOfPartitionEntries * SizeOfPartitionEntry.
+  // Both fields are attacker-controlled; a crafted product can wrap to a small
+  // value, causing AllocatePool to succeed for a tiny buffer that
+  // MediaReadBlocks then overflows.
+  //
+  if (Gpt->NumberOfPartitionEntries != 0 &&
+      Gpt->SizeOfPartitionEntry > (MAX_UINTN / Gpt->NumberOfPartitionEntries)) {
+    DEBUG ((DEBUG_ERROR, "FindGptPartitions: ReadSize overflow (Entries=%d Size=%d)\n",
+            Gpt->NumberOfPartitionEntries, Gpt->SizeOfPartitionEntry));
+    Status = EFI_UNSUPPORTED;
+    goto Done;
+  }
+
   ReadSize = (UINTN)Gpt->NumberOfPartitionEntries * Gpt->SizeOfPartitionEntry;
-  ReadSize = (ReadSize % DevBlockInfo->BlockSize) == 0 ? ReadSize : DevBlockInfo->BlockSize * ((
-               ReadSize / DevBlockInfo->BlockSize) + 1);
+
+  //
+  // Detect overflow in the block-size rounding-up step.
+  //
+  if (DevBlockInfo->BlockSize != 0 && (ReadSize % DevBlockInfo->BlockSize) != 0) {
+    UINTN RoundedBlocks = ReadSize / DevBlockInfo->BlockSize + 1;
+    if (RoundedBlocks > (MAX_UINTN / DevBlockInfo->BlockSize)) {
+      DEBUG ((DEBUG_ERROR, "FindGptPartitions: ReadSize rounding overflow\n"));
+      Status = EFI_UNSUPPORTED;
+      goto Done;
+    }
+    ReadSize = DevBlockInfo->BlockSize * RoundedBlocks;
+  }
+
   GptEntries = (EFI_PARTITION_ENTRY *) AllocatePool (ReadSize);
   if (GptEntries == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
@@ -528,6 +589,10 @@ FindPartitions (
     return Status;
   }
 
+  if ((DevBlockInfo.BlockSize == 0) || (DevBlockInfo.BlockSize > PART_MAX_BLOCK_SIZE)) {
+    DEBUG ((DEBUG_ERROR, "Invalid/Unsupported block size: 0x%x\n", DevBlockInfo.BlockSize));
+    return EFI_INVALID_PARAMETER;
+  }
 
   PartBlockDev = (PART_BLOCK_DEVICE *) AllocateZeroPool (sizeof (PART_BLOCK_DEVICE));
   if (PartBlockDev == NULL) {

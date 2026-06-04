@@ -93,7 +93,7 @@ MarkBootParitionBpdt (
   }
 
   BpdtHeader->Signature = HeaderState;
-  if (HeaderSize != 0) {
+  if (HeaderSize != NULL) {
     *HeaderSize           = BPDT_SIZE;
   }
   return EFI_SUCCESS;
@@ -126,6 +126,9 @@ PlatformGetStage1AOffset (
 {
   EFI_STATUS                   Status;
   UINT32                       Offset;
+  UINT32                       FlashMapOffset;
+  UINT32                       FlashMapLimit;
+  UINT32                       EntryEnd;
   UINT8                       *Ptr;
   UINT32                       Index;
   UINT32                       RgnBase;
@@ -145,29 +148,67 @@ PlatformGetStage1AOffset (
   }
 
   // Search for Flash Map signature in image
+  Status      = EFI_NOT_FOUND;
   FlashMapPtr = NULL;
   Ptr         = (UINT8 *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
   BpOffset    = IsBackupPartition ? (RgnSize >> 1) : 0;
+  if (ImageHdr->UpdateImageSize < (FLASH_MAP_IN_FV_OFFSET + sizeof (UINT32))) {
+    DEBUG((DEBUG_ERROR, "Capsule image too small to contain flash map signature\n"));
+    return EFI_COMPROMISED_DATA;
+  }
+
+  FlashMapLimit = ImageHdr->UpdateImageSize - (FLASH_MAP_IN_FV_OFFSET + sizeof (UINT32));
   for (Offset = BpOffset; Offset < ImageHdr->UpdateImageSize; Offset += SIZE_4KB) {
-     if (*(UINT32 *)(Ptr + Offset + FLASH_MAP_IN_FV_OFFSET) == FLASH_MAP_SIG_HEADER) {
+     if (Offset > FlashMapLimit) {
+       break;
+     }
+
+     FlashMapOffset = Offset + FLASH_MAP_IN_FV_OFFSET;
+     if (*(UINT32 *)(Ptr + FlashMapOffset) == FLASH_MAP_SIG_HEADER) {
         // This is flash map
-        FlashMapPtr = (FLASH_MAP *)(Ptr + Offset + FLASH_MAP_IN_FV_OFFSET);
+        FlashMapPtr = (FLASH_MAP *)(Ptr + FlashMapOffset);
         break;
      }
   }
 
   if (FlashMapPtr != NULL) {
+    FlashMapOffset = (UINT32)((UINTN)FlashMapPtr - (UINTN)Ptr);
+    if ((ImageHdr->UpdateImageSize - FlashMapOffset) < FLASH_MAP_HEADER_SIZE) {
+      DEBUG((DEBUG_ERROR, "Flash map header exceeds capsule image bounds\n"));
+      return EFI_COMPROMISED_DATA;
+    }
+
+    if ((FlashMapPtr->Length < FLASH_MAP_HEADER_SIZE) ||
+        (FlashMapPtr->Length > (ImageHdr->UpdateImageSize - FlashMapOffset))) {
+      DEBUG((DEBUG_ERROR, "Flash map length out of capsule bounds: 0x%x\n", FlashMapPtr->Length));
+      return EFI_COMPROMISED_DATA;
+    }
+
     // Search for Stage1A in flash map
     MaxEntries = ((FlashMapPtr->Length - FLASH_MAP_HEADER_SIZE) / sizeof (FLASH_MAP_ENTRY_DESC));
     for (Index = 0; Index < MaxEntries; Index++) {
       EntryDesc = FlashMapPtr->EntryDesc[Index];
       if (EntryDesc.Signature == FLASH_MAP_SIG_STAGE1A) {
+        if ((EntryDesc.Size > 0) && (EntryDesc.Offset > (MAX_UINT32 - EntryDesc.Size))) {
+          DEBUG((DEBUG_ERROR, "Stage1A entry size causes overflow\n"));
+          return EFI_COMPROMISED_DATA;
+        }
+        EntryEnd = EntryDesc.Offset + EntryDesc.Size;
+        if ((EntryEnd < EntryDesc.Offset) || (EntryEnd > ImageHdr->UpdateImageSize)) {
+          DEBUG((DEBUG_ERROR, "Stage1A entry out of capsule bounds: Offset=0x%x Size=0x%x Payload=0x%x\n",
+                EntryDesc.Offset, EntryDesc.Size, ImageHdr->UpdateImageSize));
+          return EFI_COMPROMISED_DATA;
+        }
+
         *Base  = (UINT32)(UINTN)(Ptr + EntryDesc.Offset);
         *Size  = EntryDesc.Size;
         Status = EFI_SUCCESS;
         break;
       }
     }
+  } else {
+    DEBUG((DEBUG_ERROR, "Could not find flash map in capsule image\n"));
+    Status = EFI_NOT_FOUND;
   }
 
   if (EFI_ERROR(Status)) {

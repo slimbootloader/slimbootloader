@@ -72,6 +72,15 @@ ReadSectors (
 
   Private    = Device->Controller;
   BlockSize  = Device->Media.BlockSize;
+
+  //
+  // Guard against UINT32 overflow in Blocks * BlockSize.
+  // BlockSize >= 512 is guaranteed by the NVME-B Lbads validation, so the
+  // maximum safe Blocks value is 0xFFFFFFFF / BlockSize.
+  //
+  if (BlockSize == 0 || Blocks > (MAX_UINT32 / BlockSize)) {
+    return EFI_BAD_BUFFER_SIZE;
+  }
   Bytes      = Blocks * BlockSize;
 
   ZeroMem (&CommandPacket, sizeof (EFI_NVM_EXPRESS_PASS_THRU_COMMAND_PACKET));
@@ -135,6 +144,13 @@ WriteSectors (
 
   Private    = Device->Controller;
   BlockSize  = Device->Media.BlockSize;
+
+  //
+  // Guard against UINT32 overflow in Blocks * BlockSize.
+  //
+  if (BlockSize == 0 || Blocks > (MAX_UINT32 / BlockSize)) {
+    return EFI_BAD_BUFFER_SIZE;
+  }
   Bytes      = Blocks * BlockSize;
 
   ZeroMem (&CommandPacket, sizeof (EFI_NVM_EXPRESS_PASS_THRU_COMMAND_PACKET));

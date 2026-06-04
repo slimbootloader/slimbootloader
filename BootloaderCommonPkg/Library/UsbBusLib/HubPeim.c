@@ -317,6 +317,17 @@ PeiUsbHubReadDesc (
   }
 
   //
+  // Reject descriptors shorter than the fixed header portion
+  // (7 bytes: Length, DescriptorType, NbrPorts, HubCharacteristics[2],
+  // PwrOn2PwrGood, HubContrCurrent).
+  //
+  if (HubDescriptor->Length < 7) {
+    DEBUG ((DEBUG_ERROR, "PeiUsbHubReadDesc: descriptor Length %d too small (min 7)\n",
+            HubDescriptor->Length));
+    return EFI_DEVICE_ERROR;
+  }
+
+  //
   // Get the whole hub descriptor
   //
   return PeiGetHubDescriptor (PeiServices, PeiUsbDevice, UsbIoPpi, HubDescriptor->Length, HubDescriptor);
@@ -390,7 +401,10 @@ PeiDoHubConfig (
   //
   // The length field of descriptor is UINT8 type, so the buffer
   // with 256 bytes is enough to hold the descriptor data.
+  // Zero-initialize so that uninitialized fields are not used if the device
+  // returns a shorter descriptor than expected.
   //
+  ZeroMem (HubDescBuffer, sizeof (HubDescBuffer));
   HubDescriptor = (EFI_USB_HUB_DESCRIPTOR *) HubDescBuffer;
 
   //
@@ -406,7 +420,15 @@ PeiDoHubConfig (
     return EFI_DEVICE_ERROR;
   }
 
+  //
+  // Cap hub port count to USB spec maximum (15 for HS, 15 for SS)
+  //
   PeiUsbDevice->DownStreamPortNo = HubDescriptor->NbrPorts;
+  if (PeiUsbDevice->DownStreamPortNo > USB_MAX_HUB_PORTS_SUPPORTED) {
+    DEBUG ((DEBUG_ERROR, "PeiDoHubConfig: NbrPorts %d exceeds limit, clamping to %d\n",
+            PeiUsbDevice->DownStreamPortNo, USB_MAX_HUB_PORTS_SUPPORTED));
+    PeiUsbDevice->DownStreamPortNo = USB_MAX_HUB_PORTS_SUPPORTED;
+  }
 
   if (PeiUsbDevice->DeviceSpeed == EFI_USB_SPEED_SUPER) {
     DEBUG ((DEBUG_VERBOSE, "PeiDoHubConfig: Set Hub Depth as 0x%x\n", PeiUsbDevice->Tier));
