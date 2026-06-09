@@ -14,11 +14,11 @@
   VERSION_STRING       = 1.0
 
 [Sources]
-  m_82_c0662_0000011a.mcb # ARL S B0 Support
+  m_82_c0662_0000011f.mcb # ARL S B0 Support
 
 [UserExtensions.SBL."CloneRepo"]
   REPO   = https://github.com/slimbootloader/firmwareblob.git
-  COMMIT = 485ec6ccc8d502948554437ca9cdb64959ce8e34
+  COMMIT = b2c1cb936f53d8abb68330b75b715059a4851c93
 
 [UserExtensions.SBL."CopyList"]
-  Microcode/ArrowLake/m_82_c0662_0000011a.pdb  : Silicon/ArrowlakePkg/Arls/Microcode/m_82_c0662_0000011a.mcb
+  Microcode/ArrowLake/m_82_c0662_0000011f.pdb  : Silicon/ArrowlakePkg/Arls/Microcode/m_82_c0662_0000011f.mcb

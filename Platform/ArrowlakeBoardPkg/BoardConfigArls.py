@@ -24,7 +24,7 @@ class Board(BaseBoard):
 
         self.VERINFO_IMAGE_ID     = 'SB_ARLS'
         self.VERINFO_PROJ_MAJOR_VER = 1
-        self.VERINFO_PROJ_MINOR_VER = 3
+        self.VERINFO_PROJ_MINOR_VER = 4
         self.VERINFO_SVN            = 1
         self.VERINFO_BUILD_DATE     = time.strftime("%m/%d/%Y")
 
@@ -32,7 +32,7 @@ class Board(BaseBoard):
         self.BOARD_NAME           = 'arls'
         self.BOARD_PKG_NAME       = 'ArrowlakeBoardPkg'
         self.SILICON_PKG_NAME     = 'ArrowlakePkg'
-        self.FSP_IMAGE_ID         = '$ARLFSP$'
+        self.FSP_IMAGE_ID         = '$ARLFSPE'
         self._EXTRA_INC_PATH      = ['Silicon/ArrowlakePkg/Arls/Fsp']
         self._FSP_PATH_NAME       = 'Silicon/ArrowlakePkg/Arls/Fsp'
         self._SMBIOS_YAML_FILE    = os.path.join('Platform', self.BOARD_PKG_NAME, 'SmbiosStrings.yaml')
