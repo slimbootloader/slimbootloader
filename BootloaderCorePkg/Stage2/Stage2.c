@@ -435,7 +435,7 @@ S3ResumePath (
   }
 
   // Find Wake Vector and Jump to OS
-  FindAcpiWakeVectorAndJump (S3Data->AcpiBase);
+  FindAcpiWakeVectorAndJump ((VOID*)(UINTN)S3Data->FacsAddress);
 }
 
 /**
@@ -633,6 +633,21 @@ SecStartup (
   BoardInit (PrePciEnumeration);
   AddMeasurePoint (0x3090);
 
+  // Make sure to get Saved S3 info before Payload SwSmi call that sets SMRR
+  if (ACPI_ENABLED () && (BootMode == BOOT_ON_S3_RESUME)) {
+    S3Data = (S3_DATA *)LdrGlobal->S3DataPtr;
+    S3Data->FacsAddress = GetFacsAddressForS3();
+    S3Data->AcpiBase = (UINT32)GetAcpiBaseForS3();
+    if ((S3Data->FacsAddress == 0) ||
+        (S3Data->AcpiBase == 0) ||
+        RShiftU64(GetAcpiBaseForS3(), 32) != 0) {
+      DEBUG((DEBUG_ERROR, "ACPI S3 resume data check failed!\n"));
+      ASSERT(FALSE);
+      // Switch to normal boot path.
+      ResetSystem (EfiResetCold);
+    }
+  }
+
   if (FixedPcdGetBool (PcdPciEnumEnabled)) {
     MemPool = AllocateTemporaryMemory (0);
     DEBUG ((DEBUG_INIT, "PCI Enum\n"));
@@ -664,11 +679,11 @@ SecStartup (
     Status   = (PcdGet32 (PcdLoaderAcpiNvsSize) < GetAcpiGnvsSize ()) ? EFI_OUT_OF_RESOURCES : EFI_SUCCESS;
     if (!EFI_ERROR (Status)) {
       AcpiGnvs = LdrGlobal->MemPoolStart - PcdGet32 (PcdLoaderAcpiNvsSize);
-      AcpiBase = AcpiGnvs - PcdGet32 (PcdLoaderAcpiReclaimSize);
       Status   = PcdSet32S (PcdAcpiGnvsAddress, AcpiGnvs);
 
       S3Data = (S3_DATA *)LdrGlobal->S3DataPtr;
       if (BootMode != BOOT_ON_S3_RESUME) {
+        AcpiBase = AcpiGnvs - PcdGet32 (PcdLoaderAcpiReclaimSize);
         PlatformUpdateAcpiGnvs ((VOID *)(UINTN)AcpiGnvs);
         S3Data->AcpiGnvs = AcpiGnvs;
         S3Data->AcpiBase = AcpiBase;
@@ -679,6 +694,10 @@ SecStartup (
         if (!EFI_ERROR (Status) && ((S3Data->AcpiTop - S3Data->AcpiBase) >
              PcdGet32 (PcdLoaderAcpiReclaimSize))) {
           Status = EFI_OUT_OF_RESOURCES;
+        }
+        Status = SaveAcpiDataForS3();
+        if (EFI_ERROR (Status)) {
+          DEBUG((DEBUG_ERROR, "Failed to save ACPI data for S3 resume - %r. S3 Resume cannot be supported.\n", Status));
         }
       } else {
         Status = (S3Data->AcpiGnvs == AcpiGnvs) ? EFI_SUCCESS : EFI_ABORTED;
