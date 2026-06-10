@@ -701,7 +701,6 @@ AuthenticateContainerInternal (
     if ((ContainerHdr->Flags & CONTAINER_HDR_FLAG_MONO_SIGNING) != 0) {
       // Additional verification if the container is signed monolithically.
       // It is required for the container to be loaded in memory before registeration.
-      Status = EFI_UNSUPPORTED;
       if ((ContainerHdr->Count > 1) && !IS_FLASH_ADDRESS (ContainerHeader)) {
         // Use the last entry to verify all other combined components
         CompEntry = (COMPONENT_ENTRY *)&ContainerHdr[1];
@@ -779,8 +778,13 @@ AuthenticateContainerInternal (
               CbInfo.HashData      = CompEntry->HashData;
               ContainerCallback (PROGESS_ID_AUTHENTICATE, &CbInfo);
             }
+          } else {
+            DEBUG ((DEBUG_ERROR, "Unsupported monolithic component compression type 0x%08x\n", CompressHdr->Signature));
+            Status = EFI_UNSUPPORTED;
           }
         }
+      } else {
+        Status = EFI_UNSUPPORTED;
       }
     } else if (FeaturePcdGet (PcdVerifiedBootEnabled)) {
       // For non-Mono signing all components must have auth data when verified boot is enabled
