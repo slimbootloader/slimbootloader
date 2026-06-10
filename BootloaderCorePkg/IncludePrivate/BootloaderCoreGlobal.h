@@ -112,6 +112,7 @@ typedef struct {
   UINT32        AcpiGnvs;
   UINT8         BootMediaType;
   UINT8         BootPartition;
+  UINT64        FacsAddress;
 } S3_DATA;
 
 #pragma pack()

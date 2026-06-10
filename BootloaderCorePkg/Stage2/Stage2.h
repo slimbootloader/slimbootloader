@@ -81,6 +81,7 @@
 #include <Library/IppCryptoPerfLib.h>
 #include <Library/BuildFdtLib.h>
 #include <Library/PlatformHookLib.h>
+#include <Library/S3SaveRestoreLib.h>
 
 #define UIMAGE_FIT_MAGIC               (0x56190527)
 

@@ -15,6 +15,7 @@
 #define SMMBASE_INFO_COMM_ID  1
 #define S3_SAVE_REG_COMM_ID   2
 #define BL_SW_SMI_COMM_ID     3
+#define BL_FACS_ADDR_COMM_ID  4
 
 //
 // Format to share info between bootloader and payload.
@@ -90,6 +91,12 @@ typedef struct {
   BL_PLD_COMM_HDR BlSwSmiHdr;
   UINT8           BlSwSmiHandlerInput;
 } BL_SW_SMI_INFO;
+
+typedef struct {
+  BL_PLD_COMM_HDR AcpiS3InfoHdr;
+  UINT64          AcpiBase;
+  UINT64          FacsAddress;
+} BL_ACPI_S3_INFO;
 
 #pragma pack()
 

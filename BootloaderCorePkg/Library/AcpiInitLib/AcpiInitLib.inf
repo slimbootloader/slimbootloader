@@ -68,3 +68,4 @@
   gPlatformModuleTokenSpaceGuid.PcdAcpiProcessorIdBase
   gPlatformCommonLibTokenSpaceGuid.PcdMadtUsePlatformLapic
   gPlatformCommonLibTokenSpaceGuid.PcdMcfgUsePlatformBaseAddr
+  gPlatformCommonLibTokenSpaceGuid.PcdBuildSmmHobs
