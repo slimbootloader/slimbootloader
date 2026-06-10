@@ -120,7 +120,7 @@ class Board(BaseBoard):
             self.NON_REDUNDANT_SIZE + self.NON_VOLATILE_SIZE
 
         # OS Loader FD/FV sizes
-        self.OS_LOADER_FD_SIZE     = 0x00059000
+        self.OS_LOADER_FD_SIZE     = 0x0005A000
         self.OS_LOADER_FD_NUMBLK   = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         self.PLD_HEAP_SIZE        = 0x04000000
