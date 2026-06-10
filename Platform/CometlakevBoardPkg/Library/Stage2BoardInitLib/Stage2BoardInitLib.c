@@ -64,6 +64,7 @@
 #include <Library/S3SaveRestoreLib.h>
 #include "GpioTables.h"
 #include <Library/MadtLib.h>
+#include <Library/AcpiInitLib.h>
 
 #define DEFAULT_GPIO_IRQ_ROUTE                      14
 
@@ -1195,6 +1196,12 @@ BoardInit (
       //
       mS3SaveReg.S3SaveHdr.TotalSize = sizeof(BL_PLD_COMM_HDR) + mS3SaveReg.S3SaveHdr.Count * sizeof(REG_INFO);
       AppendS3Info ((VOID *)&mS3SaveReg, FALSE);
+
+      // Need to Save Acpi info again after clearing region
+      Status = SaveAcpiDataForS3 ();
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "Failed to save ACPI S3 data after clearing region: %r - S3 Resume expected to fail.\n", Status));
+      }
     }
     break;
   case EndOfStages:

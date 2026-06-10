@@ -79,6 +79,7 @@
 #include <Library/PlatformHookLib.h>
 #include <Library/ResetSystemLib.h>
 #include <Library/MadtLib.h>
+#include <Library/AcpiInitLib.h>
 
 //
 // GPIO_PAD Fileds
@@ -678,6 +679,12 @@ BoardInit (
         Status = AppendS3Info ((VOID *)&mSmmBaseInfo, TRUE);
         mS3SaveReg.S3SaveHdr.TotalSize = sizeof(BL_PLD_COMM_HDR) + mS3SaveReg.S3SaveHdr.Count * sizeof(REG_INFO);
         AppendS3Info ((VOID *)&mS3SaveReg, FALSE);
+
+        // Need to Save ACPI info again after clearing region
+        Status = SaveAcpiDataForS3 ();
+        if (EFI_ERROR (Status)) {
+          DEBUG ((DEBUG_ERROR, "Failed to save ACPI S3 data after clearing region: %r - S3 Resume expected to fail.\n", Status));
+        }
       }
     }
     if ((GetBootMode() != BOOT_ON_FLASH_UPDATE) && (GetPayloadId() != 0)) {
