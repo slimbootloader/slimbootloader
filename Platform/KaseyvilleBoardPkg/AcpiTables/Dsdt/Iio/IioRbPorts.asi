@@ -1,0 +1,104 @@
+/** @file
+
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+#include <Acpi/Register/PmcRegs.h>
+
+    // PCI Express Port A
+    Device (BRPA) {
+        Name   (_ADR, 0x00020000)
+        Method (_PRW, 0) {
+            Return (Package (0x02) {GPE_PCI_EXP, 0x04})
+        }
+        Method (_PRT, 0) {
+            Return (AR02)
+        }
+        #include "Iio/IioRootPortCommon.asi"
+    }
+
+    // PCI Express Port B
+    Device (BRPB) {
+        Name   (_ADR, 0x00030000)
+        Method (_PRW, 0) {
+            Return (Package (0x02) {GPE_PCI_EXP, 0x04})
+        }
+        Method (_PRT, 0) {
+            Return (AR03)
+        }
+        #include "Iio/IioRootPortCommon.asi"
+    }
+
+    // PCI Express Port C
+    Device (BRPC) {
+        Name   (_ADR, 0x00040000)
+        Method (_PRW, 0) {
+            Return (Package (0x02) {GPE_PCI_EXP, 0x04})
+        }
+        Method (_PRT, 0) {
+            Return (AR04)
+        }
+        #include "Iio/IioRootPortCommon.asi"
+    }
+
+    // PCI Express Port D
+    Device (BRPD) {
+        Name   (_ADR, 0x00050000)
+        Method (_PRW, 0) {
+            Return (Package (0x02) {GPE_PCI_EXP, 0x04})
+        }
+        Method (_PRT, 0) {
+            Return (AR05)
+        }
+        #include "Iio/IioRootPortCommon.asi"
+    }
+
+    // PCI Express Port E
+    Device (BRPE) {
+        Name   (_ADR, 0x00060000)
+        Method (_PRW, 0) {
+            Return (Package (0x02) {GPE_PCI_EXP, 0x04})
+        }
+        Method (_PRT, 0) {
+            Return (AR06)
+        }
+        #include "Iio/IioRootPortCommon.asi"
+    }
+
+    // PCI Express Port F
+    Device (BRPF) {
+        Name   (_ADR, 0x00070000)
+        Method (_PRW, 0) {
+            Return (Package (0x02) {GPE_PCI_EXP, 0x04})
+        }
+        Method (_PRT, 0) {
+            Return (AR07)
+        }
+        #include "Iio/IioRootPortCommon.asi"
+    }
+
+    // PCI Express Port G
+    Device (BRPG) {
+        Name   (_ADR, 0x00080000)
+        Method (_PRW, 0) {
+            Return (Package (0x02) {GPE_PCI_EXP, 0x04})
+        }
+        Method (_PRT, 0) {
+            Return (AR08)
+        }
+        #include "Iio/IioRootPortCommon.asi"
+    }
+
+    // PCI Express Port H
+    Device (BRPH) {
+        Name   (_ADR, 0x00090000)
+        Method (_PRW, 0) {
+            Return (Package (0x02) {GPE_PCI_EXP, 0x04})
+        }
+        Method (_PRT, 0) {
+            Return (AR09)
+        }
+        #include "IioRootPortCommon.asi"
+    }

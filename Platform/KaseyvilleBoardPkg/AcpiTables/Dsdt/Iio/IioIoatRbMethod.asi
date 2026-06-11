@@ -1,0 +1,113 @@
+/** @file
+
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+  External (DBGM, FieldUnitObj)
+  Name (SUPP, 0)
+  Name (CTRL, 0)
+
+  //
+  // _SEG is ACPI method called by OS to read PCI segment of IIO stack.
+  //
+  Method (_SEG, 0, NotSerialized)
+  {
+    Return(CONCATENATE2(SG0, SOCKET))
+  }
+
+  //
+  // _PXM is ACPI method called by OS to read NUMA Proximity Domain for IIO stack.
+  //
+  Method(_PXM, 0, NotSerialized)
+  {
+    Return(CONCATENATE3(IX, SOCKET, IOAT_INDEX))
+  }
+
+  Method(_OSC,4)
+  {
+      //
+      // Create DWord-addressable fields from the capabilities Buffer
+      //
+      CreateDWordField(Arg3,0,CDW1)
+      If (LEqual(Arg0,ToUUID("33DB4D5B-1FF7-401C-9657-7441C03DD766"))) {
+
+        //
+        // Create DWord-addressable fields from the capabilities Buffer
+        //
+        CreateDWordField(Arg3,4,CDW2)
+
+        //
+        // Fill 3rd capability DWORD only if the count is greater than 2.
+        //
+        If(LGreater(Arg2,2)) {
+          CreateDWordField(Arg3,8,CDW3)
+        }
+
+        //
+        // Save Capabilities DWord2 & 3
+        //
+        Store(CDW2,SUPP)
+        Store(CDW3,CTRL)
+
+        //
+        // Never allow SHPC (no SHPC controller in system), Mask bit 1
+        //
+        And(CTRL, Not(2), CTRL)
+
+        //
+        // Select Native PCIe AER/eDPC handling from OS or Firmware First model
+        //
+        If (CondRefOf (\_SB.OSNC))
+        {
+          //in case OS has AER capability.
+          If (LEqual ( And(CTRL, 8), 8)) {
+
+            //in case OS support multiple segment.
+            If (And (SUPP, 8)) {
+              If (CondRefOf (^_SEG))
+              {
+                Store (^_SEG, Local0)
+              } Else {
+                Store (0, Local0)
+              }
+            } Else {
+              Store (0, Local0)
+            }
+
+            Store (^_BBN, Local1)
+
+            // if BIOS allows OS take. Do nothing.
+            If (\_SB.OSNC(Local0, Local1, SUPP, CTRL)) {
+
+            } Else {
+              And (CTRL, Not(0x88), CTRL)
+            }
+          } Else {
+            And (CTRL, Not(0x88), CTRL)
+          }
+        } Else {
+          //
+          //Disable Native PCIe AER/eDPC handling from OS, AER is bit3, eDPC is bit7
+          //
+          And (CTRL, Not(0x88), CTRL)
+        }
+
+        //
+        // update DWORD3 in the buffer
+        //
+        Store(CTRL,CDW3)
+        Return(Arg3)
+
+      } Else {
+        //
+        // Just indicate unrecognized UUID
+        // Leave it at that
+        //
+        Or (CDW1,4,CDW1)
+        if(LEqual(DBGM, 0x01)){
+          Store (0xEE, IO80)
+        }
+        Return(Arg3)
+      }
+  } // End _OSC

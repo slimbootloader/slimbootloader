@@ -1,0 +1,64 @@
+/** @file
+
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+
+#include <Acpi/AcpiTablePlatform.h>
+External(\_SB.WERR, DeviceObj)
+
+//  General Purpose Event
+Scope (\_GPE) {
+  #include "NvdimmGpe.asi"
+
+  // Based on Socket ID to be notified, evaluate appropriate devices.
+  Method(NTFC, 2){
+    If(And(Arg0, 0x01)){
+      Notify(\_SB.SCK0, Arg1)
+    }
+
+  } //End Method NTFC
+
+  Method(NTFI, 2){
+  } //End Method NTFI
+
+  // Tell OS to run thru the new status of this device (Software SCI generated from SMM for all Hot plug events)
+  Method (_L62, 0x0, NotSerialized) {
+    if(LEqual(SCI0, 3)) { // Device ejection (Invoked with _EJ0 method called)
+      //NTFM  (SCI1, 3)
+      NTFC  (SCI2, 3)
+      Store (0, SCI0)
+    } else {              // Device check (OS can still reject online request based on resources and capability)
+      NTFC (CPHP, 0)
+      NTFI (IIOP, 0)
+      Store (0, CPHP)
+      Store (0, IIOP)
+    }
+
+    // Retrieve leaf and root notification data pre SWGPE clear
+    Store (NNPR (), Local0)
+
+    Store (0, SGPC)
+
+    if(LEqual(WSCI, 0x1)) {
+      Store(0, WSCI)
+      if(LEqual(DBGM, 0x01)){
+        Store (0x4A, IO80)
+      }
+      If (CondRefOf (\_SB.WERR)) {
+        Notify (\_SB.WERR, 0x80)
+      }
+    }
+
+    // Perform NVDIMM leaf and root notifications with notification data updated post SWGPE clear
+    NNDO (Local0)
+
+    //
+    //  Handle eDPC SWGPE event
+    //
+    #include "Iio/IioPcieEdpcGpe.asi"
+  }
+
+}// end of _GPE scope.

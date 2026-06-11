@@ -1,0 +1,92 @@
+/** @file
+
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+External (\MPRS, IntObj)
+External (\KPRS, IntObj)
+
+//
+// PS/2 style mouse port
+//
+Device (PS2M)
+{
+  Name (_HID, EISAID ("PNP0F03")) // Hardware Device ID - Microsoft mouse
+  Name (_CID, EISAID ("PNP0F13")) // Compatible ID
+
+  Method (_STA, 0x0)
+  {
+    // Enter Configuration Mode and Select the KBC (Logical Device #5)
+    ENFF (0x05)
+
+    //
+    // First, read the active register.
+    // If this register is TRUE, it means that the device is present & active.
+    //
+    If (ACTF) {
+      If (LOr (MSHF, MSLF)) {
+        // Leave Configuration Mode
+        EXFF ()
+        // Device is present & active. It will *NOT* fail self-test and should be shown to user.
+        Return (0x0F)
+      }
+    }
+    // Leave Configuration Mode
+    EXFF ()
+
+    // Device not even present
+    Return (0x00)
+  }
+
+  Name (_CRS, ResourceTemplate () {
+    IRQNoFlags () {12}
+  })
+
+} // End of Device PS2M
+
+
+//
+// PS2 Keyboard w/ PS2 mouse support
+//
+Device (PS2K)
+{
+  //
+  // PnP Device ID
+  //
+  Name (_HID, EISAID ("PNP0303"))
+  Name (_CID, EISAID ("PNP030B")) // Compatible ID, PC/AT Enhanced Keyboard 101/102
+
+  Method (_STA, 0x0)
+  {
+    // Enter Configuration Mode and Select the KBC (Logical Device #5)
+    ENFF (0x05)
+
+    //
+    // First, read the active register.
+    // If this register is TRUE, it means that the device is present & active.
+    //
+    If (ACTF) {
+      If (LOr (AHFF, ALFF)) {
+        // Leave Configuration Mode
+        EXFF ()
+        // Device is present & active. It will *NOT* fail self-test and should be shown to user.
+        Return (0x0F)
+      }
+    }
+
+    // Leave Configuration Mode
+    EXFF ()
+
+    // Device not even present
+    Return (0x00)
+  } // End of Method _STA
+
+  Name (_CRS, ResourceTemplate () {
+    IO (Decode16, 0x60, 0x60, 0x01, 0x01)
+    IO (Decode16, 0x64, 0x64, 0x01, 0x01)
+    IRQNoFlags () {1}
+  })
+
+} // End of Device PS2K

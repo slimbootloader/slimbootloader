@@ -1,0 +1,153 @@
+/** @file
+
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+External(PCIC, MethodObj)
+External(PCID, MethodObj)
+
+//
+// Uncore 0
+//
+#undef UB_INDEX
+#define UB_INDEX  0
+    Device (IIO_DEVICE_NAME(UB, SOCKET, UB_INDEX)) {
+        Name   (_HID, EISAID("PNP0A03"))
+        Name   (_UID, IIO_DEVICE_UID_ASL(UB_UID, SOCKET, UB_INDEX))
+
+        Method (_PRT, 0)
+        {
+          Return (AR10)
+        }
+
+        #include "Uncore.asi"
+
+        // Uncore 0 UBOX Device
+        Device (UBX0) {
+            Name   (_ADR, 0x0000FFFF)
+        }
+
+        // Uncore 0 GLOBALIEH Device
+        Device (GIEH) {
+            Name   (_ADR, 0x00020000)
+        }
+
+        // Uncore 0 PUNIT0 Device
+        Device (PUT0) {
+            Name   (_ADR, 0x0005FFFF)
+        }
+
+        // Uncore 0 EPRPUNIT0 Device
+        Device (EUNT) {
+            Name   (_ADR, 0x0006FFFF)
+        }
+
+        // Uncore 0 PUNIT1 Device
+        Device (PUT1) {
+            Name   (_ADR, 0x00070000)
+        }
+
+        // Uncore 0 CHABC0 Device
+        Device (CHAB) {
+            Name   (_ADR, 0x000DFFFF)
+        }
+
+        // Uncore 0 CHA 0~7 Device
+        Device (CHA0) {
+            Name   (_ADR, 0x000EFFFF)
+        }
+
+        // Uncore 0 CHA 8~15 Device
+        Device (CHA1) {
+            Name   (_ADR, 0x000FFFFF)
+        }
+
+        // Uncore 0 CHA 16~23 Device
+        Device (CHA2) {
+            Name   (_ADR, 0x0010FFFF)
+        }
+
+        // Uncore 0 CHA 24~31 Device
+        Device (CHA3) {
+            Name   (_ADR, 0x0011FFFF)
+        }
+
+        // Uncore 0 CHA 32~39 Device
+        Device (CHA4) {
+            Name   (_ADR, 0x0012FFFF)
+        }
+
+        // Uncore 0 CHA 40~47 Device
+        Device (CHA5) {
+            Name   (_ADR, 0x0013FFFF)
+        }
+
+        // Uncore 0 CHA 48~55 Device
+        Device (CHA6) {
+            Name   (_ADR, 0x0014FFFF)
+        }
+
+        // Uncore 0 CHA 56~63 Device
+        Device (CHA7) {
+            Name   (_ADR, 0x0015FFFF)
+        }
+    }
+//
+// Uncore 1
+//
+#undef UB_INDEX
+#define UB_INDEX  1
+    Device (IIO_DEVICE_NAME(UB, SOCKET, UB_INDEX)) {
+        Name   (_HID, EISAID("PNP0A03"))
+        Name   (_UID, IIO_DEVICE_UID_ASL(UB_UID, SOCKET, UB_INDEX))
+
+        Method (_PRT, 0)
+        {
+          Return (AR11)
+        }
+
+        #include "Uncore.asi"
+
+        // Uncore 1 CHA 0~7 Device
+        Device (CHA0) {
+            Name   (_ADR, 0x0000FFFF)
+        }
+
+        // Uncore 1 CHA 8~15 Device
+        Device (CHA1) {
+            Name   (_ADR, 0x0001FFFF)
+        }
+
+        // Uncore 1 CHA 16~23 Device
+        Device (CHA2) {
+            Name   (_ADR, 0x0002FFFF)
+        }
+
+        // Uncore 1 CHA 24~31 Device
+        Device (CHA3) {
+            Name   (_ADR, 0x0003FFFF)
+        }
+
+        // Uncore 1 CHA 32~39 Device
+        Device (CHA4) {
+            Name   (_ADR, 0x0004FFFF)
+        }
+
+        // Uncore 1 CHA 40~47 Device
+        Device (CHA5) {
+            Name   (_ADR, 0x0005FFFF)
+        }
+
+        // Uncore 1 CHA 48~55 Device
+        Device (CHA6) {
+            Name   (_ADR, 0x0006FFFF)
+        }
+
+        // Uncore 1 CHA 56~63 Device
+        Device (CHA7) {
+            Name   (_ADR, 0x0007FFFF)
+        }
+    }
+#undef UB_INDEX
