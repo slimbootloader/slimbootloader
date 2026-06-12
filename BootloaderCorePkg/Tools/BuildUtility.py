@@ -227,6 +227,211 @@ class PciEnumPolicyInfo(Structure):
         self.BusScanType        = 0
         self.NumOfBus           = 0
 
+
+def _fv_ffs_offset(fd, guid_le):
+    """Return the FD offset of the EFI_FFS_FILE_HEADER with the given GUID.
+
+    EFI_FFS_FILE_HEADER.Name (the full 16-byte EFI_GUID) is at offset 0 of
+    the header, so the position where the GUID bytes are found IS the header
+    start. Pass the full 16-byte GUID in EFI little-endian wire order.
+    Returns -1 if not found.
+    """
+    search_start = 0
+    while True:
+        pos = fd.find(guid_le, search_start)
+        if pos < 0:
+            return -1
+        if (pos & 7) == 0 and pos + 24 <= len(fd):
+            fsz   = struct.unpack_from('<I', fd, pos + 0x14)[0] & 0x00FFFFFF
+            state = fd[pos + 0x17]
+            if 24 <= fsz <= len(fd) - pos and state not in (0x00, 0xFF):
+                return pos
+        search_start = pos + 1
+
+
+def _find_ffs_containing(fd, fv_hdr_len, fv_size, target_offset):
+    """Return the FFS header offset whose file range contains target_offset."""
+    fv_end = min(fv_size, len(fd))
+    pos = (fv_hdr_len + 7) & ~7
+    while pos + 24 <= fv_end:
+        fsz = struct.unpack_from('<I', fd, pos + 0x14)[0] & 0x00FFFFFF
+        if fsz < 24 or fsz == 0x00FFFFFF:
+            break
+        if pos + fsz > fv_end:
+            break
+        if pos <= target_offset < pos + fsz:
+            return pos
+        pos = (pos + fsz + 7) & ~7
+    return -1
+
+
+def _fix_pcd_addr(fd, ffs_off, fd_base, pad, shift_start, name):
+    """Fix up a BinaryPatch PCD value that became stale by pad bytes."""
+    if ffs_off < 0 or ffs_off < shift_start:
+        return fd
+
+    stale_val   = (ffs_off + 0x1C + fd_base) & 0xFFFFFFFF
+    correct_val = (stale_val + pad) & 0xFFFFFFFF
+    stale_bytes = struct.pack('<I', stale_val)
+
+    count = fd.count(stale_bytes)
+    if count == 0:
+        print('Fixup Stage2 TE AVX2 alignment: %s stale PCD value 0x%08X not found in FD' % (name, stale_val))
+        return fd
+    if count > 1:
+        raise Exception('Fixup Stage2 TE AVX2 alignment: %s stale PCD value 0x%08X found %d times; refusing ambiguous patch' % (
+                        name, stale_val, count))
+
+    pos = fd.find(stale_bytes)
+    struct.pack_into('<I', fd, pos, correct_val)
+    print('Fixup Stage2 TE AVX2 alignment: Fixup %s PCD at FD 0x%X: 0x%08X -> 0x%08X (+0x%X)' % (
+          name, pos, stale_val, correct_val, pad))
+    return fd
+
+
+def fixup_stage2_avx2_alignment(fv_dir):
+    """Align Stage2 TE image for X64_L9/AVX2 and repair dependent metadata."""
+    TE_HDR_SIG  = 0x5A56
+    TE_HDR_SIZE = 0x28
+
+    stage2_fd_path  = os.path.join(fv_dir, 'STAGE2.fd')
+    stage2_inf_path = os.path.join(fv_dir, 'STAGE2.inf')
+
+    with open(stage2_fd_path, 'rb') as f:
+        fd = bytearray(f.read())
+
+    fd_len  = len(fd)
+    fv_size = struct.unpack_from('<Q', fd, 0x20)[0]
+
+    fd_base = None
+    with open(stage2_inf_path, 'r') as f:
+        for line in f:
+            m = re.match(r'^\s*EFI_BASE_ADDRESS\s*=\s*(0x[0-9a-fA-F]+)', line)
+            if m:
+                fd_base = int(m.group(1), 16)
+                break
+    if fd_base is None:
+        raise Exception('fixup_stage2_avx2_alignment: EFI_BASE_ADDRESS not found in %s' % stage2_inf_path)
+
+    hdr_entry    = struct.unpack_from('<I', fd, 0)[0]
+    hdr_base     = struct.unpack_from('<I', fd, 4)[0]
+    te_fd_offset = hdr_base - fd_base
+
+    if te_fd_offset < TE_HDR_SIZE or te_fd_offset + TE_HDR_SIZE > fd_len:
+        raise Exception('fixup_stage2_avx2_alignment: TE offset 0x%x out of range' % te_fd_offset)
+    if struct.unpack_from('<H', fd, te_fd_offset)[0] != TE_HDR_SIG:
+        raise Exception('fixup_stage2_avx2_alignment: no TE signature at FD offset 0x%x' % te_fd_offset)
+
+    te_stripped = struct.unpack_from('<H', fd, te_fd_offset + 6)[0]
+    adjust      = te_stripped - TE_HDR_SIZE
+    misalign    = (te_fd_offset - adjust) & 0x1F
+    if misalign == 0:
+        return
+
+    pad        = 32 - misalign
+    te_ins_pos = te_fd_offset + TE_HDR_SIZE
+    adjust_new = adjust - pad
+
+    if adjust < pad:
+        raise Exception('fixup_stage2_avx2_alignment: TE StrippedSize 0x%X too small '
+                        'to subtract pad=%d (adjust=0x%X)' % (te_stripped, pad, adjust))
+
+    if fv_size > fd_len or fv_size <= te_ins_pos + pad:
+        raise Exception('fixup_stage2_avx2_alignment: fv_size 0x%X is inconsistent '
+                        '(fd_len=0x%X, te_ins_pos=0x%X, pad=%d)' % (fv_size, fd_len, te_ins_pos, pad))
+
+    print('Fixup Stage2 TE AVX2 alignment: misalign=%d, inserting %d pad bytes at FD 0x%X' % (misalign, pad, te_ins_pos))
+
+    acpi_ffs = _fv_ffs_offset(fd, bytes([0x25,0x4E,0x37,0x7E, 0x01,0x8E, 0xEE,0x4F, 0x87,0xF2, 0x39,0x0C,0x23,0xC6,0x06,0xCD]))
+    vbt_ffs  = _fv_ffs_offset(fd, bytes([0xD5,0xA6,0x8C,0xE0, 0x02,0x8D, 0xAE,0x43, 0xAB,0xB1, 0x95,0x2C,0xC7,0x87,0xC9,0x33]))
+    logo_ffs = _fv_ffs_offset(fd, bytes([0xE9,0x3B,0x2D,0x5E, 0x72,0xAD, 0x1D,0x4D, 0xAA,0xD5, 0x6B,0x08,0xAF,0x92,0x15,0x90]))
+
+    tail = fd[fv_size - pad : fv_size]
+    if any(b != 0xFF for b in tail):
+        raise Exception('fixup_stage2_avx2_alignment: tail %d bytes at FV 0x%X are not '
+                        'free space (0xFF); refusing to truncate non-free data' % (pad, fv_size - pad))
+
+    fd = (fd[:te_ins_pos] +
+          bytearray(pad) +
+          fd[te_ins_pos : fv_size - pad] +
+          fd[fv_size:])
+
+    fd = _fix_pcd_addr(fd, acpi_ffs, fd_base, pad, te_ins_pos, 'ACPI')
+    fd = _fix_pcd_addr(fd, vbt_ffs,  fd_base, pad, te_ins_pos, 'VBT ')
+    fd = _fix_pcd_addr(fd, logo_ffs, fd_base, pad, te_ins_pos, 'Logo')
+
+    struct.pack_into('<H', fd, te_fd_offset + 6, te_stripped - pad)
+
+    te_sect_off = te_fd_offset - 4
+    sz3 = struct.unpack_from('<I', fd, te_sect_off)[0] & 0x00FFFFFF
+    sz3 += pad
+    fd[te_sect_off]     =  sz3        & 0xFF
+    fd[te_sect_off + 1] = (sz3 >>  8) & 0xFF
+    fd[te_sect_off + 2] = (sz3 >> 16) & 0xFF
+
+    fv_hdr_len  = struct.unpack_from('<H', fd, 0x30)[0]
+    ffs_hdr_off = _find_ffs_containing(fd, fv_hdr_len, fv_size, te_fd_offset)
+    if ffs_hdr_off < 0:
+        raise Exception('fixup_stage2_avx2_alignment: cannot find FFS containing TE at 0x%X' % te_fd_offset)
+    ffs_sz_off = ffs_hdr_off + 0x14
+    fsz = struct.unpack_from('<I', fd, ffs_sz_off)[0] & 0x00FFFFFF
+    fsz += pad
+    fd[ffs_sz_off]     =  fsz        & 0xFF
+    fd[ffs_sz_off + 1] = (fsz >>  8) & 0xFF
+    fd[ffs_sz_off + 2] = (fsz >> 16) & 0xFF
+
+    FFS_HDR_SIZE = 24
+    fd[ffs_hdr_off + 0x10] = 0
+    hdr_sum = sum(fd[ffs_hdr_off : ffs_hdr_off + FFS_HDR_SIZE]) & 0xFF
+    fd[ffs_hdr_off + 0x10] = (0x100 - hdr_sum) & 0xFF
+
+    FFS_ATTRIB_CHECKSUM = 0x40
+    FFS_FIXED_CHECKSUM  = 0xAA
+    if fd[ffs_hdr_off + 0x12] & FFS_ATTRIB_CHECKSUM:
+        body_len = fsz - FFS_HDR_SIZE
+        body_sum = sum(fd[ffs_hdr_off + FFS_HDR_SIZE : ffs_hdr_off + FFS_HDR_SIZE + body_len]) & 0xFF
+        fd[ffs_hdr_off + 0x11] = (0x100 - body_sum) & 0xFF
+    else:
+        fd[ffs_hdr_off + 0x11] = FFS_FIXED_CHECKSUM
+
+    reloc_va   = struct.unpack_from('<I', fd, te_fd_offset + 0x20)[0]
+    reloc_size = struct.unpack_from('<I', fd, te_fd_offset + 0x24)[0]
+    if reloc_size >= 8:
+        pos = te_fd_offset + reloc_va - adjust_new
+        rem = reloc_size
+        while rem >= 8:
+            if pos + 8 > len(fd):
+                raise Exception('fixup_stage2_avx2_alignment: reloc block header at 0x%X out of bounds' % pos)
+            blk_size = struct.unpack_from('<I', fd, pos + 4)[0]
+            if blk_size == 0:
+                break
+            if blk_size < 8 or blk_size > rem or (blk_size - 8) % 2 != 0:
+                raise Exception('fixup_stage2_avx2_alignment: invalid reloc block size 0x%X at 0x%X' % (blk_size, pos))
+            if pos + blk_size > len(fd):
+                raise Exception('fixup_stage2_avx2_alignment: reloc block at 0x%X extends past FD end' % pos)
+            page_rva = struct.unpack_from('<I', fd, pos)[0]
+            for i in range((blk_size - 8) // 2):
+                entry   = struct.unpack_from('<H', fd, pos + 8 + i * 2)[0]
+                rtype   = entry >> 12
+                img_off = te_fd_offset + page_rva + (entry & 0xFFF) - adjust_new
+                if rtype == 3:
+                    if img_off < 0 or img_off + 4 > len(fd):
+                        raise Exception('fixup_stage2_avx2_alignment: HIGHLOW reloc img_off 0x%X out of bounds' % img_off)
+                    v = struct.unpack_from('<I', fd, img_off)[0]
+                    struct.pack_into('<I', fd, img_off, (v + pad) & 0xFFFFFFFF)
+                elif rtype == 10:
+                    if img_off < 0 or img_off + 8 > len(fd):
+                        raise Exception('fixup_stage2_avx2_alignment: DIR64 reloc img_off 0x%X out of bounds' % img_off)
+                    v = struct.unpack_from('<Q', fd, img_off)[0]
+                    struct.pack_into('<Q', fd, img_off, (v + pad) & 0xFFFFFFFFFFFFFFFF)
+            rem -= blk_size
+            pos += blk_size
+
+    struct.pack_into('<I', fd, 0, (hdr_entry + pad) & 0xFFFFFFFF)
+
+    with open(stage2_fd_path, 'wb') as f:
+        f.write(fd)
+
 def _comparable_version(version):
     component_re = re.compile(r'([0-9]+|[._+-])')
     result = []
