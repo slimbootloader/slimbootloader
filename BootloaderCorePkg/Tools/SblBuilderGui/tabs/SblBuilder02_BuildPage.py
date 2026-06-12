@@ -1,3 +1,10 @@
+## @ SblBuilder02_BuildPage.py
+#
+# Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
 import os, glob, sys
 from importlib.machinery import SourceFileLoader
 import tkinter as tk
