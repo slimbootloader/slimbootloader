@@ -712,25 +712,49 @@ IN  CONST  UINT8                     *Event
 
   TpmLibGetActivePcrBanks(&PcrBankActive);
 
+  Status = EFI_NOT_FOUND;
+
   if ((PcrBankActive & HASH_ALG_SHA256) != 0) {
       Digests->digests[Digests->count].hashAlg = (TPMI_ALG_HASH) GetTpmHashAlg(HASH_ALG_SHA256);
-      CalculateHash (Data, Length, GetCryptoHashAlg(HASH_ALG_SHA256) , (UINT8 *) (&(Digests->digests[Digests->count].digest)));
-      Digests->count++;
+      Status = CalculateHash (Data, Length, GetCryptoHashAlg(HASH_ALG_SHA256) , (UINT8 *) (&(Digests->digests[Digests->count].digest)));
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "Error %r occurred during SHA256 hash calculation for PCR extend.\n", Status));
+      } else {
+        Digests->count++;
+      }
   }
   if ((PcrBankActive & HASH_ALG_SHA384) != 0) {
       Digests->digests[Digests->count].hashAlg = (TPMI_ALG_HASH) GetTpmHashAlg(HASH_ALG_SHA384);
-      CalculateHash (Data, Length, GetCryptoHashAlg(HASH_ALG_SHA384) , (UINT8 *) (&(Digests->digests[Digests->count].digest)));
-      Digests->count++;
+      Status = CalculateHash (Data, Length, GetCryptoHashAlg(HASH_ALG_SHA384) , (UINT8 *) (&(Digests->digests[Digests->count].digest)));
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "Error %r occurred during SHA384 hash calculation for PCR extend.\n", Status));
+      } else {
+        Digests->count++;
+      }
   }
   if ((PcrBankActive & HASH_ALG_SHA512) != 0) {
       Digests->digests[Digests->count].hashAlg = (TPMI_ALG_HASH) GetTpmHashAlg(HASH_ALG_SHA512);
-      CalculateHash (Data, Length, GetCryptoHashAlg(HASH_ALG_SHA512) , (UINT8 *) (&(Digests->digests[Digests->count].digest)));
-      Digests->count++;
+      Status = CalculateHash (Data, Length, GetCryptoHashAlg(HASH_ALG_SHA512) , (UINT8 *) (&(Digests->digests[Digests->count].digest)));
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "Error %r occurred during SHA512 hash calculation for PCR extend.\n", Status));
+      } else {
+        Digests->count++;
+      }
   }
   if ((PcrBankActive & HASH_ALG_SM3_256) != 0) {
       Digests->digests[Digests->count].hashAlg = (TPMI_ALG_HASH) GetTpmHashAlg(HASH_ALG_SM3_256);
-      CalculateHash (Data, Length, GetCryptoHashAlg(HASH_ALG_SM3_256) , (UINT8 *) (&(Digests->digests[Digests->count].digest)));
-      Digests->count++;
+      Status = CalculateHash (Data, Length, GetCryptoHashAlg(HASH_ALG_SM3_256) , (UINT8 *) (&(Digests->digests[Digests->count].digest)));
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "Error %r occurred during SM3_256 hash calculation for PCR extend.\n", Status));
+      } else {
+        Digests->count++;
+      }
+  }
+
+  // Either every hash function failed or no PCR banks are active.
+  if (Digests->count == 0) {
+    DEBUG ((DEBUG_ERROR, "Error %r occurred during hash calculation for PCR extend.\n", Status));
+    return Status;
   }
 
   Status = Tpm2PcrExtend (PcrHandle, Digests);
