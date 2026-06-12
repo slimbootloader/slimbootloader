@@ -1,0 +1,40 @@
+## @file
+#
+#  Copyright (c) 2023, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = PchGspiLib
+  FILE_GUID                      = 28a42fae-9e78-4eb0-b3d4-b951fa4128e6
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = PchGspiLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF
+#
+
+[Sources]
+  PchGspiLib.c
+  PchGspiLibPrivate.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  Silicon/AlderlakePkg/AlderlakePkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  PcdLib
+  IoLib
+  PciLib
+  PchPcrLib
+  DebugLib
+  PchSbiAccessLib
+  PchInfoLib
