@@ -1,3 +1,10 @@
+## @ SblBuilderGuiComp.py
+#
+# Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
 import tkinter as tk
 from tkinter import ttk, filedialog, font, StringVar, messagebox
 import os
