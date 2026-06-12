@@ -220,6 +220,12 @@ GetBootImageFromRawPartition (
   //
   Address =  LogicBlkDev.StartBlock + LbaAddr + AlignedHeaderBlkCnt;
 
+  if (AlignedImageSize <= AlignedHeaderSize) {
+    DEBUG((DEBUG_ERROR, "Invalid image size (0x%x) from header, which is smaller than header size (0x%x)\n", AlignedImageSize, AlignedHeaderSize));
+    FreePages (Buffer, EFI_SIZE_TO_PAGES (AlignedImageSize));
+    return EFI_UNSUPPORTED;
+  }
+
   Status = MediaReadBlocks (
              BootOption->HwPart,
              Address,
