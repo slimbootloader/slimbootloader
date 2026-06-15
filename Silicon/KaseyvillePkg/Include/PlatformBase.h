@@ -23,9 +23,13 @@
 #define PCH_IOAPIC_ADDRESS          0xFEC00000
 #define HPET_BLOCK_ADDRESS          0xFED00000
 #define PCH_INTERRUPT_BASE          0
+#define LOCAL_APIC_BASE_ADDRESS     0xFEE00000
 
 #define NGN_MAX_SERIALNUMBER_STRLEN 4  // Max serial number string length
 #define NGN_MAX_PARTNUMBER_STRLEN   30 // Max part number string length
 #define MAX_DIMM                    2  // Max DIMM per channel
 #define MAX_MC_CH                   1  // Max number of channels per MC
+
+#define VAR_NAME_VAR_STS            L"VarSts"
+#define VAR_STS_MAX_SIZE_BYTES      16
 #endif
