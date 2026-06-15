@@ -463,7 +463,11 @@ PlatformUpdateAcpiTable (
     PatchCpuSsdtTable (Table, GlobalNvs);
   } else if (Table->OemTableId == SIGNATURE_64 ('C', 'p', 'u', '0', 'I', 's', 't', 0)) {
     if (GetBootMode () != BOOT_ON_FLASH_UPDATE) {
-      AcpiPatchPss (Table, GlobalNvs);
+      if ((GlobalNvs->CpuNvs.PpmFlags & PPM_EIST) != 0) {
+        AcpiPatchPss (Table, GlobalNvs);
+      } else {
+        DEBUG ((DEBUG_INFO, "Skip Cpu0Ist _PSS patch because EIST is disabled\n"));
+      }
     }
   } else if (Table->Signature == EFI_BDAT_TABLE_SIGNATURE) {
     FspHobList = GetFspHobListPtr ();
