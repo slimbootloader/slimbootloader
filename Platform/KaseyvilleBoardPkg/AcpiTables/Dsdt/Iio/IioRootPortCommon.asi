@@ -1,0 +1,179 @@
+/** @file
+
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+  //;************************************************************************;
+  //; PCIe Slot Capabilities Register
+  //;    Bit - 31-5  -  Not used
+  //;    Bit -   4   -  Power Indicator Present.
+  //;    Bit -   3   -  Attention Indicator Present.
+  //;    Bit -   2   -  MRL Sensor Present.
+  //;    Bit -   1   -  Power Controller Present.
+  //;    Bit -   0   -  Attention Button Present.
+  //;
+  //; PCIe Slot control Register
+  //;    Bit -  10   -  PWR Control Disable
+  //;    Bit - 9:8   -  Attn Indicator
+  //;    Bit - 7:6   -  PWR Indicator
+  //;    Bit -   5   -  Hot-Plug Interrupt Event Enable
+  //;    Bit -   4   -  Command Complete Interrupt enable
+  //;    Bit -   3   -  Presence Detect Changed Interrupt enable
+  //;    Bit -   2   -  MRL Sensor Changed Interrupt enable
+  //;    Bit -   1   -  PwrFault Detect Interrupt enable
+  //;    Bit -   0   -  Attention Button Pressed Interrupt Enable
+  //;
+  //; PCIe Slot Status Registers
+  //;    Bit -   6   -  Presence Detect State.
+  //;    Bit -   5   -  MRL Sensor State.
+  //;    Bit -   4   -  Command Completed.
+  //;
+  //;    RWC Status Bits
+  //;
+  //;    Bit -   3   -  Presence Detect Changed.
+  //;    Bit -   2   -  MRL Sensor Changed.
+  //;    Bit -   1   -  Power Fault Detected.
+  //;    Bit -   0   -  Attention Button Pressed.
+  //;************************************************************************;
+  OperationRegion (PXCP, PCI_Config, IRPC, 0x40)
+  Field (PXCP, ByteAcc, NoLock, Preserve) {
+    Offset (0x10),            // Link Control Register
+    , 4,
+    LDIS, 1,                  // Link Disable bit4.
+    , 11,
+    Offset (0x14),            // PCI Slot Capabilities Register
+    ATBP, 1,                  // Attention Button Present
+    , 1,
+    MRSP, 1,                  // MRL Sensor Present
+    ATIP, 1,                  // Attention Indicator Present
+    PWIP, 1,                  // Power Indicator Present
+    , 14,
+    PSNM, 13,                 // Physical Slot Number
+    Offset (0x18),            // Slot Control Register
+    ABIE, 1,                  // Attention Button Pressed Interrupt Enable
+    PFIE, 1,                  // Power Fault Detected Interrupt Enable
+    MSIE, 1,                  // MRL Sensor Changed Interrupt Enable
+    PDIE, 1,                  // Presence Detect Changed Interrupt Enable.
+    CCIE, 1,                  // Command Complete Interrupt Enable.
+    HPIE, 1,                  // Hot-plug Interrupt Enable.
+    SCTL, 5,                  // Attn/Power indicator and Power controller.
+    , 5,
+    Offset (0x1A),            // Slot Status Register
+    SSTS, 7,                  // The status bits in Slot Status Reg
+    , 1,
+    Offset (0x20),            // Root Status Register
+    , 16,
+    PMES, 1,                  // PME Status bit 16
+    PMEP, 1,                  // PME Pending bit 17
+    , 14
+  }
+
+  //
+  // _DSM Device Specific Method
+  //
+  // Arg0: UUID Unique function identifier
+  // Arg1: Integer Revision Level
+  // Arg2: Integer Function Index (0 = Return Supported Functions)
+  // Arg3: Package Parameters
+  Method(_DSM, 4, Serialized) {
+    //
+    // Switch based on which unique function identifier was passed in
+    //
+    If (LEqual(Arg0, ToUUID ("E5C937D0-3553-4d7a-9117-EA4D19C3434D"))) {
+      //
+      // _DSM Definitions for Latency Tolerance Reporting
+      //
+      // Arguments:
+      // Arg0: UUID: E5C937D0-3553-4d7a-9117-EA4D19C3434D
+      // Arg1: Revision ID: 3
+      // Arg2: Function Index: 0, c, d
+      // Arg3: Empty Package
+      //
+      // Switch by function index
+      //
+      Switch(ToInteger(Arg2)) {
+        //
+        // Function Index:0
+        // Standard query - A bitmask of functions supported
+        //
+        Case (0) {
+          Name(OPTS, Buffer(2) {0, 0})
+          CreateBitField(OPTS, 0, FUN0)
+          CreateBitField(OPTS, 12, FUNC)
+          CreateBitField(OPTS, 13, FUND)
+
+          Store(1, FUN0)
+          Store(1, FUNC)
+          Store(1, FUND)
+          Return(OPTS)
+        }
+        //
+        // Function Index: C
+        // Downstream Port Containment Hint
+        //
+        Case(12) {
+            Return(1)
+        }
+
+        //
+        // Function Index: D
+        // Downstream Port Containment Device Location
+        //
+        Case(13) {
+          Name(DLOC, Buffer(2){0, 0})
+          CreateField(DLOC, 0, 3, DFUN)
+          CreateField(DLOC, 3, 5, DDEV)
+          CreateField(DLOC, 8, 8, DBUS)
+          Store(_BBN, DBUS)
+          store(_ADR, Local2)
+          And(Local2, 0xffff, Local3)
+          ShiftRight (Local2, 16, Local4)
+          Store(Local4, DDEV)
+          Store(Local3, DFUN)
+          Return(ToInteger(DLOC))
+        }
+
+      } // End of switch(Arg2)
+    } // End of if
+    return (Buffer() {0x00})
+  } // End of _DSM
+
+  Method(SNUM, 0, Serialized) {
+    Store(PSNM, Local0)
+    Return(Local0)
+  }
+
+  Device(H000) {
+    Name(_ADR, 0x00000000)
+    Method(_SUN, 0) { Return(SNUM) } // Slot User Number
+  }
+  Device(H001) {
+    Name(_ADR, 0x00000001)
+    Method(_SUN, 0) { Return(SNUM) } // Slot User Number
+  }
+  Device(H002) {
+    Name(_ADR, 0x00000002)
+    Method(_SUN, 0) { Return(SNUM) } // Slot User Number
+  }
+  Device(H003) {
+    Name(_ADR, 0x00000003)
+    Method(_SUN, 0) { Return(SNUM) } // Slot User Number
+  }
+  Device(H004) {
+    Name(_ADR, 0x00000004)
+    Method(_SUN, 0) { Return(SNUM) } // Slot User Number
+  }
+  Device(H005) {
+    Name(_ADR, 0x00000005)
+    Method(_SUN, 0) { Return(SNUM) } // Slot User Number
+  }
+  Device(H006) {
+    Name(_ADR, 0x00000006)
+    Method(_SUN, 0) { Return(SNUM) } // Slot User Number
+  }
+  Device(H007) {
+    Name(_ADR, 0x00000007)
+    Method(_SUN, 0) { Return(SNUM) } // Slot User Number
+  }

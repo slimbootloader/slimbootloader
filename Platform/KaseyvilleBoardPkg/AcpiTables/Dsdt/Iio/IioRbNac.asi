@@ -1,0 +1,41 @@
+/** @file
+
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+    // IOAT Nac stack
+    Device (IIO_DEVICE_NAME(DI, SOCKET, IOAT_INDEX)) {
+        Name (_HID, EISAID("PNP0A08"))
+        Name (_CID, EISAID("PNP0A03"))
+        Name (_UID, IIO_DEVICE_UID_ASL(DINO_UID, SOCKET, IOAT_INDEX))
+
+        Method (_BBN, 0, NotSerialized)
+        {
+          Return(ToInteger(DeRefOf(Index(RBRS, 8))))
+        }
+
+        #include "IioIoatRbResource.asi"
+        #include "IioIoatRbMethod.asi"
+
+        Method (_PRT, 0)
+        {
+          Return (AR12)
+        }
+
+        Method (_STA, 0, NotSerialized)
+        {
+          if (And(CONCATENATE3(IP, SOCKET, IOAT_INDEX), 0x01)) {
+            Return (0x0F)
+          }
+          Return (0x00)
+        }
+
+        Device (CPM0) { //CPM within NAC
+          Name   (_ADR, 0x00050000)
+          Method (_PRT, 0) {
+              Return (AR05)
+          }
+        }
+    }

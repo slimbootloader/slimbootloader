@@ -1,0 +1,151 @@
+/** @file
+
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+  Name(RBRS, ResourceTemplate() {
+    //RESOURCE_CHUNK1_OFF
+    WORDBusNumber(            //Bus number resource (0); the bridge produces bus numbers for its subsequent buses
+      ResourceProducer,       // bit 0 of general flags is 1
+      MinNotFixed,            // Range is NotFixed, will be patched as Fixed when device is present
+      MaxNotFixed,            // Range is NotFixed, will be patched as Fixed when device is present
+      PosDecode,              // PosDecode
+      0x0000,                 // Granularity (FIX1 - Patched by ACPI runtime update)
+      0x0000,                 // Min         (FIX1 - Patched by ACPI runtime update)
+      0x0000,                 // Max         (FIX1 - Patched by ACPI runtime update)
+      0x0000,                 // Translation
+      0x0000,                 // Range Length = Max-Min+1 (FIX1 - Patched by ACPI runtime update)
+            ,
+            ,
+      FIX1                    // DescriptorName populated so iASL outputs offset for it in a .h file
+    )
+
+    //RESOURCE_CHUNK2_OFF
+    WORDIO(                   //Consumed-and-produced resource (all I/O above CFF)
+      ResourceProducer,       // bit 0 of general flags is 0
+      MinNotFixed,            // Range is NotFixed, will be patched as Fixed when device is present
+      MaxNotFixed,            // Range is NotFixed, will be patched as Fixed when device is present
+      PosDecode,
+      EntireRange,
+      0x0000,                 // Granularity (FIX2 - Patched by ACPI runtime update)
+      0x0000,                 // Min         (FIX2 - Patched by ACPI runtime update)
+      0x0000,                 // Max         (FIX2 - Patched by ACPI runtime update)
+      0x0000,                 // Translation
+      0x0000,                 // Range Length = Max-Min+1 (FIX2 - Patched by ACPI runtime update)
+            ,
+            ,
+      FIX2                    // DescriptorName populated so iASL outputs offset for it in a .h file
+    )
+
+    //
+    // PCI RESOURCE_32bit
+    //
+    DWORDMemory(              // Consumed-and-produced resource(all of memory space)
+      ResourceProducer,       // bit 0 of general flags is 0
+      PosDecode,              // positive Decode
+      MinNotFixed,            // Range is NotFixed, will be patched as Fixed when device is present
+      MaxNotFixed,            // Range is NotFixed, will be patched as Fixed when device is present
+      NonCacheable,
+      ReadWrite,
+      0x00000000,             // Granularity (FIX3 - Patched by ACPI runtime update)
+      0x00000000,             // Min (calculated dynamically) (FIX3 - Patched by ACPI runtime update)
+      0x00000000,             // Max = 4GB - 1MB  (fwh + fwh alias) (FIX3 - Patched by ACPI runtime update)
+      0x00000000,             // Translation
+      0x00000000,             // Range Length (calculated dynamically) (FIX3 - Patched by ACPI runtime update)
+                ,
+                ,
+      FIX3                    // DescriptorName populated so iASL outputs offset for it in a .h file
+    )
+
+    //
+    // PCI RESOURCE_64bit
+    //
+    QWORDMemory(              // Consumed-and-produced resource(all of memory space)
+      ResourceProducer,       // bit 0 of general flags is 0
+      PosDecode,              // positive Decode
+      MinNotFixed,            // Range is NotFixed, will be patched as Fixed when device is present
+      MaxNotFixed,            // Range is NotFixed, will be patched as Fixed when device is present
+      NonCacheable,
+      ReadWrite,
+      0x00000000000,          // Granularity (FIX4 - Patched by ACPI runtime update)
+      0x00000000000,          // Min (calculated dynamically) (FIX4 - Patched by ACPI runtime update)
+      0x00000000000,          // Max = 4GB - 1MB  (fwh + fwh alias) (FIX4 - Patched by ACPI runtime update)
+      0x00000000000,          // Translation
+      0x00000000000,          // Range Length (calculated dynamically) (FIX4 - Patched by ACPI runtime update)
+                   ,
+                   ,
+      FIX4                    // DescriptorName populated so iASL outputs offset for it in a .h file
+    )
+
+    //Legacy Resource On S3m
+    #if defined(Legacy_Resource) && (SOCKET == 0) && (IOAT_INDEX == 0)
+        //RESOURCE_CHUNK2_OFF
+          IO(                       // Consumed resource (CF8-CFF)
+            Decode16,
+            0x0CF8,
+            0x0CF8,
+            1,
+            8
+          )
+
+        //RTC
+        WORDIO(                   // Consumed-and-produced resource
+          ResourceProducer,       // bit 0 of general flags is 0
+          MinFixed,               // Range is fixed
+          MaxFixed,               // Range is fixed
+          PosDecode,
+          EntireRange,
+          0x0000,                 // Granularity
+          0x0070,                 // Min
+          0x0077,                 // Max
+          0x0000,                 // Translation
+          0x0008                  // Range Length
+        )
+
+          // SMBUS
+          WORDIO(                   // Consumed-and-produced resource
+            ResourceProducer,       // bit 0 of general flags is 0
+            MinNotFixed,            // Range is NotFixed, will be patched as Fixed when device is present
+            MaxNotFixed,            // Range is NotFixed, will be patched as Fixed when device is present
+            PosDecode,
+            EntireRange,
+            0x0000,                 // Granularity
+            0x0780,                 // Min
+            0x079F,                 // Max
+            0x0000,                 // Translation
+            0x0020                  // Range Length
+        )
+
+          // ACPI
+          WORDIO(                   // Consumed-and-produced resource
+            ResourceProducer,       // bit 0 of general flags is 0
+            MinNotFixed,            // Range is NotFixed, will be patched as Fixed when device is present
+            MaxNotFixed,            // Range is NotFixed, will be patched as Fixed when device is present
+            PosDecode,
+            EntireRange,
+            0x0000,                 // Granularity
+            0x0500,                 // Min
+            0x05FF,                 // Max
+            0x0000,                 // Translatio
+            0x0100                  // Range Length
+        )
+
+          // PMC
+          DWordMemory(ResourceProducer,PosDecode,MinFixed,MaxFixed,NonCacheable,
+              ReadWrite,0x00,0xF6800000,0xF6803FFF,0x00,0x4000)
+
+          // SPI
+          DWordMemory(ResourceProducer,PosDecode,MinFixed,MaxFixed,NonCacheable,
+              ReadWrite,0x00,0xF6830000,0xF6830FFF,0x00,0x1000)
+
+          // P2SB
+          DWordMemory(ResourceProducer,PosDecode,MinFixed,MaxFixed,NonCacheable,
+              ReadWrite,0x00,0xF7000000,0xF7FFFFFF,0x00,0x1000000)
+      #endif
+  }) // end of PRXX Buffer
+
+  Method (_CRS, 0x0, NotSerialized) {
+      Return (RBRS)
+  }
