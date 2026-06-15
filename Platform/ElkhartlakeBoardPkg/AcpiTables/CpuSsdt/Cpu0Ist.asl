@@ -18,6 +18,7 @@ DefinitionBlock (
 {
   External(\_SB.OSCP, IntObj)
   External(\TCNT, FieldUnitObj)
+  External(\_SB.CFGD, IntObj)
   External(\_SB.CPPC, FieldUnitObj)
   External(\_SB.PR00, DeviceObj)
 
@@ -49,6 +50,14 @@ DefinitionBlock (
     //
     Method(_PSS,0)
     {
+      //
+      // If EIST is disabled, do not expose placeholder P-state data.
+      //
+      If (LNot(And(\_SB.CFGD, PPM_EIST)))
+      {
+        Return (Package(0) {})
+      }
+
       If(And(\_SB.OSCP,0x0400))
       {
         Return (TPSS)
