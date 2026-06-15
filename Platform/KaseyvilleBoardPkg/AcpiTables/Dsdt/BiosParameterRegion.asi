@@ -1,0 +1,544 @@
+/** @file
+
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+  //
+  // NVS parameter BIOS_ACPI_PARAM
+  //
+  OperationRegion (PSYS, SystemMemory, 0x30584946, 0x800) // (FIX0 - Patched by ACPI runtime update)
+  Field (PSYS, ByteAcc, NoLock, Preserve) {
+    // IOAPIC Start
+    PLAT   ,  32,   // Platform ID
+
+    Offset (0x04),  //
+    APCE   ,   1,   // PCH IOAPIC Enable
+    RESA   ,  63,
+
+    Offset (0x0C),
+    SKOV   ,   1,   // Override ApicId socket field
+    P119   ,   1,   // PCH IOAPIC 24_119 enabled
+    RES0   ,   6,   // Unused
+    // IOAPIC End
+
+    // Power Managment Start
+    Offset (0x0D),
+    TPME   ,  1,    // TPM Enable
+    CSEN   ,  1,    // C State Enable
+    C6EN   ,  3,    // C6 Enable
+    MWOS   ,  1,    // MWAIT support Enable
+    ATOM   ,  1,    // Small Core Flag
+    CC1E   ,  1,    // C1e in Small Core
+    Offset (0x0E),
+    PSEN   ,  1,    // P State Enable
+    EMCA   ,  1,    // EMCA Enable
+    HWAL   ,  2,    // PSD HW_ALL Enable
+    KPRS   ,  1,    // KB present Flag
+    MPRS   ,  1,    // Mouse present Flag
+    RESX   ,  2,    // Unused
+    // Power Management End
+
+    // RAS Start
+    Offset (0x0F),
+    CPHP   ,  8,    // Bit field for determining CPU hotplug event is happening, Update every time CPU Hotpug event is registered as valid
+                    // Bit0 CPU0 O*L Request
+                    // Bit1 CPU1 O*L Request
+                    // Bit2 CPU2 O*L Request
+                    // Bit3 CPU3 O*L Request
+                    // Bit4 CPU4 O*L Request
+                    // Bit5 CPU5 O*L Request
+                    // Bit6 CPU6 O*L Request
+                    // Bit7 CPU7 O*L Request
+    IIOP   ,  8,    // Bit field for determining IIO hotplug event is happening, Update every time IIO Hotpug event is registered as valid
+                    // Bit0 IIO1 O*L Request
+                    // Bit1 IIO2 O*L Request
+                    // Bit2 IIO3 O*L Request
+                    // Bit3-7 Reserved
+    //
+    // The objects PP<socket><pe> defined per Socket/PCI Express contain bitmap of PCI hierarchies created for PCIe domain.
+    // The content is updated by PatchDsdtTableAML() in Stage2 in BIOS_ACPI_PARAM structure.
+    //
+    PP00, 8, PP01, 8, PP02, 8, PP03, 8, PP04, 8, PP05, 8, PP06, 8, PP07, 8, PP08, 8, PP09, 8,
+    PP10, 8, PP11, 8, PP12, 8, PP13, 8, PP14, 8, PP15, 8, PP16, 8, PP17, 8, PP18, 8, PP19, 8,
+    PP20, 8, PP21, 8, PP22, 8, PP23, 8, PP24, 8, PP25, 8, PP26, 8, PP27, 8, PP28, 8, PP29, 8,
+    PP30, 8, PP31, 8, PP32, 8, PP33, 8, PP34, 8, PP35, 8, PP36, 8, PP37, 8, PP38, 8, PP39, 8,
+    PP40, 8, PP41, 8, PP42, 8, PP43, 8, PP44, 8, PP45, 8, PP46, 8, PP47, 8, PP48, 8, PP49, 8,
+    PP50, 8, PP51, 8, PP52, 8, PP53, 8, PP54, 8, PP55, 8, PP56, 8, PP57, 8, PP58, 8, PP59, 8,
+    PP60, 8, PP61, 8, PP62, 8, PP63, 8, PP64, 8, PP65, 8, PP66, 8, PP67, 8, PP68, 8, PP69, 8,
+    PP70, 8, PP71, 8, PP72, 8, PP73, 8, PP74, 8, PP75, 8, PP76, 8, PP77, 8, PP78, 8, PP79, 8,
+    //
+    // The objects IP<socket><ioat> defined per Socket/IO Accelerator contain the present status of IOAT instances.
+    // The content is updated by PatchDsdtTableAML() in Stage2 in BIOS_ACPI_PARAM structure.
+    //
+    IP00, 8, IP01, 8, IP02, 8, IP03, 8, IP04, 8, IP05, 8, IP06, 8, IP07, 8,
+    IP10, 8, IP11, 8, IP12, 8, IP13, 8, IP14, 8, IP15, 8, IP16, 8, IP17, 8,
+    IP20, 8, IP21, 8, IP22, 8, IP23, 8, IP24, 8, IP25, 8, IP26, 8, IP27, 8,
+    IP30, 8, IP31, 8, IP32, 8, IP33, 8, IP34, 8, IP35, 8, IP36, 8, IP37, 8,
+    IP40, 8, IP41, 8, IP42, 8, IP43, 8, IP44, 8, IP45, 8, IP46, 8, IP47, 8,
+    IP50, 8, IP51, 8, IP52, 8, IP53, 8, IP54, 8, IP55, 8, IP56, 8, IP57, 8,
+    IP60, 8, IP61, 8, IP62, 8, IP63, 8, IP64, 8, IP65, 8, IP66, 8, IP67, 8,
+    IP70, 8, IP71, 8, IP72, 8, IP73, 8, IP74, 8, IP75, 8, IP76, 8, IP77, 8,
+    //
+    // The objects IS<socket><ioat> defined per Socket/IO Accelerator contain segment of IOAT instances.
+    // The content is updated by PatchDsdtTableAML() in Stage2 in BIOS_ACPI_PARAM structure.
+    //
+    IS00, 8, IS01, 8, IS02, 8, IS03, 8, IS04, 8, IS05, 8, IS06, 8, IS07, 8,
+    IS10, 8, IS11, 8, IS12, 8, IS13, 8, IS14, 8, IS15, 8, IS16, 8, IS17, 8,
+    IS20, 8, IS21, 8, IS22, 8, IS23, 8, IS24, 8, IS25, 8, IS26, 8, IS27, 8,
+    IS30, 8, IS31, 8, IS32, 8, IS33, 8, IS34, 8, IS35, 8, IS36, 8, IS37, 8,
+    IS40, 8, IS41, 8, IS42, 8, IS43, 8, IS44, 8, IS45, 8, IS46, 8, IS47, 8,
+    IS50, 8, IS51, 8, IS52, 8, IS53, 8, IS54, 8, IS55, 8, IS56, 8, IS57, 8,
+    IS60, 8, IS61, 8, IS62, 8, IS63, 8, IS64, 8, IS65, 8, IS66, 8, IS67, 8,
+    IS70, 8, IS71, 8, IS72, 8, IS73, 8, IS74, 8, IS75, 8, IS76, 8, IS77, 8,
+    CXC0   , 16,    // Bitmap of CXL capable PE in Socket0, each bit represents CXL capability in a coresponding PE. Used in _STA method (Patched by ACPI runtime update)
+    CXC1   , 16,    // Bitmap of CXL capable PE in Socket1
+    CXC2   , 16,    // Bitmap of CXL capable PE in Socket2
+    CXC3   , 16,    // Bitmap of CXL capable PE in Socket3
+    CXC4   , 16,    // Bitmap of CXL capable PE in Socket4
+    CXC5   , 16,    // Bitmap of CXL capable PE in Socket5
+    CXC6   , 16,    // Bitmap of CXL capable PE in Socket6
+    CXC7   , 16,    // Bitmap of CXL capable PE in Socket7
+    UBP0   , 8,     // Uncore present bitmap in socket0, what uncore stacks are present for _STA method (Patched by ACPI runtime update)
+    UBP1   , 8,     // Uncore present bitmap in socket1
+    UBP2   , 8,     // Uncore present bitmap in socket2
+    UBP3   , 8,     // Uncore present bitmap in socket3
+    UBP4   , 8,     // Uncore present bitmap in socket4
+    UBP5   , 8,     // Uncore present bitmap in socket5
+    UBP6   , 8,     // Uncore present bitmap in socket6
+    UBP7   , 8,     // Uncore present bitmap in socket7
+    PRBM   , 32,    // Processor Bit mask, what sockets are present for STA method, Update every time hotplug event happen and at boot time (Patched by ACPI runtime update)
+    CFMM   , 32,    // MMCFG Base
+    TSSZ   , 32,    // TSEG Size.
+    SMI0   , 32,    // Parameter0 used for faked SMI request
+    SMI1   , 32,    // Parameter1 used for faked SMI request
+    SMI2   , 32,    // Parameter2 used for faked SMI request
+    SMI3   , 32,    // Parameter3 used for faked SMI request
+    SCI0   , 32,    // Parameter0 used for faked SCI request
+    SCI1   , 32,    // Parameter1 used for faked SCI request
+    SCI2   , 32,    // Parameter2 used for faked SCI request
+    SCI3   , 32,    // Parameter3 used for faked SCI request
+    MADD   , 64,    // Migration ActionRegion GAS address. (Migration support written for 8 CPU socket system. In a 4 socket system, CPU4-7 and MEM8-15 are invalid.)
+    CUU0   , 128,   // CPU0 UUID
+    CUU1   , 128,   // CPU1 UUID
+    CUU2   , 128,   // CPU2 UUID
+    CUU3   , 128,   // CPU3 UUID
+    CUU4   , 128,   // CPU4 UUID
+    CUU5   , 128,   // CPU5 UUID
+    CUU6   , 128,   // CPU6 UUID
+    CUU7   , 128,   // CPU7 UUID
+    CPSP   , 8,     // CPU spare bitmap. 1 == IsSpare.
+    ME00   , 128,   // MEM0 UUID
+    ME01   , 128,   // MEM1 UUID
+    ME10   , 128,   // MEM2 UUID
+    ME11   , 128,   // MEM3 UUID
+    ME20   , 128,   // MEM4 UUID
+    ME21   , 128,   // MEM5 UUID
+    ME30   , 128,   // MEM6 UUID
+    ME31   , 128,   // MEM7 UUID
+    ME40   , 128,   // MEM8 UUID
+    ME41   , 128,   // MEM9 UUID
+    ME50   , 128,   // MEM10 UUID
+    ME51   , 128,   // MEM11 UUID
+    ME60   , 128,   // MEM12 UUID
+    ME61   , 128,   // MEM13 UUID
+    ME70   , 128,   // MEM14 UUID
+    ME71   , 128,   // MEM15 UUID
+    LDIR   , 64,    // L1 Directory Address
+    PRID   , 32,    // Processor ID
+    WHEA   , 8,
+    WHEN   , 8,
+    WSCI   , 8,
+    EBUF   , 64,    // Error Status data buffer address for OOB RAS Offload
+    RARA   , 64,    // Read Ack Register address for OOB RAS Offload
+    // RAS End
+
+    // BIOS Guard Start
+    BGMA   , 64,    // BIOS Guard Memory Address
+    BGMS   , 8,     // BIOS Guard Memory Size
+    BGIO   , 16,    // BIOS Guard IO Trap Address
+    CNBS   , 8,     // CPU SKU number bit shift
+    // BIOS Guard End
+
+    // USB3 Start
+    XHMD   , 8,
+    SBV1   , 8,     // USB Sideband Deferring GPE Vector (HOST_ALERT#1)
+    SBV2   , 8,     // USB Sideband Deferring GPE Vector (HOST_ALERT#2)
+    // USB3 End
+
+    // HWPM Start
+    HWEN   ,  2,    // HWPM State Enable
+    RES1   ,  6,    // Reserved bits
+    // HWPM End
+
+    // SGX Start
+    EPCS   ,  8,    // EPC Status
+    ELN0   , 64,    // EPC0 Length
+    ELN1   , 64,    // EPC1 Length
+    ELN2   , 64,    // EPC2 Length
+    ELN3   , 64,    // EPC3 Length
+    ELN4   , 64,    // EPC4 Length
+    ELN5   , 64,    // EPC5 Length
+    ELN6   , 64,    // EPC6 Length
+    ELN7   , 64,    // EPC7 Length
+    EBA0   , 64,    // EPC0 Base Address
+    EBA1   , 64,    // EPC1 Base Address
+    EBA2   , 64,    // EPC2 Base Address
+    EBA3   , 64,    // EPC3 Base Address
+    EBA4   , 64,    // EPC4 Base Address
+    EBA5   , 64,    // EPC5 Base Address
+    EBA6   , 64,    // EPC6 Base Address
+    EBA7   , 64,    // EPC7 Base Address
+    // SGX End
+
+    // PCIe Multi-Seg Start
+    SGEN   , 8,     // PCIe_MultiSeg_Support enable/disable
+    SG00   , 8,     // PCI segment ID for socket 0
+    SG01   , 8,     // PCI segment ID for socket 1
+    SG02   , 8,     // PCI segment ID for socket 2
+    SG03   , 8,     // PCI segment ID for socket 3
+    SG04   , 8,     // PCI segment ID for socket 4
+    SG05   , 8,     // PCI segment ID for socket 5
+    SG06   , 8,     // PCI segment ID for socket 6
+    SG07   , 8,     // PCI segment ID for socket 7
+    // PCIe Multi-Seg End
+    //
+    // Sub-NUMA Cluster support splits socket proximity domain into per MC or group of MC domains (aka clusters).
+    //
+    CLOD   , 8,     //  0 - SNC disabled, 2 - SNC enabled with 2 clusters, 4 - SNC enabled with 4 clusters
+    //
+    // The objects PX<socket><pe> defined per Socket/PCI Express contain proximity domain for each PCIe.
+    //
+    PX00, 16, PX01, 16, PX02, 16, PX03, 16, PX04, 16, PX05, 16, PX06, 16, PX07, 16, PX08, 16, PX09, 16,
+    PX10, 16, PX11, 16, PX12, 16, PX13, 16, PX14, 16, PX15, 16, PX16, 16, PX17, 16, PX18, 16, PX19, 16,
+    PX20, 16, PX21, 16, PX22, 16, PX23, 16, PX24, 16, PX25, 16, PX26, 16, PX27, 16, PX28, 16, PX29, 16,
+    PX30, 16, PX31, 16, PX32, 16, PX33, 16, PX34, 16, PX35, 16, PX36, 16, PX37, 16, PX38, 16, PX39, 16,
+    PX40, 16, PX41, 16, PX42, 16, PX43, 16, PX44, 16, PX45, 16, PX46, 16, PX47, 16, PX48, 16, PX49, 16,
+    PX50, 16, PX51, 16, PX52, 16, PX53, 16, PX54, 16, PX55, 16, PX56, 16, PX57, 16, PX58, 16, PX59, 16,
+    PX60, 16, PX61, 16, PX62, 16, PX63, 16, PX64, 16, PX65, 16, PX66, 16, PX67, 16, PX68, 16, PX69, 16,
+    PX70, 16, PX71, 16, PX72, 16, PX73, 16, PX74, 16, PX75, 16, PX76, 16, PX77, 16, PX78, 16, PX79, 16,
+    //
+    // The objects IX<socket><ioat> defined per Socket/IO Accelerator contain proximity domain for each IOAT.
+    //
+    IX00, 16, IX01, 16, IX02, 16, IX03, 16, IX04, 16, IX05, 16, IX06, 16, IX07, 16,
+    IX10, 16, IX11, 16, IX12, 16, IX13, 16, IX14, 16, IX15, 16, IX16, 16, IX17, 16,
+    IX20, 16, IX21, 16, IX22, 16, IX23, 16, IX24, 16, IX25, 16, IX26, 16, IX27, 16,
+    IX30, 16, IX31, 16, IX32, 16, IX33, 16, IX34, 16, IX35, 16, IX36, 16, IX37, 16,
+    IX40, 16, IX41, 16, IX42, 16, IX43, 16, IX44, 16, IX45, 16, IX46, 16, IX47, 16,
+    IX50, 16, IX51, 16, IX52, 16, IX53, 16, IX54, 16, IX55, 16, IX56, 16, IX57, 16,
+    IX60, 16, IX61, 16, IX62, 16, IX63, 16, IX64, 16, IX65, 16, IX66, 16, IX67, 16,
+    IX70, 16, IX71, 16, IX72, 16, IX73, 16, IX74, 16, IX75, 16, IX76, 16, IX77, 16,
+
+    PMBA    , 16,    // ACPI IO Base Address
+    DBGM    , 8,     // Debug Mode Indicator
+    IRPC    , 8,     // IIO PCIe root port PCIe Capability offset
+
+    TXTE    , 8,     // TXT Support for ACPI
+
+    //DiscreteConnecivity
+    SVDC    , 8,     //Skip VDID check
+
+    // Connectivity
+    GBTK    , 32,    // Gpio for Bluetooth RfKill
+    GBTI    , 32,    // Gpio for Bluetooth interrupt
+    ATDV    , 8,     // AntennaDiversity
+    CECV    , 32,    // CNV external 32KHz Clock
+
+    DWFK    , 32,    //  Gpio for WiFi RF-Kill
+
+    WIFE    , 8,     //  WifiEnable
+    DOM1    , 8,     //  WifiDomainType1
+    LIM1    , 16,    //  WifiPowerLimit1
+    TIM1    , 32,    //  WifiTimeWindow1
+    TRD0    , 8,     //  TRxDelay0
+    TRL0    , 8,     //  TRxCableLength0
+    TRD1    , 8,     //  TRxDelay1
+    TRL1    , 8,     //  TRxCableLength1
+
+    WDM1    , 8,     //  WrddDomainType1
+    CID1    , 16,    //  WrddCountryIndentifier1
+
+    STXE    , 8,     //  WrdsWiFiSarEnable
+    ST10    , 8,     //  WrdsWiFiSarTxPowerSet1Limit1
+    ST11    , 8,     //  WrdsWiFiSarTxPowerSet1Limit2
+    ST12    , 8,     //  WrdsWiFiSarTxPowerSet1Limit3
+    ST13    , 8,     //  WrdsWiFiSarTxPowerSet1Limit4
+    ST14    , 8,     //  WrdsWiFiSarTxPowerSet1Limit5
+    ST15    , 8,     //  WrdsWiFiSarTxPowerSet1Limit6
+    ST16    , 8,     //  WrdsWiFiSarTxPowerSet1Limit7
+    ST17    , 8,     //  WrdsWiFiSarTxPowerSet1Limit8
+    ST18    , 8,     //  WrdsWiFiSarTxPowerSet1Limit9
+    ST19    , 8,     //  WrdsWiFiSarTxPowerSet1Limit10
+    ST50    , 8,     //  WrdsWiFiSarTxPowerSet1Limit11
+    ST51    , 8,     //  WrdsWiFiSarTxPowerSet1Limit12
+    ST52    , 8,     //  WrdsWiFiSarTxPowerSet1Limit13
+    ST53    , 8,     //  WrdsWiFiSarTxPowerSet1Limit14
+    ST54    , 8,     //  WrdsWiFiSarTxPowerSet1Limit15
+    ST55    , 8,     //  WrdsWiFiSarTxPowerSet1Limit16
+    ST56    , 8,     //  WrdsWiFiSarTxPowerSet1Limit17
+    ST57    , 8,     //  WrdsWiFiSarTxPowerSet1Limit18
+    ST58    , 8,     //  WrdsWiFiSarTxPowerSet1Limit19
+    ST59    , 8,     //  WrdsWiFiSarTxPowerSet1Limit20
+    ST5A    , 8,     //  WrdsWiFiSarTxPowerSet1Limit21
+    ST5B    , 8,     //  WrdsWiFiSarTxPowerSet1Limit22
+    CD10    , 8,     // WrdsCdbWiFiSarTxPowerSet1Limit1
+    CD11    , 8,     // WrdsCdbWiFiSarTxPowerSet1Limit2
+    CD12    , 8,     // WrdsCdbWiFiSarTxPowerSet1Limit3
+    CD13    , 8,     // WrdsCdbWiFiSarTxPowerSet1Limit4
+    CD14    , 8,     // WrdsCdbWiFiSarTxPowerSet1Limit5
+    CD15    , 8,     // WrdsCdbWiFiSarTxPowerSet1Limit6
+    CD16    , 8,     // WrdsCdbWiFiSarTxPowerSet1Limit7
+    CD17    , 8,     // WrdsCdbWiFiSarTxPowerSet1Limit8
+    CD18    , 8,     // WrdsCdbWiFiSarTxPowerSet1Limit9
+    CD19    , 8,     // WrdsCdbWiFiSarTxPowerSet1Limit10
+    CD1A    , 8,     // WrdsCdbWiFiSarTxPowerSet1Limit11
+    CD20    , 8,     // WrdsCdbWiFiSarTxPowerSet1Limit12
+    CD21    , 8,     // WrdsCdbWiFiSarTxPowerSet1Limit13
+    CD22    , 8,     // WrdsCdbWiFiSarTxPowerSet1Limit14
+    CD23    , 8,     // WrdsCdbWiFiSarTxPowerSet1Limit15
+    CD24    , 8,     // WrdsCdbWiFiSarTxPowerSet1Limit16
+    CD25    , 8,     // WrdsCdbWiFiSarTxPowerSet1Limit17
+    CD26    , 8,     // WrdsCdbWiFiSarTxPowerSet1Limit18
+    CD27    , 8,     // WrdsCdbWiFiSarTxPowerSet1Limit19
+    CD28    , 8,     // WrdsCdbWiFiSarTxPowerSet1Limit20
+    CD29    , 8,     // WrdsCdbWiFiSarTxPowerSet1Limit21
+    CD2A    , 8,     // WrdsCdbWiFiSarTxPowerSet1Limit22
+
+    STDE    , 8,     // EwrdWiFiDynamicSarEnable
+    STRS    , 8,     // EwrdWiFiDynamicSarRangeSets
+    ST20    , 8,     // EwrdWiFiSarTxPowerSet2Limit1
+    ST21    , 8,     // EwrdWiFiSarTxPowerSet2Limit2
+    ST22    , 8,     // EwrdWiFiSarTxPowerSet2Limit3
+    ST23    , 8,     // EwrdWiFiSarTxPowerSet2Limit4
+    ST24    , 8,     // EwrdWiFiSarTxPowerSet2Limit5
+    ST25    , 8,     // EwrdWiFiSarTxPowerSet2Limit6
+    ST26    , 8,     // EwrdWiFiSarTxPowerSet2Limit7
+    ST27    , 8,     // EwrdWiFiSarTxPowerSet2Limit8
+    ST28    , 8,     // EwrdWiFiSarTxPowerSet2Limit9
+    ST29    , 8,     // EwrdWiFiSarTxPowerSet2Limit10
+    ST60    , 8,     // EwrdWiFiSarTxPowerSet2Limit11
+    ST61    , 8,     // EwrdWiFiSarTxPowerSet2Limit12
+    ST62    , 8,     // EwrdWiFiSarTxPowerSet2Limit13
+    ST63    , 8,     // EwrdWiFiSarTxPowerSet2Limit14
+    ST64    , 8,     // EwrdWiFiSarTxPowerSet2Limit15
+    ST65    , 8,     // EwrdWiFiSarTxPowerSet2Limit16
+    ST66    , 8,     // EwrdWiFiSarTxPowerSet2Limit17
+    ST67    , 8,     // EwrdWiFiSarTxPowerSet2Limit18
+    ST68    , 8,     // EwrdWiFiSarTxPowerSet2Limit19
+    ST69    , 8,     // EwrdWiFiSarTxPowerSet2Limit20
+    ST6A    , 8,     // EwrdWiFiSarTxPowerSet2Limit21
+    ST6B    , 8,     // EwrdWiFiSarTxPowerSet2Limit22
+    ST30    , 8,     // EwrdWiFiSarTxPowerSet3Limit1
+    ST31    , 8,     // EwrdWiFiSarTxPowerSet3Limit2
+    ST32    , 8,     // EwrdWiFiSarTxPowerSet3Limit3
+    ST33    , 8,     // EwrdWiFiSarTxPowerSet3Limit4
+    ST34    , 8,     // EwrdWiFiSarTxPowerSet3Limit5
+    ST35    , 8,     // EwrdWiFiSarTxPowerSet3Limit6
+    ST36    , 8,     // EwrdWiFiSarTxPowerSet3Limit7
+    ST37    , 8,     // EwrdWiFiSarTxPowerSet3Limit8
+    ST38    , 8,     // EwrdWiFiSarTxPowerSet3Limit9
+    ST39    , 8,     // EwrdWiFiSarTxPowerSet3Limit10
+    ST70    , 8,     // EwrdWiFiSarTxPowerSet3Limit11
+    ST71    , 8,     // EwrdWiFiSarTxPowerSet3Limit12
+    ST72    , 8,     // EwrdWiFiSarTxPowerSet3Limit13
+    ST73    , 8,     // EwrdWiFiSarTxPowerSet3Limit14
+    ST74    , 8,     // EwrdWiFiSarTxPowerSet3Limit15
+    ST75    , 8,     // EwrdWiFiSarTxPowerSet3Limit16
+    ST76    , 8,     // EwrdWiFiSarTxPowerSet3Limit17
+    ST77    , 8,     // EwrdWiFiSarTxPowerSet3Limit18
+    ST78    , 8,     // EwrdWiFiSarTxPowerSet3Limit19
+    ST79    , 8,     // EwrdWiFiSarTxPowerSet3Limit20
+    ST7A    , 8,     // EwrdWiFiSarTxPowerSet3Limit21
+    ST7B    , 8,     // EwrdWiFiSarTxPowerSet3Limit22
+    ST40    , 8,     // EwrdWiFiSarTxPowerSet4Limit1
+    ST41    , 8,     // EwrdWiFiSarTxPowerSet4Limit2
+    ST42    , 8,     // EwrdWiFiSarTxPowerSet4Limit3
+    ST43    , 8,     // EwrdWiFiSarTxPowerSet4Limit4
+    ST44    , 8,     // EwrdWiFiSarTxPowerSet4Limit5
+    ST45    , 8,     // EwrdWiFiSarTxPowerSet4Limit6
+    ST46    , 8,     // EwrdWiFiSarTxPowerSet4Limit7
+    ST47    , 8,     // EwrdWiFiSarTxPowerSet4Limit8
+    ST48    , 8,     // EwrdWiFiSarTxPowerSet4Limit9
+    ST49    , 8,     // EwrdWiFiSarTxPowerSet4Limit10
+    ST80    , 8,     // EwrdWiFiSarTxPowerSet4Limit11
+    ST81    , 8,     // EwrdWiFiSarTxPowerSet4Limit12
+    ST82    , 8,     // EwrdWiFiSarTxPowerSet4Limit13
+    ST83    , 8,     // EwrdWiFiSarTxPowerSet4Limit14
+    ST84    , 8,     // EwrdWiFiSarTxPowerSet4Limit15
+    ST85    , 8,     // EwrdWiFiSarTxPowerSet4Limit16
+    ST86    , 8,     // EwrdWiFiSarTxPowerSet4Limit17
+    ST87    , 8,     // EwrdWiFiSarTxPowerSet4Limit18
+    ST88    , 8,     // EwrdWiFiSarTxPowerSet4Limit19
+    ST89    , 8,     // EwrdWiFiSarTxPowerSet4Limit20
+    ST8A    , 8,     // EwrdWiFiSarTxPowerSet4Limit21
+    ST8B    , 8,     // EwrdWiFiSarTxPowerSet4Limit22
+    CD30    , 8,     // EwrdCdbWiFiSarTxPowerSet2Limit1
+    CD31    , 8,     // EwrdCdbWiFiSarTxPowerSet2Limit2
+    CD32    , 8,     // EwrdCdbWiFiSarTxPowerSet2Limit3
+    CD33    , 8,     // EwrdCdbWiFiSarTxPowerSet2Limit4
+    CD34    , 8,     // EwrdCdbWiFiSarTxPowerSet2Limit5
+    CD35    , 8,     // EwrdCdbWiFiSarTxPowerSet2Limit6
+    CD36    , 8,     // EwrdCdbWiFiSarTxPowerSet2Limit7
+    CD37    , 8,     // EwrdCdbWiFiSarTxPowerSet2Limit8
+    CD38    , 8,     // EwrdCdbWiFiSarTxPowerSet2Limit9
+    CD39    , 8,     // EwrdCdbWiFiSarTxPowerSet2Limit10
+    CD3A    , 8,     // EwrdCdbWiFiSarTxPowerSet2Limit11
+    CD3B    , 8,     // EwrdCdbWiFiSarTxPowerSet2Limit12
+    CD3C    , 8,     // EwrdCdbWiFiSarTxPowerSet2Limit13
+    CD3D    , 8,     // EwrdCdbWiFiSarTxPowerSet2Limit14
+    CD3E    , 8,     // EwrdCdbWiFiSarTxPowerSet2Limit15
+    CD3F    , 8,     // EwrdCdbWiFiSarTxPowerSet2Limit16
+    CD40    , 8,     // EwrdCdbWiFiSarTxPowerSet2Limit17
+    CD41    , 8,     // EwrdCdbWiFiSarTxPowerSet2Limit18
+    CD42    , 8,     // EwrdCdbWiFiSarTxPowerSet2Limit19
+    CD43    , 8,     // EwrdCdbWiFiSarTxPowerSet2Limit20
+    CD44    , 8,     // EwrdCdbWiFiSarTxPowerSet2Limit21
+    CD45    , 8,     // EwrdCdbWiFiSarTxPowerSet2Limit22
+    CD46    , 8,     // EwrdCdbWiFiSarTxPowerSet3Limit1
+    CD47    , 8,     // EwrdCdbWiFiSarTxPowerSet3Limit2
+    CD48    , 8,     // EwrdCdbWiFiSarTxPowerSet3Limit3
+    CD49    , 8,     // EwrdCdbWiFiSarTxPowerSet3Limit4
+    CD4A    , 8,     // EwrdCdbWiFiSarTxPowerSet3Limit5
+    CD4B    , 8,     // EwrdCdbWiFiSarTxPowerSet3Limit6
+    CD4C    , 8,     // EwrdCdbWiFiSarTxPowerSet3Limit7
+    CD4D    , 8,     // EwrdCdbWiFiSarTxPowerSet3Limit8
+    CD4E    , 8,     // EwrdCdbWiFiSarTxPowerSet3Limit9
+    CD4F    , 8,     // EwrdCdbWiFiSarTxPowerSet3Limit10
+    CD50    , 8,     // EwrdCdbWiFiSarTxPowerSet3Limit11
+    CD51    , 8,     // EwrdCdbWiFiSarTxPowerSet3Limit12
+    CD52    , 8,     // EwrdCdbWiFiSarTxPowerSet3Limit13
+    CD53    , 8,     // EwrdCdbWiFiSarTxPowerSet3Limit14
+    CD54    , 8,     // EwrdCdbWiFiSarTxPowerSet3Limit15
+    CD55    , 8,     // EwrdCdbWiFiSarTxPowerSet3Limit16
+    CD56    , 8,     // EwrdCdbWiFiSarTxPowerSet3Limit17
+    CD57    , 8,     // EwrdCdbWiFiSarTxPowerSet3Limit18
+    CD58    , 8,     // EwrdCdbWiFiSarTxPowerSet3Limit19
+    CD59    , 8,     // EwrdCdbWiFiSarTxPowerSet3Limit20
+    CD5A    , 8,     // EwrdCdbWiFiSarTxPowerSet3Limit21
+    CD5B    , 8,     // EwrdCdbWiFiSarTxPowerSet3Limit22
+    CD5C    , 8,     // EwrdCdbWiFiSarTxPowerSet4Limit1
+    CD5D    , 8,     // EwrdCdbWiFiSarTxPowerSet4Limit2
+    CD5E    , 8,     // EwrdCdbWiFiSarTxPowerSet4Limit3
+    CD5F    , 8,     // EwrdCdbWiFiSarTxPowerSet4Limit4
+    CD60    , 8,     // EwrdCdbWiFiSarTxPowerSet4Limit5
+    CD61    , 8,     // EwrdCdbWiFiSarTxPowerSet4Limit6
+    CD62    , 8,     // EwrdCdbWiFiSarTxPowerSet4Limit7
+    CD63    , 8,     // EwrdCdbWiFiSarTxPowerSet4Limit8
+    CD64    , 8,     // EwrdCdbWiFiSarTxPowerSet4Limit9
+    CD65    , 8,     // EwrdCdbWiFiSarTxPowerSet4Limit10
+    CD66    , 8,     // EwrdCdbWiFiSarTxPowerSet4Limit11
+    CD67    , 8,     // EwrdCdbWiFiSarTxPowerSet4Limit12
+    CD68    , 8,     // EwrdCdbWiFiSarTxPowerSet4Limit13
+    CD69    , 8,     // EwrdCdbWiFiSarTxPowerSet4Limit14
+    CD6A    , 8,     // EwrdCdbWiFiSarTxPowerSet4Limit15
+    CD6B    , 8,     // EwrdCdbWiFiSarTxPowerSet4Limit16
+    CD6C    , 8,     // EwrdCdbWiFiSarTxPowerSet4Limit17
+    CD6D    , 8,     // EwrdCdbWiFiSarTxPowerSet4Limit18
+    CD6E    , 8,     // EwrdCdbWiFiSarTxPowerSet4Limit19
+    CD6F    , 8,     // EwrdCdbWiFiSarTxPowerSet4Limit20
+    CD70    , 8,     // EwrdCdbWiFiSarTxPowerSet4Limit21
+    CD71    , 8,     // EwrdCdbWiFiSarTxPowerSet4Limit22
+
+    SD11    , 8,     // WgdsWiFiSarDeltaGroup1PowerMax1
+    SD12    , 8,     // WgdsWiFiSarDeltaGroup1PowerChainA1
+    SD13    , 8,     // WgdsWiFiSarDeltaGroup1PowerChainB1
+    SD14    , 8,     // WgdsWiFiSarDeltaGroup1PowerMax2
+    SD15    , 8,     // WgdsWiFiSarDeltaGroup1PowerChainA2
+    SD16    , 8,     // WgdsWiFiSarDeltaGroup1PowerChainB2
+    SD17    , 8,     // WgdsWiFiSarDeltaGroup1PowerMax3
+    SD18    , 8,     // WgdsWiFiSarDeltaGroup1PowerChainA3
+    SD19    , 8,     // WgdsWiFiSarDeltaGroup1PowerChainB3
+    SD21    , 8,     // WgdsWiFiSarDeltaGroup2PowerMax1
+    SD22    , 8,     // WgdsWiFiSarDeltaGroup2PowerChainA1
+    SD23    , 8,     // WgdsWiFiSarDeltaGroup2PowerChainB1
+    SD24    , 8,     // WgdsWiFiSarDeltaGroup2PowerMax2
+    SD25    , 8,     // WgdsWiFiSarDeltaGroup2PowerChainA2
+    SD26    , 8,     // WgdsWiFiSarDeltaGroup2PowerChainB2
+    SD27    , 8,     // WgdsWiFiSarDeltaGroup2PowerMax3
+    SD28    , 8,     // WgdsWiFiSarDeltaGroup2PowerChainA3
+    SD29    , 8,     // WgdsWiFiSarDeltaGroup2PowerChainB3
+    SD31    , 8,     // WgdsWiFiSarDeltaGroup3PowerMax1
+    SD32    , 8,     // WgdsWiFiSarDeltaGroup3PowerChainA1
+    SD33    , 8,     // WgdsWiFiSarDeltaGroup3PowerChainB1
+    SD34    , 8,     // WgdsWiFiSarDeltaGroup3PowerMax2
+    SD35    , 8,     // WgdsWiFiSarDeltaGroup3PowerChainA2
+    SD36    , 8,     // WgdsWiFiSarDeltaGroup3PowerChainB2
+    SD37    , 8,     // WgdsWiFiSarDeltaGroup3PowerMax3
+    SD38    , 8,     // WgdsWiFiSarDeltaGroup3PowerChainA3
+    SD39    , 8,     // WgdsWiFiSarDeltaGroup3PowerChainB3
+
+    SGMM    , 8,     // SAR GEO Mapping Mode
+    SL00    , 8,     // 0 - DEFAULT
+    SL01    , 8,     // 1 - FCC
+    SL02    , 8,     // 2 - USA TW
+    SL03    , 8,     // 3 - Canada IC
+    SL04    , 8,     // 4 - ETSI 5G8SRD
+    SL05    , 8,     // 5 - ETSI 5G8Med
+    SL06    , 8,     // 6 - Japan
+    SL07    , 8,     // 7 - Brazil
+    SL08    , 8,     // 8 - ETSI 5G8FCC
+    SL09    , 8,     // 9 - Indonesia
+    SL10    , 8,     // 10 - South Korea
+    SL11    , 8,     // 11 - Chile
+    SL12    , 8,     // 12 - ETSI 5G8Pass
+    SL13    , 8,     // 13 - Pakistan
+    SL14    , 8,     // 14 - No 11ac
+    SL15    , 8,     // 15 - 2G4 Only
+    SL16    , 8,     // 16 - China BIOS
+    SL17    , 8,     // 17 - Russia
+    SL18    , 8,     // 18 - EU + ETSI + 5G8SRD
+
+    WAGE    , 8,     // Wifi Ant Gain Enable
+    AGA1    , 8,     // Ant Gain Table Chain A 2400
+    AGA2    , 8,     // Ant Gain Table Chain A 5150-5350
+    AGA3    , 8,     // Ant Gain Table Chain A 5350-5470
+    AGA4    , 8,     // Ant Gain Table Chain A 5470-5725
+    AGA5    , 8,     // Ant Gain Table Chain A 5725-5950
+    AGA6    , 8,     // Ant Gain Table Chain A 5945-6165git
+    AGA7    , 8,     // Ant Gain Table Chain A 6165-6405
+    AGA8    , 8,     // Ant Gain Table Chain A 6405-6525
+    AGA9    , 8,     // Ant Gain Table Chain A 6525-6705
+    AGAA    , 8,     // Ant Gain Table Chain A 6705-6865
+    AGAB    , 8,     // Ant Gain Table Chain A 6865-7105
+    AGB1    , 8,     // Ant Gain Table Chain B 2400
+    AGB2    , 8,     // Ant Gain Table Chain B 5150-5350
+    AGB3    , 8,     // Ant Gain Table Chain B 5350-5470
+    AGB4    , 8,     // Ant Gain Table Chain B 5470-5725
+    AGB5    , 8,     // Ant Gain Table Chain B 5725-5950
+    AGB6    , 8,     // Ant Gain Table Chain B 5945-6165
+    AGB7    , 8,     // Ant Gain Table Chain B 6165-6405
+    AGB8    , 8,     // Ant Gain Table Chain B 6405-6525
+    AGB9    , 8,     // Ant Gain Table Chain B 6525-6705
+    AGBA    , 8,     // Ant Gain Table Chain B 6705-6865
+    AGBB    , 8,     // Ant Gain Table Chain B 6865-7105
+
+    WPFA    , 32,    // Platform PHY Config Chain A
+    WPFB    , 32,    // Platform PHY Config Chain B
+    WPFC    , 32,    // Platform PHY Config Chain C
+    WPFD    , 32,    // Platform PHY Config Chain D
+
+    WTSE    , 8,     // WifiTASSelection
+    WTLE    , 8,     // WifiTASListEntries
+
+    ACSD    , 8,     // SRD Active Channels Selection
+    I5BS    , 8,     // Indonesia 5.15-5.35 GHz Band Support Selection
+    UHBS    , 32,    // WifiUltraHighBandSupport
+
+    SDAA    , 8,     // WiFiDynamicSarAntennaACurrentSet
+    SDAB    , 8,     // WiFiDynamicSarAntennaBCurrentSet
+
+    // Connectivity BT
+    BTSE    , 8,     // BluetoothSar
+    BTBR    , 8,     // BluetoothSarBr
+    BED2    , 8,     // BluetoothSarEdr2
+    BED3    , 8,     // BluetoothSarEdr3
+    BTLE    , 8,     // BluetoothSarLe
+    BTL2    , 8,     // BluetoothSarLe2Mhz
+    BTLL    , 8,     // BluetoothSarLeLr
+    SDS9    , 8,     // DiscreteBtModule
+    SDM9    , 8,     // DiscreteBtModuleIrqMode
+
+    ECR1    , 8,     // ECR1
+
+  }

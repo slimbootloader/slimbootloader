@@ -1,0 +1,36 @@
+/** @file
+
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+  //
+  // _BBN is ACPI method called by OS to read PCI base bus number for IIO stack.
+  //
+  Method(_BBN, 0, NotSerialized)
+  {
+    Return(ToInteger(DeRefOf(Index(RBRS, 8))))
+  }
+
+  //
+  // _PXM is ACPI method called by OS to read NUMA Proximity Domain for IIO stack.
+  //
+  Method(_PXM, 0, NotSerialized)
+  {
+    Return(CONCATENATE3(PX, SOCKET, PE_INDEX))
+  }
+
+  //
+  // _SEG is ACPI method called by OS to read PCI segment of IIO stack.
+  //
+  Method(_SEG, 0, NotSerialized)
+  {
+    Return(CONCATENATE2(SG0, SOCKET))
+  }
+
+  // Current resource template return
+  Method(_CRS, 0x0, NotSerialized)
+  {
+    Return(RBRS)
+  }

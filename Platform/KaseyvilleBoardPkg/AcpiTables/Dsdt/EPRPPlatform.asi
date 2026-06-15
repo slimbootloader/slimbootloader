@@ -1,0 +1,21 @@
+/** @file
+
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+#include <Acpi/AcpiMacro.h>
+
+DefinitionBlock ("EPRPPlatformGnrD.asl", "DSDT", 2, "INTEL", "PLATEPRP", 3)
+{
+  #include "Platform.asl"
+  #include "CommonPlatform.asi"
+  #include "PlatformPciTree_EPRP.asi"
+  #include "AMLUPD.asl"
+  #include "Dsdt.asl"
+  #include "FwuWmi.asl"
+  #include "Pch.asl"
+  #include "PlatformGpeNg.asi"
+  #include "Iio/IioPcieEdpcNotifyGnrD.asi"
+  #include "Aspeed/Aspd.asi"
+} // end of DSDT

@@ -1,0 +1,361 @@
+/** @file
+  This file is a copy of IioRootBridge.asi that creates second, simultaneous
+  host bridge device in ASL for CXL 1.1 endpoint devices. Downstream port in
+  CXL 1.1 mode in some bus N, together with CXL upstream port, when configured,
+  disappear from PCI config space and can be accessed only via RCRB region
+  in MMIO. But CXL 1.1 endpoint devices are visible in bus N+1. The DP/UP ports
+  not exposed in PCI config space are kind of invisible bridge, what breaks PCI
+  Enumeration. To expose the CXL 1.1 endpoint devices additional artificial PCI
+  host bridge needs to be created with bus base N+1. This file implements such
+  bridge.
+
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+#define CXL_SUPPORT_FIELD_OFFSET  12
+#define CXL_CONTROL_FIELD_OFFSET  16
+
+
+  External (DBGM, FieldUnitObj)
+  Name (SUPP, 0)
+  Name (CTRL, 0)
+  Name (SUPC, 0)
+  Name (CTRC, 0)
+
+
+  #include "IioRootBridgeCommon.asi"
+
+  //
+  // Operation region for SMI port access.
+  //
+  OperationRegion (SMIP, SystemIO, 0xB2, 1)
+  Field (SMIP, ByteAcc, NoLock, Preserve) {
+    IOB2, 8
+  }
+
+  //
+  // _STA is ACPI method called by OS to read status of ACPI device, IIO stack in this case.
+  //
+  Method(_STA, 0, NotSerialized)
+  { //
+    // Check in PCI hierarchy present bitmap of given processor/PE (PXxy) if CXL 1p1 hierarchy is present.
+    // If so return present here.
+    //
+    ShiftLeft(1, PCIROOT_CXL1P1, Local1)
+    if (And(CONCATENATE3(PP, SOCKET, PE_INDEX), Local1)) {
+      Return(0x0F)
+    }
+    Return(0x00)
+  }
+
+
+  Method(_OSC, 4)
+  {
+      //
+      // Create DWord-addressable fields from the capabilities Buffer
+      //
+      CreateDWordField(Arg3,0,CDW1)
+      If (LOr(LEqual(Arg0,ToUUID("33DB4D5B-1FF7-401C-9657-7441C03DD766")),
+             (LEqual(Arg0,ToUUID("68F2D50B-C469-4D8A-BD3D-941A103FD3FC")))
+          )) {
+
+        //
+        // Create DWord-addressable fields from the capabilities Buffer
+        //
+        CreateDWordField(Arg3,4,CDW2)
+
+        //
+        // Fill 3rd capability DWORD only if the count is greater than 2.
+        //
+        If(LGreater(Arg2,2)) {
+          CreateDWordField(Arg3,8,CDW3)
+        }
+
+        //
+        // Save Capabilities DWord2 & 3
+        //
+        Store(CDW2,SUPP)
+        Store(CDW3,CTRL)
+
+        If (LEqual(Arg0,ToUUID("68F2D50B-C469-4D8A-BD3D-941A103FD3FC"))) {
+          //
+          // Fetch 4th and 5th capability DWORD only if they are availlble.
+          //
+          If(LGreater(Arg2,3)) {
+            CreateDWordField(Arg3,CXL_SUPPORT_FIELD_OFFSET,CDW4) // CXL Support Field
+          }
+          If(LGreater(Arg2,4)) {
+            CreateDWordField(Arg3,CXL_CONTROL_FIELD_OFFSET,CDW5) // CXL Control Field
+          }
+
+          // Save CXL capabilities Support and Capabilities
+          Store (CDW4, SUPC)
+          Store (CDW5, CTRC)
+        }
+
+        //
+        // Only allow native hot plug control if OS supports
+        // * ASPM
+        // * MSI/MSI-X
+        //
+        If (LNotEqual(And(SUPP, 0x16), 0x16)) { // Conditions not met?
+          And(CTRL, Not(1), CTRL) // Mask bit 0 to deny.
+          Sleep(1000)
+        }
+
+        //
+        // Never allow SHPC (no SHPC controller in system), Mask bit 1
+        //
+        And(CTRL, Not(2), CTRL)
+
+        //
+        // Select Native PCIe AER/eDPC handling from OS or Firmware First model
+        //
+        If (CondRefOf (\_SB.OSNC))
+        {
+          //in case OS has AER capability.
+          If (LEqual ( And(CTRL, 8), 8)) {
+
+            //in case OS support multiple segment.
+            If (And (SUPP, 8)) {
+              If (CondRefOf (^_SEG))
+              {
+                Store (^_SEG, Local0)
+              } Else {
+                Store (0, Local0)
+              }
+            } Else {
+              Store (0, Local0)
+            }
+
+            Store (^_BBN, Local1)
+
+            If (LNotEqual(And(SUPC, 0x5), 0x5)) {
+              If (CondRefOf (\_SB.OSNL)) {
+                //
+                // Check if CXL link is active
+                //
+                If (\_SB.OSNL(Local0, Local1)) {
+                  //
+                  // don't allow Native AER support and don't disable SMIs
+                  //
+                  And (CTRL, Not(0x88), CTRL)
+                } Else {
+                  //
+                  // if SBL allows OS take. Do nothing.
+                  //
+                  If (\_SB.OSNC(Local0, Local1, SUPP, CTRL)) {
+
+                  } Else {
+                    And (CTRL, Not(0x88), CTRL)
+                  }
+                }
+              }
+            } Else {
+              //
+              // if SBL allows OS take. Do nothing.
+              //
+              If (\_SB.OSNC(Local0, Local1, SUPP, CTRL)) {
+
+              } Else {
+                And (CTRL, Not(0x88), CTRL)
+              }
+            }
+          } Else {
+            //
+            // Disable Native PCIe AER/eDPC handling from OS, AER is bit3, eDPC is bit7
+            //
+            And (CTRL, Not(0x88), CTRL)
+          }
+        }
+
+        If (Not(And(CDW1,1))) { // Query Flag Clear?
+          //
+          // Disable GPEs for Features granted native control
+          //
+          If (And(CTRL, 0x01)) { // Native Hot plug control granted?
+
+            Store (0x01, GPSH)                // Clear Hotplug SCI Enable in GPE0
+          }
+        }
+
+        If (LNotEqual(Arg1,one)) { // unknown revision
+          Or(CDW1,0x08,CDW1)
+        }
+
+        If(LNotEqual(CDW3,CTRL)) { // capabilities bits were masked
+          Or(CDW1,0x10,CDW1)
+        }
+        //
+        // update DWORD3 in the buffer
+        //
+        Store(CTRL,CDW3)
+
+        //
+        // Evaluate CXL OS capability
+        //
+        If (LEqual(Arg0,ToUUID("68F2D50B-C469-4D8A-BD3D-941A103FD3FC"))) {
+          //
+          // Grant CXL Memory Error Reporting control based on support
+          // only if BIT0 - CXL 1.1 Port Register Access supported and
+          // BIT2 - CXL protocol error are set
+          //
+          If (LNot(LEqual(And(SUPC, 0x5), 0x5))) { // CXL capabilities BIT0/2 set
+            And(CTRC, Not(0x1), CTRC)  // Mask bit 0 to deny
+          } else {
+            If (LEqual(And(CTRC, 0x1), 0x1)) {
+              If (CondRefOf (\_SB.MFNH)) {
+                Store(\_SB.MFNH(), Local2)
+                Store (Local2, IOB2)
+              }
+            }
+          }
+          Store (CTRC, CDW5)
+
+        } // End of CXL OS Capability Evaluation
+        Return(Arg3)
+
+      } Else {
+        //
+        // Just indicate unrecognized UUID
+        // Leave it at that
+        //
+        Or (CDW1,4,CDW1)
+        if(LEqual(DBGM, 0x01)){
+          Store (0xEE, IO80)
+        }
+        Return(Arg3)
+      }
+  } // End _OSC
+
+  Name(RBRS, ResourceTemplate() {
+    //RESOURCE_CHUNK1_OFF
+    WORDBusNumber(            //Bus number resource (0); the bridge produces bus numbers for its subsequent buses
+      ResourceProducer,       // bit 0 of general flags is 1
+      MinNotFixed,            // Range is NotFixed, will be patched as Fixed when device is present
+      MaxNotFixed,            // Range is NotFixed, will be patched as Fixed when device is present
+      PosDecode,              // PosDecode
+      0x0000,                 // Granularity (FIX1 - Patched by ACPI runtime update)
+      0x0000,                 // Min         (FIX1 - Patched by ACPI runtime update)
+      0x0000,                 // Max         (FIX1 - Patched by ACPI runtime update)
+      0x0000,                 // Translation
+      0x0000,                 // Range Length = Max-Min+1 (FIX1 - Patched by ACPI runtime update)
+            ,
+            ,
+      FIX1                    // DescriptorName populated so iASL outputs offset for it in <*>.offset.h file
+    )
+
+    //: Off board video card not detected in device manager when it is connected to CPU
+    //RESOURCE_CHUNK5_OFF
+    DWORDMEMORY(              // descriptor for video RAM on video card
+      ResourceProducer,       // bit 0 of general flags is 0
+      PosDecode,
+      MinNotFixed,            // Range is NotFixed, will be patched as Fixed when device is present
+      MaxNotFixed,            // Range is NotFixed, will be patched as Fixed when device is present
+      Cacheable,
+      ReadWrite,
+      0x00000000,             // Granularity  (FIX5 - Patched by ACPI runtime update)
+      0x00000000,             // Min          (FIX5 - Patched by ACPI runtime update)
+      0x00000000,             // Max          (FIX5 - Patched by ACPI runtime update)
+      0x00000000,             // Translation
+      0x00000000,             // Range Length (FIX5 - Patched by ACPI runtime update)
+                ,
+                ,
+      FIX5                    // DescriptorName populated so iASL outputs offset for it in <*>.offset.h file
+    )
+
+    //RESOURCE_CHUNK2_OFF
+    WORDIO(                   //Consumed-and-produced resource (all I/O above CFF)
+      ResourceProducer,       // bit 0 of general flags is 0
+      MinNotFixed,            // Range is NotFixed, will be patched as Fixed when device is present
+      MaxNotFixed,            // Range is NotFixed, will be patched as Fixed when device is present
+      PosDecode,
+      EntireRange,
+      0x0000,                 // Granularity (FIX2 - Patched by ACPI runtime update)
+      0x0000,                 // Min         (FIX2 - Patched by ACPI runtime update)
+      0x0000,                 // Max         (FIX2 - Patched by ACPI runtime update)
+      0x0000,                 // Translation
+      0x0000,                 // Range Length = Max-Min+1 (FIX2 - Patched by ACPI runtime update)
+            ,
+            ,
+      FIX2                    // DescriptorName populated so iASL outputs offset for it in <*>.offset.h file
+    )
+
+    //Off board video card not detected in device manager when it is connected to CPU
+    //Descriptor for IO space of the video card.
+    WORDIO(                   // Consumed-and-produced resource (all I/O below CF8)
+      ResourceProducer,       // bit 0 of general flags is 0
+      MinNotFixed,            // Range is NotFixed, will be patched as Fixed when device is present
+      MaxNotFixed,            // Range is NotFixed, will be patched as Fixed when device is present
+      PosDecode,
+      EntireRange,
+      0x0000,                 // Granularity (FIX6 - Patched by ACPI runtime update)
+      0x0000,                 // Min         (FIX6 - Patched by ACPI runtime update)
+      0x0000,                 // Max         (FIX6 - Patched by ACPI runtime update)
+      0x0000,                 // Translation
+      0x0000,                 // Range Length
+            ,
+            ,
+      FIX6                    // DescriptorName populated so iASL outputs offset for it in <*>.offset.h file
+    )
+
+    //Off board video card not detected in device manager when it is connected to CPU
+    //Descriptor for IO space of the video card.
+    WORDIO(                   // Consumed-and-produced resource (all I/O below CF8)
+      ResourceProducer,       // bit 0 of general flags is 0
+      MinNotFixed,            // Range is NotFixed, will be patched as Fixed when device is present
+      MaxNotFixed,            // Range is NotFixed, will be patched as Fixed when device is present
+      PosDecode,
+      EntireRange,
+      0x0000,                 // Granularity (FIX7 - Patched by ACPI runtime update)
+      0x0000,                 // Min         (FIX7 - Patched by ACPI runtime update)
+      0x0000,                 // Max         (FIX7 - Patched by ACPI runtime update)
+      0x0000,                 // Translation
+      0x0000,                 // Range Length
+            ,
+            ,
+      FIX7                    // DescriptorName populated so iASL outputs offset for it in <*>.offset.h file
+    )
+
+    //
+    // PCI RESOURCE_32bit
+    //
+    DWORDMemory(              // Consumed-and-produced resource(all of memory space)
+      ResourceProducer,       // bit 0 of general flags is 0
+      PosDecode,              // positive Decode
+      MinNotFixed,            // Range is NotFixed, will be patched as Fixed when device is present
+      MaxNotFixed,            // Range is NotFixed, will be patched as Fixed when device is present
+      NonCacheable,
+      ReadWrite,
+      0x00000000,             // Granularity (FIX3 - Patched by ACPI runtime update)
+      0x00000000,             // Min (calculated dynamically) (FIX3 - Patched by ACPI runtime update)
+      0x00000000,             // Max = 4GB - 1MB  (fwh + fwh alias) (FIX3 - Patched by ACPI runtime update)
+      0x00000000,             // Translation
+      0x00000000,             // Range Length (calculated dynamically) (FIX3 - Patched by ACPI runtime update)
+                ,
+                ,
+      FIX3                    // DescriptorName populated so iASL outputs offset for it in <*>.offset.h file
+    )
+
+    //
+    // PCI RESOURCE_64bit
+    //
+    QWORDMemory(              // Consumed-and-produced resource(all of memory space)
+      ResourceProducer,       // bit 0 of general flags is 0
+      PosDecode,              // positive Decode
+      MinNotFixed,            // Range is NotFixed, will be patched as Fixed when device is present
+      MaxNotFixed,            // Range is NotFixed, will be patched as Fixed when device is present
+      NonCacheable,
+      ReadWrite,
+      0x00000000000,          // Granularity (FIX4 - Patched by ACPI runtime update)
+      0x00000000000,          // Min (calculated dynamically) (FIX4 - Patched by ACPI runtime update)
+      0x00000000000,          // Max = 4GB - 1MB  (fwh + fwh alias) (FIX4 - Patched by ACPI runtime update)
+      0x00000000000,          // Translation
+      0x00000000000,          // Range Length (calculated dynamically) (FIX4 - Patched by ACPI runtime update)
+                   ,
+                   ,
+      FIX4                    // DescriptorName populated so iASL outputs offset for it in <*>.offset.h file
+    )
+  }) // end of PRXX Buffer

@@ -1,0 +1,190 @@
+/** @file
+
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+Device (UAR2) {  // 550A COM Port
+  Name (_HID, EISAID ("PNP0501")) // PnP Device ID
+  Name (_UID, 2)                  // Generic ID for COMB
+
+  //*****************************************************
+  // Method _STA:  Return Status
+  //*****************************************************
+  Method (_STA, 0x0, NotSerialized) {
+    // Enter Configuration Mode and Select the UART2 (Logical Device #3)
+    ENFF (0x03)
+
+    //
+    // First, read the active register.
+    // If this register is TRUE, it means that the device is present & active.
+    //
+    If (ACTF) {
+      // Leave Configuration Mode
+      EXFF ()
+      // Device is present & active. It will *NOT* fail self-test and should be shown to user.
+      Return (0x0F)
+    } Else {
+      //
+      // Device isn't active, so check if it's at least present.
+      //
+      // If the I/O Address is non-zero, then the device is present.
+      // Test for zero by OR'ing together the high and low bytes of the address.
+      //
+      If (LOr (AHFF, ALFF)) {
+        // Leave Configuration Mode
+        EXFF ()
+       // Device is present, but not active. It will *NOT* fail self-test and should be shown to user.
+        Return (0x0D)
+      } Else {
+        // Leave Configuration Mode
+        EXFF ()
+        // Device not even present
+        Return (0x00)
+      }
+    }
+  } // End of Method _STA
+
+  //*****************************************************
+  //  Method _DIS:  Disable the device
+  //*****************************************************
+  Method (_DIS, 0x0, NotSerialized) {
+    // Enter Configuration Mode and Select the UART2 (Logical Device #3)
+    ENFF (0x03)
+
+    // Set the active register to zero to disable device
+    Store (0x00, ACTF)
+
+    // Leave Configuration Mode
+    EXFF ()
+  } // End of Method _DIS
+
+  //*****************************************************
+  //  Method _CRS:  Return Current Resource Settings
+  //*****************************************************
+  Method (_CRS, 0x0, Serialized) {
+    Name (BUF0, ResourceTemplate () {
+      IO (Decode16, 0x2F8, 0x2F8, 0x08, 0x08)
+      IRQNoFlags(){3}
+    })
+
+    //
+    // Create some ByteFields in the Buffer in order to
+    // permit saving values into the data portions of each of the descriptors above.
+    //
+    CreateByteField (BUF0, 0x02, IOLO) // IO Port Low
+    CreateByteField (BUF0, 0x03, IOHI) // IO Port Hi
+    CreateByteField (BUF0, 0x04, IORL) // IO Port Low
+    CreateByteField (BUF0, 0x05, IORH) // IO Port High
+    CreateWordField (BUF0, 0x09, IRQL) // IRQ
+
+    // Enter Configuration Mode and Select the UART2 (Logical Device #3)
+    ENFF (0x03)
+
+    //
+    // Get the IO setting from the chip, and copy it to both the min & max for the IO descriptor.
+    //
+
+    // Low Bytes:
+    Store (ALFF, IOLO)  // min.
+    Store (ALFF, IORL)  // max.
+
+    // High Bytes:
+    Store (AHFF, IOHI)  // min.
+    Store (AHFF, IORH)  // max.
+
+    //
+    // Get the IRQ setting from the chip, and shift it into the descriptor byte.
+    //
+    Store (0x01, Local0)
+    ShiftLeft (Local0, INTF, IRQL)
+
+    // Leave Configuration Mode
+    EXFF ()
+
+    // Return the result
+    Return (BUF0)
+
+  } // End of Method _CRS
+
+  //*****************************************************
+  //  Method _PRS:  Return Possible Resource Settings
+  //*****************************************************
+  Method (_PRS, 0x0, Serialized) {
+    Name (BUF0, ResourceTemplate () {
+      // Good configuration for Legacy O/S and sub-optional for ACPI O/S
+      StartDependentFn (0, 2)
+      {
+        IO (Decode16, 0x2F8, 0x2F8, 0x01, 0x08)
+        IRQNoFlags () {3}
+      }
+
+      // Good configuration for Legacy O/S and sub-optional for ACPI O/S
+      StartDependentFn (0, 2)
+      {
+        IO (Decode16, 0x2E8, 0x2E8, 0x01, 0x08)
+        IRQNoFlags () {3}
+      }
+
+      // Good configuration for Legacy O/S and sub-optional for ACPI O/S
+      StartDependentFn (0, 2)
+      {
+        IO (Decode16, 0x3F8, 0x3F8, 0x01, 0x08)
+        IRQNoFlags () {4}
+      }
+
+      // Good configuration for Legacy O/S and sub-optional for ACPI O/S
+      StartDependentFn (0, 2)
+      {
+        IO (Decode16, 0x3E8, 0x3E8, 0x01, 0x08)
+        IRQNoFlags () {4}
+      }
+
+      // Good configuration for ACPI and sub-optional Legacy O/S
+      StartDependentFn (2, 0)
+      {
+        IO (Decode16, 0x100, 0x2F8, 0x08, 0x08)
+        IRQNoFlags () {15, 14, 13, 12, 11, 10, 8, 7, 6, 5, 4, 3, 1}
+      }
+      EndDependentFn ()
+    })
+
+    // Return the result
+    Return (BUF0)
+
+  } // End of Method _PRS
+
+  //*****************************************************
+  //  Method _SRS:  Set Resource Setting
+  //*****************************************************
+  Method (_SRS , 0x1, NotSerialized) {
+    // Arg0 is PnP Resource String to set
+
+    //
+    // Define offsets into descriptor to match value returned by descriptors in _PRS method
+    //
+    CreateByteField (Arg0, 0x02, IOLO) // IO Port Low
+    CreateByteField (Arg0, 0x03, IOHI) // IO Port Hi
+
+    CreateWordField (Arg0, 0x09, IRQL) // IRQ
+
+    // Enter Configuration Mode and Select the UART2 (Logical Device #3)
+    ENFF (0x03)
+
+    // Set the IO Base Address
+    Store (IOLO, ALFF)
+    Store (IOHI, AHFF)
+
+    // Set IRQ
+    FindSetRightBit (IRQL, INTF)
+    If (LNotEqual (IRQL, Zero)) {Decrement (INTF)}
+
+    // Activate the device
+    Store (0x01, ACTF)
+
+    // Leave Configuration Mode
+    EXFF ()
+
+  } // End of Method _SRS
+} // End of Device UAR2

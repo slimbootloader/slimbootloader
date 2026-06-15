@@ -1,0 +1,62 @@
+/** @file
+
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+#include <Acpi/AcpiMacro.h>
+
+External(\_SB.EDTM, MethodObj)
+External (\_SB.EDNT, FieldUnitObj)
+External (\_SB.EDVD, FieldUnitObj)
+
+
+#define PCIE_EDPC_NOTIFY_PORTS(socket, pe, port)                                    \
+  Store (\_SB.IIO_DEVICE_NAME(PC, socket, pe)._SEG, Local0)                         \
+  Store (\_SB.IIO_DEVICE_NAME(PC, socket, pe)._BBN, Local1)                         \
+  Store (\_SB.IIO_DEVICE_NAME(PC, socket, pe).BRP##port._ADR, Local2)               \
+  And (Local2, 0xffff, Local3)                                                         \
+  ShiftRight (Local2, 16, Local4)                                                      \
+  If (\_SB.EDTM(Local0, Local1, Local4, Local3)) {                                     \
+    If (\_SB.EDNT) {                                                                   \
+      /*                                                                               \
+       we are going to notify this device, set the valid flag to EDPC_INFO_NOTIFIED    \
+      */                                                                               \
+      Store (2, \_SB.EDVD)                                                             \
+      Notify(\_SB.IIO_DEVICE_NAME(PC, socket, pe).BRP##port, 0xf) /*Error Eject*/   \
+    } else {                                                                           \
+      /*                                                                               \
+       we are going to notify this device, set the valid flag to EDPC_INFO_NOTIFIED    \
+      */                                                                               \
+      Store (2, \_SB.EDVD)                                                             \
+      Notify(\_SB.IIO_DEVICE_NAME(PC, socket, pe).BRP##port, 0)   /*Bus Check*/     \
+    }                                                                                  \
+  }
+
+#define PCIE_EDPC_NOTIFY_STACKS(socket, pe)                                         \
+  PCIE_EDPC_NOTIFY_PORTS(socket, pe, A)                                             \
+  PCIE_EDPC_NOTIFY_PORTS(socket, pe, B)                                             \
+  PCIE_EDPC_NOTIFY_PORTS(socket, pe, C)                                             \
+  PCIE_EDPC_NOTIFY_PORTS(socket, pe, D)                                             \
+  PCIE_EDPC_NOTIFY_PORTS(socket, pe, E)                                             \
+  PCIE_EDPC_NOTIFY_PORTS(socket, pe, F)                                             \
+  PCIE_EDPC_NOTIFY_PORTS(socket, pe, G)                                             \
+  PCIE_EDPC_NOTIFY_PORTS(socket, pe, H)
+
+
+#define PCIE_EDPC_NOTIFY_SOCKET(socket)                                                \
+  PCIE_EDPC_NOTIFY_STACKS(socket, 0)                                                   \
+  PCIE_EDPC_NOTIFY_STACKS(socket, 1)                                                   \
+  PCIE_EDPC_NOTIFY_STACKS(socket, 2)
+
+Scope (\_SB) {
+  //
+  // eDPE Notify Method
+  //
+  Method (EDNM, 0) {
+    // PE01 PEI-Ex eDPE
+    // If this is the eDPE event trigger, notify error eject or bus check
+    PCIE_EDPC_NOTIFY_SOCKET(0)
+  } //endof the method EDNM
+}

@@ -1,0 +1,158 @@
+/** @file
+
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+
+Include ("Acpi/BaseMacro.h")
+
+    // IOAT Hcta stack
+    Device (IIO_DEVICE_NAME(DI, SOCKET, IOAT_INDEX)) {
+        Name (_HID, EISAID("PNP0A08"))
+        Name (_CID, EISAID("PNP0A03"))
+        Name (_UID, IIO_DEVICE_UID_ASL(DINO_UID, SOCKET, IOAT_INDEX))
+
+        Method (_BBN, 0, NotSerialized)
+        {
+          Return(ToInteger(DeRefOf(Index(RBRS, 8))))
+        }
+
+        #define Legacy_Resource
+        #include "IioIoatRbResource.asi"
+        #undef Legacy_Resource
+        #include "IioIoatRbMethod.asi"
+
+        Method (_PRT, 0)
+        {
+          Return (AR12)
+        }
+
+        Method (_STA, 0, NotSerialized)
+        {
+          if (And(CONCATENATE3(IP, SOCKET, IOAT_INDEX), 0x01)) {
+            Return (0x0F)
+          }
+          Return (0x00)
+        }
+
+        Device (DSA0) {
+          Name (_ADR, 0x00010000)
+        }
+
+        #if (SOCKET == 0) && (IOAT_INDEX == 0)
+            #include "PchApic.asi"
+            #include "Mother.asi"
+        #endif
+    }
+
+    Device (IIO_DEVICE_NAME (CP, SOCKET, IOAT_INDEX)) {
+        Name (_HID, EISAID("PNP0A08"))
+        Name (_CID, EISAID("PNP0A03"))
+        Name (_UID, IIO_DEVICE_UID_ASL(CPM0_UID, SOCKET, IOAT_INDEX))
+
+        Method (_BBN, 0, NotSerialized)
+        {
+          Return(ToInteger(DeRefOf(Index(RBRS, 8))))
+        }
+        #include "IioIoatRbResource.asi"
+        #include "IioIoatRbMethod.asi"
+
+        Method (_PRT, 0)
+        {
+          Return (AR12)
+        }
+
+        Method (_STA, 0, NotSerialized)
+        {
+          ShiftLeft(1, PCIROOT_CPM0, Local1)
+          if (And(CONCATENATE3(IP, SOCKET, IOAT_INDEX), Local1)) {
+            Return(0x0F)
+          }
+          Return(0x00)
+        }
+    }
+
+    Device (IIO_DEVICE_NAME (HQ, SOCKET, IOAT_INDEX)) {
+        Name (_HID, EISAID("PNP0A08"))
+        Name (_CID, EISAID("PNP0A03"))
+        Name (_UID, IIO_DEVICE_UID_ASL(HQM0_UID, SOCKET, IOAT_INDEX))
+
+        Method (_BBN, 0, NotSerialized)
+        {
+          Return(ToInteger(DeRefOf(Index(RBRS, 8))))
+        }
+        #include "IioIoatRbResource.asi"
+        #include "IioIoatRbMethod.asi"
+
+        Method (_PRT, 0)
+        {
+          Return (AR12)
+        }
+
+        Method (_STA, 0, NotSerialized)
+        {
+          ShiftLeft(1, PCIROOT_HQM0, Local1)
+          if (And(CONCATENATE3(IP, SOCKET, IOAT_INDEX), Local1)) {
+            Return(0x0F)
+          }
+          Return(0x00)
+        }
+    }
+
+    //HCB CPM1
+    Device (IIO_DEVICE_NAME (BP, SOCKET, IOAT_INDEX)) {
+        Name (_HID, EISAID("PNP0A08"))
+        Name (_CID, EISAID("PNP0A03"))
+        Name (_UID, IIO_DEVICE_UID_ASL(CPM1_UID, SOCKET, IOAT_INDEX))
+
+        Method (_BBN, 0, NotSerialized)
+        {
+          Return(ToInteger(DeRefOf(Index(RBRS, 8))))
+        }
+        #include "IioIoatRbResource.asi"
+        #include "IioIoatRbMethod.asi"
+
+        Method (_PRT, 0)
+        {
+          Return (AR12)
+        }
+
+        Method (_STA, 0, NotSerialized)
+        {
+          ShiftLeft(1, PCIROOT_CPM1, Local1)
+          if (And(CONCATENATE3(IP, SOCKET, IOAT_INDEX), Local1)) {
+            Return(0x0F)
+          }
+          Return(0x00)
+        }
+    }
+
+    //Hcta TIP
+    Device (IIO_DEVICE_NAME (TA, SOCKET, IOAT_INDEX)) {
+        Name (_HID, EISAID("PNP0A08"))
+        Name (_CID, EISAID("PNP0A03"))
+        Name (_UID, IIO_DEVICE_UID_ASL(TIP_UID, SOCKET, IOAT_INDEX))
+
+        Method (_BBN, 0, NotSerialized)
+        {
+          Return(ToInteger(DeRefOf(Index(RBRS, 8))))
+        }
+        #include "IioIoatRbResource.asi"
+        #include "IioIoatRbMethod.asi"
+
+        Method (_PRT, 0)
+        {
+          Return (AR12)
+        }
+
+        Method (_STA, 0, NotSerialized)
+        {
+          ShiftLeft(1, PCIROOT_TIP1, Local1)
+          if (And(CONCATENATE3(IP, SOCKET, IOAT_INDEX), Local1)) {
+            Return(0x0F)
+          }
+          Return(0x00)
+        }
+    }

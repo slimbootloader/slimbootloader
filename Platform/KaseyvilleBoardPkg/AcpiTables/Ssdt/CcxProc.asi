@@ -1,0 +1,218 @@
+/** @file
+
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+  External (TYPE, FieldUnitObj)
+  External (CSEN, FieldUnitObj)
+  External (C6EN, FieldUnitObj)
+  External (MWOS, FieldUnitObj)
+  External (ATOM, FieldUnitObj)
+  External (CC1E, FieldUnitObj)
+
+  //
+  //  MWAIT C State Support packages
+  //
+
+/*++
+  Refer to ACPI Spec. Rev. 005 Section 8.4.2.1 and Intel Processor Vendor-Spec. ACPI Rev. 005 Section 3.3 (Document No. : 302223-005)
+
+  Structure of a Package (MCS1 as a sample)
+
+  Register           : Address_Space ID   = FFixedHW (Intel PPM driver Register parameter)
+  Register_Bit_Width : Vendor Code        = 1 (Intel, C1 I/O then Halt or Native C-State)
+  Register_Bit_Offset: Class Code         = 2 (Native C-State)
+  Address            : Arg0(64-bits)      = 0x00
+  Access Size        : Arg1(8-bits)       = 1 ([0] set=HW-coordinated, and [1] clear=don't use Bus Master avoidance)
+  Type                                    = 1 (C-State type, 1=C1, 2=C2, 3=C3, etc)
+  Latency                                 = 3 (Unit: microseconds, worst-case latency to enter/exit C-State)
+  Power                                   = 0x3E8 (Unit: milliwatts, average power cosumption when in C-State)
+--*/
+
+  Name (MCS1, Package() {     // C1
+    1,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x00, 1)}, 1, 1, 0x3E8 },     // C1, MWAIT
+  })
+
+  Name (MCS2, Package() {     // C1/C6, CC6 -> ACPI C2
+    2,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x00, 1)}, 1, 1, 0x3E8 },     // C1, MWAIT
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x20, 3)}, 2, 41, 0x15e },    // C6, MWAIT Extension
+    })
+
+  Name (MCS3, Package() {     // C1/C6, CC6 -> ACPI C3
+    2,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x00, 1)}, 1, 1, 0x3E8 },     // C1, MWAIT
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x20, 3)}, 3, 41, 0x15e },    // C6, MWAIT Extension
+    })
+
+  Name (MCS4, Package() {     // C1/C6-P, PkgC6 -> ACPI C2
+    2,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x00, 1)}, 1, 1, 0x3E8 },     // C1, MWAIT
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x21, 3)}, 2, 41, 0x15e },    // C6, MWAIT Extension
+    })
+
+  Name (MCS5, Package() {     // C1/C6-P, PkgC6 -> ACPI C3
+    2,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x00, 1)}, 1, 1, 0x3E8 },     // C1, MWAIT
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x21, 3)}, 3, 41, 0x15e },    // C6, MWAIT Extension
+    })
+
+  //Small Core (Atom)
+  Name (MA01, Package() {     // Atom C1
+    1,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x00, 1)}, 1, 1, 0x3E8 },     // Atom C1, MWAIT
+  })
+
+  Name (MA02, Package() {     // Atom C1/C6S, CC6S -> ACPI C2
+    2,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x00, 1)}, 1, 1, 0x3E8 },     // Atom C1, MWAIT
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x22, 3)}, 2, 41, 0x15e },    // Atom C6S, MWAIT Extension
+    })
+
+  Name (MA03, Package() {     // Atom C1/C6S, CC6S -> ACPI C3
+    2,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x00, 1)}, 1, 1, 0x3E8 },     // Atom C1, MWAIT
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x22, 3)}, 3, 41, 0x15e },    // Atom C6S, MWAIT Extension
+    })
+
+  Name (MA04, Package() {     // Atom C1/C6S-P, PkgC6S -> ACPI C2
+    2,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x00, 1)}, 1, 1, 0x3E8 },     // Atom C1, MWAIT
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x23, 3)}, 2, 41, 0x15e },    // Atom C6S, MWAIT Extension
+    })
+
+  Name (MA05, Package() {     // Atom C1/C6S-P, PkgC6S -> ACPI C3
+    2,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x00, 1)}, 1, 1, 0x3E8 },     // Atom C1, MWAIT
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x23, 3)}, 3, 41, 0x15e },    // Atom C6S, MWAIT Extension
+    })
+
+  Name (MA11, Package() {     // Atom C1e
+    1,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x01, 1)}, 1, 1, 0x3E8 },     // Atom C1e, MWAIT
+  })
+
+  Name (MA12, Package() {     // Atom C1e/C6S, CC6S -> ACPI C2
+    2,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x01, 1)}, 1, 1, 0x3E8 },     // Atom C1e, MWAIT
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x22, 3)}, 2, 41, 0x15e },    // Atom C6S, MWAIT Extension
+    })
+
+  Name (MA13, Package() {     // Atom C1e/C6S, CC6S -> ACPI C3
+    2,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x01, 1)}, 1, 1, 0x3E8 },     // Atom C1e, MWAIT
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x22, 3)}, 3, 41, 0x15e },    // Atom C6S, MWAIT Extension
+    })
+
+  Name (MA14, Package() {     // Atom C1e/C6S-P, PkgC6S -> ACPI C2
+    2,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x01, 1)}, 1, 1, 0x3E8 },     // Atom C1e, MWAIT
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x23, 3)}, 2, 41, 0x15e },    // Atom C6S, MWAIT Extension
+    })
+
+  Name (MA15, Package() {     // Atom C1e/C6S-P, PkgC6S -> ACPI C3
+    2,
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x01, 1)}, 1, 1, 0x3E8 },     // Atom C1e, MWAIT
+    Package() { ResourceTemplate(){Register(FFixedHW, 1, 2, 0x23, 3)}, 3, 41, 0x15e },    // Atom C6S, MWAIT Extension
+    })
+
+  Name (CST1, Package() {     // C1
+    1,
+    Package() {ResourceTemplate() {Register(FFixedHW, 0, 0, 0)}, 1, 1, 0x3E8},
+    })
+
+  Name (CST2, Package() {     // C1/C6      CC6 -> ACPI C2
+    2,
+    Package() {ResourceTemplate() {Register(FFixedHW, 0, 0, 0)}, 1, 1, 0x3E8},
+    Package() {ResourceTemplate() {Register(SystemIO, 8, 0, PCH_ACPI_PORT_C6_ADDR)}, 2, 41, 0x15e},   // C6
+    })
+
+  Name (CST3, Package() {     // C1/C6      CC6 -> ACPI C3
+    2,
+    Package() {ResourceTemplate() {Register(FFixedHW, 0, 0, 0)}, 1, 1, 0x3E8},
+    Package() {ResourceTemplate() {Register(SystemIO, 8, 0, PCH_ACPI_PORT_C6_ADDR)}, 3, 41, 0x15e},   // C6
+    })
+
+Method(_CST, 0)
+{
+/*++
+  CSEN is a DWORD constant defined within scope by SBL and represents
+  a SBL flag indicating whether C-states should be enabled.
+    0 = C-state support disabled
+    1 = C-state support enabled
+  MWOS is a DWORD constant defined within scope by SBL and represents
+  a SBL flag indicating whether Native MWAIT should be enabled.
+    0 = Native MWAIT support disabled
+    1 = Native MWAIT support enabled
+  TYPE is a DWORD constant defined within scope by SBL and is updated
+  with the Capabilities DWORD captured by the _PDC method. TYPE
+  represents the capabilities of the OSPM processor driver.
+--*/
+    If(LAnd (MWOS , And(TYPE, 0x200))) {
+      //Mwait is enabled
+      If(CSEN) {
+        If(ATOM) {
+          If(CC1E) {
+            //Small Core Path, C1e is enabled
+            If(LEqual (C6EN,1)) {                // CC6S as ACPI C2
+              Return (MA12)
+            }
+            If(LEqual (C6EN,2)) {                // CC6S as ACPI C3
+              Return (MA13)
+            }
+            If(LEqual (C6EN,3)) {                // C1/C6S-P, PkgC6 -> ACPI C2
+              Return (MA14)
+            }
+            If(LEqual (C6EN,4)) {                // C1/C6S-P, PkgC6 -> ACPI C3
+              Return (MA15)
+            }
+            return(MA11)
+          }
+
+          //Small Core Path, C1e is disabled
+          If(LEqual (C6EN,1)) {                // CC6S as ACPI C2
+            Return (MA02)
+          }
+          If(LEqual (C6EN,2)) {                // CC6S as ACPI C3
+            Return (MA03)
+          }
+          If(LEqual (C6EN,3)) {                // C1/C6S-P, PkgC6 -> ACPI C2
+            Return (MA04)
+          }
+          If(LEqual (C6EN,4)) {                // C1/C6S-P, PkgC6 -> ACPI C3
+            Return (MA05)
+          }
+          return(MA01)
+        }
+
+        // BigCore path
+        If(LEqual (C6EN,1)) {                // CC6 as ACPI C2
+          Return (MCS2)
+        }
+        If(LEqual (C6EN,2)) {                // CC6 as ACPI C3
+          Return (MCS3)
+        }
+        If(LEqual (C6EN,3)) {                // C1/C6-P, PkgC6 -> ACPI C2
+          Return (MCS4)
+        }
+        If(LEqual (C6EN,4)) {                // C1/C6-P, PkgC6 -> ACPI C3
+          Return (MCS5)
+        }
+      }
+      return(MCS1)                //C1
+    } //end of mwait
+
+    //Mwait is disabled
+    If(CSEN) {                    // IO redirect
+      If(LEqual (C6EN,1)) {                // CC6 as ACPI C2
+        Return (CST2)
+      }
+      If(LEqual (C6EN,2)) {                // CC6 as ACPI C3
+        Return (CST3)
+      }
+    }
+   return(CST1)                  // C1
+} // End of _CST
