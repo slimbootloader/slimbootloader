@@ -12,7 +12,7 @@
 #define TCO_BASE_ADDRESS            0x400
 #define MAX_SOCKET                  1
 #define MAX_IO_APICS                1
-#define MAX_IMC                     2                       // Maximum memory controllers per socket
+#define MAX_IMC                     8 // Maximum memory controllers per socket
 
 #define MAX_IIO_STACK               14
 #define IIO_STACK0                  0
