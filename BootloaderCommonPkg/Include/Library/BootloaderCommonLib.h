@@ -636,6 +636,7 @@ GetHashStorePtr (
   @retval RETURN_SUCCESS             Found a match in hash store.
   @retval RETURN_INVALID_PARAMETER   HashData is NULL.
   @retval RETURN_NOT_FOUND           Hash data is not found.
+  @retval RETURN_COMPROMISED_DATA    Hash data in store is invalid.
 
 **/
 RETURN_STATUS
