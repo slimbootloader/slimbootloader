@@ -732,6 +732,7 @@ SetDeviceAddr (
   @retval RETURN_SUCCESS             Found a match in hash store.
   @retval RETURN_INVALID_PARAMETER   HashData is NULL.
   @retval RETURN_NOT_FOUND           Hash data is not found.
+  @retval RETURN_COMPROMISED_DATA    Hash data in store is invalid.
 
 **/
 RETURN_STATUS
@@ -761,6 +762,12 @@ MatchHashInStore (
   HashEndPtr   = (UINT8 *) HashStorePtr +  HashStorePtr->UsedLength;
   while (HashEntryPtr < HashEndPtr) {
     HashEntryData = (HASH_STORE_DATA *) HashEntryPtr;
+    // Validate Hash Entry data before use
+    if ((UINTN)HashEndPtr - (UINTN)HashEntryData < sizeof(HASH_STORE_DATA) ||
+        HashEntryData->DigestLen == 0 ||
+        HashEntryData->DigestLen > ((UINTN)HashEndPtr - (UINTN)HashEntryData - sizeof (HASH_STORE_DATA))) {
+      return RETURN_COMPROMISED_DATA;
+    }
     if (((HashEntryData->Usage & Usage) != 0) && (HashEntryData->HashAlg == HashAlg)) {
       // Usage and hash type matched, check hash now
       if (CompareMem (HashData, HashEntryData->Digest, HashEntryData->DigestLen) == 0) {
