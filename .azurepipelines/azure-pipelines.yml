@@ -107,6 +107,10 @@ jobs:
         Build.Name:   "idv"
         Build.Arch:   "-a x64"
         Build.Target: ""
+      KSV_X64_DEBUG:
+        Build.Name:   "ksv"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
       RPLS_X86_DEBUG:
         Build.Name:   "rpls"
         Build.Arch:   ""
@@ -201,6 +205,14 @@ jobs:
         Build.Target: ""
       ARLU_X64_RELEASE:
         Build.Name:   "arlu"
+        Build.Arch:   "-a x64"
+        Build.Target: "-r"
+      KSV_X64_DEBUG:
+        Build.Name:   "ksv"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      KSV_X64_RELEASE:
+        Build.Name:   "ksv"
         Build.Arch:   "-a x64"
         Build.Target: "-r"
       BTLS_X86_DEBUG:
@@ -334,6 +346,14 @@ jobs:
         Build.Target: "-r"
       IDVH_X64_DEBUG:
         Build.Name:   "idvh"
+        Build.Arch:   "-a x64"
+        Build.Target: ""
+      KSV_X64_RELEASE:
+        Build.Name:   "ksv"
+        Build.Arch:   "-a x64"
+        Build.Target: "-r"
+      KSV_X64_DEBUG:
+        Build.Name:   "ksv"
         Build.Arch:   "-a x64"
         Build.Target: ""
       RPLS_X86_RELEASE:
