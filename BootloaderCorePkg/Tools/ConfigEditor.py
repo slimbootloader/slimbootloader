@@ -209,8 +209,8 @@ class custom_table(ttk.Treeview):
             tok = token.strip()
             match = re.match(r'^((?:0[xX])?[0-9A-Fa-f]+)-((?:0[xX])?[0-9A-Fa-f]+):(\d+):(.+)$', tok)
             if match:
-                start = int(match.group(1), 0)
-                end = int(match.group(2), 0)
+                start = int(match.group(1), 16)
+                end = int(match.group(2), 16)
                 size = match.group(3)
                 fmt = match.group(4)
                 if end >= start:
