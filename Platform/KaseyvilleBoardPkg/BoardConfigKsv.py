@@ -167,8 +167,7 @@ class Board(BaseBoard):
 
         self.NON_REDUNDANT_SIZE   = 0x01000000
 
-        # Need a little bit more for full paging table
-        self.OS_LOADER_FD_SIZE    = 0x0005E000
+        self.OS_LOADER_FD_SIZE    = 0x00060000
         self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         self.SLIMBOOTLOADER_SIZE  = 0x01000000 # 16 MB
