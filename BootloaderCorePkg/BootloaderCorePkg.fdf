@@ -182,7 +182,7 @@ FV = OsLoader
   READ_LOCK_CAP      = TRUE
   READ_LOCK_STATUS   = TRUE
 
-  INF BootloaderCorePkg/Stage2/Stage2.inf
+  INF RuleOverride = STAGE2 BootloaderCorePkg/Stage2/Stage2.inf
 
 !if $(HAVE_ACPI_TABLE)
   INF RuleOverride = ACPITABLE $(ACPI_TABLE_INF_FILE)
@@ -261,6 +261,11 @@ FV = OsLoader
 [Rule.Common.PEIM]
   FILE PEIM = $(NAMED_GUID) {
     TE  TE  Align=16  $(INF_OUTPUT)/$(MODULE_NAME).efi
+  }
+
+[Rule.Common.PEIM.STAGE2]
+  FILE PEIM = $(NAMED_GUID) {
+    TE  TE  Align=32  $(INF_OUTPUT)/$(MODULE_NAME).efi
   }
 
 [Rule.Common.SEC.RESET_VECTOR]
