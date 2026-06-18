@@ -11,6 +11,8 @@
 #include <Uefi/UefiBaseType.h>
 #include <IndustryStandard/Acpi.h>
 
+#define S3_PTR_CHK(Ptr) (!EFI_ERROR (ValidateAcpiPointerInS3(Ptr)))
+
 typedef struct {
   EFI_ACPI_5_0_FPDT_PERFORMANCE_RECORD_HEADER     Header;
   UINT32                                          Reserved;
@@ -215,5 +217,24 @@ EFIAPI
 FindAcpiFacsAddress (
   IN  UINT32    AcpiTableBase
   );
+
+/**
+    Validate that the given ACPI pointer is within the ACPI memory range
+    defined in S3Data.
+
+    This function is used on S3 resume to validate any ACPI pointers
+    (e.g. from FACS) against the known ACPI memory range stored in
+    S3Data, to ensure they are safe to access without relying on
+    DRAM-resident ACPI tables.
+
+  @param[in] AcpiPtr
+  @return    EFI_STATUS
+
+ */
+EFI_STATUS
+EFIAPI
+ValidateAcpiPointerInS3(
+  IN VOID *AcpiPtr
+);
 
 #endif

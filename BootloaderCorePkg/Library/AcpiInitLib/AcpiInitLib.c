@@ -992,3 +992,43 @@ FindAcpiFacsAddress (
   }
   return 0;
 }
+
+/**
+    Validate that the given ACPI pointer is within the ACPI memory range
+    defined in S3Data.
+
+    This function is used on S3 resume to validate any ACPI pointers
+    (e.g. from FACS) against the known ACPI memory range stored in
+    S3Data, to ensure they are safe to access without relying on
+    DRAM-resident ACPI tables.
+
+  @param[in] AcpiPtr
+  @return    EFI_STATUS
+
+ */
+EFI_STATUS
+EFIAPI
+ValidateAcpiPointerInS3(
+  IN VOID *AcpiPtr
+)
+{
+  S3_DATA *S3Data;
+
+  if (AcpiPtr == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  S3Data = (S3_DATA *)GetS3DataPtr();
+  if (S3Data == NULL) {
+    return EFI_UNSUPPORTED;
+  }
+
+  if ((UINTN)AcpiPtr < S3Data->AcpiBase ||
+      (UINTN)AcpiPtr >= (UINTN)S3Data->AcpiBase + PcdGet32 (PcdLoaderAcpiReclaimSize)) {
+    DEBUG((DEBUG_ERROR, "ACPI pointer 0x%08X is outside of ACPI memory range 0x%08X - 0x%08X\n", (UINTN)AcpiPtr, S3Data->AcpiBase, (UINTN)S3Data->AcpiBase + PcdGet32 (PcdLoaderAcpiReclaimSize)));
+    return EFI_INVALID_PARAMETER;
+  }
+  DEBUG((DEBUG_VERBOSE, "ACPI pointer 0x%08X is within ACPI memory range 0x%08X - 0x%08X\n", (UINTN)AcpiPtr, S3Data->AcpiBase, (UINTN)S3Data->AcpiBase + PcdGet32 (PcdLoaderAcpiReclaimSize)));
+
+  return EFI_SUCCESS;
+}
