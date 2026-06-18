@@ -1,0 +1,43 @@
+## @file
+#
+#  Library that builds an ACPI Watchdog Action Table (WDAT) at runtime.
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = WdatLib
+  FILE_GUID                      = 7B5D4F2C-9C7E-4B8B-9F6A-1D2E3F4A5B6C
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = WdatLib
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC ARM
+#
+
+[Sources]
+  WdatLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCorePkg/BootloaderCorePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+  Silicon/CommonSocPkg/CommonSocPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  PcdLib
+  DebugLib
+
+[Pcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultOemId
+  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultOemTableId
+  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultOemRevision
+  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultCreatorId
+  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultCreatorRevision
