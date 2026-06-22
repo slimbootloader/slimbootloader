@@ -34,5 +34,14 @@ _lzcnt_u64 (unsigned long long __X)
 #endif /* IPP_SBL_LZCNT_INTRINSICS_DEFINED */
 #endif
 // Provide SSE2 vector types (__m128i etc.) and intrinsics needed by ipp-crypto
+// Only include emmintrin.h when x86gprintrin.h is available to avoid
+// header chain issues with -nostdlib on some toolchains
+#if defined(__has_include)
+#if __has_include(<x86gprintrin.h>)
 #include <emmintrin.h>
+#endif
+#else
+#include <emmintrin.h>
+#endif
+
 #endif
