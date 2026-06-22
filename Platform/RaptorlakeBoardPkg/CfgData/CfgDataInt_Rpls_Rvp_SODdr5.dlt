@@ -17,7 +17,7 @@ PLATFORMID_CFG_DATA.PlatformId           | 0x0011
 PLAT_NAME_CFG_DATA.PlatformName          | 'RPLS S17'
 GEN_CFG_DATA.PayloadId                   | ''
 FEATURES_CFG_DATA.Features.S0ix          | 0x0
-GEN_CFG_DATA.BootToShell                 | 1
+GEN_CFG_DATA.BootToShell                 | 0
 
 #
 # This GPIO maps to the SW7C1 4-block DIP switch's 3rd switch.

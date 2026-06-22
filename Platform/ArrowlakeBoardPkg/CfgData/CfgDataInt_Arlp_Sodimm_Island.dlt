@@ -16,7 +16,7 @@ PLATFORMID_CFG_DATA.PlatformId                  | 0x001B
 PLAT_NAME_CFG_DATA.PlatformName                 | 'ArlhIsd'
 GEN_CFG_DATA.PayloadId                          | 'UEFI'
 GEN_CFG_DATA.VbtImageId                         | 3
-GEN_CFG_DATA.BootToShell                        | 1
+GEN_CFG_DATA.BootToShell                        | 0
 SILICON_CFG_DATA.EcAvailable                    | 0x0
 
 # FIPS mode enablement feature

@@ -16,7 +16,7 @@ PLATFORMID_CFG_DATA.PlatformId           | 0x014
 PLAT_NAME_CFG_DATA.PlatformName          | 'UPXi12Rp'
 GEN_CFG_DATA.PayloadId                   | ''
 FEATURES_CFG_DATA.Features.S0ix          | 0x0
-GEN_CFG_DATA.BootToShell                 | 1
+GEN_CFG_DATA.BootToShell                 | 0
 
 # BIOS workaround for S3 support with VTD enabled.
 # Fix is expected in RPL-S client MR1 release, then this can be removed.
