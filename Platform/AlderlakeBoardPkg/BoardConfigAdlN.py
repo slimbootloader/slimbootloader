@@ -23,8 +23,8 @@ class Board(BaseBoard):
         super(Board, self).__init__(*args, **kwargs)
 
         self.VERINFO_IMAGE_ID     = 'SB_ASL'
-        self.VERINFO_PROJ_MAJOR_VER = 2
-        self.VERINFO_PROJ_MINOR_VER = 5
+        self.VERINFO_PROJ_MAJOR_VER = 1
+        self.VERINFO_PROJ_MINOR_VER = 6
         self.VERINFO_SVN            = 1
         self.VERINFO_BUILD_DATE     = time.strftime("%m/%d/%Y")
 
