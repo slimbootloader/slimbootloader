@@ -16,7 +16,7 @@ PLATFORMID_CFG_DATA.PlatformId           | 0x1A
 PLAT_NAME_CFG_DATA.PlatformName          | 'ArlhCRB'
 GEN_CFG_DATA.PayloadId                   | ''
 GEN_CFG_DATA.VbtImageId                  | 1
-GEN_CFG_DATA.BootToShell                 | 1
+GEN_CFG_DATA.BootToShell                 | 0
 
 # FIPS mode enablement feature
 FEATURES_CFG_DATA.Features.MeFipsMode           | 0

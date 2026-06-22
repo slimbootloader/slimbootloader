@@ -16,7 +16,7 @@ PLATFORMID_CFG_DATA.PlatformId                  | 0x19
 PLAT_NAME_CFG_DATA.PlatformName                 | 'ArlhLp5'
 GEN_CFG_DATA.PayloadId                          | ''
 GEN_CFG_DATA.VbtImageId                         | 2
-GEN_CFG_DATA.BootToShell                        | 1
+GEN_CFG_DATA.BootToShell                        | 0
 
 # FIPS mode enablement feature
 FEATURES_CFG_DATA.Features.MeFipsMode           | 0
