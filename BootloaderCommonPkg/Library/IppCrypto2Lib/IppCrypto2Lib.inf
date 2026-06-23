@@ -19,7 +19,7 @@
 #
 # The following information is for reference only and not required by the build tools.
 #
-#  VALID_ARCHITECTURES           = X64
+#  VALID_ARCHITECTURES           = X64 IA32
 #
 
 [Sources]
@@ -53,17 +53,14 @@
   $(IPP_PATH)/sources/ippcp/pcpbnu_getoctstr.c
   $(IPP_PATH)/sources/ippcp/pcpbnu_arith_mul_adc.c
   $(IPP_PATH)/sources/ippcp/pcpbnu_arith_sqr_adc.c
-  $(IPP_PATH)/sources/ippcp/pcpbnu32_arith_muldigit.c
   $(IPP_PATH)/sources/ippcp/pcpprng_gen.c
   $(IPP_PATH)/sources/ippcp/pcpbnu_arith_add.c
   $(IPP_PATH)/sources/ippcp/pcpbnu32_arith_add.c
   $(IPP_PATH)/sources/ippcp/pcpbnu_arith_addmuldigit.c
   $(IPP_PATH)/sources/ippcp/pcpbnu_arith_sub.c
   $(IPP_PATH)/sources/ippcp/pcpbnu32_arith_sub.c
-  $(IPP_PATH)/sources/ippcp/pcpbnu32_arith_submuldigit.c
   $(IPP_PATH)/sources/ippcp/pcpbnu_nlz.c
   $(IPP_PATH)/sources/ippcp/pcpbnu32_nlz.c
-  $(IPP_PATH)/sources/ippcp/pcpbnu32_arith_div.c
 
   # RSA Source files
   $(IPP_PATH)/sources/ippcp/pcprsa_getsizepublickey.c
@@ -171,6 +168,12 @@
 
 [Sources.X64]
   IppCryptoSupportX64.c
+  $(IPP_PATH)/sources/ippcp/pcpbnu32_arith_muldigit.c
+  $(IPP_PATH)/sources/ippcp/pcpbnu32_arith_submuldigit.c
+  $(IPP_PATH)/sources/ippcp/pcpbnu32_arith_div.c
+
+[Sources.IA32]
+  IppCryptoSupportIA32.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -192,3 +195,8 @@
   # /wd4996: Upstream ipp-crypto uses APIs MSVC labels as deprecated.
   MSFT:*_*_*_CC_FLAGS = -D_ABL_ -D_ARCH_EM64T -DIPPCP_FIPS_MODE /GL- /wd4996
   GCC:*_*_*_CC_FLAGS  = -D_ABL_ -D_ARCH_EM64T -DIPPCP_FIPS_MODE -w -Wformat -Wformat-security -U_WIN64 -U_WIN32
+
+[BuildOptions.IA32]
+  MSFT:*_*_*_CC_FLAGS = -D_ABL_ -D_ARCH_IA32 -DIPPCP_FIPS_MODE -D__ALIGN64= /GL- /wd4616 /wd4996
+  GCC:*_*_*_CC_FLAGS  = -D_ABL_ -D_ARCH_IA32 -DIPPCP_FIPS_MODE -w -Wformat -Wformat-security
+
