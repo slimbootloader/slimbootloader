@@ -89,6 +89,9 @@ IPP_CRYPTO_OPTIMIZATION_MASK = {
     "X64_Y8"          : 0x0080, # SSE4.2
     "X64_E9"          : 0x0100, # AVX
     "X64_L9"          : 0x0200, # AVX2
+    "IA32_P8"         : 0x0400, # SSE4.2 tier: W7/V8 SSE asm + SHA-NI, no AVX
+    "IA32_G9"         : 0x0800, # AVX asm + SHA-NI
+    "IA32_NI"         : 0x1000, # AVX asm + SHA-NI + SHA512-NI (AVX2 encoding)
     }
 
 IPP_CRYPTO_ALG_MASK = {
