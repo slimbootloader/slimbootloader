@@ -115,7 +115,7 @@ class Board(BaseBoard):
         self.STAGE1_DATA_SIZE     = 0x00014000
         self.FSP_M_STACK_TOP      = 0xFEF7FF00
         self.STAGE1B_SIZE         = 0x00200000
-        self.STAGE2_SIZE          = 0x000C2000
+        self.STAGE2_SIZE          = 0x000C8000
         self.STAGE2_FD_BASE       = 0x01000000
         self.STAGE2_FD_SIZE       = 0x001F0000
 
@@ -184,8 +184,50 @@ class Board(BaseBoard):
             self.REDUNDANT_SIZE        = self.UCODE_SIZE + self.STAGE2_SIZE + self.STAGE1B_SIZE + \
                                          self.FWUPDATE_SIZE + self.CFGDATA_SIZE + self.KEYHASH_SIZE
 
+        self.FUSA_SUPPORT         = 0
+        self.FUSA_SIZE            = 0
+        self.DIAGNOSTICACM_SIZE   = 0
+
+        # These can be overridden by FUSA dlt file if FUSA_SUPPORT is set
         self.ENABLE_TCC = 0
         self.ENABLE_TSN = 0
+
+        if self.FUSA_SUPPORT:
+            self.ENABLE_PRE_OS_CHECKER = 0
+            if self.ENABLE_PRE_OS_CHECKER:
+                self.POSC_SIZE = 0x00080000
+                self.SIIPFW_SIZE += self.POSC_SIZE
+            self.FUSA_BIST_PATTERN_SUPPORT = 0
+            if self.FUSA_BIST_PATTERN_SUPPORT:
+                self.FSBP_SIZE = 0x1000000
+                self.FUSA_SIZE = 0x1000 + self.FSBP_SIZE
+
+            # Allow TCC and TSN to be enabled by FuSa dlt file
+            FusaConfig = []
+
+            brd_cfg_src_dir = os.path.join(os.environ['SBL_SOURCE'], 'Platform', self.BOARD_PKG_NAME, 'CfgData')
+            brd_cfg2_src_dir = '.'
+            if hasattr(self, 'BOARD_PKG_NAME_OVERRIDE'):
+                brd_cfg2_src_dir = os.path.join(os.environ['SBL_SOURCE'], 'Platform', self.BOARD_PKG_NAME_OVERRIDE, 'CfgData')
+
+            if os.path.exists(os.path.join(brd_cfg_src_dir, 'CfgData_FuSa_Feature.dlt')):
+                with open (os.path.join(brd_cfg_src_dir, 'CfgData_FuSa_Feature.dlt')) as f:
+                    FusaConfig = f.readlines()
+            else:
+                if os.path.exists(os.path.join(brd_cfg2_src_dir, 'CfgData_FuSa_Feature.dlt')):
+                    with open (os.path.join(brd_cfg2_src_dir, 'CfgData_FuSa_Feature.dlt')) as f:
+                        FusaConfig = f.readlines()
+
+            for line in FusaConfig:
+                if (re.search("TCC_CFG_DATA\.TccEnable\s+\|\s*1",line) != None or
+                    re.search("TCC_CFG_DATA\.TccEnable\s+\|\s*0x0*1",line) != None):
+                    # use setattr() to avoid matching release.py regex
+                    setattr(self, 'ENABLE_TCC', 1)
+                elif (re.search("SILICON_CFG_DATA\.PchTsnEnable\s+\|\s*1",line) != None or
+                    re.search("SILICON_CFG_DATA\.PchTsnEnable\s+\|\s*0x0*1",line) != None):
+                    # use setattr() to avoid matching release.py regex
+                    setattr(self, 'ENABLE_TSN', 1)
+
         if self.ENABLE_TSN:
             self.TMAC_SIZE = 0x00001000
             self.SIIPFW_SIZE += self.TMAC_SIZE
@@ -193,7 +235,7 @@ class Board(BaseBoard):
         if self._SMBIOS_YAML_FILE:
             self.SIIPFW_SIZE += 0x1000
 
-        self.NON_REDUNDANT_SIZE   = 0x3BF000 + self.SIIPFW_SIZE
+        self.NON_REDUNDANT_SIZE   = 0x3BF000 + self.SIIPFW_SIZE + self.FUSA_SIZE
         self.NON_VOLATILE_SIZE    = 0x001000
         self.SLIMBOOTLOADER_SIZE  = (self.TOP_SWAP_SIZE + self.REDUNDANT_SIZE) * 2 + \
                                     self.NON_REDUNDANT_SIZE + self.NON_VOLATILE_SIZE
@@ -202,17 +244,27 @@ class Board(BaseBoard):
         self.PLD_STACK_SIZE       = 0x00020000
         self.PLD_RSVD_MEM_SIZE    = 0x00500000
 
+        if self.FUSA_SUPPORT:
+            # FuSa validation requires prebuilt images that can boot OS Loader Ubuntu
+            self.PLD_HEAP_SIZE        = 0x09000000
+            self.DIAGNOSTICACM_SIZE   = 0x00001000
+
         self.KM_SIZE              = 0x00000400
         self.BPM_SIZE             = 0x00000600
         self.ACM_SIZE             = 0x00040000 + self.KM_SIZE + self.BPM_SIZE
         # adjust ACM_SIZE to meet 256KB alignment (to align 256KB ACM size)
         if self.ACM_SIZE > 0:
-            acm_top = self.FLASH_LAYOUT_START - self.STAGE1A_SIZE
+            acm_top = self.FLASH_LAYOUT_START - self.STAGE1A_SIZE - self.DIAGNOSTICACM_SIZE
             acm_btm = acm_top - self.ACM_SIZE
             acm_btm = (acm_btm & 0xFFFC0000)
             self.ACM_SIZE     = acm_top - acm_btm
 
         self.LOADER_RSVD_MEM_SIZE = 0xC00000
+        # large BIST test patterns increase heap usage significantly. round to 1MB
+        if (2*self.FUSA_SIZE & 0xFFFFF) != 0:
+            self.LOADER_RSVD_MEM_SIZE += (2*self.FUSA_SIZE & ~0xFFFFF) + 0x100000
+        else:
+            self.LOADER_RSVD_MEM_SIZE += 2*self.FUSA_SIZE
 
         # If mulitple VBT table support is required, list them as:
         #   {VbtImageId1 : VbtFileName1, VbtImageId2 : VbtFileName2, ...}
@@ -257,6 +309,16 @@ class Board(BaseBoard):
                     else:
                         tsn_cfg_dir = os.path.join(os.getenv('SBL_SOURCE', ''), 'Platform', self.BOARD_PKG_NAME, 'CfgData')
                         lines += open (os.path.join(tsn_cfg_dir, 'CfgData_Tsn_Feature.dlt')).read()
+
+                if self.FUSA_SUPPORT:
+                    if os.path.exists(os.path.join(brd_cfg_src_dir, 'CfgData_FuSa_Feature.dlt')):
+                        lines += open (os.path.join(brd_cfg_src_dir, 'CfgData_FuSa_Feature.dlt')).read()
+
+                    # remove the TCC_CFG_DATA.TccEnable line to avoid its presence in final dlt files
+                    lines = re.sub("TCC_CFG_DATA\.TccEnable\s+\|[^\n]+","",lines)
+                    if self.ENABLE_PRE_OS_CHECKER:
+                        if os.path.exists(os.path.join(brd_cfg_src_dir, 'CfgData_Posc_Feature.dlt')):
+                            lines += open (os.path.join(brd_cfg_src_dir, 'CfgData_Posc_Feature.dlt')).read()
 
                 # Write to generated final dlt file
                 output_cfg_dlt_file = os.path.join(build._fv_dir, dlt_file)
@@ -305,6 +367,11 @@ class Board(BaseBoard):
         if self.BUILD_CSME_UPDATE_DRIVER:
             dsc['LibraryClasses.%s' % self.BUILD_ARCH].append ('MeFwUpdateLib|Silicon/$(SILICON_PKG_NAME)/Library/MeFwUpdateLib/MeFwUpdateLib.inf')
 
+        if self.FUSA_SUPPORT:
+            dsc['LibraryClasses.%s' % self.BUILD_ARCH].append ('CrashLogLib|Silicon/AlderlakePkg/Library/FusaCrashLogLib/FusaCrashLogLib.inf')
+            dsc['LibraryClasses.%s' % self.BUILD_ARCH].append ('FusaConfigLib|Silicon/AlderlakePkg/Library/FusaConfigLib/FusaConfigLib.inf')
+            dsc['LibraryClasses.%s' % self.BUILD_ARCH].append ('PchGspiLib|Silicon/AlderlakePkg/Library/PchGspiLib/PchGspiLib.inf')
+
         if self.ENABLE_PCIE_PM:
             lib = [
                 'PciePm|Silicon/$(SILICON_PKG_NAME)/Library/PciePm/PciePm.inf',
@@ -326,6 +393,9 @@ class Board(BaseBoard):
         if self._N_SUPPORT:
             dsc['PcdsFixedAtBuild'].append ('gPlatformAlderLakeTokenSpaceGuid.PcdAdlNSupport | TRUE')
 
+        dsc['PcdsFixedAtBuild'].append (
+            'gPlatformModuleTokenSpaceGuid.PcdFusaSupport | $(FUSA_SUPPORT)'
+        )
         return dsc
 
 
@@ -365,23 +435,41 @@ class Board(BaseBoard):
         container_list = []
         container_list_auth_type = self._RSA_SIGN_TYPE + '_'+ self._SIGNING_SCHEME[4:] + '_' + self._SIGN_HASH
         container_list.append (
-          # Name | Image File             |    CompressAlg  | AuthType                        | Key File                        | Region Align   | Region Size |  Svn Info
-          # ========================================================================================================================================================
-          ('IPFW',      'SIIPFW.bin',          '',     container_list_auth_type,   'KEY_ID_CONTAINER'+'_'+self._RSA_SIGN_TYPE,        0,          0     ,        0),   # Container Header
-        )
-        container_list.append (
-          ('SMBS',      'smbios.bin',    'Dummy',        container_list_auth_type,   'KEY_ID_CONTAINER'+'_'+self._RSA_SIGN_TYPE,            0,              0x1000,    0),   # SMBIOS Component
+            [
+                # Name | Image File   | CompressAlg | AuthType                 | Key File                                 | Region Align | Region Size | Svn Info
+                # ================================================================================================================================================
+                ('IPFW', 'SIIPFW.bin',  '',           container_list_auth_type,  'KEY_ID_CONTAINER' + '_' + self._RSA_SIGN_TYPE, 0,        0,            0),  # Container Header
+                ('SMBS', 'smbios.bin',  'Dummy',      container_list_auth_type,  'KEY_ID_CONTAINER' + '_' + self._RSA_SIGN_TYPE, 0,        0x1000,       0),  # SMBIOS Component
+            ]
         )
 
         bins = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Binaries')
 
         if self.ENABLE_TSN:
-            TsnSubRegion = os.path.join(bins, 'TsnSubRegion.bin')if os.path.exists(os.path.join(bins, 'TsnSubRegion.bin')) else ''
-            container_list.append (
-              ('TMAC', TsnSubRegion, 'Lz4', container_list_auth_type, 'KEY_ID_CONTAINER_COMP'+'_'+self._RSA_SIGN_TYPE, 0, self.TMAC_SIZE, 0),   # TSN MAC Address
+            TsnSubRegion = os.path.join(bins, 'TsnSubRegion.bin') if os.path.exists(os.path.join(bins, 'TsnSubRegion.bin')) else ''
+            container_list[0].append (
+                ('TMAC', TsnSubRegion,  'Lz4',        container_list_auth_type,  'KEY_ID_CONTAINER_COMP' + '_' + self._RSA_SIGN_TYPE, 0,   self.TMAC_SIZE, 0),  # TSN MAC Address
             )
 
-        return [container_list]
+        if self.FUSA_SUPPORT:
+            if self.ENABLE_PRE_OS_CHECKER:
+                CompFilePreOsChecker = os.path.join(bins, 'PreOsChecker.bin') if os.path.exists(os.path.join(bins, 'PreOsChecker.bin')) else ''
+                container_list[0].append (
+                    ('POSC', CompFilePreOsChecker, 'Lz4',   container_list_auth_type, 'KEY_ID_CONTAINER_COMP' + '_' + self._RSA_SIGN_TYPE, 0, self.POSC_SIZE, 0),  # Pre-OS Checker
+                )
+
+            if self.FUSA_BIST_PATTERN_SUPPORT:
+                CompFileStartupBist = os.path.join(bins, 'FusaStartupBist.ffs') if os.path.exists(os.path.join(bins, 'FusaStartupBist.ffs')) else ''
+                container_list.append (
+                    [
+                        # Name | Image File        | CompressAlg | AuthType                 | Key File                                 | Region Align | Region Size | Svn Info
+                        # ================================================================================================================================================
+                        ('FUFW', 'FUFW.bin',          '',          container_list_auth_type, 'KEY_ID_CONTAINER'      + '_' + self._RSA_SIGN_TYPE, 0,    0,              0),  # Container Header
+                        ('FSBP', CompFileStartupBist, 'Lz4',       container_list_auth_type, 'KEY_ID_CONTAINER_COMP' + '_' + self._RSA_SIGN_TYPE, 0,    self.FSBP_SIZE, 0),  # FuSa Startup BIST Pattern file
+                    ]
+                )
+
+        return container_list
 
     def GetOutputImages (self):
         # define extra images that will be copied to output folder
@@ -396,6 +484,7 @@ class Board(BaseBoard):
 
         acm_flag = 0 if self.ACM_SIZE > 0 else STITCH_OPS.MODE_FILE_IGNOR
         fwu_flag = 0 if self.ENABLE_FWU else STITCH_OPS.MODE_FILE_IGNOR
+        diagnosticacm_flag = 0 if self.DIAGNOSTICACM_SIZE > 0 else STITCH_OPS.MODE_FILE_IGNOR
         cfg_flag = 0 if len(self._CFGDATA_EXT_FILE) > 0 and self.CFGDATA_REGION_TYPE == FLASH_REGION_TYPE.BIOS else STITCH_OPS.MODE_FILE_IGNOR
 
         if len(self._CFGDATA_EXT_FILE) > 0 and self.CFGDATA_REGION_TYPE == FLASH_REGION_TYPE.PLATFORMDATA:
@@ -411,15 +500,23 @@ class Board(BaseBoard):
                 ('SBLRSVD.bin',    ''        , self.SBLRSVD_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
                 ]
             ),
-            ('NON_REDUNDANT.bin', [
-                ('SIIPFW.bin'   ,  ''        , self.SIIPFW_SIZE,   STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
-                ('VARIABLE.bin' ,  ''        , self.VARIABLE_SIZE, STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
-                ('MRCDATA.bin'  ,  ''        , self.MRCDATA_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
-                ('EPAYLOAD.bin',   ''        , self.EPAYLOAD_SIZE, STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
-                ('UEFIVARIABLE.bin', ''      , self.UEFI_VARIABLE_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
-                ('PAYLOAD.bin'  ,  'Lz4'    , self.PAYLOAD_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
-                ]
-            ),
+        ])
+
+        non_redundant_comp = []
+        if self.FUSA_SUPPORT and self.FUSA_BIST_PATTERN_SUPPORT:
+            non_redundant_comp = [('FUFW.bin'          , '' , self.FUSA_SIZE,          STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_HEAD)]
+
+        non_redundant_comp.extend ([
+            ('SIIPFW.bin'   ,  ''        , self.SIIPFW_SIZE,   STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+            ('VARIABLE.bin' ,  ''        , self.VARIABLE_SIZE, STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
+            ('MRCDATA.bin'  ,  ''        , self.MRCDATA_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
+            ('EPAYLOAD.bin',   ''        , self.EPAYLOAD_SIZE, STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+            ('UEFIVARIABLE.bin', ''      , self.UEFI_VARIABLE_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
+            ('PAYLOAD.bin'  ,  'Lz4'    , self.PAYLOAD_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
+            ])
+
+        img_list.extend ([
+            ('NON_REDUNDANT.bin', non_redundant_comp)
         ])
 
         if self.BUILD_IDENTICAL_TS:
@@ -475,11 +572,13 @@ class Board(BaseBoard):
                 ),
                 ('TOP_SWAP_A.bin', [
                     ('ACM.bin'      ,  ''        , self.ACM_SIZE,      STITCH_OPS.MODE_FILE_NOP | acm_flag, STITCH_OPS.MODE_POS_TAIL),
+                    ('DIAGNOSTICACM.bin',  '',     self.DIAGNOSTICACM_SIZE,     STITCH_OPS.MODE_FILE_NOP | diagnosticacm_flag, STITCH_OPS.MODE_POS_TAIL),
                     ('STAGE1A_A.fd'      , ''    , self.STAGE1A_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
                     ]
                 ),
                 ('TOP_SWAP_B.bin', [
                     ('ACM.bin'      ,  ''        , self.ACM_SIZE,      STITCH_OPS.MODE_FILE_NOP | acm_flag, STITCH_OPS.MODE_POS_TAIL),
+                    ('DIAGNOSTICACM.bin',  ''    , self.DIAGNOSTICACM_SIZE, STITCH_OPS.MODE_FILE_NOP | diagnosticacm_flag, STITCH_OPS.MODE_POS_TAIL),
                     ('STAGE1A_B.fd'      , ''    , self.STAGE1A_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
                     ]
                 ),
