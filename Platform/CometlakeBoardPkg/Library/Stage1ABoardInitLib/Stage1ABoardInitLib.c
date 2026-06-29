@@ -44,7 +44,7 @@ FSPT_UPD TempRamInitParams = {
     .PcdSerialIoUartNumber      = 0,
     .PcdSerialIoUartPinMux      = 0,
     .UnusedUpdSpace0            = 0,
-    .PcdPciExpressBaseAddress   = FixedPcdGet32 (PcdPciMmcfgBase),
+    .PcdPciExpressBaseAddress   = FixedPcdGet64 (PcdPciMmcfgBase),
     .PcdPciExpressRegionLength  = 0x20000000,
     .ReservedFsptUpd1           = {0},
   },
