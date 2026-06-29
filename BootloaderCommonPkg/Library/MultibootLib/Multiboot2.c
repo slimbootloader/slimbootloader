@@ -145,12 +145,14 @@ SetupMultiboot2Info (
   )
 {
   MULTIBOOT2_INFO *Mb2Info = &MultiBoot->Mb2Info;
+  UINT64          NextTagSize;
 
   unsigned mb2_info_size_max = 0x1000;
   void *mb2_info = AllocatePool (mb2_info_size_max);
   if (mb2_info == NULL) {
-    DEBUG ((DEBUG_INFO, "Multiboot-2 info buffer allocation Error\n"));
+    DEBUG ((DEBUG_ERROR, "Multiboot-2 info buffer allocation Error\n"));
     ASSERT (mb2_info);
+    return;
   }
 
   struct multiboot2_start_tag *mbi_start = (struct multiboot2_start_tag *)mb2_info;
@@ -172,6 +174,14 @@ SetupMultiboot2Info (
   if (MultiBoot->CmdFile.Size != 0)
   {
     DECLARE_TAG (struct multiboot2_tag_string, tag, mb2_info, info_idx);
+    NextTagSize = ALIGN_UP(sizeof(struct multiboot2_tag_string) + MultiBoot->CmdFile.Size + 1, MULTIBOOT2_TAG_ALIGN);
+    if (mb2_info_size_max < info_idx + NextTagSize) {
+      DEBUG ((DEBUG_ERROR, "Multiboot-2 info buffer overflow\n"));
+      Mb2Info->StartTag = NULL;
+      FreePool (mb2_info);
+      ASSERT (FALSE);
+      return;
+    }
 
     unsigned len = MultiBoot->CmdFile.Size;
     CopyMem(tag->string, MultiBoot->CmdFile.Addr, len);
@@ -182,6 +192,14 @@ SetupMultiboot2Info (
 
   // bootloader name tag (2)
   {
+    NextTagSize = ALIGN_UP(sizeof(struct multiboot2_tag_string) + AsciiStrSize((CHAR8 *) mLoaderName), MULTIBOOT2_TAG_ALIGN);
+    if (mb2_info_size_max < info_idx + NextTagSize) {
+      DEBUG ((DEBUG_ERROR, "Multiboot-2 info buffer overflow\n"));
+      Mb2Info->StartTag = NULL;
+      FreePool (mb2_info);
+      ASSERT (FALSE);
+      return;
+    }
     DECLARE_TAG (struct multiboot2_tag_string, tag, mb2_info, info_idx);
 
     UINT32 len = (UINT32) AsciiStrSize((CHAR8 *) mLoaderName);
@@ -197,6 +215,14 @@ SetupMultiboot2Info (
 
     const MULTIBOOT_MODULE *mod = &MultiBoot->MbModule[idx];
     UINT32 len = (UINT32) AsciiStrSize((CHAR8 *) mod->String);
+    NextTagSize = ALIGN_UP(sizeof(struct multiboot2_tag_module) + len, MULTIBOOT2_TAG_ALIGN);
+    if (mb2_info_size_max < info_idx + NextTagSize) {
+      DEBUG ((DEBUG_ERROR, "Multiboot-2 info buffer overflow\n"));
+      Mb2Info->StartTag = NULL;
+      FreePool (mb2_info);
+      ASSERT (FALSE);
+      return;
+    }
 
     module_tag->mod_start   = mod->Start;
     module_tag->mod_end     = mod->End;
@@ -207,6 +233,14 @@ SetupMultiboot2Info (
 
   // basic memory info tag (4)
   {
+    NextTagSize = ALIGN_UP(sizeof(struct multiboot2_tag_basic_meminfo), MULTIBOOT2_TAG_ALIGN);
+    if (mb2_info_size_max < info_idx + NextTagSize) {
+      DEBUG ((DEBUG_ERROR, "Multiboot-2 info buffer overflow\n"));
+      Mb2Info->StartTag = NULL;
+      FreePool (mb2_info);
+      ASSERT (FALSE);
+      return;
+    }
     DECLARE_TAG (struct multiboot2_tag_basic_meminfo, tag, mb2_info, info_idx);
 
     // The amount of lower and upper memory size (in KB) will be updated
@@ -223,6 +257,14 @@ SetupMultiboot2Info (
 
     MEMORY_MAP_INFO *mmap_info = GetMemoryMapInfo();
     unsigned mb_mmap_count = mmap_info->Count;
+    NextTagSize = ALIGN_UP(sizeof(struct multiboot2_tag_mmap) + sizeof(struct multiboot2_mmap_entry) * mb_mmap_count, MULTIBOOT2_TAG_ALIGN);
+    if (mb2_info_size_max < info_idx + NextTagSize) {
+      DEBUG ((DEBUG_ERROR, "Multiboot-2 info buffer overflow\n"));
+      Mb2Info->StartTag = NULL;
+      FreePool (mb2_info);
+      ASSERT (FALSE);
+      return;
+    }
 
     mmap_tag->entry_size = sizeof(struct multiboot2_mmap_entry);
     mmap_tag->entry_version = 0;
@@ -236,6 +278,14 @@ SetupMultiboot2Info (
   EFI_HOB_GUID_TYPE *GuidHob = GetFirstGuidHob (&gEfiGraphicsInfoHobGuid);
   if (GuidHob != NULL)
   {
+    NextTagSize = ALIGN_UP(sizeof(struct multiboot2_tag_framebuffer), MULTIBOOT2_TAG_ALIGN);
+    if (mb2_info_size_max < info_idx + NextTagSize) {
+      DEBUG ((DEBUG_ERROR, "Multiboot-2 info buffer overflow\n"));
+      Mb2Info->StartTag = NULL;
+      FreePool (mb2_info);
+      ASSERT (FALSE);
+      return;
+    }
     DECLARE_TAG (struct multiboot2_tag_framebuffer, tag, mb2_info, info_idx);
 
     EFI_PEI_GRAPHICS_INFO_HOB  *GfxInfoHob = (EFI_PEI_GRAPHICS_INFO_HOB *)GET_GUID_HOB_DATA (GuidHob);
@@ -257,6 +307,14 @@ SetupMultiboot2Info (
 
   // end tag (0)
   {
+    NextTagSize = ALIGN_UP(sizeof(struct multiboot2_tag), MULTIBOOT2_TAG_ALIGN);
+    if (mb2_info_size_max < info_idx + NextTagSize) {
+      DEBUG ((DEBUG_ERROR, "Multiboot-2 info buffer overflow\n"));
+      Mb2Info->StartTag = NULL;
+      FreePool (mb2_info);
+      ASSERT (FALSE);
+      return;
+    }
     DECLARE_TAG (struct multiboot2_tag, end_tag, mb2_info, info_idx);
     APPEND_TAG (info_idx, end_tag, MULTIBOOT2_TAG_TYPE_END, sizeof(struct multiboot2_tag));
   }
