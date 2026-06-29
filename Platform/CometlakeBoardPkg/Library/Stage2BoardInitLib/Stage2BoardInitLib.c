@@ -2572,6 +2572,8 @@ PlatformUpdateAcpiGnvs (
   //
   PlatformNvs->PlatformId = (UINT8) GetPlatformId ();
 
+  // PCI config space must lie within 4GB address space with 256MB MMCONFIG window.
+  ASSERT (PcdGet64 (PcdPciExpressBaseAddress) < (BASE_4GB - 0x10000000));
   SaNvs->XPcieCfgBaseAddress          = (UINT32)(PcdGet64(PcdPciExpressBaseAddress));
 
   SaNvs->Mmio32Base   = PcdGet32(PcdPciResourceMem32Base);
