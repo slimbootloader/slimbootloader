@@ -45,7 +45,7 @@ FSPT_UPD TempRamInitParams = {
                                     FixedPcdGet32 (PcdDebugPortNumber) : 2,
     .PcdSerialIoUartMode        = 4, // SerialIoUartSkipInit, let SBL init UART
     .PcdSerialIoUartBaudRate    = 115200,
-    .PcdPciExpressBaseAddress   = FixedPcdGet32 (PcdPciMmcfgBase),
+    .PcdPciExpressBaseAddress   = FixedPcdGet64 (PcdPciMmcfgBase),
     .PcdPciExpressRegionLength  = 0x10000000,
     .PcdSerialIoUartParity      = 1, // NoParity
     .PcdSerialIoUartDataBits    = 8,
