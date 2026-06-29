@@ -93,7 +93,7 @@ ParseAcpiTableInfo (
                EFI_ACPI_5_0_PCI_EXPRESS_MEMORY_MAPPED_CONFIGURATION_SPACE_BASE_ADDRESS_DESCRIPTION_TABLE_SIGNATURE) {
       Mcfg = (EFI_ACPI_MEMORY_MAPPED_CONFIGURATION_BASE_ADDRESS_TABLE *) (UINTN) (Entry64[Idx]);
       Status = PcdSet64S (PcdPciExpressBaseAddress, Mcfg->Segment.BaseAddress);
-      DEBUG ((DEBUG_INFO, "PCI Express  Base: 0x%x\n", (UINT32)PcdGet64 (PcdPciExpressBaseAddress)));
+      DEBUG ((DEBUG_INFO, "PCI Express  Base: 0x%llx\n", PcdGet64 (PcdPciExpressBaseAddress)));
     }
   }
 
