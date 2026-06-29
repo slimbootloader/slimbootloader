@@ -950,6 +950,8 @@ PlatformUpdateAcpiGnvs (
   PlatformNvs->HdaDspPpModuleMask               = 0;
 
   // System Agent
+  // PCI config space must lie within 4GB address space with 256MB MMCONFIG window.
+  ASSERT (PcdGet64 (PcdPciExpressBaseAddress) < (BASE_4GB - 0x10000000));
   SaNvs->XPcieCfgBaseAddress                    = (UINT32) (PcdGet64 (PcdPciExpressBaseAddress));
 
   AsmCpuid (1, &CpuidRegs.RegEax, 0, 0, 0);
