@@ -1965,6 +1965,8 @@ PlatformUpdateAcpiGnvs (
   UpdateCpuNvs (CpuNvs);
 
   //System Agent NVS Init
+  // PCI config space must lie within 4GB address space with 256MB MMCONFIG window.
+  ASSERT (PcdGet64 (PcdPciExpressBaseAddress) < (BASE_4GB - 0x10000000));
   SaNvs->XPcieCfgBaseAddress      = (UINT32)(PcdGet64(PcdPciExpressBaseAddress));
   SaNvs->Mmio64Base               = 0;
   SaNvs->Mmio64Length             = 0;
