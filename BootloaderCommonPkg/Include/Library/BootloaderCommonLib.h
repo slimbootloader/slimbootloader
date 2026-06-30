@@ -646,4 +646,26 @@ MatchHashInStore (
   IN       UINT8           *HashData
   );
 
+/**
+  Compare two buffers in constant time to prevent timing side-channel attacks.
+
+  This function always examines every byte in the range [0, Length) regardless
+  of whether a mismatch is found early.  The accumulated difference is stored
+  in a volatile variable so that the compiler cannot optimize away any iterations.
+
+  @param[in]  BufferA  Pointer to the first buffer.
+  @param[in]  BufferB  Pointer to the second buffer.
+  @param[in]  Length   Number of bytes to compare.
+
+  @retval  0           The buffers are identical over Length bytes.
+  @retval != 0         At least one byte differs.
+
+**/
+INTN
+CompareMemConstantTime (
+  IN CONST VOID  *BufferA,
+  IN CONST VOID  *BufferB,
+  IN UINTN       Length
+  );
+
 #endif

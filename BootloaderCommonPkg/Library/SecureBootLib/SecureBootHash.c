@@ -187,8 +187,10 @@ DoHashVerify (
 
   Status = RETURN_SECURITY_VIOLATION;
   if (Usage == 0) {
-    // Compare hash with the buffer passed in
-    if (CompareMem (HashData, (VOID *)Digest, DigestSize) == 0) {
+    //
+    // Compare hash with the buffer passed in (constant-time to prevent timing leak)
+    //
+    if (CompareMemConstantTime (HashData, (VOID *)Digest, DigestSize) == 0) {
       Status = RETURN_SUCCESS;
     }
   } else {
