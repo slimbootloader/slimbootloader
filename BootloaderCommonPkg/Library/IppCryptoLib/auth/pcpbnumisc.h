@@ -53,7 +53,7 @@
 /* expand by zeros */
 #define ZEXPAND_BNU(srcdst,srcLen, dstLen) \
 { \
-  SetMem (srcdst + srcLen * sizeof (BNU_CHUNK_T), (dstLen - srcLen) * sizeof (BNU_CHUNK_T), 0); \
+  SetMem (srcdst + srcLen, (dstLen - srcLen) * sizeof (BNU_CHUNK_T), 0); \
 }
 
 /* copy and expand by zeros */

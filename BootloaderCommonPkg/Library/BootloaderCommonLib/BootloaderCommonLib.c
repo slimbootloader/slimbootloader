@@ -448,6 +448,31 @@ GetComponentInfo (
 }
 
 /**
+  Return the expected digest length in bytes for a given HashAlg identifier.
+
+  @param[in]  HashAlg   One of HASH_TYPE_SHA256 / HASH_TYPE_SHA384 /
+                        HASH_TYPE_SHA512 / HASH_TYPE_SM3.
+
+  @retval 0        Algorithm is unknown or unsupported.
+  @retval Others   Expected digest length in bytes.
+
+**/
+STATIC
+UINT8
+HashAlgExpectedDigestLen (
+  IN  UINT8   HashAlg
+  )
+{
+  switch (HashAlg) {
+  case HASH_TYPE_SHA256:  return SHA256_DIGEST_SIZE;
+  case HASH_TYPE_SHA384:  return SHA384_DIGEST_SIZE;
+  case HASH_TYPE_SHA512:  return SHA512_DIGEST_SIZE;
+  case HASH_TYPE_SM3:     return SM3_DIGEST_SIZE;
+  default:                return 0;
+  }
+}
+
+/**
   Get the component hash data by the component type.
 
   @param[in]  ComponentType   Component type.
@@ -496,8 +521,22 @@ GetComponentHash (
   }
 
   while (HashEntryPtr < HashEndPtr) {
-
+    // Ensure the fixed header fits before reading any fields
+    if ((UINTN)(HashEndPtr - HashEntryPtr) < sizeof (HASH_STORE_DATA)) {
+      HashEntryPtr = HashEndPtr;
+      break;
+    }
     HashEntryData = (HASH_STORE_DATA *) HashEntryPtr;
+    // Reject malformed entries: zero-length digest, digest size that does not
+    // match the declared algorithm, or a digest that overruns the buffer.
+    if ((HashEntryData->DigestLen == 0) ||
+        (HashEntryData->DigestLen != HashAlgExpectedDigestLen (HashEntryData->HashAlg)) ||
+        (HashEntryData->DigestLen > (UINTN)(HashEndPtr - HashEntryPtr) - sizeof (HASH_STORE_DATA))) {
+      DEBUG ((DEBUG_ERROR, "HashStore entry has invalid DigestLen (0x%x) for HashAlg (0x%x); stopping.\n",
+              HashEntryData->DigestLen, HashEntryData->HashAlg));
+      HashEntryPtr = HashEndPtr;
+      return RETURN_COMPROMISED_DATA;
+    }
     if(HashEntryData->Usage & (1 << HashIndex)){
       //Hash Entry found
       break;
@@ -723,6 +762,58 @@ SetDeviceAddr (
 }
 
 /**
+  Compare two buffers in constant time to prevent timing side-channel attacks.
+
+  This function always examines every byte in the range [0, Length) regardless
+  of whether a mismatch is found early.  The accumulated difference is stored
+  in a volatile variable so that the compiler cannot optimize away any iterations.
+
+  @param[in]  BufferA  Pointer to the first buffer.
+  @param[in]  BufferB  Pointer to the second buffer.
+  @param[in]  Length   Number of bytes to compare.
+
+  @retval  0           The buffers are identical over Length bytes.
+  @retval != 0         At least one byte differs.
+
+**/
+INTN
+CompareMemConstantTime (
+  IN CONST VOID  *BufferA,
+  IN CONST VOID  *BufferB,
+  IN UINTN       Length
+  )
+{
+  volatile CONST UINT8  *A;
+  volatile CONST UINT8  *B;
+  volatile INTN Diff = 0;
+  UINTN         Idx;
+
+  //
+  // If length is 0, buffers are considered equal
+  //
+  if (Length == 0) {
+    return 0;
+  }
+
+  //
+  // Validate pointers are not NULL
+  //
+  if ((BufferA == NULL) || (BufferB == NULL)) {
+    return -1;
+  }
+
+  A = (volatile CONST UINT8 *) BufferA;
+  B = (volatile CONST UINT8 *) BufferB;
+  Diff = 0;
+
+  for (Idx = 0; Idx < Length; Idx++) {
+    Diff |= A[Idx] ^ B[Idx];
+  }
+
+  return (INTN) Diff;
+}
+
+/**
   Match a given hash with the ones in hash store.
 
   @param[in]  Usatge      Hash usage.
@@ -761,18 +852,24 @@ MatchHashInStore (
   HashEntryPtr = HashStorePtr->Data;
   HashEndPtr   = (UINT8 *) HashStorePtr +  HashStorePtr->UsedLength;
   while (HashEntryPtr < HashEndPtr) {
+    // Ensure the fixed header fits before reading any fields
+    if ((UINTN)(HashEndPtr - HashEntryPtr) < sizeof (HASH_STORE_DATA)) {
+      break;
+    }
     HashEntryData = (HASH_STORE_DATA *) HashEntryPtr;
     // Validate Hash Entry data before use
     if ((UINTN)HashEndPtr - (UINTN)HashEntryData < sizeof(HASH_STORE_DATA) ||
         HashEntryData->DigestLen == 0 ||
+        HashEntryData->DigestLen != HashAlgExpectedDigestLen (HashEntryData->HashAlg) ||
         HashEntryData->DigestLen > ((UINTN)HashEndPtr - (UINTN)HashEntryData - sizeof (HASH_STORE_DATA))) {
       return RETURN_COMPROMISED_DATA;
     }
     if (((HashEntryData->Usage & Usage) != 0) && (HashEntryData->HashAlg == HashAlg)) {
-      // Usage and hash type matched, check hash now
-      if (CompareMem (HashData, HashEntryData->Digest, HashEntryData->DigestLen) == 0) {
+      //
+      // Usage and hash type matched, compare digest in constant time
+      //
+      if (CompareMemConstantTime (HashData, HashEntryData->Digest, HashEntryData->DigestLen) == 0) {
         Status = RETURN_SUCCESS;
-        break;
       }
     }
     HashEntryPtr +=  sizeof(HASH_STORE_DATA) + HashEntryData->DigestLen;

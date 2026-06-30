@@ -620,38 +620,29 @@ typedef enum {
 #define IPP_NOERROR_RET()  return ippStsNoErr
 #define IPP_ERROR_RET( ErrCode )  return (ErrCode)
 
-#ifdef _IPP_DEBUG
+#define IPP_BADARG_RET( expr, ErrCode )\
+            {if (expr) { IPP_ERROR_RET( ErrCode ); }}
 
-    #define IPP_BADARG_RET( expr, ErrCode )\
-                {if (expr) { IPP_ERROR_RET( ErrCode ); }}
+#define IPP_BAD_SIZE_RET( n )\
+            IPP_BADARG_RET( (n)<=0, ippStsSizeErr )
 
-#else
+#define IPP_BAD_STEP_RET( n )\
+            IPP_BADARG_RET( (n)<=0, ippStsStepErr )
 
-    #define IPP_BADARG_RET( expr, ErrCode )
+#define IPP_BAD_PTR1_RET( ptr )\
+            IPP_BADARG_RET( NULL==(ptr), ippStsNullPtrErr )
 
-#endif
+#define IPP_BAD_PTR2_RET( ptr1, ptr2 )\
+            {IPP_BAD_PTR1_RET( ptr1 ); IPP_BAD_PTR1_RET( ptr2 )}
 
+#define IPP_BAD_PTR3_RET( ptr1, ptr2, ptr3 )\
+            {IPP_BAD_PTR2_RET( ptr1, ptr2 ); IPP_BAD_PTR1_RET( ptr3 )}
 
-    #define IPP_BAD_SIZE_RET( n )\
-                IPP_BADARG_RET( (n)<=0, ippStsSizeErr )
+#define IPP_BAD_PTR4_RET( ptr1, ptr2, ptr3, ptr4 )\
+            {IPP_BAD_PTR2_RET( ptr1, ptr2 ); IPP_BAD_PTR2_RET( ptr3, ptr4 )}
 
-    #define IPP_BAD_STEP_RET( n )\
-                IPP_BADARG_RET( (n)<=0, ippStsStepErr )
-
-    #define IPP_BAD_PTR1_RET( ptr )\
-                IPP_BADARG_RET( NULL==(ptr), ippStsNullPtrErr )
-
-    #define IPP_BAD_PTR2_RET( ptr1, ptr2 )\
-                {IPP_BAD_PTR1_RET( ptr1 ); IPP_BAD_PTR1_RET( ptr2 )}
-
-    #define IPP_BAD_PTR3_RET( ptr1, ptr2, ptr3 )\
-                {IPP_BAD_PTR2_RET( ptr1, ptr2 ); IPP_BAD_PTR1_RET( ptr3 )}
-
-    #define IPP_BAD_PTR4_RET( ptr1, ptr2, ptr3, ptr4 )\
-                {IPP_BAD_PTR2_RET( ptr1, ptr2 ); IPP_BAD_PTR2_RET( ptr3, ptr4 )}
-
-    #define IPP_BAD_ISIZE_RET(roi) \
-               IPP_BADARG_RET( ((roi).width<=0 || (roi).height<=0), ippStsSizeErr)
+#define IPP_BAD_ISIZE_RET(roi) \
+            IPP_BADARG_RET( ((roi).width<=0 || (roi).height<=0), ippStsSizeErr)
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /*                              internal messages                             */
@@ -932,4 +923,3 @@ extern double            __intel_castu64_f64(unsigned __int64 val);
 #endif
 
 #endif /* __OWNDEFS_H__ */
-

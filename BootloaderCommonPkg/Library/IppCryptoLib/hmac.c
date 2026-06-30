@@ -53,12 +53,34 @@ IppStatus HKDFExtract( Ipp8u* prk, int prkLen,
                        const IppsHashMethod* pMethod
                      )
 {
+  if ((prk == NULL) || (ikm == NULL) || (pMethod == NULL)) {
+    DEBUG ((DEBUG_ERROR, "HKDFExtract: NULL pointer parameter\n"));
+    return ippStsNullPtrErr;
+  }
+  if ((prkLen <= 0) || (ikmLen <= 0)) {
+    DEBUG ((DEBUG_ERROR, "HKDFExtract: Invalid length parameter\n"));
+    return ippStsBadArgErr;
+  }
+  if ((salt == NULL) && (saltLen != 0)) {
+    DEBUG ((DEBUG_ERROR, "HKDFExtract: NULL salt with non-zero saltLen\n"));
+    return ippStsNullPtrErr;
+  }
+
+  //
+  // RFC 5869 Section 2.2: If salt is not present, it defaults to a string of HashLen zeros.
+  //
+  if ((salt == NULL) && (saltLen == 0)) {
+    Ipp8u zero_salt[64];
+    ZeroMem (zero_salt, prkLen);
+    return ippsHMACMessage_rmf(ikm, ikmLen, zero_salt, prkLen, prk, prkLen, pMethod);
+  }
+
   return ippsHMACMessage_rmf(ikm, ikmLen, salt, saltLen, prk, prkLen, pMethod);
 }
 
 IppStatus HKDFExpand( Ipp8u* okm, int okmLen,
                       const Ipp8u* prk, int prkLen,
-                      const Ipp8u* info,int infoLen,
+                      const Ipp8u* info, int infoLen,
                       const IppsHashMethod* pMethod)
 {
   int ctxSize = 0;
@@ -70,6 +92,39 @@ IppStatus HKDFExpand( Ipp8u* okm, int okmLen,
   int outLen;
   int copyLen;
   IppStatus Sts;
+
+  //
+  // Validate required pointer parameters
+  //
+  if ((okm == NULL) || (prk == NULL) || (pMethod == NULL)) {
+    DEBUG ((DEBUG_ERROR, "HKDFExpand: NULL pointer parameter\n"));
+    return ippStsNullPtrErr;
+  }
+
+  //
+  // RFC 5869 Section 2.3: info is optional context; NULL is valid if infoLen == 0
+  //
+  if ((info == NULL) && (infoLen != 0)) {
+    DEBUG ((DEBUG_ERROR, "HKDFExpand: NULL info with non-zero infoLen\n"));
+    return ippStsNullPtrErr;
+  }
+
+  //
+  // Validate length parameters
+  //
+  if ((okmLen <= 0) || (prkLen <= 0)) {
+    DEBUG ((DEBUG_ERROR, "HKDFExpand: Invalid length parameter\n"));
+    return ippStsBadArgErr;
+  }
+
+  //
+  // Enforce RFC 5869 Section 2.3: L <= 255 * HashLen
+  //
+  hashLen = prkLen;
+  if ((hashLen <= 0) || (okmLen > (255 * hashLen))) {
+    DEBUG ((DEBUG_ERROR, "HKDFExpand: okmLen exceeds 255*hashLen limit\n"));
+    return ippStsBadArgErr;
+  }
 
   Sts = ippsHMACGetSize_rmf(&ctxSize);
   if(Sts !=ippStsNoErr) {
@@ -88,15 +143,20 @@ IppStatus HKDFExpand( Ipp8u* okm, int okmLen,
   }
 
   tmpLen = 0;
-  hashLen = prkLen;
   cnt = 1;
 
-  for(outLen=0; outLen<okmLen; outLen+=hashLen) {
-    Sts = ippsHMACUpdate_rmf(tmp,  tmpLen, pHMAC);
+  //
+  // Use safe pointer for info (RFC 5869 allows empty/NULL info)
+  //
+  const Ipp8u empty_info = 0;
+  const Ipp8u *use_info = info ? info : &empty_info;
+
+  for(outLen = 0; outLen < okmLen; outLen += hashLen) {
+    Sts = ippsHMACUpdate_rmf(tmp, tmpLen, pHMAC);
     if(Sts !=ippStsNoErr) {
       goto Exit;
     }
-    Sts = ippsHMACUpdate_rmf(info, infoLen, pHMAC);
+    Sts = ippsHMACUpdate_rmf(use_info, infoLen, pHMAC);
     if(Sts !=ippStsNoErr) {
       goto Exit;
     }
@@ -105,18 +165,23 @@ IppStatus HKDFExpand( Ipp8u* okm, int okmLen,
       goto Exit;
     }
     cnt++;
-    Sts = ippsHMACFinal_rmf(tmp,  hashLen, pHMAC);
+    Sts = ippsHMACFinal_rmf(tmp, hashLen, pHMAC);
     if(Sts !=ippStsNoErr) {
       goto Exit;
     }
     tmpLen = hashLen;
 
-    copyLen = ((outLen+hashLen)<=okmLen)? hashLen : okmLen-outLen;
+    copyLen = ((outLen + hashLen) <= okmLen) ? hashLen : (okmLen - outLen);
+    if (copyLen <= 0) {
+      Sts = ippStsBadArgErr;
+      goto Exit;
+    }
 
-    CopyMem(okm+outLen, tmp, copyLen);
+    CopyMem(okm + outLen, tmp, copyLen);
   }
 
 Exit:
+  ZeroMem(pHMAC, ctxSize);
   FreePool(pHMAC);
   return Sts;
 }
@@ -125,22 +190,17 @@ EFI_STATUS
 HKDF ( const IppsHashMethod* pMethod,
        const Ipp8u* salt, int saltLen,
        const Ipp8u* ikm, int ikmLen,
-       const Ipp8u* info,int infoLen,
+       const Ipp8u* info, int infoLen,
        Ipp8u* okm, int okmLen
      )
 {
   Ipp8u tprk[IPP_SHA256_DIGEST_BITSIZE/8];
   IppStatus Sts;
 
-  // TODO: Check to see if Expand returns correct OKM  or not if ikmLen > 64
-  if ((saltLen > 64) ||  (infoLen > 64) || (ikmLen > 64)){
-    DEBUG ((DEBUG_ERROR, "HKDF: Invalid Parameter\n"));
-    return RETURN_INVALID_PARAMETER;
-  }
-
   // step 1 (extract)
-  Sts = HKDFExtract(tprk,sizeof(tprk), salt,saltLen, ikm,ikmLen, pMethod);
+  Sts = HKDFExtract(tprk, sizeof(tprk), salt, saltLen, ikm, ikmLen, pMethod);
   if(Sts !=ippStsNoErr) {
+    ZeroMem(tprk, sizeof(tprk));
     DEBUG ((DEBUG_ERROR, "HKDF Extract failed:%d\n", Sts));
     return EFI_PROTOCOL_ERROR;
   }
@@ -149,7 +209,13 @@ HKDF ( const IppsHashMethod* pMethod,
 #endif
 
   // step 2 (expand)
-  Sts = HKDFExpand(okm,okmLen, tprk,sizeof(tprk), info,infoLen, pMethod);
+  Sts = HKDFExpand(okm, okmLen, tprk, sizeof(tprk), info, infoLen, pMethod);
+
+  //
+  // Clear PRK from stack before return
+  //
+  ZeroMem(tprk, sizeof(tprk));
+
   if(Sts !=ippStsNoErr) {
     DEBUG ((DEBUG_ERROR, "HKDF Expand failed:%d\n", Sts));
     return EFI_PROTOCOL_ERROR;
