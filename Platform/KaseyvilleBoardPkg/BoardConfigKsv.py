@@ -28,6 +28,7 @@ class Board(BaseBoard):
         self.VERINFO_SVN          = 1
         self.VERINFO_BUILD_DATE   = time.strftime("%m/%d/%Y")
 
+        self.BUILD_ARCH           = 'X64'
         self.BOARD_NAME           = 'ksv'
         self.BOARD_PKG_NAME       = 'KaseyvilleBoardPkg'
         self.SILICON_PKG_NAME     = 'KaseyvillePkg'

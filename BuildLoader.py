@@ -28,6 +28,14 @@ from   BuildUtility import *
 
 import glob
 
+
+def print_warning(message):
+    # Use ANSI yellow for warnings when output is a terminal.
+    if os.name != 'nt' and sys.stdout.isatty() and os.getenv('NO_COLOR') is None:
+        print('\033[33m%s\033[0m' % message)
+    else:
+        print(message)
+
 def rebuild_basetools ():
     exe_list = 'GenFfs  GenFv  GenFw  GenSec  Lz4Compress  LzmaCompress'.split()
     ret = 0
@@ -1620,6 +1628,11 @@ def main():
         for index, name in enumerate(board_names):
             if args.board == name:
                 brdcfg = module_names[index]
+                if args.arch.lower() == 'ia32' and brdcfg.Board().BUILD_ARCH == 'X64':
+                    print_warning('ERROR: IA32 build is not supported for platform [%s].' % args.board)
+                    print_warning('ERROR: Platform [%s] supports X64 architecture only. Build stopped.' % args.board)
+                    sys.exit(2)
+
                 board  = brdcfg.Board(
                                         BUILD_ARCH        = args.arch.upper(), \
                                         RELEASE_MODE      = args.release,     \

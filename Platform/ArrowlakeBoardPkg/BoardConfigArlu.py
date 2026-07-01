@@ -26,6 +26,7 @@ class Board(ArrowlakeBoardConfig.Board):
         super(Board, self).__init__(*args, **kwargs)
 
         self.VERINFO_IMAGE_ID     = 'SB_ARLU'
+        self.BUILD_ARCH           = 'X64'
         self.BOARD_NAME           = 'arlu'
         self.MICROCODE_INF_FILE   = 'Silicon/ArrowlakePkg/Arlh/Microcode/MicrocodeArlu.inf'
         self._ACM_CPU_FMS = [
