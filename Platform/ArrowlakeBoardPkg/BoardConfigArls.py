@@ -30,6 +30,7 @@ class Board(BaseBoard):
 
         self.BUILD_ARCH           = 'X64'
         self.BOARD_NAME           = 'arls'
+        self.IA32_DEPRICATED      = True
         self.BOARD_PKG_NAME       = 'ArrowlakeBoardPkg'
         self.SILICON_PKG_NAME     = 'ArrowlakePkg'
         self.FSP_IMAGE_ID         = '$ARLFSPE'

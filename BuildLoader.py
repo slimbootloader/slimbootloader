@@ -28,6 +28,14 @@ from   BuildUtility import *
 
 import glob
 
+
+def print_warning(message):
+    # Use ANSI yellow for warnings when output is a terminal.
+    if sys.stdout.isatty() and os.getenv('NO_COLOR') is None:
+        print('\033[33m%s\033[0m' % message)
+    else:
+        print(message)
+
 def rebuild_basetools ():
     exe_list = 'GenFfs  GenFv  GenFw  GenSec  Lz4Compress  LzmaCompress'.split()
     ret = 0
@@ -157,6 +165,7 @@ class BaseBoard(object):
         self.HAVE_PSD_TABLE        = 0
         self.HAVE_SEED_LIST        = 0
         self.HAVE_FIT4_ENTRY       = 0
+        self.IA32_DEPRICATED       = False
 
         self.FIT_ENTRY_MAX_NUM     = 10
 
@@ -1615,6 +1624,15 @@ def main():
     sp = ap.add_subparsers(help='command')
 
     def cmd_build(args):
+        if args.arch.lower() == 'ia32':
+            board_index = board_names.index(args.board)
+            board_cfg = module_names[board_index].Board()
+            board_cfg.IA32_DEPRICATED = getattr(board_cfg, 'IA32_DEPRICATED', False)
+            if board_cfg.IA32_DEPRICATED:
+                print_warning('WARNING: IA32 build is deprecated and not supported for platform [%s].' % args.board)
+                print_warning('WARNING: Platform [%s] supports X64 architecture only. Build stopped.' % args.board)
+                return
+
         prep_env ()
 
         for index, name in enumerate(board_names):
