@@ -108,7 +108,8 @@ UpdateFpdtBootTable (
 
 
 /**
-  Get FPDT firmware performance table by searching ACPI table
+  Get FPDT firmware performance table by searching ACPI table. During
+  S3 Resume all pointers need to be bounds checked.
 
   @param[in]  AcpiTableBase    ACPI table base address
 
@@ -131,13 +132,35 @@ GetFpdtTable (
   Rsdp = (EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER *)(UINTN)AcpiTableBase;
   Rsdt = (EFI_ACPI_DESCRIPTION_HEADER *)(UINTN)Rsdp->RsdtAddress;
 
+  if (!S3_PTR_CHK(Rsdt) ||
+      !S3_PTR_CHK((VOID*)((UINTN)Rsdt + sizeof(EFI_ACPI_DESCRIPTION_HEADER) - 1)) ||
+      (!IS_X64 && ((UINT64)(UINTN)Rsdt + Rsdt->Length - 1) > MAX_UINT32) ||
+      !S3_PTR_CHK((VOID*)((UINTN)Rsdt + Rsdt->Length - 1)) ||
+      Rsdt->Length < sizeof(EFI_ACPI_DESCRIPTION_HEADER))
+  {
+    return NULL;
+  }
+
   NumEntries = (Rsdt->Length - sizeof(EFI_ACPI_DESCRIPTION_HEADER)) / sizeof(UINT32);
   RsdtEntry  = (UINT32 *) ((UINT8 *)Rsdt + sizeof (EFI_ACPI_DESCRIPTION_HEADER));
   for (Index = 0; Index < NumEntries; Index++) {
     Hdr = (EFI_ACPI_COMMON_HEADER *) (UINTN) RsdtEntry[Index];
+    if (!S3_PTR_CHK(Hdr) ||
+        !S3_PTR_CHK((VOID*)((UINTN)Hdr + sizeof(EFI_ACPI_COMMON_HEADER) - 1)) ||
+        (!IS_X64 && ((UINT64)(UINTN)Hdr + Hdr->Length - 1) > MAX_UINT32) ||
+        !S3_PTR_CHK((VOID*)((UINTN)Hdr + Hdr->Length - 1)) ||
+        Hdr->Length < sizeof(EFI_ACPI_COMMON_HEADER))
+    {
+      return NULL;
+    }
     if (Hdr->Signature == EFI_ACPI_5_0_FIRMWARE_PERFORMANCE_DATA_TABLE_SIGNATURE) {
       Fpdt = (FIRMWARE_PERFORMANCE_TABLE *) Hdr;
       BootTable = (BOOT_PERFORMANCE_TABLE *)(UINTN)Fpdt->BootPointerRecord.BootPerformanceTablePointer;
+      if (!S3_PTR_CHK(BootTable) ||
+          (!IS_X64 && ((UINT64)(UINTN)BootTable + sizeof(BOOT_PERFORMANCE_TABLE) - 1) > MAX_UINT32) ||
+          !S3_PTR_CHK((VOID*)((UINTN)BootTable + sizeof(BOOT_PERFORMANCE_TABLE) - 1))) {
+        return NULL;
+      }
       DEBUG ((DEBUG_VERBOSE, "FPDT: ResetEnd                = %ld\n", BootTable->BasicBoot.ResetEnd));
       DEBUG ((DEBUG_VERBOSE, "FPDT: OsLoaderLoadImageStart  = %ld\n", BootTable->BasicBoot.OsLoaderLoadImageStart));
       DEBUG ((DEBUG_VERBOSE, "FPDT: OsLoaderStartImageStart = %ld\n", BootTable->BasicBoot.OsLoaderStartImageStart));
@@ -180,6 +203,11 @@ UpdateFpdtS3Table (
   }
 
   S3PerfTable = (S3_PERFORMANCE_TABLE *)(UINTN)Fpdt->S3PointerRecord.S3PerformanceTablePointer;
+  if (!S3_PTR_CHK(S3PerfTable) ||
+
+      !S3_PTR_CHK((VOID*)((UINTN)S3PerfTable + sizeof(S3_PERFORMANCE_TABLE) - 1))) {
+    return EFI_INVALID_PARAMETER;
+  }
   ASSERT ((S3PerfTable != NULL) && (S3PerfTable->Header.Signature == EFI_ACPI_5_0_FPDT_S3_PERFORMANCE_TABLE_SIGNATURE));
 
   // Get current time

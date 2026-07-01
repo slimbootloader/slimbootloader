@@ -11,6 +11,8 @@
 #include <Uefi/UefiBaseType.h>
 #include <IndustryStandard/Acpi.h>
 
+#define S3_PTR_CHK(Ptr) (!EFI_ERROR (ValidateAcpiPointerInS3(Ptr)))
+
 typedef struct {
   EFI_ACPI_5_0_FPDT_PERFORMANCE_RECORD_HEADER     Header;
   UINT32                                          Reserved;
@@ -86,18 +88,20 @@ typedef struct {
 #pragma pack()
 
 /**
-  This function is called on S3 boot flow only.
+  Locate the ACPI wake vector from FACS and jump to it on S3 resume.
 
-  It will locate the S3 waking vector from the ACPI table and then
-  jump into it. The control will never return.
+  This function retrieves the FACS address from the TSEG S3 communication
+  area (stored during normal boot via AppendS3Info), validates the FACS
+  signature, extracts the FirmwareWakingVector, and transfers control to
+  the OS wake entry point. This function does not return on success.
 
-  @param  AcpiBase   ACPI table base address
+  @param[in]  FacsAddress   Address of FACS saved from normal boot.
 
 **/
 VOID
 EFIAPI
 FindAcpiWakeVectorAndJump (
-  IN  UINT32    AcpiBase
+  VOID    *FacsAddress
   );
 
 /**
@@ -142,5 +146,95 @@ EFIAPI
 UpdateFpdtSblTable (
   VOID
   );
+
+/**
+  Discover the S3 required info via the live ACPI tables and save it
+  to the TSEG S3 communication area for use on S3 resume.
+
+  Save AcpiBase and FACS address into TSEG so that it can be retrieved
+  on S3 resume without trusting DRAM-resident ACPI tables. The storage
+  method depends on PcdBuildSmmHobs:
+    BIT1 - copy BL_ACPI_S3_INFO at a fixed offset after PLD_TO_BL_SMM_INFO
+           and per-CPU SMM base entries in TSEG
+    BIT0 - append a BL_ACPI_S3_INFO structure via AppendS3Info()
+
+  @retval EFI_SUCCESS         ACPI S3 data saved successfully.
+  @retval EFI_NOT_FOUND       ACPI S3 data not found in the ACPI tables.
+  @retval EFI_DEVICE_ERROR    CPU info unavailable.
+  @retval EFI_UNSUPPORTED     No supported storage method available.
+
+**/
+EFI_STATUS
+EFIAPI
+SaveAcpiDataForS3 (
+  VOID
+  );
+
+/**
+  Retrieve the FACS address from the TSEG S3 communication area.
+
+  This function reads the FACS physical address previously saved by
+  SaveAcpiDataForS3() during normal boot. It is called on S3 resume
+  to locate the FACS without relying on DRAM-resident ACPI tables.
+
+  @retval  Non-zero   Physical address of the FACS table.
+  @retval  0          FACS address not found.
+
+**/
+UINT64
+EFIAPI
+GetFacsAddressForS3 (
+  VOID
+  );
+
+/**
+  Retrieve the ACPI base address from the TSEG S3 communication area.
+
+  Calls GetAcpiS3Info() and returns the AcpiBase field. Called on S3 resume
+  to locate the ACPI tables without relying on DRAM-resident data.
+
+  @retval  Non-zero   Physical address of the ACPI RSDP.
+  @retval  0          ACPI base address not found.
+
+**/
+UINT64
+EFIAPI
+GetAcpiBaseForS3 (
+  VOID
+  );
+
+/**
+  Find the FACS physical address by walking the live ACPI XSDT.
+
+  @param[in]  AcpiTableBase   Physical address of the RSDP.
+
+  @retval  Non-zero   Physical address of the FACS structure.
+  @retval  0          FACS not found.
+
+**/
+UINT64
+EFIAPI
+FindAcpiFacsAddress (
+  IN  UINT32    AcpiTableBase
+  );
+
+/**
+    Validate that the given ACPI pointer is within the ACPI memory range
+    defined in S3Data.
+
+    This function is used on S3 resume to validate any ACPI pointers
+    (e.g. from FACS) against the known ACPI memory range stored in
+    S3Data, to ensure they are safe to access without relying on
+    DRAM-resident ACPI tables.
+
+  @param[in] AcpiPtr
+  @return    EFI_STATUS
+
+ */
+EFI_STATUS
+EFIAPI
+ValidateAcpiPointerInS3(
+  IN VOID *AcpiPtr
+);
 
 #endif

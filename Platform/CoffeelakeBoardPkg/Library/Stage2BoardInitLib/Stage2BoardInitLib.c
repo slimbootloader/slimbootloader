@@ -70,6 +70,7 @@
 #include <Library/HeciLib.h>
 #include <Library/PlatformHookLib.h>
 #include <Library/MadtLib.h>
+#include <Library/AcpiInitLib.h>
 
 #define ICH_IOAPIC_ID                               0x02
 #define LOCAL_APIC_BASE_ADDRESS                     0xFEE00000
@@ -1086,6 +1087,12 @@ BoardInit (
       //
       mS3SaveReg.S3SaveHdr.TotalSize = sizeof(BL_PLD_COMM_HDR) + mS3SaveReg.S3SaveHdr.Count * sizeof(REG_INFO);
       AppendS3Info ((VOID *)&mS3SaveReg, FALSE);
+
+      // Need to Save ACPI info again after clearing region
+      Status = SaveAcpiDataForS3 ();
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "Failed to save ACPI S3 data after clearing region: %r - S3 Resume expected to fail.\n", Status));
+      }
     }
     break;
   case EndOfStages:

@@ -24,6 +24,8 @@
 #include <Library/FirmwareUpdateLib.h>
 #include <Guid/BootLoaderVersionGuid.h>
 #include <BootloaderCoreGlobal.h>
+#include <Library/S3SaveRestoreLib.h>
+#include <Guid/SmmInformationGuid.h>
 #include "AcpiInitLibInternal.h"
 
 STATIC
@@ -717,19 +719,248 @@ AcpiInit (
 
 typedef VOID (*DOWAKEUP) (UINT32 WakeVector);
 
+/**
+  Discover the S3 required info via the live ACPI tables and save it
+  to the TSEG S3 communication area for use on S3 resume.
+
+  Save AcpiBase and FACS address into TSEG so that it can be retrieved
+  on S3 resume without trusting DRAM-resident ACPI tables. The storage
+  method depends on PcdBuildSmmHobs:
+    BIT1 - copy BL_ACPI_S3_INFO at a fixed offset after PLD_TO_BL_SMM_INFO
+           and per-CPU SMM base entries in TSEG
+    BIT0 - append a BL_ACPI_S3_INFO structure via AppendS3Info()
+
+  @retval EFI_SUCCESS         ACPI S3 data saved successfully.
+  @retval EFI_NOT_FOUND       ACPI S3 data not found in the ACPI tables.
+  @retval EFI_DEVICE_ERROR    CPU info unavailable.
+  @retval EFI_UNSUPPORTED     No supported storage method available.
+
+**/
+EFI_STATUS
+EFIAPI
+SaveAcpiDataForS3(
+  VOID
+  )
+{
+  LDR_SMM_INFO         LdrSmmInfo;
+  BL_ACPI_S3_INFO      AcpiS3Info;
+  EFI_STATUS           Status;
+  SYS_CPU_INFO        *SysCpuInfo;
+  VOID                *AcpiS3TsegPtr;
+
+  //
+  // Get the number of detected CPUs
+  //
+  SysCpuInfo = MpGetInfo ();
+  if ((SysCpuInfo == NULL) || (SysCpuInfo->CpuCount == 0)) {
+    return EFI_DEVICE_ERROR;
+  }
+
+  Status = EFI_UNSUPPORTED;
+
+  AcpiS3Info.AcpiS3InfoHdr.Signature = BL_PLD_COMM_SIG;
+  AcpiS3Info.AcpiS3InfoHdr.Id        = BL_FACS_ADDR_COMM_ID;
+  AcpiS3Info.AcpiS3InfoHdr.Count     = 1;
+  AcpiS3Info.AcpiS3InfoHdr.TotalSize = sizeof (BL_ACPI_S3_INFO);
+  AcpiS3Info.AcpiBase                = PcdGet32 (PcdAcpiTablesRsdp);
+  AcpiS3Info.FacsAddress             = FindAcpiFacsAddress(PcdGet32 (PcdAcpiTablesRsdp));
+
+  if (AcpiS3Info.AcpiBase == 0 || AcpiS3Info.FacsAddress == 0) {
+    DEBUG((DEBUG_ERROR, "ACPI info needed for S3 is Invalid!\n"));
+    ASSERT (FALSE);
+    return EFI_NOT_FOUND;
+  }
+
+  if ((PcdGet8(PcdBuildSmmHobs) & BIT1) != 0) {
+    PlatformUpdateHobInfo (&gSmmInformationGuid, &LdrSmmInfo);
+    AcpiS3TsegPtr = (VOID *)(UINTN)(LdrSmmInfo.SmmBase + sizeof(PLD_TO_BL_SMM_INFO) + (sizeof(CPU_SMMBASE)*SysCpuInfo->CpuCount));
+    if ((AcpiS3TsegPtr < (VOID*)(UINTN)LdrSmmInfo.SmmBase) ||
+        (AcpiS3TsegPtr >= (VOID*)(UINTN)(LdrSmmInfo.SmmBase + LdrSmmInfo.SmmSize - sizeof(BL_ACPI_S3_INFO)))) {
+      DEBUG((DEBUG_ERROR, "TSEG target address for ACPI S3 info is out of range!\n"));
+      ASSERT (FALSE);
+      return EFI_UNSUPPORTED;
+    }
+    DEBUG((DEBUG_INFO, "Copying ACPI info struct to 0x%08X in S3 data\n", (UINTN)AcpiS3TsegPtr));
+    CopyMem (AcpiS3TsegPtr , &AcpiS3Info, sizeof(BL_ACPI_S3_INFO));
+    Status = EFI_SUCCESS;
+  }
+  else if ((PcdGet8(PcdBuildSmmHobs) & BIT0) != 0) {
+    Status = AppendS3Info(&AcpiS3Info, FALSE);
+  }
+  return Status;
+}
 
 /**
-  This function is called on S3 boot flow only.
+  Retrieve the pointer to BL_ACPI_S3_INFO structure from the TSEG S3 communication area.
 
-  It will locate the S3 waking vector from the ACPI table and then
-  jump into it. The control will never return.
+  This function locates the BL_ACPI_S3_INFO structure stored in TSEG by
+  SaveAcpiDataForS3() during normal boot. The retrieval method depends on
+  PcdBuildSmmHobs:
+    BIT1 - read from a fixed offset after PLD_TO_BL_SMM_INFO and per-CPU SMM base entries in TSEG
+    BIT0 - find the structure appended via AppendS3Info()
 
-  @param  AcpiTableBase   ACPI table base address
+  @retval Pointer to BL_ACPI_S3_INFO if found and valid, NULL if not found or invalid.
+
+**/
+BL_ACPI_S3_INFO*
+EFIAPI
+GetAcpiS3Info(
+  VOID
+)
+{
+  LDR_SMM_INFO         LdrSmmInfo;
+  BL_ACPI_S3_INFO     *AcpiS3Info;
+  SYS_CPU_INFO        *SysCpuInfo;
+
+  //
+  // Get the number of detected CPUs
+  //
+  SysCpuInfo = MpGetInfo ();
+  if ((SysCpuInfo == NULL) || (SysCpuInfo->CpuCount == 0)) {
+    return NULL;
+  }
+
+  PlatformUpdateHobInfo (&gSmmInformationGuid, &LdrSmmInfo);
+  if ((PcdGet8(PcdBuildSmmHobs) & BIT1) != 0) {
+    AcpiS3Info = (BL_ACPI_S3_INFO *)(UINTN)(LdrSmmInfo.SmmBase + sizeof(PLD_TO_BL_SMM_INFO) + (sizeof(CPU_SMMBASE)*SysCpuInfo->CpuCount));
+    if ((AcpiS3Info < (BL_ACPI_S3_INFO *)(UINTN)LdrSmmInfo.SmmBase) ||
+        (AcpiS3Info >= (BL_ACPI_S3_INFO *)(UINTN)(LdrSmmInfo.SmmBase + LdrSmmInfo.SmmSize - sizeof(BL_ACPI_S3_INFO)))) {
+      DEBUG((DEBUG_ERROR, "TSEG target address for ACPI S3 info is out of range!\n"));
+      ASSERT (FALSE);
+      return NULL;
+    }
+    if (AcpiS3Info->AcpiS3InfoHdr.Signature != BL_PLD_COMM_SIG || AcpiS3Info->AcpiS3InfoHdr.Id != BL_FACS_ADDR_COMM_ID) {
+      DEBUG((DEBUG_ERROR, "FACS address info not found in S3 data at expected location 0x%08X\n", AcpiS3Info));
+      return NULL;
+    }
+    return AcpiS3Info;
+  }
+  else if ((PcdGet8(PcdBuildSmmHobs) & BIT0) != 0) {
+    AcpiS3Info = FindS3Info (BL_FACS_ADDR_COMM_ID);
+    if (AcpiS3Info == NULL) {
+      DEBUG((DEBUG_ERROR, "FACS address info not found in S3 data\n"));
+      return NULL;
+    }
+    return AcpiS3Info;
+  }
+  else {
+    return NULL;
+  }
+}
+
+/**
+  Retrieve the FACS address from the TSEG S3 communication area.
+
+  This function reads the FACS physical address previously saved by
+  SaveAcpiDataForS3() during normal boot. It is called on S3 resume
+  to locate the FACS without relying on DRAM-resident ACPI tables.
+
+  @retval  Non-zero   Physical address of the FACS table.
+  @retval  0          FACS address not found.
+
+**/
+UINT64
+EFIAPI
+GetFacsAddressForS3(
+  VOID
+  )
+{
+  BL_ACPI_S3_INFO     *AcpiS3Info;
+
+  AcpiS3Info = GetAcpiS3Info();
+  if (AcpiS3Info != NULL) {
+    return AcpiS3Info->FacsAddress;
+  }
+  return 0;
+
+}
+
+/**
+  Retrieve the ACPI base address from the TSEG S3 communication area.
+
+  This function reads the ACPI base physical address previously saved by
+  SaveAcpiDataForS3() during normal boot. It is called on S3 resume
+  to locate the ACPI base without relying on DRAM-resident ACPI tables.
+
+  @retval  Non-zero   Physical address of the ACPI base.
+  @retval  0          ACPI base address not found.
+
+**/
+UINT64
+EFIAPI
+GetAcpiBaseForS3(
+  VOID
+)
+{
+  BL_ACPI_S3_INFO     *AcpiS3Info;
+
+  AcpiS3Info = GetAcpiS3Info();
+  if (AcpiS3Info != NULL) {
+    return AcpiS3Info->AcpiBase;
+  }
+  return 0;
+
+}
+
+/**
+  Locate the ACPI wake vector from FACS and jump to it on S3 resume.
+
+  This function retrieves the FACS address from the TSEG S3 communication
+  area (stored during normal boot via AppendS3Info), validates the FACS
+  signature, extracts the FirmwareWakingVector, and transfers control to
+  the OS wake entry point. This function does not return on success.
+
+  @param[in]  FacsAddress   Address of FACS saved from normal boot.
 
 **/
 VOID
 EFIAPI
 FindAcpiWakeVectorAndJump (
+  VOID    *FacsAddress
+  )
+{
+  EFI_ACPI_5_0_FIRMWARE_ACPI_CONTROL_STRUCTURE   *Facs;
+  UINT32                                          WakeVector;
+  DOWAKEUP                                        DoWake;
+
+  Facs = (EFI_ACPI_5_0_FIRMWARE_ACPI_CONTROL_STRUCTURE *)FacsAddress;
+  if (Facs->Signature == EFI_ACPI_5_0_FIRMWARE_ACPI_CONTROL_STRUCTURE_SIGNATURE) {
+    WakeVector = Facs->FirmwareWakingVector;
+    // Calculate CRC32 for 0x00000000 ---> BootLoaderRsvdMemBase and
+    // compare with the one calculated and saved in Stage1B.
+    if (PcdGetBool (PcdS3DebugEnabled)) {
+      if (!S3DebugRestoreAndCompareCRC32 () ) {
+        return;
+      }
+    }
+    CopyMem ((VOID *)(UINTN)WakeUpBuffer, (VOID *)(UINTN)&WakeUp, WakeUpSize);
+    DoWake = (DOWAKEUP)(UINTN)WakeUpBuffer;
+    DEBUG ((DEBUG_INIT, "Jump to Wake vector = 0x%x\n", WakeVector));
+    DoWake (WakeVector);
+    //
+    // Should never reach here!
+    //
+  }
+}
+
+
+/**
+  Find the FACS physical address by walking the live ACPI XSDT.
+
+  Scans the XSDT entries for FACP and resolves the FACS pointer via
+  XFirmwareCtrl (64-bit) with fallback to FirmwareCtrl (32-bit).
+  Used during normal boot to discover FACS after AcpiInit() so that the
+  address can be stored for S3 resume.
+
+  @param[in]  AcpiTableBase   Physical address of the RSDP.
+
+  @retval  Non-zero   Physical address of the FACS structure.
+  @retval  0          FACS not found.
+
+**/
+UINT64
+EFIAPI
+FindAcpiFacsAddress (
   IN  UINT32    AcpiTableBase
   )
 {
@@ -740,8 +971,6 @@ FindAcpiWakeVectorAndJump (
   UINT8                                           Index;
   EFI_ACPI_5_0_FIRMWARE_ACPI_CONTROL_STRUCTURE   *Facs;
   EFI_ACPI_5_0_FIXED_ACPI_DESCRIPTION_TABLE      *Facp;
-  UINT32                                          WakeVector;
-  DOWAKEUP                                        DoWake;
 
   Rsdp = (EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER *)(UINTN)AcpiTableBase;
   Xsdt = (EFI_ACPI_DESCRIPTION_HEADER *)(UINTN)Rsdp->XsdtAddress;
@@ -757,22 +986,49 @@ FindAcpiWakeVectorAndJump (
         Facs = (EFI_ACPI_5_0_FIRMWARE_ACPI_CONTROL_STRUCTURE *)(UINTN)Facp->FirmwareCtrl;
       }
       if (Facs->Signature == EFI_ACPI_5_0_FIRMWARE_ACPI_CONTROL_STRUCTURE_SIGNATURE) {
-        WakeVector = Facs->FirmwareWakingVector;
-        // Calculate CRC32 for 0x00000000 ---> BootLoaderRsvdMemBase and
-        // compare with the one calculated and saved in Stage1B.
-        if (PcdGetBool (PcdS3DebugEnabled)) {
-          if (!S3DebugRestoreAndCompareCRC32 () ) {
-            return;
-          }
-        }
-        CopyMem ((VOID *)(UINTN)WakeUpBuffer, (VOID *)(UINTN)&WakeUp, WakeUpSize);
-        DoWake = (DOWAKEUP)(UINTN)WakeUpBuffer;
-        DEBUG ((DEBUG_INIT, "Jump to Wake vector = 0x%x\n", WakeVector));
-        DoWake (WakeVector);
-        //
-        // Should never reach here!
-        //
+        return (UINT64)(UINTN)Facs;
       }
     }
   }
+  return 0;
+}
+
+/**
+    Validate that the given ACPI pointer is within the ACPI memory range
+    defined in S3Data.
+
+    This function is used on S3 resume to validate any ACPI pointers
+    (e.g. from FACS) against the known ACPI memory range stored in
+    S3Data, to ensure they are safe to access without relying on
+    DRAM-resident ACPI tables.
+
+  @param[in] AcpiPtr
+  @return    EFI_STATUS
+
+ */
+EFI_STATUS
+EFIAPI
+ValidateAcpiPointerInS3(
+  IN VOID *AcpiPtr
+)
+{
+  S3_DATA *S3Data;
+
+  if (AcpiPtr == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  S3Data = (S3_DATA *)GetS3DataPtr();
+  if (S3Data == NULL) {
+    return EFI_UNSUPPORTED;
+  }
+
+  if ((UINTN)AcpiPtr < S3Data->AcpiBase ||
+      (UINTN)AcpiPtr >= (UINTN)S3Data->AcpiBase + PcdGet32 (PcdLoaderAcpiReclaimSize)) {
+    DEBUG((DEBUG_ERROR, "ACPI pointer 0x%08X is outside of ACPI memory range 0x%08X - 0x%08X\n", (UINTN)AcpiPtr, S3Data->AcpiBase, (UINTN)S3Data->AcpiBase + PcdGet32 (PcdLoaderAcpiReclaimSize)));
+    return EFI_INVALID_PARAMETER;
+  }
+  DEBUG((DEBUG_VERBOSE, "ACPI pointer 0x%08X is within ACPI memory range 0x%08X - 0x%08X\n", (UINTN)AcpiPtr, S3Data->AcpiBase, (UINTN)S3Data->AcpiBase + PcdGet32 (PcdLoaderAcpiReclaimSize)));
+
+  return EFI_SUCCESS;
 }
