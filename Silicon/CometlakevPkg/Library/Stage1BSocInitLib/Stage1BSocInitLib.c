@@ -14,6 +14,7 @@
 #include <RegAccess.h>
 
 VOID
+EFIAPI
 EnableCodeExecution (
   VOID
 )

@@ -13,6 +13,7 @@
 #include <Library/IoLib.h>
 
 VOID
+EFIAPI
 EnableCodeExecution (
   VOID
 )

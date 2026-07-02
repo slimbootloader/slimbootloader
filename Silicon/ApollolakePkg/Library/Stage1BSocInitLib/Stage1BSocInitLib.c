@@ -15,6 +15,7 @@
   Enables the execution by writing to the MSR.
 **/
 VOID
+EFIAPI
 EnableCodeExecution (
   VOID
 )

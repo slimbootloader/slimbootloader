@@ -15,6 +15,7 @@
   Enables the execution
 **/
 VOID
+EFIAPI
 EnableCodeExecution (
   VOID
 )
