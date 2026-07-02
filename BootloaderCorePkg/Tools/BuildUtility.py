@@ -1047,8 +1047,14 @@ def check_for_python():
     '''
     Verify Python executable is at required version
     '''
-    os.environ['PYTHON_COMMAND'] = sys.executable
-    cmd = os.environ['PYTHON_COMMAND']
+    cmd = sys.executable
+    # The EDK2 tool wrappers (Trim.bat, GenFds.bat, ...) invoke %PYTHON_COMMAND%
+    # unquoted, so a Python installed under a path containing spaces (e.g.
+    # "C:\Program Files\Python") breaks the build. Quote it on Windows.
+    if os.name == 'nt' and ' ' in cmd and not cmd.startswith('"'):
+        os.environ['PYTHON_COMMAND'] = '"%s"' % cmd
+    else:
+        os.environ['PYTHON_COMMAND'] = cmd
     try:
         ver = subprocess.check_output([cmd, '--version']).decode().strip().split()[-1]
     except:
