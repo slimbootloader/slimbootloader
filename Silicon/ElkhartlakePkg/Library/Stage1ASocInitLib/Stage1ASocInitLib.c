@@ -28,6 +28,7 @@ EnableCodeExecution (
   Disable watch dog timer (Halt TCO timer).
 **/
 VOID
+EFIAPI
 DisableWatchDogTimer (
   VOID
 )

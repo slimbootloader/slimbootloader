@@ -22,6 +22,7 @@ EnableCodeExecution (
 }
 
 VOID
+EFIAPI
 DisableWatchDogTimer (
   VOID
 )
