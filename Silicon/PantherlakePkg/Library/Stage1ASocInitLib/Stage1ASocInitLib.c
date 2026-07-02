@@ -15,6 +15,7 @@
 
 **/
 VOID
+EFIAPI
 DisableWatchDogTimer (
   VOID
   )
