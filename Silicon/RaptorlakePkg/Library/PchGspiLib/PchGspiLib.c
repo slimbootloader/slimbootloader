@@ -84,7 +84,7 @@ PchGspiInit(
   UINT8         CapId, CapOffset;
   EFI_PCI_PMCSR Pmcsr;
 
-  if (Controller > sizeof(mPchGspiCtrls)/sizeof(UINT64)) {
+  if (Controller >= sizeof(mPchGspiCtrls)/sizeof(mPchGspiCtrls[0])) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -122,7 +122,7 @@ PchGspiInit(
         }
         break;
       }
-    CapOffset = PciRead8(CapOffset+1);
+    CapOffset = PciRead8(mPchGspiCtrls[Controller]+CapOffset+1);
   } while (CapOffset);
 
   // DMA reset
@@ -162,6 +162,31 @@ PchGspiInit(
   return Status;
 
 }
+
+/**
+  This function is used to wait for GSPI controller to be ready for next operation.
+  It checks the SITFL and SSSR registers to ensure that the Tx FIFO is empty and the controller is not busy.
+  If the controller is busy, it will loop until it becomes ready.
+
+  @param BaseAddress - GSPI controller base address
+
+ */
+VOID
+WaitForGspiReady(
+  UINTN   BaseAddress
+)
+{
+  UINT32  Sitfl;
+  UINT32  Sssr;
+
+  do {
+    Sitfl = (MmioRead32(BaseAddress + PCH_GSPI_SITF) & PCH_GSPI_SIRF_SITFL_MASK) >> PCH_GSPI_SIRF_SITFL_SHIFT;
+    DEBUG((DEBUG_VERBOSE, "SITFL: 0x%X", Sitfl));
+    Sssr = MmioRead32(BaseAddress + PCH_GSPI_SSSR);
+    DEBUG((DEBUG_VERBOSE, "\tSSSR: 0x%04X\n", Sssr));
+  } while ((Sitfl != 0) || (Sssr & PCH_GSPI_SSSR_BSY));
+}
+
 /**
   Write Buffer to SPI controller indicated. Configure HW
   chip select setting first.
@@ -184,13 +209,11 @@ PchGspiWrite(
   UINTN   Addr = (UINTN)GetGspiBaseAddress(Controller);
   UINT32  Data32;
   UINTN   DataIndex;
-  UINT32  Sitfl;
-  UINT32  Sssr;
-  UINT32  RemainingSize;
+  UINTN   RemainingSize;
   UINT8   *CurrentData;
 
 
-  if ((Controller > sizeof(mPchGspiCtrls)/sizeof(UINT64)) || ChipSelect > 1) {
+  if ((Controller >= sizeof(mPchGspiCtrls)/sizeof(mPchGspiCtrls[0])) || ChipSelect > 1) {
     return EFI_INVALID_PARAMETER;
   }
   if (Data == NULL || DataSize == 0) {
@@ -213,20 +236,16 @@ PchGspiWrite(
           DataIndex < (RemainingSize < PCH_GSPI_BLOCK_SIZE ? RemainingSize : PCH_GSPI_BLOCK_SIZE);
           DataIndex++)
     {
-      // wait for Tx FIFO empty and controller not busy
-      do {
-        Sitfl = (MmioRead32(Addr + PCH_GSPI_SITF) & PCH_GSPI_SIRF_SITFL_MASK) >> PCH_GSPI_SIRF_SITFL_SHIFT;
-        DEBUG((DEBUG_VERBOSE, "SITFL: 0x%X\n", Sitfl));
-        Sssr = MmioRead32(Addr + PCH_GSPI_SSSR);
-        DEBUG((DEBUG_VERBOSE, "SSSR: 0x%X\n", Sssr));
-      } while ((Sitfl != 0) || (Sssr & PCH_GSPI_SSSR_BSY));
-      DEBUG((DEBUG_VERBOSE, "\tChannel %d TX FIFO ready\n", Controller));
+      WaitForGspiReady(Addr);
+      DEBUG((DEBUG_VERBOSE, "Channel %d TX FIFO ready", Controller));
       MmioWrite32(Addr + PCH_GSPI_SSDR, CurrentData[DataIndex]);
-      DEBUG((DEBUG_VERBOSE, "\tWrote GSPI Data byte index 0x%X to FIFO\n", DataIndex));
+      DEBUG((DEBUG_VERBOSE, "\tWrote GSPI Data byte index 0x%X data %02x to FIFO\n", DataIndex, CurrentData[DataIndex]));
     }
 
-    CurrentData += PCH_GSPI_BLOCK_SIZE;
-    RemainingSize -= (RemainingSize < PCH_GSPI_BLOCK_SIZE ? RemainingSize : PCH_GSPI_BLOCK_SIZE);
+    CurrentData += MIN(RemainingSize, PCH_GSPI_BLOCK_SIZE);
+    RemainingSize -= MIN(RemainingSize, PCH_GSPI_BLOCK_SIZE);
+
+    WaitForGspiReady(Addr);
 
     // Disable SPI operation
     MmioAnd32(Addr + PCH_GSPI_SSCR0, (UINT32)~PCH_GSPI_SSCR0_SSE);
