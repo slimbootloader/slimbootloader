@@ -125,7 +125,7 @@ MmRead (
   Count  += Start;
 
   if (Start > 0) {
-    ShellPrint (L"%08X: ", Addr & ~0xF);
+    ShellPrint (L"%0*llX: ", (int)(sizeof(UINTN)*2), (UINT64)(Addr & ~0xF));
     for (Index = 0; Index < Start * (Width * 2 + 1); Index++) {
       ShellPrint (L" ");
     }
@@ -133,7 +133,7 @@ MmRead (
 
   for (Index = Start; Index < Count; Index++, Addr+=Width) {
     if ((Index % ItemsPerRow) == 0) {
-      ShellPrint (L"%08X: ", Addr);
+      ShellPrint (L"%0*llX: ", (int)(sizeof(UINTN)*2), (UINT64)Addr);
     }
     switch (Width) {
     case 1:
