@@ -117,7 +117,7 @@ class Board(BaseBoard):
         if self._SMBIOS_YAML_FILE:
             self.SIIPFW_SIZE += 0x1000
         self.EPAYLOAD_SIZE        = 0x0020D000
-        self.PAYLOAD_SIZE         = 0x00022000
+        self.PAYLOAD_SIZE         = 0x00024000
         self.CFGDATA_SIZE         = 0x00001000
         self.KEYHASH_SIZE         = 0x00001000
         self.VARIABLE_SIZE        = 0x00002000
@@ -155,7 +155,7 @@ class Board(BaseBoard):
         if not self.STAGE1B_XIP:
             # For Stage1B, it can be compressed if STAGE1B_XIP is 0
             # If so, STAGE1B_FD_BASE/STAGE1B_FD_SIZE need to be defined
-            self.STAGE1B_FD_SIZE      = 0x32000
+            self.STAGE1B_FD_SIZE      = 0x36000
             if self.NO_OPT_MODE:
                 self.STAGE1B_FD_SIZE += 0xE000
             self.STAGE1B_FD_BASE    = FREE_TEMP_RAM_TOP - self.STAGE1B_FD_SIZE
@@ -165,6 +165,8 @@ class Board(BaseBoard):
         self.STAGE2_FD_BASE       = 0x01000000
         self.STAGE2_FD_SIZE       = 0x00060000
 
+        self.OS_LOADER_FD_SIZE    = 0x0006A000
+
         if self.NO_OPT_MODE:
             if self.FSPDEBUG_MODE == 1:
                 self.STAGE2_SIZE     += 0x8000
@@ -173,7 +175,6 @@ class Board(BaseBoard):
             self.PAYLOAD_SIZE        += 0xA000
             self.OS_LOADER_FD_SIZE   += 0x23000
             self.FWUPDATE_SIZE       += 0x8000
-            self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         if self.ENABLE_UI_SETUP:
             self.PAYLOAD_SIZE            += 0x00005000
@@ -181,7 +182,8 @@ class Board(BaseBoard):
             self.CONSOLE_OUT_DEVICE_MASK  = 0x00000003
             self.CONSOLE_IN_DEVICE_MASK   = 0x00000003
             self.ENABLE_USB_KB            = 1
-            self.OS_LOADER_FD_NUMBLK      = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
+
+        self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         self.STAGE1_STACK_SIZE    = 0x00002000
         self.STAGE1_DATA_SIZE     = 0x0000E000
