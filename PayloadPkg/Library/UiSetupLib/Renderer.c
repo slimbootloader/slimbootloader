@@ -1368,6 +1368,7 @@ RenderFindPopup (
   UINT16  PopupHeight;
   UINT16  StartRow;
   UINT16  StartCol;
+  UINT16  ContentWidth;
   CHAR8   Title[32];
   CHAR8   QueryBuf[80];
 
@@ -1391,12 +1392,18 @@ RenderFindPopup (
   DrawVLine (StartRow + 1, StartCol, PopupHeight - 2, BOX_S_VLINE, ATTR_POPUP);
   DrawVLine (StartRow + 1, StartCol + PopupWidth - 1, PopupHeight - 2, BOX_S_VLINE, ATTR_POPUP);
 
+  ContentWidth = 0;
+  if (PopupWidth > 4) {
+    ContentWidth = PopupWidth;
+    ContentWidth -= 4;
+  }
+
   AsciiSPrint (Title, sizeof (Title), IsActive ? "Find (update)" : "Find");
-  PutString (StartRow + 1, StartCol + 2, Title, ATTR_POPUP, PopupWidth - 4);
+  PutString (StartRow + 1, StartCol + 2, Title, ATTR_POPUP, ContentWidth);
 
   AsciiSPrint (QueryBuf, sizeof (QueryBuf), "/%a_", (Query != NULL) ? Query : "");
-  PutString (StartRow + 3, StartCol + 2, QueryBuf, ATTR_POPUP_SEL, PopupWidth - 4);
-  PutString (StartRow + 4, StartCol + 2, "Enter=Search  Esc=Cancel  Bksp=Delete", ATTR_POPUP, PopupWidth - 4);
+  PutString (StartRow + 3, StartCol + 2, QueryBuf, ATTR_POPUP_SEL, ContentWidth);
+  PutString (StartRow + 4, StartCol + 2, "Enter=Search  Esc=Cancel  Bksp=Delete", ATTR_POPUP, ContentWidth);
 }
 
 /**
@@ -1430,7 +1437,7 @@ RenderFindResultsPopup (
     PopupHeight = 8;
   }
 
-  StartRow = (mRows - PopupHeight) / 2;
+  StartRow = (mRows > PopupHeight) ? (mRows - PopupHeight) / 2 : 0;
   StartCol = (mCols - PopupWidth) / 2;
 
   FillRect (StartRow, StartCol, PopupHeight, PopupWidth, ' ', ATTR_POPUP);
@@ -1451,7 +1458,7 @@ RenderFindResultsPopup (
   }
   PutString (StartRow + 1, StartCol + 2, Title, ATTR_POPUP, PopupWidth - 4);
 
-  VisibleRows = (PopupHeight > 5) ? (UINT16)(PopupHeight - 5) : 1;
+  VisibleRows = PopupHeight - 5;
   if (Count == 0) {
     PutString (StartRow + 3, StartCol + 2, "No matches found.", ATTR_POPUP_SEL, PopupWidth - 4);
   } else {
@@ -1526,7 +1533,7 @@ RenderTablePopup (
     PopupHeight = 8;
   }
 
-  StartRow = (mRows - PopupHeight) / 2;
+  StartRow = (mRows > PopupHeight) ? (mRows - PopupHeight) / 2 : 0;
   StartCol = (mCols - PopupWidth) / 2;
   VisibleRows = (UINT16)(PopupHeight - 5);
 
@@ -1548,9 +1555,6 @@ RenderTablePopup (
   Digits = (UINT16)((ElemBits + 3) / 4);
   if (Digits < 2) {
     Digits = 2;
-  }
-  if (Digits > 16) {
-    Digits = 16;
   }
 
   if (DumpMode && (ElemBits == 8)) {
@@ -1673,6 +1677,7 @@ ScreenFlush (
   VOID
   )
 {
+  EFI_STATUS  Status;
   UINT8   Attr;
   UINT8   CurStyle;
   UINT8   NewStyle;
@@ -1698,7 +1703,10 @@ ScreenFlush (
   // Keep serial output active as well when both outputs are selected.
   //
   if (mRenderToFrameBuffer && (mScreenBuf == mFrameBufferScreenBuf)) {
-    DrawFrameBuffer (mRows, mCols, mScreenBuf);
+    Status = DrawFrameBuffer (mRows, mCols, mScreenBuf);
+    if (EFI_ERROR (Status)) {
+      return;
+    }
   }
 
   //
