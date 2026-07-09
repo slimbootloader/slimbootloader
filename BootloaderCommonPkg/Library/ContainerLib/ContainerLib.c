@@ -1249,7 +1249,6 @@ LoadComponentWithCallback (
   if (CompressHdr->Size == 0) {
     DstLen = 0;
     ScrLen = 0;
-    Status = EFI_SUCCESS;
   } else {
     Status = DecompressGetInfo (CompressHdr->Signature, CompressHdr->Data,
                                 CompressHdr->CompressedSize, &DstLen, &ScrLen);
