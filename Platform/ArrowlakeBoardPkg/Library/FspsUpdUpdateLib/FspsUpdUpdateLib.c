@@ -608,6 +608,9 @@ UpdateFspConfig (
     IoWrite32 ((UINTN) (ACPI_BASE_ADDRESS + R_ACPI_IO_SMI_EN), SmiEn & (UINT32) (~B_ACPI_IO_SMI_EN_GBL_SMI_EN));
     // Lock down SMI
     FspsConfig->PchLockDownGlobalSmi = 0x1;
+  } else if (GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE){
+    FspsConfig->PchLockDownGlobalSmi = 0;
+    DEBUG ((DEBUG_INFO, "PchLockDownGlobalSmi = 0\n"));
   }
 
   // PCH Flash protection
