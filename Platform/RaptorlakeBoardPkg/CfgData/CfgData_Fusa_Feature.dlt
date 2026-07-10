@@ -52,6 +52,9 @@ MEMORY_CFG_DATA.HyperThreading                | 0
 MEMORY_CFG_DATA.DisableStarv2medPrioOnNewReq  | 1
 
 POWER_CFG_DATA.Cx                             | 0
+POWER_CFG_DATA.Eist                           | 0
+POWER_CFG_DATA.Hwp                            | 0
+POWER_CFG_DATA.TurboMode                      | 0
 
 SILICON_CFG_DATA.PsfTccEnable                 | 0
 SILICON_CFG_DATA.PchDmiAspmCtrl               | 0
