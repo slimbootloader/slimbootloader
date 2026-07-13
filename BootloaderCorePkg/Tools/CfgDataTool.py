@@ -580,7 +580,7 @@ def GetCfgDataByTag (CfgData, Pid, Tag, IsInternal = False):
         # Try to find it in internal database
         return GetCfgDataByTag (CfgData, Pid, Tag, True)
     else:
-        raise Exception ('Could not find TAG:0x%03X for PID:0x%02X in internal or external CFGDATA !' % Tag)
+        raise Exception ('Could not find TAG:0x%03X for PID:0x%02X in internal or external CFGDATA !' % (Tag, Pid))
 
 
 def CmdExport(Args):
@@ -700,11 +700,20 @@ def CmdExport(Args):
     CfgDefBlobHdr.TotalLength  = CfgDefLen
     CfgDefBlobHdr.Attribute    = 0
 
-    # Collect available platform ID
+    # Collect available platform IDs.  Wildcard 0xFFFFFFFF masks apply to
+    # every board and don't identify a specific PID, so they must not be
+    # folded into PidMask -- otherwise the export loop below would iterate
+    # all 32 possible PIDs, most of which have no backing data and would
+    # raise in GetCfgDataByTag.
+    _, (CfgExtItemList, _, _) = next(iter(CfgDataExt.CfgDataBase.items()))
     PidMask = 0
-    CfgFile, (CfgExtItemList, CfgExtBlobHdr, IsBuiltIn) = list(CfgDataExt.CfgDataBase.items())[0]
     for CfgItem in CfgExtItemList:
-        PidMask |= CfgItem[1]
+        if CfgItem[1] != 0xFFFFFFFF:
+            PidMask |= CfgItem[1]
+
+    # When caller supplied an explicit -n board list, constrain to just those.
+    if BrdNameDict:
+        PidMask &= sum(1 << pid for pid in BrdNameDict)
 
     # Export board specific external CFGDATA
     for Pid in range(32):
