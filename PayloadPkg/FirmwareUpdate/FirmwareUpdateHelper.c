@@ -968,6 +968,7 @@ UpdateSingleComponent (
   EFI_STATUS                Status;
   UINT32                    CompName;
   FLASH_MAP                 *FlashMap;
+  UINT32                    RomBase;
   UINT32                    AllocateSize;
   FIRMWARE_UPDATE_PARTITION *UpdatePartition;
   FIRMWARE_UPDATE_REGION    *UpdateRegion;
@@ -998,16 +999,14 @@ UpdateSingleComponent (
 
   UpdateRegion                  = &UpdatePartition->FwRegion[0];
 
-  //
-  // Guard against UINT32 overflow: RomSize + CompBase may exceed MAX_UINT32
-  //
-  if (((UINT64)FlashMap->RomSize + (UINT64)CompBase) > MAX_UINT32) {
-    DEBUG((DEBUG_ERROR, "UpdateSingleComponent: address computation overflow: RomSize=0x%x CompBase=0x%x\n",
-          FlashMap->RomSize, CompBase));
+  RomBase = (UINT32)(0x100000000ULL - FlashMap->RomSize);
+  if (CompBase < RomBase) {
+    DEBUG((DEBUG_ERROR, "UpdateSingleComponent: component address underflow: CompBase=0x%x RomBase=0x%x\n",
+           CompBase, RomBase));
     FreePool(UpdatePartition);
     return EFI_UNSUPPORTED;
   }
-  UpdateRegion->ToUpdateAddress = (UINT32)(FlashMap->RomSize + CompBase);
+  UpdateRegion->ToUpdateAddress = CompBase - RomBase;
   UpdateRegion->UpdateSize      = ImageHdr->UpdateImageSize;
   UpdateRegion->SourceAddress   = (UINT8 *)((UINTN)ImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
   UpdatePartition->RegionCount  = 1;
