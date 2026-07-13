@@ -606,6 +606,17 @@ def gen_config_file (fv_dir, brd_name_override, brd_name, platform_id, pri_key, 
 
     gen_cfg_data ("GENPKL", cfg_dsc_file, cfg_pkl_file)
     gen_cfg_data (gen_cmd[file_ext], cfg_dsc_file, cfg_comb_dsc_file)
+
+    # GENYML flattens '!include' files by data merge and drops YAML
+    # comments.  Re-inject the FSP UPD cfg-base markers so stitch-time
+    # delta regeneration can read them from the bundled yaml alone.
+    try:
+        from GenFspUpdDelta import preserve_fsp_upd_base_markers
+        preserve_fsp_upd_base_markers(brd_cfg_dir, cfg_comb_dsc_file)
+    except Exception as err:
+        print("  WARNING: could not preserve FSP UPD cfg-base markers "
+              "in %s: %s" % (cfg_comb_dsc_file, err))
+
     gen_cfg_data ("GENHDR", cfg_pkl_file, ';'.join([cfg_hdr_file, cfg_com_hdr_file]))
     gen_cfg_data ("GENBIN", cfg_pkl_file, cfg_bin_file)
 
@@ -681,8 +692,7 @@ def gen_config_file (fv_dir, brd_name_override, brd_name, platform_id, pri_key, 
     # Inject FSP UPD deltas into the merged config data before signing
     if fsp_path:
         from GenFspUpdDelta import gen_and_inject_fsp_upd_deltas
-        gen_and_inject_fsp_upd_deltas(fv_dir, brd_cfg_dir, fsp_path, cfg_merged_bin_file,
-                                      dlt_files=cfg_ext)
+        gen_and_inject_fsp_upd_deltas(fv_dir, brd_cfg_dir, cfg_merged_bin_file, dlt_files=cfg_ext)
 
     cfg_final_file = os.path.join(fv_dir, "CFGDATA.bin")
     if pri_key:
