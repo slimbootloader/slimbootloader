@@ -318,6 +318,14 @@ def gen_fsp_upd_delta_blobs(cfg_dir, output_dir, dlt_files,
             if platform_id is None:
                 print("  WARNING: No PlatformId in %s, skipping" % dlt_name)
                 continue
+            if not (0 <= platform_id < 32):
+                # tag = base + platform_id and CondValue = 1 << platform_id
+                # both require 0..31.  Out-of-range would silently produce a
+                # wildcard CondValue at inject time, applying the delta to
+                # every board.
+                print("  WARNING: PlatformId 0x%02X in %s out of range "
+                      "[0..31], skipping" % (platform_id, dlt_name))
+                continue
             print("  Board PlatformId=0x%02X (%s)" % (platform_id, dlt_name))
 
             board_bin = os.path.join(tmpdir,
@@ -370,12 +378,16 @@ def _delta_entries_from_payloads(default_payload, board_payload, cfg_base):
     FSPM_UPD_CFG_DATA / FSPS_UPD_CFG_DATA tag (config fields only, no
     outer header).  The tag payload byte 0 corresponds to full-UPD byte
     'cfg_base', so we add cfg_base to each entry's offset before emit.
+    Fails fast on a length mismatch: silently truncating would drop
+    tail differences and mask real drift between defaults and per-board
+    binaries.
     """
     if default_payload is None or board_payload is None:
         return []
-    n = min(len(default_payload), len(board_payload))
-    default_payload = default_payload[:n]
-    board_payload   = board_payload[:n]
+    if len(default_payload) != len(board_payload):
+        raise RuntimeError(
+            "FSP UPD payload length mismatch: defaults=%d board=%d" %
+            (len(default_payload), len(board_payload)))
     entries = compute_deltas(default_payload, board_payload)
     return [(off + cfg_base, ln, val) for (off, ln, val) in entries]
 
