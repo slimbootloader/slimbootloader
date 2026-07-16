@@ -174,16 +174,12 @@ CreateTpmEventLogHob (
   )
 {
   VOID                  *HobData;
-  TCG_PCR_EVENT2        *TcgPcrEvent2;
-  UINT8                 *DigestBuffer;
 
   UINT32                Lasa;            //LogAreaStartAddress
   UINT32                Laml;            //LogAreaMinimumLength
   TCG_PCR_EVENT2_HDR    *EmptySlot;
   TCG_PCR_EVENT_HDR     *FirstEvent;
   UINT32                EventSize;
-  UINT32                HobSize;
-  UINT32                *EventSizePtr;
 
   GetTCGLasa (&Lasa, &Laml);
   if (Lasa == 0 || Laml == 0 ) {
@@ -197,33 +193,36 @@ CreateTpmEventLogHob (
 
   while (EmptySlot < (TCG_PCR_EVENT2_HDR *)(UINTN)(Lasa + Laml - 1)) {
 
-    HobSize   = sizeof(EmptySlot->PCRIndex) + sizeof(EmptySlot->EventType) + GetDigestListSize (&EmptySlot->Digests);
-    EventSizePtr = (UINT32 *) ((UINT8 *) EmptySlot + HobSize);
-    HobSize = HobSize + sizeof(EmptySlot->EventSize) + *EventSizePtr;
+    EventSize = GetCompressedTCGEventSize (EmptySlot);
+    if (EventSize == 0) {
+      break;
+    }
 
+    //
+    // Validate that the event stays within the log buffer to guard against
+    // a corrupted event log causing out-of-bounds reads or oversized HOBs.
+    //
+    if ((UINT8 *)EmptySlot + EventSize > (UINT8 *)(UINTN)(Lasa + Laml)) {
+      DEBUG ((DEBUG_ERROR, "TCG event at %p size 0x%x exceeds log buffer, aborting.\n", EmptySlot, EventSize));
+      return RETURN_VOLUME_CORRUPTED;
+    }
+
+    //
+    // The event log is stored in packed wire format (variable-length digests).
+    // Copy the entire packed event directly into the HOB since the HOB consumer
+    // expects the same TCG 2.0 wire format.
+    //
     HobData = BuildGuidHob (
                &gTcgEvent2EntryHobGuid,
-               HobSize
+               EventSize
                );
     if (HobData == NULL) {
       return EFI_OUT_OF_RESOURCES;
     }
 
-    TcgPcrEvent2 = HobData;
-    TcgPcrEvent2->PCRIndex = EmptySlot->PCRIndex;
-    TcgPcrEvent2->EventType = EmptySlot->EventType;
-    DigestBuffer = (UINT8 *)&TcgPcrEvent2->Digest;
-    DigestBuffer = CopyDigestListToBuffer (DigestBuffer, &EmptySlot->Digests, HASH_ALG_SHA256);
-    CopyMem (DigestBuffer, EventSizePtr, sizeof(TcgPcrEvent2->EventSize));
-    DigestBuffer = DigestBuffer + sizeof(TcgPcrEvent2->EventSize);
-    CopyMem (DigestBuffer, (UINT8 *) ((UINT8 *) EventSizePtr + sizeof(EmptySlot->EventType)), *EventSizePtr);
+    CopyMem (HobData, EmptySlot, EventSize);
 
-    EventSize = GetCompressedTCGEventSize (EmptySlot);
-    if (EventSize == 0) {
-      break;
-    } else {
-      EmptySlot = (TCG_PCR_EVENT2_HDR *) ((UINT8 *)EmptySlot + EventSize);
-    }
+    EmptySlot = (TCG_PCR_EVENT2_HDR *) ((UINT8 *)EmptySlot + EventSize);
   }
 
   return EFI_SUCCESS;
