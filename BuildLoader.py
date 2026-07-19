@@ -1632,6 +1632,8 @@ def main():
                     print_warning('ERROR: IA32 build is not supported for platform [%s].' % args.board)
                     print_warning('ERROR: Platform [%s] supports X64 architecture only. Build stopped.' % args.board)
                     sys.exit(2)
+                if args.arch == '':
+                    args.arch = 'ia32'
 
                 board  = brdcfg.Board(
                                         BUILD_ARCH        = args.arch.upper(), \
@@ -1653,7 +1655,7 @@ def main():
     buildp.add_argument('-v',  '--usever',  action='store_true', help='Use board version file')
     buildp.add_argument('-fp', dest='fsppath', type=str, help='FSP binary path relative to FspBin in Silicon folder', default='')
     buildp.add_argument('-fd', '--fspdebug', action='store_true', help='Use debug FSP binary')
-    buildp.add_argument('-a',  '--arch', choices=['ia32', 'x64'], help='Specify the ARCH for build. Default is to build IA32 image.', default ='ia32')
+    buildp.add_argument('-a',  '--arch', choices=['ia32', 'x64'], help='Specify the ARCH for build. If not specified, platform ARCH default will be used.', default ='')
     buildp.add_argument('-no', '--noopt', action='store_true', help='No compile/link optimization for debugging purpose. Not enabled in Release build.')
     buildp.add_argument('-p',  '--payload' , dest='payload', type=str, help='Payload file name', default ='OsLoader.efi')
     buildp.add_argument('board', metavar='board', choices=board_names, help='Board Name (%s)' % ', '.join(board_names))
