@@ -83,6 +83,7 @@
   gPlatformModuleTokenSpaceGuid.PcdBootFailureThreshold
   gPlatformModuleTokenSpaceGuid.PcdUcodeSlotSize
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
+  gPlatformModuleTokenSpaceGuid.PcdForceBiosUpdateEnabled
 
 [Depex]
   TRUE

@@ -379,6 +379,7 @@
   gPlatformModuleTokenSpaceGuid.PcdEnablePciePm           | $(ENABLE_PCIE_PM)
   gPlatformCommonLibTokenSpaceGuid.PcdFspNoEop            | $(HAVE_NO_FSP_EOP)
   gPlatformModuleTokenSpaceGuid.PcdEnableFwuNotify        | $(ENABLE_FWU_NOTIFY)
+  gPlatformModuleTokenSpaceGuid.PcdForceBiosUpdateEnabled | $(ENABLE_FORCE_BIOS_UPDATE)
   gPlatformCommonLibTokenSpaceGuid.PcdTxtEnabled          | $(TXT_ENABLED)
 
 
