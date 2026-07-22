@@ -1501,6 +1501,10 @@ ApplyFwImage (
   switch (Signature) {
   case FW_UPDATE_COMP_BIOS_REGION:
     if ((CapHdr->CapsuleFlags & CAPSULE_FLAG_FORCE_BIOS_UPDATE) != 0) {
+      if (FeaturePcdGet(PcdForceBiosUpdateEnabled) == FALSE) {
+        DEBUG((DEBUG_ERROR, "ApplyFwImage: force BIOS update feature is disabled !!!\n"));
+        return EFI_UNSUPPORTED;
+      }
       Status = UpdateFullBiosRegion (ImageHdr);
     } else {
       Status = UpdateSystemFirmware (ImageHdr, FwPolicy, CapHdr->CapsuleFlags);
