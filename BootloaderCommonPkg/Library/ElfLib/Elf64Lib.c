@@ -235,11 +235,14 @@ LoadElf64Image (
     //
     // Check bounds for file read and memory write
     //
-    if ((UINTN)ProgramHdr->p_offset + (UINTN)ProgramHdr->p_filesz > ElfCt->FileSize) {
-      return EFI_INVALID_PARAMETER;
-    }
-
-    if (Delta + (UINTN)ProgramHdr->p_memsz > ElfCt->ImageSize) {
+    if (ProgramHdr->p_offset > ElfCt->FileSize ||
+        ProgramHdr->p_filesz > (ElfCt->FileSize - ProgramHdr->p_offset) ||
+        ProgramHdr->p_paddr < (UINTN)ElfCt->PreferredImageAddress ||
+        Delta > (ElfCt->ImageSize) ||
+        ProgramHdr->p_memsz > (ElfCt->ImageSize - Delta) ||
+        ProgramHdr->p_filesz > ProgramHdr->p_memsz ||
+        ((sizeof (UINTN) == sizeof (UINT32)) && ProgramHdr->p_paddr > MAX_UINT32))
+    {
       return EFI_INVALID_PARAMETER;
     }
 
