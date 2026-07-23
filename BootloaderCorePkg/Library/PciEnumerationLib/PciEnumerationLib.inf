@@ -41,6 +41,7 @@
   BaseLib
   DebugLib
   PciExpressLib
+  IoLib
   SortLib
   HobLib
 
@@ -58,4 +59,5 @@
   gPlatformModuleTokenSpaceGuid.PcdSrIovSupport
   gPlatformModuleTokenSpaceGuid.PcdResizableBarSupport
   gPlatformModuleTokenSpaceGuid.PcdPciResAllocTableBase
+  gPlatformModuleTokenSpaceGuid.PcdPciHostBridgeTableBase
   gPlatformModuleTokenSpaceGuid.PcdPciEnumHookProc
