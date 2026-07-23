@@ -752,7 +752,7 @@ InitTxt(
   /// are passed, i.e. TPM is present, CPU and CS are TXT capable.
   /// Add to check CPU TXT capable in case CPU drivers do not check additional requirements
   ///
-  if ((mTxtLibCtx.TxtInfoData->ChipsetIsTxtCapable) && (IsTxtProcessor ()) && (IsTxtEnabled (&mTxtLibCtx))) {
+  if ((mTxtLibCtx.TxtInfoData->ChipsetIsTxtCapable) && (IsTxtProcessor ()) && (IsTxtEnabled ())) {
     DEBUG ((DEBUG_INFO, "TxtLib::TXT Enabled\n"));
 
   ///
