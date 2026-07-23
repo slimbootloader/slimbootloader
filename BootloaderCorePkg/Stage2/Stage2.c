@@ -360,7 +360,6 @@ NormalBootPath (
   // timer if another payload is set to be launched
   if (PcdGetBool (PcdSblResiliencyEnabled) && GetBootMode () != BOOT_ON_FLASH_UPDATE) {
     StopTcoTimer ();
-    ClearFailedBootCount ();
   }
 
   DEBUG ((DEBUG_INFO, "Payload entry: 0x%08X\n", PldEntry));
@@ -431,7 +430,6 @@ S3ResumePath (
   // No payload is executed in S3 resume, so stop TCO timer in all cases
   if (PcdGetBool (PcdSblResiliencyEnabled)) {
     StopTcoTimer ();
-    ClearFailedBootCount ();
   }
 
   // Find Wake Vector and Jump to OS

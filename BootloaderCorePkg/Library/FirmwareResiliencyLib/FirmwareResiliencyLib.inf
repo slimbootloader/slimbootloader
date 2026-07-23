@@ -32,12 +32,18 @@
 [LibraryClasses]
   TcoTimerLib
   BootloaderCommonLib
+  BootloaderCoreLib
   ResetSystemLib
   DebugLib
   TopSwapLib
   PcdLib
   WatchDogTimerLib
   SpiFlashLib
+  VariableLib
+  BaseMemoryLib
+
+[Guids]
+  gRecoveryStatusVariableGuid
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdFlashBaseAddress

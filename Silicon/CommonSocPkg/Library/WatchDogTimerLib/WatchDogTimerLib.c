@@ -20,7 +20,7 @@
 
 // BIT21 ~23 might be used by FSP
 #define B_ACPI_IO_OC_WDT_CTL_RECOVERY_TRIGGER             BIT20
-#define B_ACPI_IO_OC_WDT_CTL_SCRATCHPAD_BOOT_CNT_MASK     (BIT18 | BIT19)
+// BIT19:18 freed - failed boot counter moved to the RECOVERY_STATUS SBL variable
 #define B_ACPI_IO_OC_WDT_CTL_TOP_SWAP_TRIGGER             BIT17
 #define B_ACPI_IO_OC_WDT_CTL_UPDATE_TRIGGER               BIT16
 
@@ -30,7 +30,6 @@
 #define B_ACPI_IO_OC_WDT_CTL_LCK                          BIT12
 #define B_ACPI_IO_OC_WDT_CTL_TOV_MASK                     0x3FF
 #define B_ACPI_IO_OC_WDT_CTL_SCRATCHPAD_MASK              0xFF0000
-#define B_ACPI_IO_OC_WDT_CTL_SCRATCHPAD_BOOT_CNT_SHIFT    0x12
 
 
 /**
@@ -263,59 +262,6 @@ IsWdtLocked (
   } else {
     return FALSE;
   }
-}
-
-/**
-  Get the number of failed boots.
-
-  @retval UINT32              the number of boots
-
-**/
-UINT32
-EFIAPI
-GetFailedBootCount (
-  VOID
-  )
-{
-  return WdtGetScratchpad (B_ACPI_IO_OC_WDT_CTL_SCRATCHPAD_BOOT_CNT_MASK) >>
-                            B_ACPI_IO_OC_WDT_CTL_SCRATCHPAD_BOOT_CNT_SHIFT;
-}
-
-/**
-  Increment the number of failed boots.
-**/
-VOID
-EFIAPI
-IncrementFailedBootCount (
-  VOID
-  )
-{
-  UINT32 FailedBootCnt;
-
-  // Get current failed boot count
-  FailedBootCnt = GetFailedBootCount ();
-
-  // Clear current failed boot count
-  ClearFailedBootCount ();
-
-  // Calculate new failed boot count
-  FailedBootCnt += 1;
-
-  // Set bits in WDT scratchpad per new count
-  WdtSetScratchpad ((FailedBootCnt << B_ACPI_IO_OC_WDT_CTL_SCRATCHPAD_BOOT_CNT_SHIFT)
-                      & B_ACPI_IO_OC_WDT_CTL_SCRATCHPAD_BOOT_CNT_MASK);
-}
-
-/**
-  Set the number of failed boots to 0.
-**/
-VOID
-EFIAPI
-ClearFailedBootCount (
-  VOID
-  )
-{
-  WdtClearScratchpad (B_ACPI_IO_OC_WDT_CTL_SCRATCHPAD_BOOT_CNT_MASK);
 }
 
 /**

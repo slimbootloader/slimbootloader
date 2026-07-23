@@ -127,36 +127,6 @@ IsWdtLocked (
   );
 
 /**
-  Get the number of failed boots.
-
-  @retval UINT32              the number of boots
-
-**/
-UINT32
-EFIAPI
-GetFailedBootCount (
-  VOID
-  );
-
-/**
-  Increment the number of failed boots.
-**/
-VOID
-EFIAPI
-IncrementFailedBootCount (
-  VOID
-  );
-
-/**
-  Set the number of failed boots to 0.
-**/
-VOID
-EFIAPI
-ClearFailedBootCount (
-  VOID
-  );
-
-/**
   Check if FW update triggered.
 **/
 BOOLEAN
