@@ -410,12 +410,6 @@ SecStartup2 (
   // Perform pre-config board init
   BoardInit (PreConfigInit);
 
-  if (PcdGetBool (PcdSblResiliencyEnabled)) {
-    // React to ACM failures here as the correct partition should be
-    // swapped to during pre-config init
-    CheckForAcmFailures ();
-  }
-
   Status = AppendHashStore (LdrGlobal, &Stage1bParam);
   DEBUG ((DEBUG_INFO,  "Append public key hash into store: %r\n", Status));
 
@@ -433,6 +427,13 @@ SecStartup2 (
   }
 
   BoardInit (PostConfigInit);
+
+  if (PcdGetBool (PcdSblResiliencyEnabled)) {
+    // Single consolidated resiliency check point. Runs after
+    // VariableInitialize() (in PostConfigInit) so the persistent
+    // L"RecoveryStatus" SBL variable is available, and before FSP-M.
+    UnifiedResiliencyCheck (PcdGet8 (PcdBootFailureThreshold), PcdGet8 (PcdMaxRecoveryAttempts));
+  }
 
   //Get Platform ID and Boot Mode
   DEBUG ((DEBUG_INIT, "BOOT: BP%d \nMODE: %d\nBoardID: 0x%02X\n",
@@ -473,10 +474,6 @@ SecStartup2 (
   FspResetHandler (Status);
 
   if (PcdGetBool (PcdSblResiliencyEnabled)) {
-    // React to TCO timer failures here as not to conflict with ACM active timer
-    // which is stopped at end of FSP-M
-    CheckForTcoTimerFailures (PcdGet8 (PcdBootFailureThreshold));
-
     // Start TCO timer here as ACM active timer is stopped at end of FSP-M
     StartTcoTimer (PcdGet16 (PcdTcoTimeout));
   }

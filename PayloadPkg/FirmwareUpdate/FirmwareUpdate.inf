@@ -55,6 +55,7 @@
   BootGuardLib
   WatchDogTimerLib
   TcoTimerLib
+  VariableLib
 
 [Guids]
   gLoaderMemoryMapInfoGuid
@@ -65,6 +66,7 @@
   gBootLoaderVersionFileGuid
   gBootLoaderVersionGuid
   gEfiGraphicsInfoHobGuid
+  gRecoveryStatusVariableGuid
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress

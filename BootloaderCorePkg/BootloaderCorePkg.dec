@@ -181,6 +181,9 @@
   gPlatformModuleTokenSpaceGuid.PcdTcoTimeout             | 100        | UINT16  | 0x200000F6
   gPlatformModuleTokenSpaceGuid.PcdFusaSupport            | FALSE      | BOOLEAN | 0x20000223
 
+  # Max recovery attempts before halting (anti-loop protection)
+  gPlatformModuleTokenSpaceGuid.PcdMaxRecoveryAttempts    |  3         | UINT8   | 0x200000F7
+
 [PcdsFixedAtBuild, PcdsPatchableInModule]
   #
   # For module patchable PCDs, if it is required to do static patching during the build

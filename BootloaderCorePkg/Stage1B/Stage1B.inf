@@ -108,6 +108,7 @@
   gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled
   gPlatformModuleTokenSpaceGuid.PcdBootFailureThreshold
   gPlatformModuleTokenSpaceGuid.PcdTcoTimeout
+  gPlatformModuleTokenSpaceGuid.PcdMaxRecoveryAttempts
   gPlatformCommonLibTokenSpaceGuid.PcdEnableCryptoPerfTest
 
 [FeaturePcd]

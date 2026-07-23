@@ -21,23 +21,25 @@ GetFwuStateMachine (
   );
 
 /**
-  Check if ACM detected corruption in IBB
+  Unified resiliency check point.
+
+  Single Stage1B detection point that consolidates the previously scattered
+  ACM and TCO failure checks. Records the recovery reason, attempt count and
+  TCO failed-boot counter in the persistent L"RecoveryStatus" SBL variable,
+  ensures the WDT recovery trigger (BIT20) is set when recovery is needed, and
+  switches partitions / resets when an SBL partition switch is required.
+
+  Must be called after BoardInit(PostConfigInit) (so VariableInitialize() has
+  run) and before FSP-M.
+
+  @param[in] BootFailureThreshold  Consecutive TCO timeouts before recovery.
+  @param[in] MaxRecoveryAttempts   Recovery attempts before CpuHalt().
 **/
 VOID
 EFIAPI
-CheckForAcmFailures (
-  VOID
-  );
-
-/**
-  Check if TCO timer detected corruption in OBB or a dead loop/crash in IBB/OBB
-
-    @param[in] BootFailureThreshold The number of boots to attempt before recovery
-**/
-VOID
-EFIAPI
-CheckForTcoTimerFailures (
-  IN UINT8 BootFailureThreshold
+UnifiedResiliencyCheck (
+  IN UINT8  BootFailureThreshold,
+  IN UINT8  MaxRecoveryAttempts
   );
 
 #endif

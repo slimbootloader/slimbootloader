@@ -31,6 +31,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/BootGuardLib.h>
 #include <Library/WatchDogTimerLib.h>
 #include <Library/TcoTimerLib.h>
+#include <Library/VariableLib.h>
+#include <RecoveryStatus.h>
 #include "FirmwareUpdateHelper.h"
 
 UINT32   mSblImageBiosRgnOffset;
@@ -1827,55 +1829,6 @@ InitFirmwareUpdate (
 }
 
 /**
-  Initialize FW update status region for recovery.
-  @retval  EFI_SUCCESS          The operation completed successfully.
-  @retval  others               There is error happening.
-**/
-EFI_STATUS
-InitFwUpdStatusForRecovery (
-  VOID
-  )
-{
-  EFI_STATUS                    Status;
-  UINT32                        FwUpdStatusOffset;
-  FW_UPDATE_STATUS              FwUpdStatus;
-  UINT8                         StateMachine;
-
-  FwUpdStatusOffset = PcdGet32(PcdFwUpdStatusBase);
-
-  GetStateMachineFlag (&StateMachine);
-  if (StateMachine != FW_UPDATE_SM_RECOVERY) {
-
-    // Set up the initial reserved region structure
-    FwUpdStatus.Signature = FW_RECOVERY_STATUS_SIGNATURE;
-    FwUpdStatus.Version = FW_UPDATE_STATUS_VERSION;
-    FwUpdStatus.Length = sizeof(FW_UPDATE_STATUS);
-    ZeroMem (&FwUpdStatus.CapsuleSig, sizeof(FwUpdStatus.CapsuleSig));
-    FwUpdStatus.StateMachine = FW_UPDATE_SM_RECOVERY;
-    FwUpdStatus.RetryCount = 0;
-    FwUpdStatus.CsmeNeedReset = CSME_NEED_RESET_INIT;
-
-    // Clear the reserved region structure, if not already null bytes
-    if (StateMachine != FW_UPDATE_SM_INIT) {
-      Status = BootMediaErase (FwUpdStatusOffset, EFI_PAGE_SIZE);
-      if (EFI_ERROR (Status)) {
-        DEBUG((DEBUG_ERROR, "BootMediaErase failed with status %r\n", Status));
-        return Status;
-      }
-    }
-
-    // Write the reserved region structure
-    Status = BootMediaWrite (FwUpdStatusOffset, sizeof(FW_UPDATE_STATUS), (UINT8 *)&FwUpdStatus);
-    if (EFI_ERROR(Status)) {
-      DEBUG((DEBUG_ERROR, "BootMediaWrite failed with status %r\n", Status));
-      return Status;
-    }
-  }
-
-  return EFI_SUCCESS;
-}
-
-/**
   Try to recover a working boot partition.
   @retval  EFI_SUCCESS          The operation completed successfully.
   @retval  others               There is error happening.
@@ -1906,14 +1859,6 @@ InitFirmwareRecovery (
   }
 
   RomBase = (UINT32) (0x100000000ULL - FlashMap->RomSize);
-
-  Status = InitFwUpdStatusForRecovery ();
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "InitFwUpdStatusForRecovery, Status = 0x%x\n", Status));
-    return Status;
-  }
-
-  ClearRecoveryTrigger ();
 
   Status = GetRegionInfo (&TopSwapRegionSize, &RedundantRegionSize, NULL);
   if (EFI_ERROR (Status)) {
@@ -2040,7 +1985,9 @@ GetRegionInfo (
 /**
   End firmware update.
 
-  This function will clear firmware update trigger and end firmware update.
+  Recovery and capsule update use separate completion paths.
+  - Recovery path: clear recovery trigger only and do not touch FW state machine.
+  - Capsule update path: clear FW update trigger and set FW state to DONE.
 
 **/
 VOID
@@ -2051,10 +1998,14 @@ EndFirmwareUpdate (
 {
   EFI_STATUS  Status;
 
-  ClearFwUpdateTrigger ();
+  if (IsRecoveryTriggered ()) {
+    ClearRecoveryTrigger ();
+  } else {
+    ClearFwUpdateTrigger ();
 
-  // Clear state machine anyway to prevent FWU loop.
-  SetStateMachineFlag (FW_UPDATE_SM_DONE);
+    // Clear state machine anyway to prevent FWU loop.
+    SetStateMachineFlag (FW_UPDATE_SM_DONE);
+  }
 
   Status = PlatformEndFirmwareUpdate ();
   if (EFI_ERROR (Status)) {
@@ -2121,12 +2072,15 @@ PayloadMain (
   IN  VOID  *PldBase
   )
 {
-  UINT32        RsvdBase;
-  UINT32        RsvdSize;
-  FLASH_MAP     *FlashMap;
-  EFI_STATUS    Status;
-  UINT32        BiosRgnSize;
-  UINT8         StateMachine;
+  UINT32           RsvdBase;
+  UINT32           RsvdSize;
+  FLASH_MAP        *FlashMap;
+  EFI_STATUS       Status;
+  EFI_STATUS       RecoveryVarStatus;
+  UINT32           BiosRgnSize;
+  RECOVERY_STATUS  RecoveryStatus;
+  UINTN            RecoveryStatusSize;
+  BOOLEAN          RecoveryStatusValid;
 
   //
   // Prepare Console Print
@@ -2190,19 +2144,40 @@ PayloadMain (
   //
   if (PcdGetBool (PcdSblResiliencyEnabled)) {
     StopTcoTimer ();
-    ClearFailedBootCount ();
   }
 
   //
   // Perform firmware recovery/update
   //
-  GetStateMachineFlag (&StateMachine);
-  if (PcdGetBool (PcdSblResiliencyEnabled) &&
-     (StateMachine == FW_UPDATE_SM_RECOVERY || IsRecoveryTriggered ())) {
+  if (PcdGetBool (PcdSblResiliencyEnabled) && IsRecoveryTriggered ()) {
     DEBUG((DEBUG_INFO, "Triggered FW recovery!\n"));
+
+    RecoveryStatusSize  = sizeof (RecoveryStatus);
+    RecoveryStatusValid = FALSE;
+    if (!EFI_ERROR (GetVariable (RECOVERY_STATUS_VARIABLE_NAME, &gRecoveryStatusVariableGuid,
+                                 NULL, &RecoveryStatusSize, &RecoveryStatus)) &&
+                                 (RecoveryStatusSize == sizeof (RecoveryStatus)) &&
+                                 (RecoveryStatus.Revision == RECOVERY_STATUS_REVISION)) {
+      RecoveryStatusValid = TRUE;
+      DEBUG ((DEBUG_INFO, "Recovery reason: 0x%x, attempt: %d\n",
+              RecoveryStatus.Reason, RecoveryStatus.AttemptCount));
+    } else {
+      DEBUG ((DEBUG_WARN, "RecoveryStatus variable missing/invalid, fallback to SBL recovery\n"));
+    }
+
     Status = InitFirmwareRecovery ();
     if (EFI_ERROR (Status)) {
       DEBUG((DEBUG_ERROR, "Firmware recovery failed with Status = %r\n", Status));
+    }
+
+    // Persist payload result for retry/cleanup.
+    if (RecoveryStatusValid) {
+      RecoveryStatus.LastResult = (UINT8)(Status & 0xFF);
+      RecoveryVarStatus = SetVariable (RECOVERY_STATUS_VARIABLE_NAME, &gRecoveryStatusVariableGuid,
+                                       EFI_VARIABLE_NON_VOLATILE, sizeof (RECOVERY_STATUS), &RecoveryStatus);
+      if (EFI_ERROR (RecoveryVarStatus)) {
+        DEBUG ((DEBUG_ERROR, "Failed to update RecoveryStatus result: %r\n", RecoveryVarStatus));
+      }
     }
   } else {
     DEBUG((DEBUG_INFO, "Triggered FW update!\n"));
