@@ -248,11 +248,34 @@ NormalBootPath (
     DEBUG ((DEBUG_INFO, "FIT Format Payload\n"));
     Context.PayloadBaseAddress = (UINTN)Dst;
     if (Context.PayloadBaseAddress != Context.PayloadLoadAddress) {
+      //
+      // Validate RelocateTableOffset before forming the pointer: the relocation
+      // table itself must lie entirely within the payload image.
+      // Use a division-based check to avoid UINTN overflow on IA32 when
+      // computing RelocateTableCount * sizeof(FIT_RELOCATE_ITEM).
+      //
+      if (Context.RelocateTableOffset >= Context.PayloadSize ||
+          (Context.PayloadSize - Context.RelocateTableOffset) / sizeof (FIT_RELOCATE_ITEM) <
+          Context.RelocateTableCount) {
+        DEBUG ((DEBUG_ERROR, "ERROR: FIT relocation table (offset 0x%lx, count %d) is outside the payload (size 0x%lx)\n",
+                Context.RelocateTableOffset, Context.RelocateTableCount, Context.PayloadSize));
+        CpuHalt ("FIT relocation table out of bounds");
+      }
       RelocateTable = (FIT_RELOCATE_ITEM *)(UINTN)(Context.PayloadBaseAddress + Context.RelocateTableOffset);
       Delta         = (INTN)(Context.PayloadBaseAddress - Context.PayloadLoadAddress);
       Context.PayloadEntryPoint += Delta;
       for (Index = 0; Index < Context.RelocateTableCount; Index++) {
         if ((RelocateTable[Index].RelocateType == 10) || (RelocateTable[Index].RelocateType == 3)) {
+          //
+          // The write target is a UINT64 (8 bytes); ensure the entire write
+          // falls within the payload, not just the starting offset.
+          //
+           if (RelocateTable[Index].Offset > Context.PayloadSize ||
+               (Context.PayloadSize - RelocateTable[Index].Offset) < sizeof (UINT64)) {
+             DEBUG ((DEBUG_ERROR, "ERROR: FIT relocation entry [%d] offset 0x%lx is outside the payload (size 0x%lx)\n",
+                     Index, RelocateTable[Index].Offset, Context.PayloadSize));
+            CpuHalt ("FIT relocation entry out of bounds");
+          }
           *((UINT64 *)(UINTN)(Context.PayloadBaseAddress + RelocateTable[Index].Offset)) += Delta;
         }
       }
