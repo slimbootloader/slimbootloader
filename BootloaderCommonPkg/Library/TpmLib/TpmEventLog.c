@@ -197,6 +197,11 @@ CreateTpmEventLogHob (
 
   while (EmptySlot < (TCG_PCR_EVENT2_HDR *)(UINTN)(Lasa + Laml - 1)) {
 
+    EventSize = GetCompressedTCGEventSize (EmptySlot);
+    if (EventSize == 0) {
+      break;
+    }
+
     HobSize   = sizeof(EmptySlot->PCRIndex) + sizeof(EmptySlot->EventType) + GetDigestListSize (&EmptySlot->Digests);
     EventSizePtr = (UINT32 *) ((UINT8 *) EmptySlot + HobSize);
     HobSize = HobSize + sizeof(EmptySlot->EventSize) + *EventSizePtr;
@@ -216,14 +221,9 @@ CreateTpmEventLogHob (
     DigestBuffer = CopyDigestListToBuffer (DigestBuffer, &EmptySlot->Digests, HASH_ALG_SHA256);
     CopyMem (DigestBuffer, EventSizePtr, sizeof(TcgPcrEvent2->EventSize));
     DigestBuffer = DigestBuffer + sizeof(TcgPcrEvent2->EventSize);
-    CopyMem (DigestBuffer, (UINT8 *) ((UINT8 *) EventSizePtr + sizeof(EmptySlot->EventType)), *EventSizePtr);
+    CopyMem (DigestBuffer, (UINT8 *) ((UINT8 *) EventSizePtr + sizeof(EmptySlot->EventSize)), *EventSizePtr);
 
-    EventSize = GetCompressedTCGEventSize (EmptySlot);
-    if (EventSize == 0) {
-      break;
-    } else {
-      EmptySlot = (TCG_PCR_EVENT2_HDR *) ((UINT8 *)EmptySlot + EventSize);
-    }
+    EmptySlot = (TCG_PCR_EVENT2_HDR *) ((UINT8 *)EmptySlot + EventSize);
   }
 
   return EFI_SUCCESS;
