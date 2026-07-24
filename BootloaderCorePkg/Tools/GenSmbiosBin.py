@@ -18,11 +18,12 @@ def gen_smbios_bin(yaml_file, bin_file):
             string_val = lines[i+2].split('"')[1]  # Assumes string is quoted
 
             out.write(struct.pack('BB', type_val, idx_val))
-            out.write(string_val.encode('ascii') + b'\0')
-
-            # If this is the end-of-table marker (Type 127), we're done
-            if type_val == 127:
+            # Type127 terminator must carry a double-null string payload.
+            if type_val == 127 and idx_val == 0:
+                out.write(b'\0\0')
                 break
+
+            out.write(string_val.encode('ascii') + b'\0')
 
             i += 3  # Skip to next entry
 
