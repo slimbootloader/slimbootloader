@@ -211,6 +211,27 @@ AcpiTableUpdate (
     AcpiHdr = (EFI_ACPI_DESCRIPTION_HEADER *)(AcpiTable + Size);
 
     //
+    // Verify the ACPI description header itself fits within the input buffer
+    // before reading any header fields (e.g. AcpiHdr->Length).
+    //
+    if ((Length - Size) < sizeof (EFI_ACPI_DESCRIPTION_HEADER)) {
+      Status = EFI_ABORTED;
+      break;
+    }
+
+    //
+    // Verify the full table (as declared by the header) fits within the input
+    // buffer.  Also reject a declared Length smaller than the header itself.
+    // Without this check a crafted AcpiHdr->Length causes CalculateSum8 and
+    // CopyMem to read beyond the caller-supplied buffer (OOB read).
+    //
+    if ((AcpiHdr->Length < sizeof (EFI_ACPI_DESCRIPTION_HEADER)) ||
+        (AcpiHdr->Length > (Length - Size))) {
+      Status = EFI_ABORTED;
+      break;
+    }
+
+    //
     // Verify Checksum
     //
     if (CalculateSum8 ((UINT8 *)AcpiHdr, AcpiHdr->Length) != 0) {
@@ -218,12 +239,10 @@ AcpiTableUpdate (
       break;
     }
 
-    if (Size + AcpiHdr->Length > Size) {
-      Size +=  AcpiHdr->Length;
-    } else {
-      Status = EFI_ABORTED;
-      break;
-    }
+    //
+    // Safe to advance: AcpiHdr->Length <= Length - Size guarantees no overflow.
+    //
+    Size += AcpiHdr->Length;
 
     // Determine policy
     Previous = Current;
