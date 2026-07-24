@@ -743,7 +743,7 @@ InitializeSmbiosInfo (
   UINT16                PlatformId;
   UINTN                 Length;
   CHAR8                *TempSmbiosStrTbl;
-  BOOT_LOADER_VERSION  *VerInfoTbl;
+  EFI_STATUS            Status;
 
   PlatformId    = GetPlatformId ();
   TempSmbiosStrTbl  = (CHAR8 *) AllocateTemporaryMemory (0);
@@ -752,25 +752,6 @@ InitializeSmbiosInfo (
   // SMBIOS_TYPE_BIOS_INFORMATION
   //
   SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_BIOS_INFORMATION, 1, "Intel Corporation");
-
-  VerInfoTbl = GetVerInfoPtr ();
-  if (VerInfoTbl != NULL) {
-    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf),
-      "SB_CML.%03d.%03d.%03d.%03d.%03d.%05d.%c-%016lX%a\0",
-      VerInfoTbl->ImageVersion.SecureVerNum,
-      VerInfoTbl->ImageVersion.CoreMajorVersion,
-      VerInfoTbl->ImageVersion.CoreMinorVersion,
-      VerInfoTbl->ImageVersion.ProjMajorVersion,
-      VerInfoTbl->ImageVersion.ProjMinorVersion,
-      VerInfoTbl->ImageVersion.BuildNumber,
-      VerInfoTbl->ImageVersion.BldDebug ? 'D' : 'R',
-      VerInfoTbl->SourceVersion,
-      VerInfoTbl->ImageVersion.Dirty ? "-dirty" : "");
-  } else {
-    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "Unknown");
-  }
-  SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_BIOS_INFORMATION, 2, TempStrBuf);
-  SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_BIOS_INFORMATION, 3, __DATE__);
 
   //
   // SMBIOS_TYPE_SYSTEM_INFORMATION
@@ -800,17 +781,6 @@ InitializeSmbiosInfo (
   //
   SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_BASEBOARD_INFORMATION,
     1, "Intel Corporation");
-  if (PlatformId == PLATFORM_ID_CML_S) {
-    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "CometLake S 82 UDIMM RVP");
-  } else if (PlatformId == PLATFORM_ID_CML_H) {
-    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "CometLake H DDR4 RVP");
-  } else if (PlatformId == PLATFORM_ID_CML_V) {
-    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "CometLake PCH-V  RVP");
-  } else {
-    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "Unknown");
-  }
-  SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_BASEBOARD_INFORMATION,
-    2, TempStrBuf);
   SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_BASEBOARD_INFORMATION,
     3, "1");
   SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_BASEBOARD_INFORMATION,
@@ -827,15 +797,12 @@ InitializeSmbiosInfo (
     0, NULL);
 
   Length = SmbiosStrTbl - TempSmbiosStrTbl;
-  SmbiosStrTbl = AllocatePool (Length);
-  if (SmbiosStrTbl == NULL) {
-    return EFI_OUT_OF_RESOURCES;
+  Status = SmbiosStringBufferInit ();
+  if (EFI_ERROR (Status)) {
+    return Status;
   }
 
-  CopyMem (SmbiosStrTbl, TempSmbiosStrTbl, Length);
-  (VOID) PcdSet32S (PcdSmbiosStringsPtr, (UINT32)(UINTN)SmbiosStrTbl);
-
-  return EFI_SUCCESS;
+  return AppendSmbiosStringData (TempSmbiosStrTbl, (UINT32)Length);
 }
 
 
