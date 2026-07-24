@@ -1374,7 +1374,7 @@ SaveNvsData (
 
     ActIdx = 0xFF;
     if (MrcVarHdr->Signature == MRC_VAR_SIGNATURE) {
-      for (Idx = 0; Idx < MrcVarHdr->SlotNum >> 3; Idx++) {
+      for (Idx = 0; (Idx < MrcVarHdr->SlotNum >> 3) && (Idx < ARRAY_SIZE (MrcVarHdr->SlotMap)); Idx++) {
         Data8 = MrcVarHdr->SlotMap[Idx];
         if (Data8 != 0) {
           ActIdx = Idx * 8;
