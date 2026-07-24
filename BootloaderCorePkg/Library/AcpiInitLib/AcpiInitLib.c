@@ -396,6 +396,12 @@ UpdateMadt (
   //
   while (MadtPtr < MadtEnd) {
     EntryHeader = (EFI_ACPI_MADT_ENTRY_COMMON_HEADER *)MadtPtr;
+    if ((UINTN)(MadtEnd - MadtPtr) < sizeof (EFI_ACPI_MADT_ENTRY_COMMON_HEADER) ||
+        EntryHeader->Length == 0 ||
+        (UINTN)(MadtEnd - MadtPtr) < EntryHeader->Length)
+    {
+      return EFI_INVALID_PARAMETER;
+    }
     Length = EntryHeader->Length;
     if ((EntryHeader->Type != EFI_ACPI_5_0_PROCESSOR_LOCAL_APIC) && (EntryHeader->Type != EFI_ACPI_5_0_PROCESSOR_LOCAL_X2APIC)) {
       CopyMem ((VOID *)Current, (VOID *)MadtPtr, Length);
