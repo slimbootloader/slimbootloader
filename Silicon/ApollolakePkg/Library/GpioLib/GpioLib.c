@@ -505,6 +505,10 @@ GpioWriteLockReg (
       PadNumber = PadNumber - GpioGroupInfo[GroupIndex].PadPerGroup;
     }
   }
+  if (GroupIndex == GpioGroupInfoLength) {
+    DEBUG ((DEBUG_ERROR, "Invalid Group %d or PadNumber %d\n", Group, PadNumber));
+    return EFI_INVALID_PARAMETER;
+  }
 
   switch (RegType) {
     case GpioPadConfigLockRegister:
@@ -526,7 +530,11 @@ GpioWriteLockReg (
   }
 
   OldPadCfgLockRegVal = MmioRead32 (SC_PCR_ADDRESS (GpioGroupInfo[GroupIndex].Community, RegOffset));
-  NewPadCfgLockRegVal = OldPadCfgLockRegVal | (1 << PadNumber);
+  if (PadNumber >= 32) {
+    DEBUG ((DEBUG_ERROR, "Invalid PadNumber %d for Group %d\n", PadNumber, Group));
+    return EFI_INVALID_PARAMETER;
+  }
+  NewPadCfgLockRegVal = OldPadCfgLockRegVal | (UINT32)(1u << PadNumber);
 
   Status = PchSbiExecution (
              GpioGroupInfo[GroupIndex].Community,
