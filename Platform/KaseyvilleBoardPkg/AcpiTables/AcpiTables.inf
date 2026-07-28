@@ -33,6 +33,7 @@
   Ssdt/CpuEist.asl
   Ssdt/CpuHwp.asl
   Ssdt/CpuCst.asl
+  PsdTable/PsdTable.aslc
   Platform/CommonBoardPkg/AcpiTables/Fpdt/Fpdt.aslc
   Platform/CommonBoardPkg/AcpiTables/Tpm/Tpm2.aslc
   Platform/CommonBoardPkg/AcpiTables/Tpm/TpmSsdt.asl

@@ -59,6 +59,7 @@
 #include <PlatformBase.h>
 #include <Library/UefiVariableLib.h>
 #include <Library/BdatLib.h>
+#include <PsdLib.h>
 #include <Library/SgxLib22.h>
 #include <IioUniversalDataHob.h>
 #include <Library/GpioV2Lib.h>
