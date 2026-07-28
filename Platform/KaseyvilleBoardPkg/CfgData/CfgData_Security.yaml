@@ -21,9 +21,13 @@
       value        : 0x1
   - EnablePsd    :
       name         : Platform Security Discovery (PSD)
-      type         : Reserved
+      type         : Combo
+      option       : 0:Disabled, 1:Enabled
+      help         : >
+                     Enable/Disable Platform Security Discovery (PSD)
       length       : 0x04
-      value        : 0x0
+      condition    : $SEC_CFG_DATA.Hide == 0
+      value        : 0x1
   - SecurityCctPrmrrSafSize :
       name         : PRMRR SAF Size
       type         : Combo
