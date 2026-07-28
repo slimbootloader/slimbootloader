@@ -858,6 +858,7 @@ PlatformUpdateAcpiTable (
 {
   EFI_ACPI_DESCRIPTION_HEADER           *Table;
   EFI_STATUS                            Status;
+  SEC_CFG_DATA                          *SecCfgData;
 
   Status = EFI_SUCCESS;
 
@@ -887,6 +888,16 @@ PlatformUpdateAcpiTable (
     break;
   case EFI_BDAT_TABLE_SIGNATURE:
     Status = PatchBdatTable (Table);
+    break;
+  case EFI_ACPI_PSD_SIGNATURE:
+    Status = EFI_UNSUPPORTED;
+    if (FeaturePcdGet (PcdPsdBiosEnabled)) {
+      SecCfgData = (SEC_CFG_DATA *)FindConfigDataByTag (CDATA_SEC_TAG);
+      if ((SecCfgData != NULL) && (SecCfgData->EnablePsd == 1)) {
+        Status = UpdateAcpiPsdTable ( (VOID* )Current);
+        DEBUG ( (DEBUG_INFO, "Updated Psd Table in AcpiTable Entries\n") );
+      }
+    }
     break;
   case EFI_ACPI_6_2_DEBUG_PORT_2_TABLE_SIGNATURE:
       Status = PatchDbg2Table (Table);
