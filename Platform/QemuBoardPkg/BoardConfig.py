@@ -87,12 +87,6 @@ class Board(BaseBoard):
         self._CFGDATA_PRIVATE_KEY   = 'KEY_ID_CFGDATA' + '_' + self._RSA_SIGN_TYPE
         self._CONTAINER_PRIVATE_KEY = 'KEY_ID_CONTAINER' + '_' + self._RSA_SIGN_TYPE
 
-        # To enable source debug, set 1 to self.ENABLE_SOURCE_DEBUG
-        # self.ENABLE_SOURCE_DEBUG  = 1
-
-        # For test purpose
-        # self.SKIP_STAGE1A_SOURCE_DEBUG = 1
-
         # BIT0:Serial  BIT1:USB KB
         # Support serial port input console by default
         self.CONSOLE_IN_DEVICE_MASK  = 0x00000001

@@ -32,4 +32,3 @@
 
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdConsoleInDeviceMask
-  gPlatformCommonLibTokenSpaceGuid.PcdSourceDebugEnabled

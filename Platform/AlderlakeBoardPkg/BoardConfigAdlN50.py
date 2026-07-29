@@ -49,10 +49,6 @@ class Board(AlderlakeBoardConfig.Board):
         self.ENABLE_SPLASH            = 1
         self.ENABLE_FRAMEBUFFER_INIT  = 1
         self.ENABLE_VTD           = 1
-        # To enable source debug, set 1 to self.ENABLE_SOURCE_DEBUG
-        self.ENABLE_SOURCE_DEBUG  = 0
-        # If ENABLE_SOURCE_DEBUG is disabled, SKIP_STAGE1A_SOURCE_DEBUG will be ignored
-        self.SKIP_STAGE1A_SOURCE_DEBUG = 1
         self.ENABLE_PCIE_PM       = 1
         # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
         # 3: Enable NOSMRR (for edk2-stable202411 and newer UEFI payload)  4: Auto NOSMRR

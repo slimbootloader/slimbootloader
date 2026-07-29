@@ -63,19 +63,12 @@ class Board(BaseBoard):
         # To set the max processor numbers to fit for 10+2 silicon
         self.CPU_MAX_LOGICAL_PROCESSOR_NUMBER = 32
 
-        # To enable source debug, set 1 to self.ENABLE_SOURCE_DEBUG
-        self.ENABLE_SOURCE_DEBUG  = 0
-        # If ENABLE_SOURCE_DEBUG is disabled, SKIP_STAGE1A_SOURCE_DEBUG will be ignored
-        self.SKIP_STAGE1A_SOURCE_DEBUG  = 0
-
         if self.HAVE_FIT_TABLE:
             self.FIT_ENTRY_MAX_NUM  = 12
 
         self.STAGE1A_SIZE         = 0x00010000
         self.STAGE1B_SIZE         = 0x00100000
         self.STAGE2_SIZE          = 0x000EA000
-        if self.ENABLE_SOURCE_DEBUG:
-            self.STAGE1B_SIZE += 0x4000
 
         self.ENABLE_FWU           = 1
         self.ENABLE_SMBIOS        = 1

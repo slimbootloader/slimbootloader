@@ -177,7 +177,6 @@ class BaseBoard(object):
         self.ENABLE_CRYPTO_SHA_OPT  = IPP_CRYPTO_OPTIMIZATION_MASK['SHA256_V8']
         self.ENABLE_FWU            = 0
         self.ENABLE_FORCE_BIOS_UPDATE = 0
-        self.ENABLE_SOURCE_DEBUG   = 0
         self.ENABLE_GRUB_CONFIG    = 0
         self.ENABLE_SMBIOS         = 0
         self.ENABLE_LINUX_PAYLOAD  = 0
