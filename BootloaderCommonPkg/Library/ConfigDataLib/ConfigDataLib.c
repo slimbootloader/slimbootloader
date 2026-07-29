@@ -409,18 +409,29 @@ AddConfigData (
 {
   CDATA_BLOB               *LdrCfgBlob;
   CDATA_BLOB               *CfgAddBlob;
-  INT32                    CfgAddSize;
+  UINT32                    CfgAddSize;
 
   LdrCfgBlob = (CDATA_BLOB *) GetConfigDataPtr ();
   CfgAddBlob = (CDATA_BLOB *) CfgAddPtr;
   if ((CfgAddBlob == NULL) || (CfgAddBlob->Signature != CFG_DATA_SIGNATURE)) {
+    DEBUG((DEBUG_ERROR, "AddConfigData: CfgAddBlob is invalid\n"));
     return EFI_UNSUPPORTED;
   }
 
-  CfgAddSize = CfgAddBlob->UsedLength - (UINT32) (CfgAddBlob->HeaderLength);
-  if (CfgAddSize < 0) {
+  if (CfgAddBlob->UsedLength <= CfgAddBlob->HeaderLength) {
+    DEBUG((DEBUG_ERROR, "AddConfigData: UsedLength <= HeaderLength\n"));
     return EFI_UNSUPPORTED;
-  } else if (CfgAddSize > (INT32) (LdrCfgBlob->TotalLength - LdrCfgBlob->UsedLength)) {
+  }
+  CfgAddSize = CfgAddBlob->UsedLength - CfgAddBlob->HeaderLength;
+  if (!IS_ALIGNED(CfgAddSize, 4)) {
+    DEBUG((DEBUG_ERROR, "AddConfigData: CfgAddSize is not aligned to 4 bytes\n"));
+    return EFI_UNSUPPORTED;
+  } else if ((LdrCfgBlob->UsedLength > LdrCfgBlob->TotalLength) ||
+             (CfgAddSize > (LdrCfgBlob->TotalLength - LdrCfgBlob->UsedLength)) ||
+             ((CfgAddSize >> 2) > MAX_UINT16) ||
+             ((LdrCfgBlob->ExtraInfo.InternalDataOffset + (CfgAddSize >> 2)) > MAX_UINT16))
+  {
+    DEBUG((DEBUG_ERROR, "AddConfigData: Not enough space to add new config data\n"));
     return EFI_OUT_OF_RESOURCES;
   }
 
