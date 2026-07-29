@@ -745,9 +745,10 @@ SendSpiCmd (
     FlashCycle = (UINT32) (V_SPI_HSFS_CYCLE_WRITE << N_SPI_HSFS_CYCLE);
     break;
   case FlashCycleErase:
-    if (((ByteCount % SIZE_4KB) != 0) ||
+    if ((ByteCount == 0) ||
+        ((ByteCount % SIZE_4KB) != 0) ||
         ((HardwareSpiAddr % SIZE_4KB) != 0)) {
-      DEBUG ((DEBUG_ERROR, "     Erase and erase size must be 4KB aligned. \n"));
+      DEBUG ((DEBUG_ERROR, "     Erase size must be non-zero and 4KB aligned. \n"));
       ASSERT (FALSE);
       Status = EFI_INVALID_PARAMETER;
       goto SendSpiCmdEnd;
