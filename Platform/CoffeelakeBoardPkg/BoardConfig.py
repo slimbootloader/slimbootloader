@@ -84,11 +84,6 @@ class Board(BaseBoard):
         # CSME update library is required to enable this option and will be available as part of CSME kit
         self.BUILD_CSME_UPDATE_DRIVER   = 0
 
-        # To enable source debug, set 1 to self.ENABLE_SOURCE_DEBUG
-        self.ENABLE_SOURCE_DEBUG  = 0
-        # If ENABLE_SOURCE_DEBUG is disabled, SKIP_STAGE1A_SOURCE_DEBUG will be ignored
-        self.SKIP_STAGE1A_SOURCE_DEBUG  = 0
-
         if self.HAVE_FIT_TABLE:
             self.FIT_ENTRY_MAX_NUM  = 12
 
@@ -98,8 +93,6 @@ class Board(BaseBoard):
         else:
             self.STAGE1B_SIZE     = 0x000DB000
         self.STAGE2_SIZE          = 0x00080000
-        if self.ENABLE_SOURCE_DEBUG:
-            self.STAGE1B_SIZE += 0x4000
 
         self.ENABLE_FWU           = 1
         self.ENABLE_SMBIOS        = 1

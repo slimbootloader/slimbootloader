@@ -66,10 +66,6 @@ class Board(BaseBoard):
         self.HAVE_ACPI_TABLE      = 1
         self.HAVE_PSD_TABLE       = 1
         self.ENABLE_VTD           = 1
-        # To enable source debug, set 1 to self.ENABLE_SOURCE_DEBUG
-        self.ENABLE_SOURCE_DEBUG  = 0
-        # If ENABLE_SOURCE_DEBUG is disabled, SKIP_STAGE1A_SOURCE_DEBUG will be ignored
-        self.SKIP_STAGE1A_SOURCE_DEBUG  = 0
         self.ENABLE_SPLASH        = 1
         self.ENABLE_FRAMEBUFFER_INIT    = 1
         # 1: To read ambient temperature at boot time 0: Disable the feature
@@ -130,9 +126,6 @@ class Board(BaseBoard):
             self.STAGE2_FD_SIZE       = 0x00200000
             self.OS_LOADER_FD_SIZE    = 0x0005D000
             self.PAYLOAD_SIZE         = 0x00080000
-
-        if self.ENABLE_SOURCE_DEBUG:
-            self.STAGE1B_SIZE += 0x4000
 
         self.ENABLE_FWU           = 1
         self.ENABLE_SMBIOS        = 1

@@ -56,7 +56,6 @@ class Board(RaptorlakeBoardConfig.Board):
         if len(self._PAYLOAD_NAME.split(';')) > 1:
             self.UEFI_VARIABLE_SIZE = 0x00040000
 
-        self.ENABLE_SOURCE_DEBUG   = 0
         self.PLD_HEAP_SIZE         = 0x0C000000
 
         # wait 600us for AP wake up. needed for 8P 16E CPUs
@@ -113,13 +112,6 @@ class Board(RaptorlakeBoardConfig.Board):
             self.STAGE2_FD_SIZE       = 0x000F0000
             self.PAYLOAD_SIZE         = 0x00024000
 
-        if self.ENABLE_SOURCE_DEBUG:
-            self.REDUNDANT_SIZE += 0x4000
-            self.STAGE1B_SIZE += 0x4000
-            if self.SKIP_STAGE1A_SOURCE_DEBUG == 0:
-                self.STAGE1A_SIZE += 0x4000
-
-        # adjust ACM_SIZE to meet 256KB alignment (to align 256KB ACM size)
         if self.ACM_SIZE > 0:
             acm_top = self.FLASH_LAYOUT_START - self.STAGE1A_SIZE
             acm_btm = acm_top - self.ACM_SIZE

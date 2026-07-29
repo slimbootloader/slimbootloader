@@ -86,14 +86,6 @@ class Board(BaseBoard):
         # G9 for 384 | W7 Opt for SHA384| Ni  Opt for SHA256| V8 Opt for SHA256
         self.ENABLE_CRYPTO_SHA_OPT    = IPP_CRYPTO_OPTIMIZATION_MASK['SHA256_NI']
 
-        # To enable source debug, set 1 to self.ENABLE_SOURCE_DEBUG
-        # self.ENABLE_SOURCE_DEBUG   = 1
-
-        # Temporary skip Stage1A due to 32KB(IBBL) size limitation
-                # until library size optimization has done.
-        # If ENABLE_SOURCE_DEBUG is disabled, SKIP_STAGE1A_SOURCE_DEBUG will be ignored
-        self.SKIP_STAGE1A_SOURCE_DEBUG  = 1
-
         # BIT0:Serial  BIT1:USB KB
         # Support serial port input console by default
         self.CONSOLE_IN_DEVICE_MASK  = 0x00000001
@@ -114,8 +106,6 @@ class Board(BaseBoard):
 
         self.STAGE1A_SIZE         = 0x00008000
         self.STAGE1B_SIZE         = 0x00038000
-        if self.ENABLE_SOURCE_DEBUG:
-            self.STAGE1B_SIZE += 0x2000
         self.STAGE2_SIZE          = 0x00035000
         self.PAYLOAD_SIZE         = 0x00025000
 
@@ -139,8 +129,6 @@ class Board(BaseBoard):
         self.STAGE1B_LOAD_BASE    = 0xFEF10000
         self.STAGE1B_FD_BASE      = 0xFEF80000
         self.STAGE1B_FD_SIZE      = 0x0006D000
-        if self.ENABLE_SOURCE_DEBUG:
-            self.STAGE1B_FD_SIZE += 0x00001000
         if self.RELEASE_MODE == 0:
             self.STAGE1B_FD_SIZE += 0x00002000
             self.PAYLOAD_SIZE    += 0x00007000

@@ -128,11 +128,7 @@
   FdtLib|MdePkg/Library/BaseFdtLib/BaseFdtLib.inf
   BuildFdtLib|BootloaderCommonPkg/Library/BuildFdtLib/BuildFdtLib.inf
 
-!if $(ENABLE_SOURCE_DEBUG)
-  DebugAgentLib|BootloaderCommonPkg/Library/DebugAgentLib/DebugAgentLib.inf
-!else
   DebugAgentLib|BootloaderCommonPkg/Library/DebugAgentLib/DebugAgentLibNull.inf
-!endif
   ElfLib|BootloaderCommonPkg/Library/ElfLib/ElfLib.inf
   S3SaveRestoreLib|BootloaderCorePkg/Library/S3SaveRestoreLib/S3SaveRestoreLib.inf
   BoardSupportLib|Platform/CommonBoardPkg/Library/BoardSupportLib/BoardSupportLib.inf
@@ -386,7 +382,6 @@
 !ifdef $(S3_DEBUG)
   gPlatformModuleTokenSpaceGuid.PcdS3DebugEnabled         | $(S3_DEBUG)
 !endif
-  gPlatformCommonLibTokenSpaceGuid.PcdSourceDebugEnabled  | $(ENABLE_SOURCE_DEBUG)
 
 [PcdsDynamicDefault]
   gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut         | 2
@@ -422,9 +417,6 @@
       BaseMemoryLib| MdePkg/Library/BaseMemoryLibRepStr/BaseMemoryLibRepStr.inf
       SocInitLib   | $(SOC_INIT_STAGE1A_LIB_INF_FILE)
       BoardInitLib | $(BRD_INIT_STAGE1A_LIB_INF_FILE)
-!if $(SKIP_STAGE1A_SOURCE_DEBUG)
-      DebugAgentLib| BootloaderCommonPkg/Library/DebugAgentLib/DebugAgentLibNull.inf
-!endif
   }
 
   BootloaderCorePkg/Stage1B/Stage1B.inf {

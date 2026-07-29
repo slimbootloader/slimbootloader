@@ -67,10 +67,6 @@ class Board(BaseBoard):
         self.ENABLE_FRAMEBUFFER_INIT  = 1
         self.ENABLE_VTD           = 1
         self.ENABLE_PCIE_PM       = 1
-        # To enable source debug, set 1 to self.ENABLE_SOURCE_DEBUG
-        self.ENABLE_SOURCE_DEBUG  = 0
-        # If ENABLE_SOURCE_DEBUG is disabled, SKIP_STAGE1A_SOURCE_DEBUG will be ignored
-        self.SKIP_STAGE1A_SOURCE_DEBUG = 1
         # 0: Disable  1: Enable  2: Auto (disable for UEFI payload, enable for others)
         # 3: Enable NOSMRR (for edk2-stable202411 and newer UEFI payload)  4: Auto NOSMRR
         self.ENABLE_SMM_REBASE    = 4
@@ -158,12 +154,6 @@ class Board(BaseBoard):
             self.STAGE2_SIZE          = 0x000C0000
             self.STAGE2_FD_SIZE       = 0x000F2000
             self.PAYLOAD_SIZE         = 0x00028000
-
-        if self.ENABLE_SOURCE_DEBUG:
-            self.STAGE1B_SIZE += 0x4000
-            if self.SKIP_STAGE1A_SOURCE_DEBUG == 0:
-                self.STAGE1A_SIZE += 0x4000
-
 
         self.UEFI_VARIABLE_SIZE = 0x1000
         if len(self._PAYLOAD_NAME.split(';')) > 1:

@@ -26,11 +26,9 @@ ConsolePoll (
   )
 {
 
-  if (FeaturePcdGet (PcdSourceDebugEnabled) != TRUE) {
-    if ((PcdGet32 (PcdConsoleInDeviceMask) & ConsoleInSerialPort) != 0) {
-      if (SerialPortPoll ()) {
-        return TRUE;
-      }
+  if ((PcdGet32 (PcdConsoleInDeviceMask) & ConsoleInSerialPort) != 0) {
+    if (SerialPortPoll ()) {
+      return TRUE;
     }
   }
 
@@ -72,17 +70,10 @@ ConsoleRead (
   Count = 0;
   while (Count < NumberOfBytes) {
     if ((PcdGet32 (PcdConsoleInDeviceMask) & ConsoleInSerialPort) != 0) {
-      if (FeaturePcdGet (PcdSourceDebugEnabled) != TRUE) {
-        if (SerialPortPoll ()) {
-          ReadCount = SerialPortRead (Buffer, 1);
-          Buffer += ReadCount;
-          Count  += ReadCount;
-        }
-      }
-      // If only serial enabled, and Source Debug enabled, return
-      // error here to prevent infinite loop and build error.
-      else if (PcdGet32 (PcdConsoleInDeviceMask) == ConsoleInSerialPort) {
-        return 0;
+      if (SerialPortPoll ()) {
+        ReadCount = SerialPortRead (Buffer, 1);
+        Buffer += ReadCount;
+        Count  += ReadCount;
       }
     }
 
