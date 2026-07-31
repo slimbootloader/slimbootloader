@@ -17,6 +17,7 @@
 #include <Library/PciEnumerationLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <UniversalPayload/PciRootBridges.h>
+#include <Guid/PciSegmentInfoGuid.h>
 #include "PciAri.h"
 #include "PciIov.h"
 #include "InternalPciEnumerationLib.h"
@@ -1864,6 +1865,51 @@ PciScanSegment (
 }
 
 /**
+  Build Universal Payload PCI Segment Info HOB from the host bridge table.
+
+  @param[in]  HostBridgeTable   Pointer to the table of host bridge descriptors.
+
+  @retval EFI_SUCCESS           HOB was created successfully.
+  @retval EFI_INVALID_PARAMETER HostBridgeTable is NULL.
+  @retval EFI_OUT_OF_RESOURCES  HOB allocation failed.
+**/
+EFI_STATUS
+BuildUniversalPayloadSegmentInfoHob (
+  IN PCI_HOST_BRIDGE_TABLE *HostBridgeTable
+  )
+{
+  UPL_PCI_SEGMENT_INFO_HOB  *SegInfoHob;
+  UINTN                      Length;
+  UINT8                      Index;
+
+  if (HostBridgeTable == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (HostBridgeTable->Count == 0) {
+    return EFI_SUCCESS;
+  }
+
+  Length = sizeof (UPL_PCI_SEGMENT_INFO_HOB) + sizeof (UPL_SEGMENT_INFO) * HostBridgeTable->Count;
+  SegInfoHob = (UPL_PCI_SEGMENT_INFO_HOB *)BuildGuidHob (&gUplPciSegmentInfoHobGuid, Length);
+  if (SegInfoHob == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  ZeroMem (SegInfoHob, Length);
+  SegInfoHob->Header.Revision = UNIVERSAL_PAYLOAD_PCI_SEGMENT_INFO_REVISION;
+  SegInfoHob->Header.Length   = (UINT16)Length;
+  SegInfoHob->Count           = HostBridgeTable->Count;
+
+  for (Index = 0; Index < HostBridgeTable->Count; Index++) {
+    SegInfoHob->SegmentInfo[Index].SegmentNumber = HostBridgeTable->HostBridge[Index].Segment;
+    SegInfoHob->SegmentInfo[Index].BaseAddress   = HostBridgeTable->HostBridge[Index].McfgBase;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
   Build Universal Payload PCI Root Bridge HOB with actual enumeration data
 
   @param [in] RootBridges       A pointer of Root Bridges List
@@ -2065,7 +2111,10 @@ PciEnumeration (
 
   ASSERT (TotalCount > 0);
 
-  BuildUniversalPayloadPciRootBridgeHob (AllBridges, TotalCount);
+  Status = BuildUniversalPayloadSegmentInfoHob (HostBridgeTable);
+  ASSERT_EFI_ERROR (Status);
+  Status = BuildUniversalPayloadPciRootBridgeHob (AllBridges, TotalCount);
+  ASSERT_EFI_ERROR (Status);
 
 #if DEBUG_PCI_ENUM
   DumpPciResAllocTable ();
