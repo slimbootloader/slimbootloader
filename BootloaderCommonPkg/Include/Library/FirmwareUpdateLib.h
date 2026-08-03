@@ -1,7 +1,7 @@
 /** @file
 The header file for firmware update library.
 
-Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2017 - 2026, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -162,6 +162,9 @@ typedef  VOID (EFIAPI *DRIVER_ENTRY) (VOID *Params);
 
   @param[out] FwBuffer        The firmware update capsule image.
   @param[out] FwSize          The capsule image size.
+  @param[in]  IsCsmeRecovery  TRUE to load the CSME recovery capsule (tag 0x081,
+                              falling back to 0x080); FALSE for the standard
+                              SBL update capsule (tag 0x080).
 
   @retval  EFI_SUCCESS        Get the capsule image successfully.
   @retval  others             Error happening when getting capsule image.
@@ -170,7 +173,8 @@ EFI_STATUS
 EFIAPI
 GetCapsuleImage (
   OUT  VOID                      **FwBuffer,
-  OUT  UINT32                    *FwSize
+  OUT  UINT32                    *FwSize,
+  IN   BOOLEAN                   IsCsmeRecovery
   );
 
 /**

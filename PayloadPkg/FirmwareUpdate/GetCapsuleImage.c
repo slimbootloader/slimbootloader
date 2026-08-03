@@ -1,7 +1,7 @@
 /** @file
   This file contains the implementation of FirmwareUpdateLib library.
 
-  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2026, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -495,6 +495,9 @@ GetOsImageList (
 
   @param[out] CapsuleImage      The firmware update capsule image.
   @param[out] CapsuleImageSize  The capsule image size.
+  @param[in]  IsCsmeRecovery    TRUE to load the CSME recovery capsule (tag
+                                0x081, falling back to 0x080); FALSE for the
+                                standard SBL update capsule (tag 0x080).
 
   @retval  EFI_SUCCESS        Get the capsule image successfully.
   @retval  others             Error happening when getting capsule image.
@@ -503,7 +506,8 @@ EFI_STATUS
 EFIAPI
 GetCapsuleImage (
   OUT VOID     **CapsuleImage,
-  OUT UINT32   *CapsuleImageSize
+  OUT UINT32   *CapsuleImageSize,
+  IN  BOOLEAN  IsCsmeRecovery
   )
 {
   EFI_STATUS              Status;
@@ -522,9 +526,18 @@ GetCapsuleImage (
   DEBUG ((DEBUG_INFO, "\n=================Read Capsule Image==============\n"));
 
   //
-  // Get capsule configuration data
+  // Get capsule configuration data. For a CSME recovery, prefer the dedicated
+  // CSME capsule (tag 0x081) and fall back to the standard capsule (0x080).
   //
-  CapsuleInfo = (CAPSULE_INFO_CFG_DATA *) FindConfigDataByTag (CDATA_CAPSULE_INFO_TAG);
+  if (IsCsmeRecovery) {
+    CapsuleInfo = (CAPSULE_INFO_CFG_DATA *) FindConfigDataByTag (CDATA_CSME_CAPSULE_INFO_TAG);
+    if (CapsuleInfo == NULL) {
+      DEBUG ((DEBUG_WARN, " CSME CapsuleInfo (0x081) not found, falling back to 0x080\n"));
+    }
+  }
+  if (CapsuleInfo == NULL) {
+    CapsuleInfo = (CAPSULE_INFO_CFG_DATA *) FindConfigDataByTag (CDATA_CAPSULE_INFO_TAG);
+  }
   //
   // If we do not find capsule information, return error
   //
