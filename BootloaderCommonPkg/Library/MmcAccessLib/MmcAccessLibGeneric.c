@@ -1855,15 +1855,15 @@ MmcInitCardInfo (
     SdCsd = (SD_CSD *)Csd;
     if (SdCsd->CsdStructure == 0) {
       CSize     = (SdCsd->CSizeHigh << 2 | SdCsd->CSizeLow) + 1;
-      CSizeMul  = (1 << (SdCsd->CSizeMul + 2));
-      ReadBlLen = (1 << (SdCsd->ReadBlLen));
+      CSizeMul  = (1U << (SdCsd->CSizeMul + 2));
+      ReadBlLen = (1U << SdCsd->ReadBlLen);
       Capacity  = MultU64x32 (MultU64x32 ((UINT64)CSize, CSizeMul), ReadBlLen);
     } else {
       SdCsd2   = (SD_CSD2 *) (VOID *)Csd;
       CSize    = (SdCsd2->CSizeHigh << 16 | SdCsd2->CSizeLow) + 1;
       Capacity = MultU64x32 ((UINT64)CSize, SIZE_512KB);
     }
-    CardData->BlockLen = (1 << SdCsd->ReadBlLen);
+    CardData->BlockLen = (1U << SdCsd->ReadBlLen);
     CardData->BlockNum = (UINT32)DivU64x32 (Capacity, CardData->BlockLen);
     DEBUG ((DEBUG_VERBOSE, " == SD CARD INFO ==\n"));
     DEBUG ((DEBUG_VERBOSE, "  Block   Length: %d\n", CardData->BlockLen));
@@ -1873,10 +1873,13 @@ MmcInitCardInfo (
     if ((ExtCsd->DeviceType & BIT2) || (ExtCsd->DeviceType & BIT3)) {
       CardData->BlockLen = 512;
     } else {
-      CardData->BlockLen = (1 << Csd->ReadBlLen);
+      CardData->BlockLen = (1U << Csd->ReadBlLen);
     }
 
-    Blocks = (ExtCsd->SecCount[0]) | (ExtCsd->SecCount[1] << 8) | (ExtCsd->SecCount[2] << 16) | (ExtCsd->SecCount[3] << 24);
+    Blocks = (UINT32)ExtCsd->SecCount[0]        |
+             ((UINT32)ExtCsd->SecCount[1] <<  8) |
+             ((UINT32)ExtCsd->SecCount[2] << 16) |
+             ((UINT32)ExtCsd->SecCount[3] << 24);
     CardData->BlockNum = Blocks;
 
     DEBUG ((DEBUG_VERBOSE, " == EMMC CARD INFO ==\n"));
@@ -1884,8 +1887,8 @@ MmcInitCardInfo (
     DEBUG ((DEBUG_VERBOSE, "  High Capacity Support: %d\n", Ocr & 0x40000000));
     DEBUG ((DEBUG_VERBOSE, "  Block Number: %d\n", Blocks));
     DEBUG ((DEBUG_VERBOSE, "  Block Length: %d\n", CardData->BlockLen));
-    DEBUG ((DEBUG_VERBOSE, "  BOOT partition size: %dKB\n", (ExtCsd->BootSizeMult << 17) / 1024));
-    DEBUG ((DEBUG_VERBOSE, "  RPMB partition size: %dKB\n", (ExtCsd->RpmbSizeMult << 17) / 1024));
+    DEBUG ((DEBUG_VERBOSE, "  BOOT partition size: %dKB\n", ((UINT32)ExtCsd->BootSizeMult << 17) / 1024));
+    DEBUG ((DEBUG_VERBOSE, "  RPMB partition size: %dKB\n", ((UINT32)ExtCsd->RpmbSizeMult << 17) / 1024));
     DEBUG ((DEBUG_VERBOSE, "  USER partition size: %dMB\n", (UINT32)DivU64x32 (MultU64x32 (Blocks, CardData->BlockLen),
             0x100000)));
     DEBUG ((DEBUG_VERBOSE, "  Current Partition: %d\n", ExtCsd->PartitionConfig));
