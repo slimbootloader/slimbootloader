@@ -1037,8 +1037,21 @@ CaculateAuthorityPCRExtendValue (
   }
 
   CurrPos += sizeof(UINT8) + sizeof(UINT16);
+
+  // Validate KeySizeBits BEFORE computing KeyModulusSize or calling CopyMem.
+  // KeySizeBits is a UINT16 from SPI-flash KM; an unsupported value would derive
+  // a KeyModulusSize that overflows the stack buffer MaxModulusExpo[RSA_KEY_SIZE_3K/8+4].
+  if ((((KEY_STRUCT_HEADER *)(UINT8*)CurrPos)->KeySizeBits) != RSA_KEY_SIZE_2K &&
+      (((KEY_STRUCT_HEADER *)(UINT8*)CurrPos)->KeySizeBits) != RSA_KEY_SIZE_3K) {
+    DEBUG ((DEBUG_ERROR, "KmSignature: Unsupported Hash Size (0x%04x)\n",
+            (((KEY_STRUCT_HEADER *)(UINT8*)CurrPos)->KeySizeBits)));
+    return FALSE;
+  }
+
   KeyModulusSize = (((KEY_STRUCT_HEADER *)(UINT8*)CurrPos)->KeySizeBits)/8;
 
+  // KeyModulusSize is now guaranteed to be RSA_KEY_SIZE_2K/8 or RSA_KEY_SIZE_3K/8,
+  // both of which fit within MaxModulusExpo[RSA_KEY_SIZE_3K/8+4].
   CopyMem (MaxModulusExpo, (UINT8 *)((RSA_PUBLIC_KEY_STRUCT *)(UINT8*)CurrPos)->Modulus, KeyModulusSize);
   CopyMem (MaxModulusExpo + KeyModulusSize, (UINT8 *)&(((RSA_PUBLIC_KEY_STRUCT *)(UINT8*)CurrPos)->Exponent), 4);
 
@@ -1048,14 +1061,11 @@ CaculateAuthorityPCRExtendValue (
     DEBUG ((DEBUG_INFO, "BtG Key Hash:  \n"));
     DumpHex (2, 0, SHA256_DIGEST_SIZE, AuthorityPcrDataPtr);
 
-  } else if((((KEY_STRUCT_HEADER *)(UINT8*)CurrPos)->KeySizeBits) == RSA_KEY_SIZE_3K) {
+  } else {
+    // RSA_KEY_SIZE_3K — already validated above
     Sha384 (MaxModulusExpo, KeyModulusSize + 4, (UINT8 *)AuthorityPcrDataPtr);
     DEBUG ((DEBUG_INFO, "BtG Key Hash:  \n"));
     DumpHex (2, 0, SHA384_DIGEST_SIZE, AuthorityPcrDataPtr);
-
-  } else {
-    DEBUG ((DEBUG_ERROR, "KmSignature: Unsupported Hash Size\n"));
-    return FALSE;
   }
   // ACM pads all BtG key hashes to 384 bits
   AuthorityPcrDataPtr += SHA384_DIGEST_SIZE;
@@ -1066,8 +1076,20 @@ CaculateAuthorityPCRExtendValue (
   for(Index = 0; Index < Km->KeyCount; Index++) {
     SHAX_KMHASH_STRUCT      *KmHash;
     SHAX_HASH_STRUCTURE     *ShaxHash;
+    UINTN                    Remaining;
     KmHash = (SHAX_KMHASH_STRUCT*) (CurrPos);
     ShaxHash = (SHAX_HASH_STRUCTURE*) &(KmHash->Digest);
+
+    // ShaxHash->Size is a UINT16 from SPI-flash KM; validate it against the
+    // remaining capacity in MaxAuthorityPcrData before CopyMem and pointer advance.
+    Remaining = sizeof (MAX_AUTHORITY_PCR_DATA) -
+                (UINTN)(AuthorityPcrDataPtr - (UINT8*)&MaxAuthorityPcrData);
+    if (ShaxHash->Size == 0 || (UINTN)ShaxHash->Size > Remaining) {
+      DEBUG ((DEBUG_ERROR, "ERROR! KM key hash size (0x%04x) exceeds available buffer (%u bytes); aborting authority PCR loop.\n",
+              ShaxHash->Size, (UINT32)Remaining));
+      return FALSE;
+    }
+
     if ((KmHash->Usage & 0x1) != 0) {
       CopyMem ( AuthorityPcrDataPtr, ShaxHash->HashBuffer,  ShaxHash->Size);
       DEBUG ((DEBUG_INFO, "BPM Key Hash:  \n"));
