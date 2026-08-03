@@ -917,6 +917,17 @@ CreatePolicyDataMeasurementEvent (
   if (((KEY_AND_SIGNATURE_STRUCT*) CurrPos)->KeyAlg == TPM_ALG_RSA) {
     // Advance the pointer to version (1 byte) and Key_alg (2 byte)
     CurrPos = (UINT8 *) (CurrPos + sizeof (UINT8) + sizeof (UINT16));
+
+    // Validate KM KeySizeBits from flash before deriving KeyModulusSize.
+    // An unchecked UINT16 value would produce a KeyStructSize that walks CurrPos
+    // arbitrarily far into or past the KM blob.
+    if ((((KEY_STRUCT_HEADER *)(UINT8*)CurrPos)->KeySizeBits) != RSA_KEY_SIZE_2K &&
+        (((KEY_STRUCT_HEADER *)(UINT8*)CurrPos)->KeySizeBits) != RSA_KEY_SIZE_3K) {
+      DEBUG ((DEBUG_ERROR, "KM key: unsupported KeySizeBits (0x%04x)\n",
+              (((KEY_STRUCT_HEADER *)(UINT8*)CurrPos)->KeySizeBits)));
+      return EFI_UNSUPPORTED;
+    }
+
     KeyModulusSize = (((KEY_STRUCT_HEADER *) (UINT8*) CurrPos)->KeySizeBits)/8; // Modulus size in bytes
     KeyStructSize = sizeof (UINT8) + sizeof (UINT16) + sizeof (UINT32) + KeyModulusSize;
     CurrPos = CurrPos + KeyStructSize;
@@ -924,6 +935,15 @@ CreatePolicyDataMeasurementEvent (
     // Here we have reached up to SigScheme
     if((*(UINT16*) CurrPos == TPM_ALG_RSASSA) || (*(UINT16*)CurrPos == TPM_ALG_RSAPSS)) {
       CurrPos += sizeof (UINT16);
+
+      // Validate KM SigSizeBits from flash before deriving KmSigSize.
+      if ((((SIGNATURE_STRUCT_HEADER*)CurrPos)->SigSizeBits) != RSA_KEY_SIZE_2K &&
+          (((SIGNATURE_STRUCT_HEADER*)CurrPos)->SigSizeBits) != RSA_KEY_SIZE_3K) {
+        DEBUG ((DEBUG_ERROR, "KM sig: unsupported SigSizeBits (0x%04x)\n",
+                (((SIGNATURE_STRUCT_HEADER*)CurrPos)->SigSizeBits)));
+        return EFI_UNSUPPORTED;
+      }
+
       KmSigSize = (((SIGNATURE_STRUCT_HEADER*)CurrPos)->SigSizeBits)/8;
       CurrPos += sizeof (UINT8) + sizeof (UINT16) + sizeof (UINT16); // Sig version (1 byte) + sigsize (2 bytes) + hash_alg (2 bytes)
 
@@ -963,6 +983,15 @@ CreatePolicyDataMeasurementEvent (
 
     // advance the pointer to version (1 byte) and Key_alg (2 byte)
     CurrPos = (UINT8 *) (CurrPos + sizeof (UINT8) + sizeof (UINT16));
+
+    // Validate BPM KeySizeBits from flash before deriving KeyModulusSize.
+    if ((((KEY_STRUCT_HEADER *)(UINT8*)CurrPos)->KeySizeBits) != RSA_KEY_SIZE_2K &&
+        (((KEY_STRUCT_HEADER *)(UINT8*)CurrPos)->KeySizeBits) != RSA_KEY_SIZE_3K) {
+      DEBUG ((DEBUG_ERROR, "BPM key: unsupported KeySizeBits (0x%04x)\n",
+              (((KEY_STRUCT_HEADER *)(UINT8*)CurrPos)->KeySizeBits)));
+      return EFI_UNSUPPORTED;
+    }
+
     KeyModulusSize = (((KEY_STRUCT_HEADER *) (UINT8*) CurrPos)-> KeySizeBits)/8; //modulus size in bytes
     KeyStructSize = sizeof (UINT8) + sizeof (UINT16) + sizeof (UINT32) + KeyModulusSize;
     CurrPos = CurrPos + KeyStructSize;
@@ -970,6 +999,15 @@ CreatePolicyDataMeasurementEvent (
     // Here we have reached up to SigScheme
     if ((*(UINT16 *) CurrPos == TPM_ALG_RSASSA) || (*(UINT16 *) CurrPos == TPM_ALG_RSAPSS)) {
       CurrPos += sizeof (UINT16);
+
+      // Validate BPM SigSizeBits from flash before deriving BpmSigSize.
+      if ((((SIGNATURE_STRUCT_HEADER*)CurrPos)->SigSizeBits) != RSA_KEY_SIZE_2K &&
+          (((SIGNATURE_STRUCT_HEADER*)CurrPos)->SigSizeBits) != RSA_KEY_SIZE_3K) {
+        DEBUG ((DEBUG_ERROR, "BPM sig: unsupported SigSizeBits (0x%04x)\n",
+                (((SIGNATURE_STRUCT_HEADER*)CurrPos)->SigSizeBits)));
+        return EFI_UNSUPPORTED;
+      }
+
       BpmSigSize = (((SIGNATURE_STRUCT_HEADER *) CurrPos)->SigSizeBits)/8;
       CurrPos += sizeof (UINT8) + sizeof (UINT16) + sizeof (UINT16) ; // Sig version (1 byte) + sigsize (2 bytes) + hash_alg (2 bytes)
 
@@ -1292,7 +1330,9 @@ CreateIbbMeasurementEvent (
   UINT32                       CurrPcrBank;
   TPMI_ALG_HASH                CurrDigestAlg;
   TCG_PCR_EVENT2_HDR           NewEventHdr;
+  UINT8                        *HashListEnd;
   UINT16                       IbbDigestSize;
+  UINT16                       IbbHashListSize;
   UINT16                       IbbDigestCount;
   TPML_DIGEST_VALUES           DigestList;
   TPML_DIGEST_VALUES           SortedDigestList;
@@ -1314,8 +1354,16 @@ CreateIbbMeasurementEvent (
   }
 
   CurrPos = (UINT8 *)IbbHashPtr;
+  IbbHashListSize = ((HASH_LIST*)CurrPos)->Size;
   IbbDigestCount = ((HASH_LIST*)CurrPos)->Count;
   DEBUG ((DEBUG_INFO, "IbbDigestCount = 0x%04x\n", IbbDigestCount));
+
+  if (IbbHashListSize < (sizeof (UINT16) + sizeof (UINT16))) {
+    DEBUG ((DEBUG_ERROR, "ERROR! IBB hash list size (0x%04x) is smaller than HASH_LIST header size.\n", IbbHashListSize));
+    return EFI_COMPROMISED_DATA;
+  }
+
+  HashListEnd = (UINT8 *)IbbHashPtr + IbbHashListSize;
 
   //
   // Advance past size and count field
@@ -1325,8 +1373,19 @@ CreateIbbMeasurementEvent (
   DEBUG ((DEBUG_INFO, "ActivePcrBanks = 0x%x\n", ActivePcrBanks));
 
   for (Idx = 0; Idx < IbbDigestCount ; Idx++) {
+    if ((CurrPos > HashListEnd) ||
+        ((UINTN)(HashListEnd - CurrPos) < (sizeof (UINT16) + sizeof (UINT16)))) {
+      DEBUG ((DEBUG_ERROR, "ERROR! IBB digest header exceeds hash list size at entry %u.\n", Idx));
+      return EFI_COMPROMISED_DATA;
+    }
+
     CurrDigestAlg = ((SHAX_HASH_STRUCTURE *)CurrPos)->HashAlg;
     IbbDigestSize = ((SHAX_HASH_STRUCTURE *)CurrPos)->Size;
+
+    if ((UINTN)(HashListEnd - CurrPos) < (sizeof (UINT16) + sizeof (UINT16) + IbbDigestSize)) {
+      DEBUG ((DEBUG_ERROR, "ERROR! IBB digest payload exceeds hash list size at entry %u.\n", Idx));
+      return EFI_COMPROMISED_DATA;
+    }
 
     DEBUG ((DEBUG_INFO, "Idx       = 0x%04x\n", Idx));
     DEBUG ((DEBUG_INFO, "Hash Alg  = 0x%04x\n", CurrDigestAlg));
@@ -1340,6 +1399,7 @@ CreateIbbMeasurementEvent (
     switch (CurrDigestAlg) {
       case TPM_ALG_SHA1:
         DEBUG ((DEBUG_INFO, "SHA1 hashing algorithm found in the BPM digests and will not be measured in the TPM event log. SHA1 is not supported in slimboot!!\n"));
+        CurrPcrBank = 0;  // Reset to prevent stale value reuse on next iteration
         break;
       case TPM_ALG_SHA256:
         CurrPcrBank = HASH_ALG_SHA256;
@@ -1359,7 +1419,23 @@ CreateIbbMeasurementEvent (
         break;
       default:
         DEBUG ((DEBUG_ERROR, "ERROR! Unsupported hashing algorithm (0x%04x) found in the BPM digests for an active PCR bank.\n", CurrDigestAlg));
+        CurrPcrBank = 0;  // Reset to prevent stale value reuse on next iteration
         break;
+    }
+
+    // Reject flash-controlled digest size that exceeds the destination union.
+    // Do not advance CurrPos with an untrusted size; the BPM data is malformed
+    // and continuing would desynchronize parsing of the remaining digests.
+    if (IbbDigestSize > sizeof (TPMU_HA)) {
+      DEBUG ((DEBUG_ERROR, "ERROR! IBB digest size (0x%04x) exceeds TPMU_HA capacity; aborting event log build.\n", IbbDigestSize));
+      return EFI_COMPROMISED_DATA;
+    }
+
+    // Reject if digest array is already full
+    if (DigestList.count >= HASH_COUNT) {
+      DEBUG ((DEBUG_ERROR, "ERROR! DigestList is full (count=%u); skipping remaining IBB digest entries.\n", DigestList.count));
+      CurrPos += IbbDigestSize;
+      continue;
     }
 
     if ((ActivePcrBanks & CurrPcrBank) != 0) {
