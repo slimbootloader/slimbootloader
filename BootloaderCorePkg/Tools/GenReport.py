@@ -203,7 +203,7 @@ class REPORTER:
         FvHdr = EFI_FIRMWARE_VOLUME_HEADER.from_buffer(FvData, 0)
         if FvHdr.ExtHeaderOffset > 0:
             FvExtHdr = EFI_FIRMWARE_VOLUME_EXT_HEADER.from_buffer(
-                Buffer, FvHdr.ExtHeaderOffset)
+                FvData, FvHdr.ExtHeaderOffset)
             Offset = FvHdr.ExtHeaderOffset + FvExtHdr.ExtHeaderSize
         else:
             Offset = FvHdr.HeaderLength
