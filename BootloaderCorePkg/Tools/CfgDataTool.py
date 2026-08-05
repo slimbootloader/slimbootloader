@@ -785,7 +785,7 @@ def CmdSign(Args):
 
     CfgBlobHeader = CCfgData.CDATA_BLOB_HEADER.from_buffer(FileData)
     if CfgBlobHeader.Signature != b'CFGD':
-        raise Exception("Invalid config binary file '%s' !" % CfgDataFile)
+        raise Exception("Invalid config binary file '%s' !" % Args.cfg_in_file)
     CfgBlobHeader.Attribute |= CCfgData.CDATA_BLOB_HEADER.ATTR_SIGNED
 
     CfgBlobHeader.Svn = Args.svn
