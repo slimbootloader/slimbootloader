@@ -76,6 +76,7 @@
 #include <Guid/SmmS3CommunicationInfoGuid.h>
 #include <Guid/CsmePerformanceInfoGuid.h>
 #include <Guid/TpmEventLogInfoGuid.h>
+#include <Guid/Tcg2AcpiCommunicateBufferHobGuid.h>
 #include <Guid/SecureBootInfoGuid.h>
 #include <Guid/SmmBaseHob.h>
 #include <Library/IppCryptoPerfLib.h>
