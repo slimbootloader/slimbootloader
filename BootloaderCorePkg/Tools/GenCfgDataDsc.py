@@ -515,7 +515,7 @@ EndList
         if Name not in CfgDict:
             CfgDict[Name] = 1
         else:
-            print ("WARNING: Duplicated item found '%s' !" % ConfigDict['cname'])
+            print ("WARNING: Duplicated item found '%s' !" % Name)
 
     def AddBsfChildPage (self, Child, Parent = 'root'):
         def AddBsfChildPageRecursive (PageTree, Parent, Child):

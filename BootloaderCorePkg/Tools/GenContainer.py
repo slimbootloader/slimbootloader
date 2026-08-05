@@ -353,7 +353,7 @@ class CONTAINER ():
                     key_hash = self.get_pub_key_hash (file_data[offset:])
                     hash_data.extend (key_hash)
                 else:
-                    raise Exception ("Unsupported AuthType '%s' !" % auth_type)
+                    raise Exception ("Unsupported AuthType '%s' !" % auth_type_str)
         return data, hash_data, auth_data
 
     def adjust_header (self):

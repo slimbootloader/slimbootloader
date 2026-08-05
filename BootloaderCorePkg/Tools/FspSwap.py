@@ -186,7 +186,7 @@ def swap_fsp (args):
                 file_name = os.path.join (args.out_dir, name + '_%d' % partition + '.lz')
                 new_hash  = gen_hash_file (file_name, HASH_VAL_STRING[entry.HashAlg])
                 if len(new_hash) != entry.DigestLen:
-                    raise Excpetion ('Unexpected hash size !')
+                    raise Exception ('Unexpected hash size !')
                 print ('Update SBL Hash Store for %s' % name)
                 data[offset:offset+entry.DigestLen] = new_hash
             offset += entry.DigestLen
