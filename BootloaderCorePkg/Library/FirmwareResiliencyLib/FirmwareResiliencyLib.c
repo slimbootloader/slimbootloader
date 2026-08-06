@@ -294,8 +294,10 @@ UnifiedResiliencyCheck (
     NewReason           |= RECOVERY_REASON_CSME_WDT;
   }
 
-  // CSME firmware code corruption (HFSTS1/HFSTS2).
-  if (IsMeCorrupt ()) {
+  //
+  // CSME firmware code corruption detection (HFSTS1/HFSTS2 via HECI-1).
+  //
+  if (PcdGetBool (PcdCsmeResiliencyEnabled) && IsMeCorrupt ()) {
     NewReason |= RECOVERY_REASON_CSME;
   }
 
@@ -337,8 +339,8 @@ UnifiedResiliencyCheck (
         Status.AttemptCount++;
         Status.LastResult = RECOVERY_RESULT_PENDING;
         if ((Status.AttemptCount > MaxRecoveryAttempts) ||
-            ((Status.Reason == RECOVERY_REASON_CSME) && (Status.AttemptCount > 1))) {
-          if (Status.Reason == RECOVERY_REASON_CSME) {
+            (((Status.Reason & RECOVERY_REASON_CSME) != 0) && (Status.AttemptCount > 1))) {
+           if ((Status.Reason & RECOVERY_REASON_CSME) != 0) {
             DEBUG ((DEBUG_WARN, "Resiliency: CSME recovery exhausted - booting degraded\n"));
             ClearRecoveryTrigger ();
             return;
@@ -371,8 +373,8 @@ UnifiedResiliencyCheck (
 
   // Anti-loop: halt or degrade when attempts are exhausted.
   if ((Status.AttemptCount > MaxRecoveryAttempts) ||
-      ((Status.Reason == RECOVERY_REASON_CSME) && (Status.AttemptCount > 1))) {
-    if (Status.Reason == RECOVERY_REASON_CSME) {
+      (((Status.Reason & RECOVERY_REASON_CSME) != 0) && (Status.AttemptCount > 1))) {
+    if ((Status.Reason & RECOVERY_REASON_CSME) != 0) {
       DEBUG ((DEBUG_WARN, "Resiliency: CSME recovery exhausted - booting degraded\n"));
       ClearRecoveryTrigger ();
       return;

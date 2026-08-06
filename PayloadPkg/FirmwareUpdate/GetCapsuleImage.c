@@ -495,9 +495,10 @@ GetOsImageList (
 
   @param[out] CapsuleImage      The firmware update capsule image.
   @param[out] CapsuleImageSize  The capsule image size.
-  @param[in]  IsCsmeRecovery    TRUE to load the CSME recovery capsule (tag
-                                0x081, falling back to 0x080); FALSE for the
-                                standard SBL update capsule (tag 0x080).
+  @param[in]  RecoveryType      FwUpdateRecoveryNone for the standard SBL capsule
+                                (tag 0x080); FwUpdateRecoveryCsme for the dedicated
+                                CSME recovery capsule (tag 0x081). CSME recovery and
+                                FW update capsules are kept separate (different versions).
 
   @retval  EFI_SUCCESS        Get the capsule image successfully.
   @retval  others             Error happening when getting capsule image.
@@ -507,7 +508,7 @@ EFIAPI
 GetCapsuleImage (
   OUT VOID     **CapsuleImage,
   OUT UINT32   *CapsuleImageSize,
-  IN  BOOLEAN  IsCsmeRecovery
+  IN  FW_UPDATE_RECOVERY_TYPE  RecoveryType
   )
 {
   EFI_STATUS              Status;
@@ -526,15 +527,18 @@ GetCapsuleImage (
   DEBUG ((DEBUG_INFO, "\n=================Read Capsule Image==============\n"));
 
   //
-  // Get capsule configuration data. For a CSME recovery, prefer the dedicated
-  // CSME capsule (tag 0x081) and fall back to the standard capsule (0x080).
+  // For CSME recovery, load the dedicated CSME recovery capsule (tag 0x081).
+  // This block is compiled only on platforms with PcdCsmeResiliencyEnabled.
   //
-  if (IsCsmeRecovery) {
+#if FixedPcdGetBool (PcdCsmeResiliencyEnabled)
+  if (RecoveryType == FwUpdateRecoveryCsme) {
     CapsuleInfo = (CAPSULE_INFO_CFG_DATA *) FindConfigDataByTag (CDATA_CSME_CAPSULE_INFO_TAG);
     if (CapsuleInfo == NULL) {
-      DEBUG ((DEBUG_WARN, " CSME CapsuleInfo (0x081) not found, falling back to 0x080\n"));
+      DEBUG ((DEBUG_ERROR, " CSME recovery CapsuleInfo (0x081) not found\n"));
+      return EFI_NOT_FOUND;
     }
   }
+#endif
   if (CapsuleInfo == NULL) {
     CapsuleInfo = (CAPSULE_INFO_CFG_DATA *) FindConfigDataByTag (CDATA_CAPSULE_INFO_TAG);
   }

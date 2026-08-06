@@ -1589,17 +1589,16 @@ IsRedundantComponent (
   This function will get capsule image file, verify the image, and update
   current firmware using new firmware.
 
-  @param[in]  IsCsmeRecovery  TRUE when driven by a CSME firmware recovery
-                              (RECOVERY_REASON_CSME), so the CSME recovery
-                              capsule is selected; FALSE for a normal capsule
-                              update.
+  @param[in]  RecoveryType    FwUpdateRecoveryNone for a normal capsule update;
+                              FwUpdateRecoveryCsme for CSME firmware code corruption
+                              recovery; FwUpdateRecoveryIoe reserved for future IOE.
 
   @retval  EFI_SUCCESS           The operation completed successfully.
   @retval  others                There is error happening.
 **/
 EFI_STATUS
 InitFirmwareUpdate (
-  IN BOOLEAN  IsCsmeRecovery
+  IN FW_UPDATE_RECOVERY_TYPE  RecoveryType
 )
 {
   EFI_STATUS                    Status;
@@ -1625,7 +1624,7 @@ InitFirmwareUpdate (
   //
   // Get capsule image.
   //
-  Status = GetCapsuleImage (&CapsuleImage, &CapsuleSize, IsCsmeRecovery);
+  Status = GetCapsuleImage (&CapsuleImage, &CapsuleSize, RecoveryType);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "GetCapsuleImage failed with status = %r\n", Status));
   }
@@ -2172,9 +2171,9 @@ PayloadMain (
     // A valid RecoveryStatus is required (carries reason + retry state).
     // Reason selects the method: CSME -> CSME capsule; SBL/CSME_WDT -> SBL recovery.
     if (RecoveryStatusValid) {
-      if (RecoveryStatus.Reason == RECOVERY_REASON_CSME) {
+      if ((RecoveryStatus.Reason & RECOVERY_REASON_CSME) != 0) {
         DEBUG ((DEBUG_INFO, "CSME firmware recovery via capsule update\n"));
-        Status = InitFirmwareUpdate (TRUE);
+        Status = InitFirmwareUpdate (FwUpdateRecoveryCsme);
         if (Status == EFI_ALREADY_STARTED) {
           //
           // CSME capsule update completed successfully.
@@ -2203,7 +2202,7 @@ PayloadMain (
     }
   } else {
     DEBUG((DEBUG_INFO, "Triggered FW update!\n"));
-    Status = InitFirmwareUpdate (FALSE);
+    Status = InitFirmwareUpdate (FwUpdateRecoveryNone);
     if (EFI_ERROR (Status)) {
       if (Status != EFI_ALREADY_STARTED) {
         DEBUG((DEBUG_ERROR, "Firmware update failed with Status = %r\n", Status));

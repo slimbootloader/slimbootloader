@@ -48,3 +48,4 @@
 
 [Pcd]
   gPlatformModuleTokenSpaceGuid.PcdFlashBaseAddress
+  gPlatformModuleTokenSpaceGuid.PcdCsmeResiliencyEnabled
