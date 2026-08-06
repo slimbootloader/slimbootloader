@@ -9,7 +9,7 @@
 
 #include <Uefi/UefiBaseType.h>
 #include <Library/DebugLib.h>
-#include <Library/PciExpressLib.h>
+#include <Library/IoLib.h>
 #include "InternalPciEnumerationLib.h"
 
 /**
@@ -67,14 +67,14 @@ LocateCapabilityRegBlock (
     CapabilityPtr = *Offset;
   } else {
     if (IS_CARDBUS_BRIDGE (&PciIoDevice->Pci)) {
-      CapabilityPtr = PciExpressRead8 (PciIoDevice->Address + EFI_PCI_CARDBUS_BRIDGE_CAPABILITY_PTR);
+      CapabilityPtr = MmioRead8 (MCFG_ADDR (PciIoDevice, EFI_PCI_CARDBUS_BRIDGE_CAPABILITY_PTR));
     } else {
-      CapabilityPtr = PciExpressRead8 (PciIoDevice->Address + PCI_CAPBILITY_POINTER_OFFSET);
+      CapabilityPtr = MmioRead8 (MCFG_ADDR (PciIoDevice, PCI_CAPBILITY_POINTER_OFFSET));
     }
   }
 
   while ((CapabilityPtr >= 0x40) && ((CapabilityPtr & 0x03) == 0x00)) {
-    CapabilityEntry = PciExpressRead16 (PciIoDevice->Address + CapabilityPtr);
+    CapabilityEntry = MmioRead16 (MCFG_ADDR (PciIoDevice, CapabilityPtr));
     CapabilityID    = (UINT8) CapabilityEntry;
 
     if (CapabilityID == CapId) {
@@ -137,7 +137,7 @@ LocatePciExpressCapabilityRegBlock (
     // Mask it to DWORD alignment per PCI spec
     //
     CapabilityPtr &= 0xFFC;
-    CapabilityEntry = PciExpressRead32 (PciIoDevice->Address + CapabilityPtr);
+    CapabilityEntry = MmioRead32 (MCFG_ADDR (PciIoDevice, CapabilityPtr));
     if (CapabilityEntry == MAX_UINT32) {
       DEBUG ((DEBUG_WARN, "PCI Address 0x08X failed to access at offset 0x%X\n",
         PciIoDevice->Address, CapabilityPtr));

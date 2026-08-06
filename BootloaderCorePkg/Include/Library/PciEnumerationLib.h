@@ -46,7 +46,8 @@ typedef enum {
 typedef struct {
   UINT8             BusBase;
   UINT8             BusLimit;
-  UINT16            Reserved;
+  UINT8             Segment;
+  UINT8             Reserved;
   UINT32            IoBase;
   UINT32            IoLimit;
   UINT64            Mmio32Base;
@@ -65,6 +66,29 @@ typedef struct {
 } PCI_RES_ALLOC_TABLE;
 
 typedef VOID   (EFIAPI *PLATFORM_PCI_ENUM_HOOK_PROC) (UINT8 Bus, UINT8 Dev, UINT8 Fun, EFI_PCI_CONTROLLER_RESOURCE_ALLOCATION_PHASE Phase);
+
+#define MAX_HOST_BRIDGES  8
+
+///
+/// Per-host-bridge (PCI segment) configuration for enumeration.
+///
+typedef struct {
+  UINT64    McfgBase;    ///< MCFG (ECAM) base address for this host bridge
+  UINT8     Segment;     ///< PCI segment group number
+  UINT8     BusBase;     ///< First bus in this host bridge's window
+  UINT8     BusLimit;    ///< Last bus in this host bridge's window
+  UINT8     Reserved;
+} PCI_HOST_BRIDGE_INFO;
+
+///
+/// Table of host bridge descriptors, pointed to by PcdPciHostBridgeTableBase.
+/// If not set, a single host bridge is derived from PcdPciExpressBaseAddress.
+///
+typedef struct {
+  UINT8                  Count;
+  UINT8                  Reserved[3];
+  PCI_HOST_BRIDGE_INFO   HostBridge[MAX_HOST_BRIDGES];
+} PCI_HOST_BRIDGE_TABLE;
 
 /**
  Enumerates the PCI devices allocates the required memory resource.

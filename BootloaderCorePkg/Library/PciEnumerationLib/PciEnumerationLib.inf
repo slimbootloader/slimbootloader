@@ -41,12 +41,14 @@
   BaseLib
   DebugLib
   PciExpressLib
+  IoLib
   SortLib
   HobLib
 
 [Guids]
   gFspNonVolatileStorageHobGuid
   gUniversalPayloadPciRootBridgeInfoGuid
+  gUplPciSegmentInfoHobGuid
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress  ## CONSUMES
@@ -58,4 +60,5 @@
   gPlatformModuleTokenSpaceGuid.PcdSrIovSupport
   gPlatformModuleTokenSpaceGuid.PcdResizableBarSupport
   gPlatformModuleTokenSpaceGuid.PcdPciResAllocTableBase
+  gPlatformModuleTokenSpaceGuid.PcdPciHostBridgeTableBase
   gPlatformModuleTokenSpaceGuid.PcdPciEnumHookProc
