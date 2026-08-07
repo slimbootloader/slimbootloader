@@ -8,6 +8,42 @@
 #include <PiPei.h>
 #include "SmbiosTables.h"
 
+typedef struct {
+  UINT8  Type;
+  UINT8  MaxStringIndex;
+} SMBIOS_TEMPLATE_STRING_INFO;
+
+STATIC CONST SMBIOS_TEMPLATE_STRING_INFO mSmbiosTemplateStringInfo[] = {
+  { SMBIOS_TYPE_BIOS_INFORMATION,     SMBIOS_STRING_INDEX_3 },
+  { SMBIOS_TYPE_SYSTEM_INFORMATION,   SMBIOS_STRING_INDEX_6 },
+  { SMBIOS_TYPE_BASEBOARD_INFORMATION,SMBIOS_STRING_INDEX_6 },
+  { SMBIOS_TYPE_SYSTEM_ENCLOSURE,     SMBIOS_STRING_INDEX_4 },
+  // Type4 is intentionally omitted because BuildProcessorInfo appends strings manually.
+};
+
+/**
+  Get expected maximum string index for a template-backed SMBIOS type.
+
+  @param[in]  Type      SMBIOS type.
+
+  @retval               Max index expected by the type template, or 0 if unknown.
+**/
+UINT8
+GetTemplateMaxStrIndex (
+  IN  UINT8   Type
+  )
+{
+  UINTN  Index;
+
+  for (Index = 0; Index < ARRAY_SIZE (mSmbiosTemplateStringInfo); Index++) {
+    if (mSmbiosTemplateStringInfo[Index].Type == Type) {
+      return mSmbiosTemplateStringInfo[Index].MaxStringIndex;
+    }
+  }
+
+  return 0;
+}
+
 
 SMBIOS_TABLE_TYPE0    mBiosInfo = {
   {                                         // Hdr

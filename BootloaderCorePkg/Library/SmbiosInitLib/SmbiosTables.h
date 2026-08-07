@@ -172,6 +172,18 @@ extern  SMBIOS_TABLE_TYPE4    mProcessorInfo;
 extern  SMBIOS_TABLE_TYPE19   mMemArrayMappedAddr;
 
 /**
+  Get expected maximum string index for a template-backed SMBIOS type.
+
+  @param[in]  Type      SMBIOS type.
+
+  @retval               Max index expected by the type template, or 0 if unknown.
+**/
+UINT8
+GetTemplateMaxStrIndex (
+  IN  UINT8   Type
+  );
+
+/**
   This function builds required processor info SMBIOS type.
 **/
 EFI_STATUS

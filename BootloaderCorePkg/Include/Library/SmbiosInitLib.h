@@ -28,7 +28,7 @@ typedef struct {
     3. Adjust the TotalLength in entry point struct
     4. Update entry point & intermediate checksum
 
-  @param[in]  NewMaxStructSize    Maximum type size of all the types added    , if called from SmbiosInit
+  @param[in]  NewMaxStructSize    Maximum type size of all the types added    , if called from BuildSmbiosTables
                                   Type Length of the current table appended   , if called from AppendSmbiosType
 
   @retval                         EFI_DEVICE_ERROR, if Smbios Entry is NULL
@@ -38,6 +38,35 @@ typedef struct {
 EFI_STATUS
 FinalizeSmbios (
   VOID
+  );
+
+/**
+  Initialize the runtime SMBIOS string buffer and seed common strings.
+
+  @retval EFI_SUCCESS            The SMBIOS string buffer is ready.
+  @retval EFI_OUT_OF_RESOURCES   Memory allocation failed.
+**/
+EFI_STATUS
+EFIAPI
+SmbiosStringBufferInit (
+  VOID
+  );
+
+/**
+  Append a serialized SMBIOS string table blob to the runtime string buffer.
+
+  @param[in]  SmbiosData      Serialized Type+Idx+String table.
+  @param[in]  SmbiosDataSize  Size of SmbiosData in bytes.
+
+  @retval EFI_SUCCESS            The blob was appended successfully.
+  @retval EFI_INVALID_PARAMETER  Input is invalid.
+  @retval EFI_OUT_OF_RESOURCES   String buffer capacity would be exceeded.
+**/
+EFI_STATUS
+EFIAPI
+AppendSmbiosStringData (
+  IN  CONST CHAR8   *SmbiosData,
+  IN  UINT32         SmbiosDataSize
   );
 
 /**
@@ -92,17 +121,17 @@ AddSmbiosTypeString (
   );
 
 /**
-  Load and initialize customized SMBIOS string data.
+  Load and append customized SMBIOS string data from a specified component.
 
-  This function allocates a buffer for SMBIOS strings, populates it with BIOS and baseboard information,
-  and loads additional SMBIOS string data from a specified component. The buffer pointer is stored in a PCD
-  for later use. The function ensures that the buffer is not overrun when copying additional data.
+  This function ensures the runtime SMBIOS string buffer is initialized,
+  then loads SMBIOS string data from the specified component and appends
+  it into that buffer.
 
   @param[in]  ContainerSig   Signature identifying the container to load SMBIOS data from.
   @param[in]  ComponentName  Name of the component containing SMBIOS string data.
 
-  @retval EFI_SUCCESS            The SMBIOS string data was loaded and initialized successfully.
-  @retval EFI_OUT_OF_RESOURCES   Memory allocation for the SMBIOS string table failed.
+  @retval EFI_SUCCESS            The SMBIOS string data was loaded and appended successfully.
+  @retval EFI_OUT_OF_RESOURCES   Runtime SMBIOS string buffer allocation failed.
   @retval Other                  Error returned by LoadComponent if loading SMBIOS data fails.
 **/
 EFI_STATUS
@@ -113,15 +142,14 @@ LoadSmbiosStringsFromComponent (
   );
 
 /**
-  This function is called to initialize the SMBIOS tables.
+  Build the SMBIOS tables from templates and the prepared runtime string buffer.
 
-  @retval       EFI_DEVICE_ERROR, if Smbios Entry is NULL
-                Status after finalizing the Smbios init
-
+  @retval EFI_DEVICE_ERROR, if Smbios Entry is NULL
+          Status from table construction otherwise.
 **/
 EFI_STATUS
 EFIAPI
-SmbiosInit (
+BuildSmbiosTables (
   VOID
   );
 
