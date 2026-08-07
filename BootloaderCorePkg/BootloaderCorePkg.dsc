@@ -24,6 +24,10 @@
 
 !include Platform.dsc
 
+!ifndef ENABLE_UNIFIED_VARIABLE
+  DEFINE ENABLE_UNIFIED_VARIABLE = 0
+!endif
+
 ################################################################################
 #
 # SKU Identification section - list of all SKU IDs supported by this Platform.
@@ -80,7 +84,11 @@
   MmcAccessLib|BootloaderCommonPkg/Library/MmcAccessLib/MmcAccessLib.inf
   GraphicsLib|BootloaderCommonPkg/Library/GraphicsLib/GraphicsLib.inf
   Crc32Lib|BootloaderCommonPkg/Library/Crc32Lib/Crc32Lib.inf
+!if $(ENABLE_UNIFIED_VARIABLE) == 1
+  VariableLib|BootloaderCommonPkg/Library/FullVariableLib/FullVariableLib.inf
+!else
   VariableLib|BootloaderCommonPkg/Library/LiteVariableLib/LiteVariableLib.inf
+!endif
   DebugDataLib|BootloaderCorePkg/Library/DebugDataLib/DebugDataLib.inf
   CpuExceptionLib|BootloaderCorePkg/Library/CpuExceptionLib/CpuExceptionLib.inf
   FileSystemLib|BootloaderCommonPkg/Library/FileSystemLib/FileSystemLib.inf
