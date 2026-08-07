@@ -51,6 +51,7 @@
   AspeedGfxLib
   UefiVariableLib
   BdatLib
+  PsdLib
   SgxLib
   GpioV2Lib
   P2sbLib
@@ -78,6 +79,7 @@
   gPlatformModuleTokenSpaceGuid.PcdSplashEnabled
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegSize
+  gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled
   gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
   gPlatformModuleTokenSpaceGuid.PcdPciEnumHookProc
   gPlatformModuleTokenSpaceGuid.PcdFuncCpuInitHook

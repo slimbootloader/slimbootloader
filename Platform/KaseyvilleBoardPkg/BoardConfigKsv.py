@@ -64,6 +64,7 @@ class Board(BaseBoard):
         self.HAVE_VERIFIED_BOOT   = 1
         self.HAVE_MEASURED_BOOT   = 1
         self.HAVE_ACPI_TABLE      = 1
+        self.HAVE_PSD_TABLE       = 1
         self.HAVE_FLASH_MAP       = 1
 
         self.ENABLE_SPLASH        = 1
@@ -226,6 +227,7 @@ class Board(BaseBoard):
             'ShellExtensionLib|Platform/$(BOARD_PKG_NAME)/Library/ShellExtensionLib/ShellExtensionLib.inf',
             'AspeedGfxLib|Platform/$(BOARD_PKG_NAME)/Library/AspeedGfxLib/AspeedGfxLib.inf',
             'BdatLib|Silicon/$(SILICON_PKG_NAME)/Library/BdatLib/BdatLib.inf',
+            'PsdLib|Silicon/$(SILICON_PKG_NAME)/Library/PsdLib/PsdLib.inf',
             'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf',
             'TcoTimerLib|Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
             'TopSwapLib|Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf'
