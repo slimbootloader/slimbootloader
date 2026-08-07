@@ -191,4 +191,4 @@
 [BuildOptions.X64]
   # /wd4996: Upstream ipp-crypto uses APIs MSVC labels as deprecated.
   MSFT:*_*_*_CC_FLAGS = -D_ABL_ -D_ARCH_EM64T -DIPPCP_FIPS_MODE /GL- /wd4996
-  GCC:*_*_*_CC_FLAGS  = -D_ABL_ -D_ARCH_EM64T -DIPPCP_FIPS_MODE -w -Wformat -Wformat-security
+  GCC:*_*_*_CC_FLAGS  = -D_ABL_ -D_ARCH_EM64T -DIPPCP_FIPS_MODE -w -Wformat -Wformat-security -U_WIN64 -U_WIN32
