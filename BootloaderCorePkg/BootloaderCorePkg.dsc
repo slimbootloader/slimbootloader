@@ -274,6 +274,7 @@
 
   gPlatformCommonLibTokenSpaceGuid.PcdBootPerformanceMask       | $(BOOT_PERFORMANCE_MASK)
   gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled         | $(ENABLE_SBL_RESILIENCY)
+  gPlatformModuleTokenSpaceGuid.PcdCsmeResiliencyEnabled        | $(ENABLE_CSME_RESILIENCY)
   gPlatformModuleTokenSpaceGuid.PcdIdenticalTopSwapsBuilt       | $(BUILD_IDENTICAL_TS)
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled          | $(ENABLE_TCC)
   gPlatformCommonLibTokenSpaceGuid.PcdEnableCryptoPerfTest      | $(ENABLE_IPP_CRYPTO_PERF)
@@ -430,9 +431,10 @@
 
   BootloaderCorePkg/Stage2/Stage2.inf {
     <LibraryClasses>
-      FspApiLib    | BootloaderCorePkg/Library/FspApiLib/FspsApiLib.inf
-      SocInitLib   | $(SOC_INIT_STAGE2_LIB_INF_FILE)
-      BoardInitLib | $(BRD_INIT_STAGE2_LIB_INF_FILE)
+      FspApiLib             | BootloaderCorePkg/Library/FspApiLib/FspsApiLib.inf
+      FirmwareResiliencyLib | BootloaderCorePkg/Library/FirmwareResiliencyLib/FirmwareResiliencyLib.inf
+      SocInitLib            | $(SOC_INIT_STAGE2_LIB_INF_FILE)
+      BoardInitLib          | $(BRD_INIT_STAGE2_LIB_INF_FILE)
   }
 
   PayloadPkg/OsLoader/OsLoader.inf {

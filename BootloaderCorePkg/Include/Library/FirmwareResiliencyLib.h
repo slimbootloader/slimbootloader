@@ -42,4 +42,16 @@ UnifiedResiliencyCheck (
   IN UINT8  MaxRecoveryAttempts
   );
 
+/**
+  Detect CSME firmware code corruption via HECI HFSTS1/HFSTS2 registers.
+
+  @retval TRUE   CSME firmware corruption detected.
+  @retval FALSE  CSME firmware is healthy (or HECI-1 is not present).
+**/
+BOOLEAN
+EFIAPI
+IsMeCorrupt (
+  VOID
+  );
+
 #endif

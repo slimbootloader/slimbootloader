@@ -1,6 +1,6 @@
 /** @file
 
-Copyright (c) 2022, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2022 - 2026, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -17,9 +17,13 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/VariableLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/BootloaderCoreLib.h>
+#include <Library/PciLib.h>
 #include <Pi/PiBootMode.h>
 #include <FirmwareUpdateStatus.h>
 #include <RecoveryStatus.h>
+#include <Register/HeciRegs.h>
+#include <Guid/OsBootOptionGuid.h>
+#include <IndustryStandard/Pci22.h>
 
 STATIC CONST CHAR16 *mRecoveryStatusVariableName = RECOVERY_STATUS_VARIABLE_NAME;
 
@@ -160,6 +164,58 @@ DetectCsmeWdtFailure (
 }
 
 /**
+  Detect CSME firmware code corruption via HECI HFSTS1/HFSTS2 registers.
+
+  Resolves HECI-1 from the platform device table (e.g. bus 128 on Novalake).
+  Corruption = stuck in recovery, fault-tolerant bring-up load failure, or a
+  pending forced firmware update (IPU).
+
+  @retval TRUE   CSME firmware corruption detected; recovery required.
+  @retval FALSE  CSME firmware is healthy (or HECI-1 is not present).
+**/
+BOOLEAN
+EFIAPI
+IsMeCorrupt (
+  VOID
+  )
+{
+  HECI_FWS_REGISTER      MeFwSts1;
+  HECI_GS_SHDW_REGISTER  MeFwSts2;
+  UINT32                 MeDeviceAddr;
+  PLT_PCI_DEVICE         MeDev;
+  UINTN                  HeciBase;
+
+  // Resolve HECI-1 from the device table; fall back to bus 0, device 22.
+  MeDeviceAddr = GetDeviceAddr ((UINT8)PlatformDeviceMe, 0);
+  if (MeDeviceAddr == 0) {
+    MeDev.PciBusNumber    = 0;
+    MeDev.PciDeviceNumber = HECI_DEV;
+  } else {
+    CopyMem (&MeDev, &MeDeviceAddr, sizeof (UINT32));
+  }
+
+  HeciBase = PCI_LIB_ADDRESS (MeDev.PciBusNumber, MeDev.PciDeviceNumber, HECI_FUN, 0);
+
+  // HECI-1 absent/disabled: device ID reads as 0xFFFF.
+  if (PciRead16 (HeciBase + PCI_DEVICE_ID_OFFSET) == 0xFFFF) {
+    return FALSE;
+  }
+
+  MeFwSts1.ul = PciRead32 (HeciBase + R_ME_HFS);
+  MeFwSts2.ul = PciRead32 (HeciBase + R_ME_HFS_2);
+
+  if ((MeFwSts1.r.CurrentState == ME_STATE_RECOVERY) ||
+      (MeFwSts1.r.FtBupLdFlr == 1) ||
+      (MeFwSts2.r.FwUpdIpu == 1)) {
+    DEBUG ((DEBUG_ERROR, "CSME firmware corruption detected (HFSTS1=0x%08x HFSTS2=0x%08x)\n",
+            MeFwSts1.ul, MeFwSts2.ul));
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+/**
   Unified resiliency check point.
 
   Consolidates ACM and TCO checks and maintains persistent recovery state.
@@ -186,9 +242,7 @@ UnifiedResiliencyCheck (
   if ((GetBootMode () == BOOT_ON_FLASH_UPDATE) && !IsRecoveryTriggered ()) {
     return;
   }
-  //
-  // Read existing "RecoveryStatus" variable (may not exist).
-  //
+  // Read existing RecoveryStatus variable (may not exist).
   ZeroMem (&Status, sizeof (Status));
   Size      = sizeof (RECOVERY_STATUS);
   EfiStatus = GetVariable (
@@ -229,9 +283,7 @@ UnifiedResiliencyCheck (
     }
   }
 
-  //
-  // Detect failures.
-  //
+  // Detect failures this boot.
   NewReason           = RECOVERY_REASON_NONE;
   NeedPartitionSwitch = FALSE;
 
@@ -240,6 +292,13 @@ UnifiedResiliencyCheck (
   //
   if (DetectCsmeWdtFailure ()) {
     NewReason           |= RECOVERY_REASON_CSME_WDT;
+  }
+
+  //
+  // CSME firmware code corruption detection (HFSTS1/HFSTS2 via HECI-1).
+  //
+  if (PcdGetBool (PcdCsmeResiliencyEnabled) && IsMeCorrupt ()) {
+    NewReason |= RECOVERY_REASON_CSME;
   }
 
   //
@@ -271,17 +330,21 @@ UnifiedResiliencyCheck (
     }
   }
 
-  //
   // No new failure detected this boot.
-  //
   if (NewReason == RECOVERY_REASON_NONE) {
     if (VarExists && (Status.Reason != RECOVERY_REASON_NONE)) {
       // Recovery already pending from a prior boot.
       if (Status.LastResult != RECOVERY_RESULT_PENDING) {
-        // Previous attempt failed; count retry.
+        // Previous attempt failed; count this retry.
         Status.AttemptCount++;
         Status.LastResult = RECOVERY_RESULT_PENDING;
-        if (Status.AttemptCount > MaxRecoveryAttempts) {
+        if ((Status.AttemptCount > MaxRecoveryAttempts) ||
+            (((Status.Reason & RECOVERY_REASON_CSME) != 0) && (Status.AttemptCount > 1))) {
+           if ((Status.Reason & RECOVERY_REASON_CSME) != 0) {
+            DEBUG ((DEBUG_WARN, "Resiliency: CSME recovery exhausted - booting degraded\n"));
+            ClearRecoveryTrigger ();
+            return;
+          }
           CpuHalt ("Recovery failed after maximum attempts\n");
         }
         EfiStatus = SaveRecoveryStatus (&Status);
@@ -289,20 +352,14 @@ UnifiedResiliencyCheck (
           CpuHalt ("Resiliency: failed to persist retry state\n");
         }
       }
-      //
-      // Keep trigger set so FW update payload runs recovery.
-      //
+      // Keep trigger set so the FW update payload runs recovery.
       SetRecoveryTrigger ();
     }
-    //
-    // Otherwise no recovery is needed - continue normal boot.
-    //
+    // Otherwise no recovery needed - continue normal boot.
     return;
   }
 
-  //
   // Recovery needed - update or create the variable.
-  //
   if (VarExists) {
     Status.Reason     |= NewReason;
     Status.AttemptCount += 1;
@@ -314,29 +371,27 @@ UnifiedResiliencyCheck (
     Status.LastResult   = RECOVERY_RESULT_PENDING;
   }
 
-  //
-  // Anti-loop protection.
-  //
-  if (Status.AttemptCount > MaxRecoveryAttempts) {
+  // Anti-loop: halt or degrade when attempts are exhausted.
+  if ((Status.AttemptCount > MaxRecoveryAttempts) ||
+      (((Status.Reason & RECOVERY_REASON_CSME) != 0) && (Status.AttemptCount > 1))) {
+    if ((Status.Reason & RECOVERY_REASON_CSME) != 0) {
+      DEBUG ((DEBUG_WARN, "Resiliency: CSME recovery exhausted - booting degraded\n"));
+      ClearRecoveryTrigger ();
+      return;
+    }
     CpuHalt ("Recovery failed after maximum attempts\n");
   }
 
-  //
-  // Write updated variable.
-  //
+  // Persist the updated recovery state.
   EfiStatus = SaveRecoveryStatus (&Status);
   if (EFI_ERROR (EfiStatus)) {
     CpuHalt ("Resiliency: failed to persist recovery state\n");
   }
 
-  //
   // Ensure the WDT recovery trigger (BIT20) is set.
-  //
   SetRecoveryTrigger ();
 
-  //
   // Switch partition and cold reset when required.
-  //
   if ((Status.Reason & RECOVERY_REASON_SBL) && NeedPartitionSwitch) {
     NewPartition = (GetCurrentBootPartition () == PrimaryPartition) ? BackupPartition : PrimaryPartition;
     DEBUG ((DEBUG_INFO, "Boot failure threshold reached! Switching to partition: %d\n", NewPartition));
@@ -347,9 +402,6 @@ UnifiedResiliencyCheck (
     ResetSystem (EfiResetCold);
   }
 
-  //
-  // No partition switch: recovery continues in this boot, so override the
-  // boot mode to BOOT_ON_FLASH_UPDATE so Stage2 runs the FW update payload.
-  //
+  // Recovery continues this boot: run the FW update payload in Stage2.
   SetBootMode (BOOT_ON_FLASH_UPDATE);
 }

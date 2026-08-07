@@ -82,6 +82,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleWidth
   gPlatformCommonLibTokenSpaceGuid.PcdFrameBufferMaxConsoleHeight
   gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled
+  gPlatformModuleTokenSpaceGuid.PcdCsmeResiliencyEnabled
   gPlatformModuleTokenSpaceGuid.PcdBootFailureThreshold
   gPlatformModuleTokenSpaceGuid.PcdUcodeSlotSize
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled

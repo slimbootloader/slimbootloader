@@ -8,7 +8,7 @@
   the result of the last attempt. It also holds the consecutive TCO timeout
   counter that previously lived in the WDT scratchpad (BIT19:18).
 
-  Copyright (c) 2024, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2024 - 2026, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -33,7 +33,7 @@
 #define RECOVERY_REASON_NONE            0x00
 #define RECOVERY_REASON_SBL             0x01    // TCO timeout detected SBL failure
 #define RECOVERY_REASON_CSME_WDT        0x02    // CSME triggered Top Swap (WDT expiry) due to failure outside SBL
-#define RECOVERY_REASON_CSME            0x04    // CSME firmware failure (HFSTS) - to be implemented
+#define RECOVERY_REASON_CSME            0x04    // CSME firmware code corruption (HFSTS1/HFSTS2)
 #define RECOVERY_REASON_IOE             0x08    // IOE CSME firmware failure - to be implemented
 // BIT4..BIT7 reserved for future failure sources
 
