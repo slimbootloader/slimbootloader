@@ -15,6 +15,7 @@
 #define ASPM_L0s_NO_LIMIT 0x7
 #define LINK_RETRAIN_WAIT_TIME 1000 // microseconds
 #define PCH_A0                0x00
+#define MAX_PCIE_RECURSION_DEPTH 32
 
 typedef union {
   struct {
@@ -1259,14 +1260,19 @@ RecursiveL1ssConfiguration (
   When this function executes on downstream component, all devices below it are guaranteed to
   return CPM=0 so it will do nothing
 
-  @param[in] Segment,Bus,Device,Function    address of currently visited PCIe device
+  @param[in] Sbdf     segment:bus:device:function coordinates of currently visited PCIe device
+  @param[in] Depth    recursion depth counter; caller must pass 0 at the root port and the
+                      function increments by 1 per level of descent. Traversal is aborted
+                      when Depth >= MAX_PCIE_RECURSION_DEPTH to prevent stack exhaustion
+                      from untrusted device-supplied SecondaryBus values.
 
   @retval TRUE = this device supports CPM, FALSE = it doesn't
 **/
 STATIC
 BOOLEAN
 RecursiveCpmConfiguration (
-  SBDF       Sbdf
+  SBDF       Sbdf,
+  UINT8      Depth
   )
 {
   SBDF         ChildSbdf;
@@ -1275,13 +1281,22 @@ RecursiveCpmConfiguration (
 
   DEBUG ((DEBUG_INFO, "RecursiveCpmConfiguration %x:%x:%x\n", Sbdf.Bus, Sbdf.Dev, Sbdf.Func));
 
+  //
+  // Prevent unbounded recursion from malicious PCIe bridge with cyclic bus topology.
+  // Device-supplied SecondaryBus must be validated with depth counter.
+  //
+  if (Depth >= MAX_PCIE_RECURSION_DEPTH) {
+    DEBUG ((DEBUG_ERROR, "RecursiveCpmConfiguration: max recursion depth exceeded at %02x:%02x:%02x (Depth=%u, Max=%u)\n", Sbdf.Bus, Sbdf.Dev, Sbdf.Func, Depth, MAX_PCIE_RECURSION_DEPTH));
+    return FALSE;
+  }
+
   ChildCpm = FALSE;
 
   if (HasChildBus (Sbdf, &ChildSbdf)) {
     ChildCpm = TRUE;
     DevType = GetDeviceType (Sbdf);
     while (FindNextPcieChild (DevType, &ChildSbdf)) {
-      ChildCpm &= RecursiveCpmConfiguration (ChildSbdf);
+      ChildCpm &= RecursiveCpmConfiguration (ChildSbdf, Depth + 1);
     }
     if (ChildCpm) {
       while (FindNextPcieChild (DevType, &ChildSbdf)) {
@@ -1594,7 +1609,7 @@ RootportDownstreamPmConfiguration (
   ConfigureRpLtrOverride (RpBase, RpSbdf.Dev, &TreeLtr, &(PcieRpCommonConfig->PcieRpLtrConfig));
   DEBUG ((DEBUG_INFO, "ConfigureRpLtrOverride %x:%x\n", RpSbdf.Dev, RpSbdf.Func));
   if (PcieRpCommonConfig->EnableCpm) {
-    RecursiveCpmConfiguration (RpSbdf);
+    RecursiveCpmConfiguration (RpSbdf, 0);
   }
   //
   // L1 substates can be modified only when L1 is disabled, so this function must execute
