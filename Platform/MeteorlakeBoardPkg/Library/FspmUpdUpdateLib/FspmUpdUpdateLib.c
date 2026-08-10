@@ -58,6 +58,30 @@ GetCpuStepping(
 }
 
 /**
+  Return the SPD pointer selected by a CFGDATA-controlled index, or 0 if the
+  index (SpdDataSelNNN, an unbounded UINT8 from CFGDATA) is out of range.
+
+  @param[in]  SpdData       Array of candidate SPD pointers.
+  @param[in]  SpdDataCount  Number of entries in SpdData.
+  @param[in]  Index         CFGDATA-supplied selector index.
+
+  @retval                   Selected SPD pointer value, or 0 if Index is out of range.
+**/
+STATIC
+UINT32
+GetSpdDataBySel (
+  IN CONST UINT32  *SpdData,
+  IN UINT32         SpdDataCount,
+  IN UINT8          Index
+  )
+{
+  if (Index >= SpdDataCount) {
+    return 0;
+  }
+  return SpdData[Index];
+}
+
+/**
   Update FSP-M UPD config data.
 
   @param  FspmUpdPtr            The pointer to the FSP-M UPD to be updated.
@@ -81,7 +105,7 @@ UpdateFspConfig (
   UINT8                       SaDisplayConfigTable[16] = { 0 };
   UINT8                       Index;
   UINT8                       DebugPort;
-  UINT32                      SpdData[7];
+  UINT32                      SpdData[3];
   UINT32                      CarBase;
   UINT32                      CarSize;
   EFI_STATUS                  Status;
@@ -132,22 +156,22 @@ UpdateFspConfig (
   SpdData[1] = (UINT32)(UINTN) (((MEM_SPD0_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD0_TAG))->MemorySpdPtr0);
   SpdData[2] = (UINT32)(UINTN) (((MEM_SPD1_CFG_DATA *)FindConfigDataByTag (CDATA_MEM_SPD1_TAG))->MemorySpdPtr1);
 
-  Fspmcfg->MemorySpdPtr000  = SpdData[MemCfgData->SpdDataSel000];
-  Fspmcfg->MemorySpdPtr001  = SpdData[MemCfgData->SpdDataSel001];
-  Fspmcfg->MemorySpdPtr010  = SpdData[MemCfgData->SpdDataSel010];
-  Fspmcfg->MemorySpdPtr011  = SpdData[MemCfgData->SpdDataSel011];
-  Fspmcfg->MemorySpdPtr020  = SpdData[MemCfgData->SpdDataSel020];
-  Fspmcfg->MemorySpdPtr021  = SpdData[MemCfgData->SpdDataSel021];
-  Fspmcfg->MemorySpdPtr030  = SpdData[MemCfgData->SpdDataSel030];
-  Fspmcfg->MemorySpdPtr031  = SpdData[MemCfgData->SpdDataSel031];
-  Fspmcfg->MemorySpdPtr100  = SpdData[MemCfgData->SpdDataSel100];
-  Fspmcfg->MemorySpdPtr101  = SpdData[MemCfgData->SpdDataSel101];
-  Fspmcfg->MemorySpdPtr110  = SpdData[MemCfgData->SpdDataSel110];
-  Fspmcfg->MemorySpdPtr111  = SpdData[MemCfgData->SpdDataSel111];
-  Fspmcfg->MemorySpdPtr120  = SpdData[MemCfgData->SpdDataSel120];
-  Fspmcfg->MemorySpdPtr121  = SpdData[MemCfgData->SpdDataSel121];
-  Fspmcfg->MemorySpdPtr130  = SpdData[MemCfgData->SpdDataSel130];
-  Fspmcfg->MemorySpdPtr131  = SpdData[MemCfgData->SpdDataSel131];
+  Fspmcfg->MemorySpdPtr000  = GetSpdDataBySel (SpdData, ARRAY_SIZE (SpdData), MemCfgData->SpdDataSel000);
+  Fspmcfg->MemorySpdPtr001  = GetSpdDataBySel (SpdData, ARRAY_SIZE (SpdData), MemCfgData->SpdDataSel001);
+  Fspmcfg->MemorySpdPtr010  = GetSpdDataBySel (SpdData, ARRAY_SIZE (SpdData), MemCfgData->SpdDataSel010);
+  Fspmcfg->MemorySpdPtr011  = GetSpdDataBySel (SpdData, ARRAY_SIZE (SpdData), MemCfgData->SpdDataSel011);
+  Fspmcfg->MemorySpdPtr020  = GetSpdDataBySel (SpdData, ARRAY_SIZE (SpdData), MemCfgData->SpdDataSel020);
+  Fspmcfg->MemorySpdPtr021  = GetSpdDataBySel (SpdData, ARRAY_SIZE (SpdData), MemCfgData->SpdDataSel021);
+  Fspmcfg->MemorySpdPtr030  = GetSpdDataBySel (SpdData, ARRAY_SIZE (SpdData), MemCfgData->SpdDataSel030);
+  Fspmcfg->MemorySpdPtr031  = GetSpdDataBySel (SpdData, ARRAY_SIZE (SpdData), MemCfgData->SpdDataSel031);
+  Fspmcfg->MemorySpdPtr100  = GetSpdDataBySel (SpdData, ARRAY_SIZE (SpdData), MemCfgData->SpdDataSel100);
+  Fspmcfg->MemorySpdPtr101  = GetSpdDataBySel (SpdData, ARRAY_SIZE (SpdData), MemCfgData->SpdDataSel101);
+  Fspmcfg->MemorySpdPtr110  = GetSpdDataBySel (SpdData, ARRAY_SIZE (SpdData), MemCfgData->SpdDataSel110);
+  Fspmcfg->MemorySpdPtr111  = GetSpdDataBySel (SpdData, ARRAY_SIZE (SpdData), MemCfgData->SpdDataSel111);
+  Fspmcfg->MemorySpdPtr120  = GetSpdDataBySel (SpdData, ARRAY_SIZE (SpdData), MemCfgData->SpdDataSel120);
+  Fspmcfg->MemorySpdPtr121  = GetSpdDataBySel (SpdData, ARRAY_SIZE (SpdData), MemCfgData->SpdDataSel121);
+  Fspmcfg->MemorySpdPtr130  = GetSpdDataBySel (SpdData, ARRAY_SIZE (SpdData), MemCfgData->SpdDataSel130);
+  Fspmcfg->MemorySpdPtr131  = GetSpdDataBySel (SpdData, ARRAY_SIZE (SpdData), MemCfgData->SpdDataSel131);
 
   //Dq/Dqs Mapping arrays
   CopyMem (&Fspmcfg->DqsMapCpu2DramMc0Ch0, MemCfgData->DqsMapCpu2DramMc0Ch0, sizeof(MemCfgData->DqsMapCpu2DramMc0Ch0));
