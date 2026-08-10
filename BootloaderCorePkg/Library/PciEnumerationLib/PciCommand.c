@@ -12,6 +12,15 @@
 #include <Library/PciExpressLib.h>
 #include "InternalPciEnumerationLib.h"
 
+//
+// Upper bounds on capability-list walk iterations, derived from PCI config
+// space size / minimum DWORD-aligned capability entry size. Bounds the walk
+// so a device reporting a NextCapability cycle (A->B->A) cannot hang
+// enumeration; a legitimate device can never have more entries than this.
+//
+#define PCI_CAP_MAX_ITERATIONS       ((0x100 - 0x40) / 4)
+#define PCI_EXPRESS_CAP_MAX_ITERATIONS  ((0x1000 - EFI_PCIE_CAPABILITY_BASE_OFFSET) / 4)
+
 /**
   Check the capability supporting by given device.
 
@@ -55,6 +64,7 @@ LocateCapabilityRegBlock (
   UINT8   CapabilityPtr;
   UINT16  CapabilityEntry;
   UINT8   CapabilityID;
+  UINT32  Iteration;
 
   //
   // To check the capability of this device supports
@@ -73,21 +83,24 @@ LocateCapabilityRegBlock (
     }
   }
 
+  Iteration = 0;
   while ((CapabilityPtr >= 0x40) && ((CapabilityPtr & 0x03) == 0x00)) {
+    //
+    // Bound the walk: a misbehaving/malicious device can chain
+    // NextCapability pointers into a multi-node cycle (A->B->A), which a
+    // simple self-pointer check does not catch.
+    //
+    if (++Iteration > PCI_CAP_MAX_ITERATIONS) {
+      DEBUG ((DEBUG_WARN, "PCI capability list exceeds max iterations, possible cycle at 0x%X\n", PciIoDevice->Address));
+      break;
+    }
+
     CapabilityEntry = PciExpressRead16 (PciIoDevice->Address + CapabilityPtr);
     CapabilityID    = (UINT8) CapabilityEntry;
 
     if (CapabilityID == CapId) {
       *Offset = CapabilityPtr;
       return EFI_SUCCESS;
-    }
-
-    //
-    // Certain PCI device may incorrectly have capability pointing to itself,
-    // break to avoid dead loop.
-    //
-    if (CapabilityPtr == (UINT8) (CapabilityEntry >> 8)) {
-      break;
     }
 
     CapabilityPtr = (UINT8) (CapabilityEntry >> 8);
@@ -118,6 +131,7 @@ LocatePciExpressCapabilityRegBlock (
   UINT32               CapabilityPtr;
   UINT32               CapabilityEntry;
   UINT16               CapabilityID;
+  UINT32               Iteration;
 
   //
   // To check the capability of this device supports
@@ -132,7 +146,18 @@ LocatePciExpressCapabilityRegBlock (
     CapabilityPtr = EFI_PCIE_CAPABILITY_BASE_OFFSET;
   }
 
+  Iteration = 0;
   while (CapabilityPtr != 0) {
+    //
+    // Bound the walk: NextCapabilityOffset is device-supplied and a
+    // misbehaving/malicious device can chain it into a cycle (A->B->A),
+    // which would otherwise loop forever since CapabilityPtr never becomes 0.
+    //
+    if (++Iteration > PCI_EXPRESS_CAP_MAX_ITERATIONS) {
+      DEBUG ((DEBUG_WARN, "PCIe extended capability list exceeds max iterations, possible cycle at 0x%X\n", PciIoDevice->Address));
+      break;
+    }
+
     //
     // Mask it to DWORD alignment per PCI spec
     //
