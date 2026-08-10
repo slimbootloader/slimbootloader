@@ -242,6 +242,7 @@ InitializeSrIov (
   UINT16        Data16;
   UINT32        PFRid;
   UINT32        LastVF;
+  UINT16        TotalVFs;
 
   Status = LocatePciExpressCapabilityRegBlock (
              PciIoDevice,
@@ -280,6 +281,27 @@ InitializeSrIov (
     FirstVFOffset = PciExpressRead16 (Address + EFI_PCIE_CAPABILITY_ID_SRIOV_FIRSTVF);
     PciIoDevice->InitialVFs = PciExpressRead16 (Address + EFI_PCIE_CAPABILITY_ID_SRIOV_INITIALVFS);
     VFStride = PciExpressRead16 (Address + EFI_PCIE_CAPABILITY_ID_SRIOV_VFSTRIDE);
+
+    //
+    // Per PCIe spec, InitialVFs must not exceed TotalVFs (the HW-reported
+    // maximum). Clamp against a non-compliant/malicious device so the VF
+    // BAR size scaling (Length * InitialVFs) can't be inflated arbitrarily.
+    //
+    TotalVFs = PciExpressRead16 (Address + EFI_PCIE_CAPABILITY_ID_SRIOV_TOTALVFS);
+    if (PciIoDevice->InitialVFs > TotalVFs) {
+      DEBUG ((DEBUG_WARN, "SR-IOV InitialVFs (%d) exceeds TotalVFs (%d), clamping\n",
+        PciIoDevice->InitialVFs, TotalVFs));
+      PciIoDevice->InitialVFs = TotalVFs;
+    }
+
+    if (PciIoDevice->InitialVFs == 0) {
+      //
+      // No VFs to reserve bus numbers for; avoid the (InitialVFs - 1)
+      // underflow below.
+      //
+      PciIoDevice->ReservedBusNum = 0;
+      return;
+    }
 
     //
     // Calculate LastVF
