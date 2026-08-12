@@ -1,7 +1,7 @@
 /** @file
 The header file for firmware update library.
 
-Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2017 - 2026, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -153,6 +153,16 @@ typedef struct {
 
 typedef  VOID (EFIAPI *DRIVER_ENTRY) (VOID *Params);
 
+///
+/// Recovery type for firmware update/recovery dispatch.
+/// Extend this enum when new component recovery types are added (e.g. IOE).
+///
+typedef enum {
+  FwUpdateRecoveryNone = 0,  ///< Normal capsule update (not a recovery path)
+  FwUpdateRecoveryCsme,      ///< CSME firmware code corruption recovery
+  FwUpdateRecoveryIoe,       ///< IOE CSME firmware recovery (reserved for future use)
+} FW_UPDATE_RECOVERY_TYPE;
+
 /**
   Get capsule image for firmware update.
 
@@ -160,17 +170,23 @@ typedef  VOID (EFIAPI *DRIVER_ENTRY) (VOID *Params);
   header. It could be read from EMMC, UFS, USB, SATA, etc. block device. Often the
   Capsule image could be saved in the root directory of a FAT system.
 
-  @param[out] FwBuffer        The firmware update capsule image.
-  @param[out] FwSize          The capsule image size.
+  @param[out] FwBuffer      The firmware update capsule image.
+  @param[out] FwSize        The capsule image size.
+  @param[in]  RecoveryType  FwUpdateRecoveryNone for a standard SBL capsule update;
+                            FwUpdateRecoveryCsme for CSME firmware code corruption
+                            recovery capsule; FwUpdateRecoveryIoe reserved for IOE.
+                            CSME and SBL recovery capsules are kept separate
+                            (different versions).
 
-  @retval  EFI_SUCCESS        Get the capsule image successfully.
-  @retval  others             Error happening when getting capsule image.
+  @retval  EFI_SUCCESS      Get the capsule image successfully.
+  @retval  others           Error happening when getting capsule image.
 **/
 EFI_STATUS
 EFIAPI
 GetCapsuleImage (
-  OUT  VOID                      **FwBuffer,
-  OUT  UINT32                    *FwSize
+  OUT  VOID                       **FwBuffer,
+  OUT  UINT32                     *FwSize,
+  IN   FW_UPDATE_RECOVERY_TYPE    RecoveryType
   );
 
 /**

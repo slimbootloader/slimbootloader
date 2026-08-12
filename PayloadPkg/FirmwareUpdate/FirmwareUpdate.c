@@ -1589,12 +1589,16 @@ IsRedundantComponent (
   This function will get capsule image file, verify the image, and update
   current firmware using new firmware.
 
+  @param[in]  RecoveryType    FwUpdateRecoveryNone for a normal capsule update;
+                              FwUpdateRecoveryCsme for CSME firmware code corruption
+                              recovery; FwUpdateRecoveryIoe reserved for future IOE.
+
   @retval  EFI_SUCCESS           The operation completed successfully.
   @retval  others                There is error happening.
 **/
 EFI_STATUS
 InitFirmwareUpdate (
-  VOID
+  IN FW_UPDATE_RECOVERY_TYPE  RecoveryType
 )
 {
   EFI_STATUS                    Status;
@@ -1620,7 +1624,7 @@ InitFirmwareUpdate (
   //
   // Get capsule image.
   //
-  Status = GetCapsuleImage (&CapsuleImage, &CapsuleSize);
+  Status = GetCapsuleImage (&CapsuleImage, &CapsuleSize, RecoveryType);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "GetCapsuleImage failed with status = %r\n", Status));
   }
@@ -2082,8 +2086,7 @@ PayloadMain (
   UINTN            RecoveryStatusSize;
   BOOLEAN          RecoveryStatusValid;
 
-  //
-  // Prepare Console Print
+  RecoveryStatusValid = FALSE;
   //
   InitConsole ();
   ConsolePrint ("Starting Firmware Update/Recovery\n");
@@ -2153,7 +2156,6 @@ PayloadMain (
     DEBUG((DEBUG_INFO, "Triggered FW recovery!\n"));
 
     RecoveryStatusSize  = sizeof (RecoveryStatus);
-    RecoveryStatusValid = FALSE;
     if (!EFI_ERROR (GetVariable (RECOVERY_STATUS_VARIABLE_NAME, &gRecoveryStatusVariableGuid,
                                  NULL, &RecoveryStatusSize, &RecoveryStatus)) &&
                                  (RecoveryStatusSize == sizeof (RecoveryStatus)) &&
@@ -2162,10 +2164,28 @@ PayloadMain (
       DEBUG ((DEBUG_INFO, "Recovery reason: 0x%x, attempt: %d\n",
               RecoveryStatus.Reason, RecoveryStatus.AttemptCount));
     } else {
-      DEBUG ((DEBUG_WARN, "RecoveryStatus variable missing/invalid, fallback to SBL recovery\n"));
+      DEBUG ((DEBUG_ERROR, "RecoveryStatus variable missing/invalid; cannot perform recovery\n"));
     }
 
-    Status = InitFirmwareRecovery ();
+    // A valid RecoveryStatus is required (carries reason + retry state).
+    // CSME-only -> CSME capsule; compound or SBL/CSME_WDT -> SBL recovery first.
+    if (RecoveryStatusValid) {
+      if (RecoveryStatus.Reason == RECOVERY_REASON_CSME) {
+        DEBUG ((DEBUG_INFO, "CSME firmware recovery via capsule update\n"));
+        Status = InitFirmwareUpdate (FwUpdateRecoveryCsme);
+        if (Status == EFI_ALREADY_STARTED) {
+          //
+          // CSME capsule update completed successfully.
+          //
+          Status = EFI_SUCCESS;
+        }
+      } else {
+        DEBUG ((DEBUG_INFO, "SBL partition recovery\n"));
+        Status = InitFirmwareRecovery ();
+      }
+    } else {
+      Status = EFI_NOT_FOUND;
+    }
     if (EFI_ERROR (Status)) {
       DEBUG((DEBUG_ERROR, "Firmware recovery failed with Status = %r\n", Status));
     }
@@ -2181,7 +2201,7 @@ PayloadMain (
     }
   } else {
     DEBUG((DEBUG_INFO, "Triggered FW update!\n"));
-    Status = InitFirmwareUpdate ();
+    Status = InitFirmwareUpdate (FwUpdateRecoveryNone);
     if (EFI_ERROR (Status)) {
       if (Status != EFI_ALREADY_STARTED) {
         DEBUG((DEBUG_ERROR, "Firmware update failed with Status = %r\n", Status));
@@ -2199,5 +2219,16 @@ EndOfFwu:
   // Terminate firmware update
   //
   ConsolePrint ("Exiting Firmware Update (Status: %r)\n", Status);
+
+  //
+  // CSME-only recovery: reset SM to INIT so FSP won't trigger an extra
+  // BOOT_ON_FLASH_UPDATE cycle from a lingering SM_DONE.
+  //
+  if (RecoveryStatusValid &&
+      (RecoveryStatus.Reason == RECOVERY_REASON_CSME) &&
+      (Status == EFI_SUCCESS)) {
+    SetStateMachineFlag (FW_UPDATE_SM_INIT);
+  }
+
   EndFirmwareUpdate ();
 }

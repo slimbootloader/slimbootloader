@@ -170,6 +170,9 @@
   # If we want to recover from boot failure
   gPlatformModuleTokenSpaceGuid.PcdSblResiliencyEnabled   |  FALSE     | BOOLEAN | 0x200000F3
 
+  # Enable CSME firmware code corruption detection and recovery (HECI/HFSTS-based).
+  gPlatformModuleTokenSpaceGuid.PcdCsmeResiliencyEnabled  |  FALSE     | BOOLEAN | 0x200000F8
+
   # If we built the top swap regions to look exactly the same
   # (no SG1B rebasing or boot partition set in flash map)
   gPlatformModuleTokenSpaceGuid.PcdIdenticalTopSwapsBuilt |  FALSE     | BOOLEAN | 0x200000F4

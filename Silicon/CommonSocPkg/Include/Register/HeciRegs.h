@@ -1,7 +1,7 @@
 /** @file
   Register Definitions for HECI
 
-  Copyright (c) 2024, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2024 - 2026, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 #ifndef _HECI_REGS_H_
@@ -11,6 +11,7 @@
 #define HECI_FUN                        0
 
 #define R_ME_HFS                           0x40
+#define R_ME_HFS_2                         0x48
 #define R_ME_HFS_3                         0x60
 #define R_ME_HFS_4                         0x64
 #define R_ME_HFS_5                         0x68
@@ -191,5 +192,10 @@ typedef union {
 
 
 #pragma pack()
+
+//
+// ME Current State Value (HFSTS1.CurrentState)
+//
+#define ME_STATE_RECOVERY     0x02
 
 #endif // _HECI_REGS_H_
