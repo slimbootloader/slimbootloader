@@ -300,8 +300,9 @@ class BaseBoard(object):
         self.BUILD_ARCH            = ''
         self.KEYH_SVN              = 0
         self.CFGDATA_SVN           = 0
-        self.BUILD_IDENTICAL_TS    = 0
-        self.ENABLE_SBL_RESILIENCY = 0
+        self.BUILD_IDENTICAL_TS     = 0
+        self.ENABLE_SBL_RESILIENCY  = 0
+        self.ENABLE_CSME_RESILIENCY = 0
         self._ACM_CPU_FMS          = []
         self._ACM_CPU_EXT_FM_FM_MASK = 0xF0
         self._DACM_CPU_FMS         = 0

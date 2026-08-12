@@ -1,7 +1,7 @@
 /** @file
   This file contains the implementation of FirmwareUpdateLib library.
 
-  Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2026, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -495,6 +495,10 @@ GetOsImageList (
 
   @param[out] CapsuleImage      The firmware update capsule image.
   @param[out] CapsuleImageSize  The capsule image size.
+  @param[in]  RecoveryType      FwUpdateRecoveryNone for the standard SBL capsule
+                                (tag 0x080); FwUpdateRecoveryCsme for the dedicated
+                                CSME recovery capsule (tag 0x081). CSME recovery and
+                                FW update capsules are kept separate (different versions).
 
   @retval  EFI_SUCCESS        Get the capsule image successfully.
   @retval  others             Error happening when getting capsule image.
@@ -503,7 +507,8 @@ EFI_STATUS
 EFIAPI
 GetCapsuleImage (
   OUT VOID     **CapsuleImage,
-  OUT UINT32   *CapsuleImageSize
+  OUT UINT32   *CapsuleImageSize,
+  IN  FW_UPDATE_RECOVERY_TYPE  RecoveryType
   )
 {
   EFI_STATUS              Status;
@@ -522,9 +527,21 @@ GetCapsuleImage (
   DEBUG ((DEBUG_INFO, "\n=================Read Capsule Image==============\n"));
 
   //
-  // Get capsule configuration data
+  // For CSME recovery, load the dedicated CSME recovery capsule (tag 0x081).
+  // This block is compiled only on platforms with PcdCsmeResiliencyEnabled.
   //
-  CapsuleInfo = (CAPSULE_INFO_CFG_DATA *) FindConfigDataByTag (CDATA_CAPSULE_INFO_TAG);
+#if FixedPcdGetBool (PcdCsmeResiliencyEnabled)
+  if (RecoveryType == FwUpdateRecoveryCsme) {
+    CapsuleInfo = (CAPSULE_INFO_CFG_DATA *) FindConfigDataByTag (CDATA_CSME_CAPSULE_INFO_TAG);
+    if (CapsuleInfo == NULL) {
+      DEBUG ((DEBUG_ERROR, " CSME recovery CapsuleInfo (0x081) not found\n"));
+      return EFI_NOT_FOUND;
+    }
+  }
+#endif
+  if (CapsuleInfo == NULL) {
+    CapsuleInfo = (CAPSULE_INFO_CFG_DATA *) FindConfigDataByTag (CDATA_CAPSULE_INFO_TAG);
+  }
   //
   // If we do not find capsule information, return error
   //
