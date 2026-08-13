@@ -61,8 +61,6 @@ typedef struct {
   UINT32            MpDataStruct;
   UINT32            Cr3;
   UINT32            CpuArch;
-  UINT32            SmrrBase;
-  UINT32            SmrrMask;
 } AP_DATA_STRUCT;
 
 typedef struct {
