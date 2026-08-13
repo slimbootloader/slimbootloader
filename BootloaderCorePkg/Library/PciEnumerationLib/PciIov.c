@@ -8,7 +8,7 @@
 #include <Uefi/UefiBaseType.h>
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
-#include <Library/PciExpressLib.h>
+#include <Library/IoLib.h>
 #include "InternalPciEnumerationLib.h"
 #include "PciCommand.h"
 
@@ -250,24 +250,24 @@ InitializeSrIov (
              );
 
   if (!EFI_ERROR (Status)) {
-    Address = PciIoDevice->Address + PciIoDevice->SrIovCapabilityOffset;
+    Address = (UINTN)GetSegmentMcfgBase (PciIoDevice->Segment) + PciIoDevice->Address + PciIoDevice->SrIovCapabilityOffset;
 
     //
     // If the SR-IOV device is an ARI device, then Set ARI Capable Hierarchy for the device.
     //
     if (FeaturePcdGet (PcdAriSupport) && PciIoDevice->AriCapabilityOffset != 0) {
-      Data16  = PciExpressRead16 (Address + EFI_PCIE_CAPABILITY_ID_SRIOV_CONTROL);
+      Data16  = MmioRead16 (Address + EFI_PCIE_CAPABILITY_ID_SRIOV_CONTROL);
       Data16 |= EFI_PCIE_CAPABILITY_ID_SRIOV_CONTROL_ARI_HIERARCHY;
-      PciExpressWrite16 (Address + EFI_PCIE_CAPABILITY_ID_SRIOV_CONTROL, Data16);
+      MmioWrite16 (Address + EFI_PCIE_CAPABILITY_ID_SRIOV_CONTROL, Data16);
     }
 
     //
     // Calculate SystemPageSize
     //
-    SupportedPageSize = PciExpressRead32 (Address + EFI_PCIE_CAPABILITY_ID_SRIOV_SUPPORTED_PAGE_SIZE);
+    SupportedPageSize = MmioRead32 (Address + EFI_PCIE_CAPABILITY_ID_SRIOV_SUPPORTED_PAGE_SIZE);
     PciIoDevice->SystemPageSize = (SupportedPageSize & BIT0); // BIT0: 4KB page
     ASSERT (PciIoDevice->SystemPageSize != 0);
-    PciExpressWrite32 (Address + EFI_PCIE_CAPABILITY_ID_SRIOV_SUPPORTED_PAGE_SIZE, PciIoDevice->SystemPageSize);
+    MmioWrite32 (Address + EFI_PCIE_CAPABILITY_ID_SRIOV_SUPPORTED_PAGE_SIZE, PciIoDevice->SystemPageSize);
 
     //
     // Adjust SystemPageSize for Alignment usage later
@@ -277,9 +277,9 @@ InitializeSrIov (
     //
     // Read First FirstVFOffset, InitialVFs, and VFStride
     //
-    FirstVFOffset = PciExpressRead16 (Address + EFI_PCIE_CAPABILITY_ID_SRIOV_FIRSTVF);
-    PciIoDevice->InitialVFs = PciExpressRead16 (Address + EFI_PCIE_CAPABILITY_ID_SRIOV_INITIALVFS);
-    VFStride = PciExpressRead16 (Address + EFI_PCIE_CAPABILITY_ID_SRIOV_VFSTRIDE);
+    FirstVFOffset = MmioRead16 (Address + EFI_PCIE_CAPABILITY_ID_SRIOV_FIRSTVF);
+    PciIoDevice->InitialVFs = MmioRead16 (Address + EFI_PCIE_CAPABILITY_ID_SRIOV_INITIALVFS);
+    VFStride = MmioRead16 (Address + EFI_PCIE_CAPABILITY_ID_SRIOV_VFSTRIDE);
 
     //
     // Calculate LastVF

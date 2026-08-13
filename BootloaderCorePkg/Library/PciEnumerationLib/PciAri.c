@@ -8,7 +8,7 @@
 #include <Uefi/UefiBaseType.h>
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
-#include <Library/PciExpressLib.h>
+#include <Library/IoLib.h>
 #include "InternalPciEnumerationLib.h"
 #include "PciCommand.h"
 
@@ -72,24 +72,24 @@ InitializeAri (
     //
     // Check if its parent supports ARI forwarding.
     //
-    Data32 = PciExpressRead32 (Bridge->Address +
-                               Bridge->PciExpressCapabilityOffset +
-                               EFI_PCIE_CAPABILITY_DEVICE_CAPABILITIES_2_OFFSET);
+    Data32 = MmioRead32 (MCFG_ADDR (Bridge,
+                          Bridge->PciExpressCapabilityOffset +
+                          EFI_PCIE_CAPABILITY_DEVICE_CAPABILITIES_2_OFFSET));
 
     if ((Data32 & EFI_PCIE_CAPABILITY_DEVICE_CAPABILITIES_2_ARI_FORWARDING) != 0) {
       //
       // ARI forward support in bridge, so enable it.
       //
-      Data32 = PciExpressRead32 (Bridge->Address +
-                                 Bridge->PciExpressCapabilityOffset +
-                                 EFI_PCIE_CAPABILITY_DEVICE_CONTROL_2_OFFSET);
+      Data32 = MmioRead32 (MCFG_ADDR (Bridge,
+                            Bridge->PciExpressCapabilityOffset +
+                            EFI_PCIE_CAPABILITY_DEVICE_CONTROL_2_OFFSET));
 
       if ((Data32 & EFI_PCIE_CAPABILITY_DEVICE_CONTROL_2_ARI_FORWARDING) == 0) {
         Data32 |= EFI_PCIE_CAPABILITY_DEVICE_CONTROL_2_ARI_FORWARDING;
-        PciExpressWrite32 (Bridge->Address +
-                           Bridge->PciExpressCapabilityOffset +
-                           EFI_PCIE_CAPABILITY_DEVICE_CONTROL_2_OFFSET,
-                           Data32);
+        MmioWrite32 (MCFG_ADDR (Bridge,
+                      Bridge->PciExpressCapabilityOffset +
+                      EFI_PCIE_CAPABILITY_DEVICE_CONTROL_2_OFFSET),
+                      Data32);
       }
     }
   }

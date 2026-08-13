@@ -11,6 +11,7 @@
 #include <IndustryStandard/Pci.h>
 #include <UniversalPayload/PciRootBridges.h>
 #include <Library/PciEnumerationLib.h>
+#include <Library/DebugLib.h>
 
 #define EFI_BRIDGE_IO32_DECODE_SUPPORTED      0x0001
 #define EFI_BRIDGE_PMEM32_DECODE_SUPPORTED    0x0002
@@ -178,6 +179,12 @@ struct _PCI_IO_DEVICE {
   UINT32                                    ResizableBarNumber;
 
   //
+  // Segment number of the host bridge that owns this device.
+  // Set on root bridge creation and inherited by all descendants.
+  //
+  UINT8                                     Segment;
+
+  //
   // The bridge device this pci device is subject to
   //
   PCI_IO_DEVICE                             *Parent;
@@ -188,6 +195,47 @@ struct _PCI_IO_DEVICE {
   LIST_ENTRY                                ChildList;
 
 };
+
+/**
+  Return the host bridge table. If PcdPciHostBridgeTableBase is not set,
+  synthesise a single-entry table from PcdPciExpressBaseAddress.
+
+  @return Pointer to the active PCI_HOST_BRIDGE_TABLE.
+**/
+PCI_HOST_BRIDGE_TABLE *
+GetHostBridgeTable (
+  VOID
+  );
+
+/**
+  Return the MCFG base address for the given PCI segment by looking up the
+  host bridge table.
+
+  @param[in]  Segment   PCI segment group number.
+  @return               MCFG base address for that segment.
+**/
+UINT64
+GetSegmentMcfgBase (
+  IN UINT8  Segment
+  );
+
+/**
+  Compute the full MCFG MMIO address for a PCI config space register.
+
+  @param[in]  Dev   PCI device instance; Dev->Segment identifies the host bridge.
+  @param[in]  Off   Register offset within the device's config space.
+  @return           Full MMIO address for the register.
+**/
+UINTN
+McfgAddr (
+  IN CONST PCI_IO_DEVICE  *Dev,
+  IN UINTN                 Off
+  );
+
+///
+/// Convenience macro wrapper for McfgAddr().
+///
+#define MCFG_ADDR(Dev, Off)  McfgAddr ((Dev), (UINTN)(Off))
 
 /**
   Check whether the bar is existed or not.

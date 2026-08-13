@@ -8,7 +8,7 @@
 #include <Uefi/UefiBaseType.h>
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
-#include <Library/PciExpressLib.h>
+#include <Library/IoLib.h>
 #include "InternalPciEnumerationLib.h"
 #include "PciCommand.h"
 
@@ -47,9 +47,9 @@ PciProgramResizableBar (
   for (Index = 0; Index < ResizableBarNumber; Index++) {
     Offset = PciIoDevice->ResizableBarOffset + sizeof (PCI_EXPRESS_EXTENDED_CAPABILITIES_HEADER) +
              sizeof (PCI_EXPRESS_EXTENDED_CAPABILITIES_RESIZABLE_BAR_ENTRY) * Index;
-    Entries[Index].ResizableBarCapability.Uint32 = PciExpressRead32 (PciIoDevice->Address + Offset);
+    Entries[Index].ResizableBarCapability.Uint32 = MmioRead32 (MCFG_ADDR (PciIoDevice, Offset));
     Offset += sizeof (PCI_EXPRESS_EXTENDED_CAPABILITIES_RESIZABLE_BAR_CAPABILITY);
-    Entries[Index].ResizableBarControl.Uint32 = PciExpressRead32 (PciIoDevice->Address + Offset);
+    Entries[Index].ResizableBarControl.Uint32 = MmioRead32 (MCFG_ADDR (PciIoDevice, Offset));
   }
 
   for (Index = 0; Index < ResizableBarNumber; Index++) {
@@ -82,7 +82,7 @@ PciProgramResizableBar (
                             OFFSET_OF (PCI_TYPE00, Device.Bar[Entries[Index].ResizableBarControl.Bits.BarIndex]),
                             Capabilities,
                             LShiftU64 (SIZE_1MB, Bit)));
-    PciExpressWrite32 (PciIoDevice->Address + Offset, Entries[Index].ResizableBarControl.Uint32);
+    MmioWrite32 (MCFG_ADDR (PciIoDevice, Offset), Entries[Index].ResizableBarControl.Uint32);
   }
   return EFI_SUCCESS;
 }
@@ -112,7 +112,7 @@ InitializeResizeBar (
 
     Offset = PciIoDevice->ResizableBarOffset + sizeof (PCI_EXPRESS_EXTENDED_CAPABILITIES_HEADER) +
           sizeof (PCI_EXPRESS_EXTENDED_CAPABILITIES_RESIZABLE_BAR_CAPABILITY);
-    ResizableBarControl.Uint32 = PciExpressRead32(PciIoDevice->Address + Offset);
+    ResizableBarControl.Uint32 = MmioRead32 (MCFG_ADDR (PciIoDevice, Offset));
     PciIoDevice->ResizableBarNumber = ResizableBarControl.Bits.ResizableBarNumber;
     DEBUG ((DEBUG_VERBOSE, "PciResizableBarNumber %d ResizableBarControl %x \n", PciIoDevice->ResizableBarNumber, ResizableBarControl.Uint32));
     PciProgramResizableBar (PciIoDevice, PciResizableBarMax);
