@@ -25,6 +25,11 @@ SECTION .text
 SPIN_LOCK_RELEASED   EQU   0
 SPIN_LOCK_ACQUIRED   EQU   1
 
+; Offset from SmmBase to the SMM_SMRR_STORAGE struct (must match SMM_SMRR_STORAGE_OFFSET in MpInitLib.h)
+SMM_SMRR_STORAGE_OFFSET  EQU  8000h + 7C00h - 8
+SMM_SMRR_BASE_OFFSET     EQU  0
+SMM_SMRR_MASK_OFFSET     EQU  4
+
 ;
 ; Equivalent NASM structure of MP_CPU_EXCHANGE_INFO
 ;
@@ -47,8 +52,6 @@ struc AP_DATA_STRUCT
   .MpDataStruct:    CTYPE_UINT32   1
   .Cr3:             CTYPE_UINT32   1
   .CpuArch:         CTYPE_UINT32   1
-  .SmrrBase:        CTYPE_UINT32   1
-  .SmrrMask:        CTYPE_UINT32   1
   .Terminator:      CTYPE_UINT32   1
 endstruc
 

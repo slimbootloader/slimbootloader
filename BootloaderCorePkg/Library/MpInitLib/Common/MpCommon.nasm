@@ -72,13 +72,19 @@ SmmRebase:
     jz             SmmEm64t
     mov            edi, 0x3fef8      ; Fallback to support SIMICS QSP model
 SmmEm64t:
+    btr            eax, 0            ; if BIT0 is set in SMBASE input, it means program SMRR
     mov            [edi], eax        ; change to new  SMBASE
-    mov            eax, [esi + AP_DATA_STRUCT_FIELD (SmrrMask)]
+    jnc            SkipSmrrProg
+    mov            esi, eax
+    add            esi, SMM_SMRR_STORAGE_OFFSET
+    mov            eax, [esi + SMM_SMRR_MASK_OFFSET]
     cmp            eax, 0
     jz             SkipSmrrProg
 
     xchg           eax, ebx
-    mov            eax, [esi + AP_DATA_STRUCT_FIELD (SmrrBase)]
+    mov            eax, [esi + SMM_SMRR_BASE_OFFSET]
+    cmp            eax, 0
+    jz             SkipSmrrProg
     xor            edx, edx
     mov            ecx, 0x1f2        ; MSR_IA32_SMRR_PHYSBASE
     wrmsr

@@ -134,6 +134,31 @@ SortSysCpu (
 }
 
 /**
+  Validate that SmrrBase and SmrrSize are suitable for programming IA32_SMRR_PHYSBASE/MASK.
+
+  SmrrSize must be zero (SMRR not used) or a power-of-two value of at least 4 KB,
+  and SmrrBase must be naturally aligned to SmrrSize.
+
+  @param[in]  SmrrBase   Proposed SMRR physical base address.
+  @param[in]  SmrrSize   Proposed SMRR region size in bytes.
+
+  @retval TRUE   Parameters are valid for SMRR programming or SmrrSize is zero.
+  @retval FALSE  SmrrSize is non-zero but fails size or alignment requirements.
+
+**/
+BOOLEAN
+IsSmrrValid (
+  IN UINT32  SmrrBase,
+  IN UINT32  SmrrSize
+  )
+{
+  if ((SmrrSize > 0) && ((SmrrSize < SIZE_4KB) ||  (SmrrSize != GetPowerOfTwo32 (SmrrSize)) || ((SmrrBase & ~(SmrrSize - 1)) != SmrrBase))) {
+    return FALSE;
+  }
+  return TRUE;
+}
+
+/**
   Relocate SMM base for CPU
 
   @param[in]  Index       CPU index to rebase.
@@ -151,16 +176,26 @@ SmmRebase (
   MSR_IA32_MTRRCAP_REGISTER MtrrCap;
   UINT8                    *SmmEntry;
   UINT8                    *DefEntry;
+  SMM_SMRR_STORAGE         *SmrrStorage;
 
   if (SmmBase == 0) {
     SmmBase  = PcdGet32 (PcdSmramTsegBase) + PcdGet32 (PcdSmramTsegSize) - (SMM_BASE_MIN_SIZE + Index * SMM_BASE_GAP);
-    SmmEntry = (UINT8 *)(UINTN)SmmBase + 0x8000;
-    // Write default handler at new SMM handler entry
+    SmmEntry    = (UINT8 *)(UINTN)SmmBase + SMM_BASE_ENTRY_OFFSET;
     MtrrCap.Uint64 = AsmReadMsr64 (MSR_IA32_MTRRCAP);
-    if ((MtrrCap.Bits.SMRR == 0) || (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE_NOSMRR)) {
+    if (!IsSmrrValid(PcdGet32 (PcdSmramTsegBase), PcdGet32 (PcdSmramTsegSize)) ||
+        (MtrrCap.Bits.SMRR == 0) ||
+        (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE_NOSMRR))
+    {
       // No SMRR support, fill "RSM" at the entry instead.
       DefEntry = (UINT8 *)&mDefaultSmiHandlerRet;
     } else {
+      // This is the only case where SBL should set the SMRR. Store it in TSEG below CPU save states
+      SmrrStorage = (SMM_SMRR_STORAGE *)(UINTN)(SmmBase + SMM_SMRR_STORAGE_OFFSET);
+      SmrrStorage->SmrrBase = PcdGet32 (PcdSmramTsegBase) | MSR_IA32_VMX_BASIC_REGISTER_MEMORY_TYPE_WRITE_BACK;
+      // Make sure SMRR valid bit is cleared for now
+      SmrrStorage->SmrrMask = (UINT32)(~(PcdGet32 (PcdSmramTsegSize) - 1)) & (UINT32)(~BIT11);
+      // SMBASE requires 32KB alignment so we use the low bit to tell the Rendezvous function to program the SMRR
+      SmmBase |= BIT0;
       DefEntry = (UINT8 *)&mDefaultSmiHandlerStart;
     }
     CopyMem (SmmEntry, DefEntry, (UINT8 *)&mDefaultSmiHandlerEnd - DefEntry);
@@ -337,7 +372,6 @@ MpInit (
   MSR_IA32_MTRRCAP_REGISTER MtrrCap;
   UINT32                    SmrrBase;
   UINT32                    SmrrSize;
-  MSR_IA32_MTRR_PHYSMASK_REGISTER SmrrMask;
 
   Status   = EFI_SUCCESS;
   ApBuffer = (UINT8 *)AP_BUFFER_ADDRESS;
@@ -381,23 +415,18 @@ MpInit (
       AsmReadIdtr ((IA32_DESCRIPTOR *)&ApDataPtr->Idtr);
       ApDataPtr->Cr3 = (UINT32)AsmReadCr3 ();
 
-      // Fill SMRR base and size
+      // Validate SMRR base and size
       SmrrBase = PcdGet32 (PcdSmramTsegBase);
       SmrrSize = PcdGet32 (PcdSmramTsegSize);
-      if (SmrrSize > 0) {
-        if ((SmrrSize < SIZE_4KB) ||  (SmrrSize != GetPowerOfTwo32 (SmrrSize)) || ((SmrrBase & ~(SmrrSize - 1)) != SmrrBase)) {
-          DEBUG ((DEBUG_INFO, "Invalid SMRR base or size\n"));
-        } else {
-          MtrrCap.Uint64 = AsmReadMsr64 (MSR_IA32_MTRRCAP);
-          if (MtrrCap.Bits.SMRR == 1) {
-            // Don't enable SMRR valid yet, it will be done at end of stage2
-            SmrrMask.Uint64 = (UINT32)(~(SmrrSize - 1));
-            SmrrMask.Bits.V = 0;
-            ApDataPtr->SmrrBase = SmrrBase | MSR_IA32_VMX_BASIC_REGISTER_MEMORY_TYPE_WRITE_BACK;
-            ApDataPtr->SmrrMask = (UINT32)SmrrMask.Uint64;
-            DEBUG ((DEBUG_INFO, "SMRR Base: 0x%08x  Mask: 0x%08x\n", ApDataPtr->SmrrBase, ApDataPtr->SmrrMask));
-          }
+      if (!IsSmrrValid (SmrrBase, SmrrSize)) {
+        DEBUG ((DEBUG_INFO, "Invalid SMRR base or size\n"));
+        MtrrCap.Uint64 = AsmReadMsr64 (MSR_IA32_MTRRCAP);
+        if ((MtrrCap.Bits.SMRR == 1) && (PcdGet8 (PcdSmmRebaseMode) == SMM_REBASE_ENABLE)) {
+          // If we expect to program SMRR and our values are invalid, treat this as fatal.
+          CpuHalt(NULL);
         }
+      } else {
+        DEBUG ((DEBUG_INFO, "SMRR Base: 0x%08x  Size: 0x%08x\n", SmrrBase, SmrrSize));
       }
 
       //

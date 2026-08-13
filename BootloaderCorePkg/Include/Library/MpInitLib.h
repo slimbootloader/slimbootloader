@@ -12,6 +12,16 @@
 
 #define SMM_BASE_MIN_SIZE          0x10000
 #define SMM_BASE_GAP               0x2000
+#define SMM_BASE_ENTRY_OFFSET      0x8000
+#define SMM_BASE_SAVE_STATE_OFFSET 0x7C00
+
+// 8 bytes (2 x UINT32) stored immediately below the per-CPU SMM save state
+#define SMM_SMRR_STORAGE_OFFSET    (SMM_BASE_ENTRY_OFFSET + SMM_BASE_SAVE_STATE_OFFSET - 2 * sizeof (UINT32))
+
+typedef struct {
+  UINT32  SmrrBase;
+  UINT32  SmrrMask;
+} SMM_SMRR_STORAGE;
 
 typedef enum {
   EnumMpInitNull   = 0x00,
