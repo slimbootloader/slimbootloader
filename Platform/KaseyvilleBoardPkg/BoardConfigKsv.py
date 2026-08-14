@@ -10,12 +10,50 @@
 # Import Modules
 #
 import os
+import re
 import sys
 import time
 
 sys.dont_write_bytecode = True
 sys.path.append (os.path.join('..', '..'))
 from BuildLoader import *
+
+AML_FILTER = (
+    re.compile(r'^(?:PSYS|BBI0|BBU0|CRCM|BAR0)$'),
+    re.compile(r'\.(?:DRVT|FXCD|FXST|FXIN|FXOU|FXBS|FXFH|CENA|CFIS)$'),
+    re.compile(r'\.FIX[0-9A-Z]$'),
+    re.compile(r'\.CCT[0-9A-Z]$'),
+    re.compile(r'\.CFH[0-9A-Z]$'),
+)
+AML_OFFSET_ENTRY = re.compile(r'^\s*\{"([^"]*)"')
+AML_OFFSET_TERMINATOR = re.compile(r'^\s*\{NULL(?:,|\s*\})')
+
+
+def filter_aml_offset_table(source_path, output_path, required_entries):
+    retained_entries = set()
+    terminator_found = False
+
+    with open(source_path, 'r') as source_file:
+        lines = source_file.readlines()
+
+    with open(output_path, 'w') as output_file:
+        for line in lines:
+            match = AML_OFFSET_ENTRY.match(line)
+            if match:
+                pathname = match.group(1)
+                if not any(pattern.search(pathname) for pattern in AML_FILTER):
+                    continue
+                retained_entries.add(pathname)
+            elif AML_OFFSET_TERMINATOR.match(line):
+                terminator_found = True
+            output_file.write(line)
+
+    missing_entries = set(required_entries) - retained_entries
+    if missing_entries or not terminator_found:
+        raise RuntimeError(
+            'Invalid filtered AML offset table %s: missing entries %s, terminator=%s' %
+            (output_path, sorted(missing_entries), terminator_found)
+        )
 
 class Board(BaseBoard):
     def __init__(self, *args, **kwargs):
@@ -32,12 +70,13 @@ class Board(BaseBoard):
         self.BOARD_NAME           = 'ksv'
         self.BOARD_PKG_NAME       = 'KaseyvilleBoardPkg'
         self.SILICON_PKG_NAME     = 'KaseyvillePkg'
-        self._EXTRA_INC_PATH      = ['Silicon/KaseyvillePkg/Ksv/Include']
+        self._EXTRA_INC_PATH      = ['Silicon/KaseyvillePkg/Ksv/Include', 'Build/AcpiOffsets']
         self._FSP_PATH_NAME       = 'Silicon/KaseyvillePkg/Ksv/FspBin'
         self.FSP_INF_FILE         = 'Silicon/KaseyvillePkg/Ksv/FspBin/FspBin.inf'
         self._SMBIOS_YAML_FILE    = os.path.join('Platform', self.BOARD_PKG_NAME, 'SmbiosStrings.yaml')
         self.MICROCODE_INF_FILE   = 'Silicon/KaseyvillePkg/Ksv/Microcode/Microcode.inf'
         self.ACTM_INF_FILE        = 'Silicon/KaseyvillePkg/Ksv/Actm/Actm.inf'
+        self.ACPI_TABLE_INF_FILE  = 'Platform/KaseyvilleBoardPkg/AcpiTables/AcpiTables.inf'
 
         self._PCI_ENUM_DOWNGRADE_MEM64  = 0
         self._PCI_ENUM_DOWNGRADE_PMEM64 = 0
@@ -202,6 +241,46 @@ class Board(BaseBoard):
 
         self._CFGDATA_INT_FILE = []
         self._CFGDATA_EXT_FILE = ['CfgData_Int_Rp.dlt']
+
+    def PlatformBuildHook (self, build, phase):
+        if phase != 'pre-build:after':
+            return
+
+        acpi_output_dir = os.path.join(
+            build._workspace,
+            'Build',
+            'BootloaderCorePkg',
+            '%s_%s' % (build._target, build._toolchain),
+            build._arch,
+            'Platform',
+            self.BOARD_PKG_NAME,
+            'AcpiTables',
+            'AcpiTables',
+            'OUTPUT',
+        )
+        output_base = os.path.join('Dsdt', 'EPRPPlatform')
+        aml_path = os.path.join(acpi_output_dir, output_base + '.aml')
+        if os.path.isfile(aml_path):
+            os.remove(aml_path)
+
+        cmd_args = [
+            'build' if os.name == 'posix' else 'build.bat',
+            '--platform', os.path.join('BootloaderCorePkg', 'BootloaderCorePkg.dsc'),
+            '-b', build._target,
+            '--arch', build._arch,
+            '--tagname', build._toolchain,
+            '--module', self.ACPI_TABLE_INF_FILE,
+        ]
+        run_process (cmd_args)
+
+        source_path = os.path.join(acpi_output_dir, output_base + '.offset.h')
+        if not os.path.isfile(source_path):
+            raise RuntimeError('iASL did not generate AML offset table: %s' % source_path)
+
+        offset_output_dir = os.path.join(build._workspace, 'Build', 'AcpiOffsets', 'Acpi')
+        os.makedirs(offset_output_dir, exist_ok=True)
+        output_path = os.path.join(offset_output_dir, 'EPRPPlatform_offset.h')
+        filter_aml_offset_table(source_path, output_path, ('PSYS',))
 
     def GetPlatformDsc (self):
         dsc = {}
