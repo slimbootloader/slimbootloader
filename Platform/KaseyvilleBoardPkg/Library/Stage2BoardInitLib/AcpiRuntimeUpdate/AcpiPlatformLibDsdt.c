@@ -14,6 +14,7 @@
 #include <Acpi/AcpiMacro.h>
 #include "SiSubsysInfoLib.h"
 #include "IioSocketTopology.h"
+// ACPI offset header generated during build time under Build/AcpiOffsets/Acpi
 #include "Acpi/EPRPPlatform_offset.h"
 
 #define MAX_CORE      256

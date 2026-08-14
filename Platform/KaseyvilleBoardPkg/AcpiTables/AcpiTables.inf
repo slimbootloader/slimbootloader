@@ -48,4 +48,4 @@
   Platform/KaseyvilleBoardPkg/KaseyvilleBoardPkg.dec
 
 [BuildOptions]
-  *_*_*_ASL_FLAGS = -ve -oi
+  *_*_*_ASL_FLAGS = -ve -oi -so
