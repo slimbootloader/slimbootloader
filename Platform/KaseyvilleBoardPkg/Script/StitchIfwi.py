@@ -35,13 +35,35 @@ except ImportError:
     err_msg += "Please make sure 'SBL_SOURCE' environment variable is set to open source SBL root folder."
     raise  ImportError(err_msg)
 
+
+def get_fit_tool_cmd(stitch_dir):
+    fit_dir = os.path.join(stitch_dir, 'Fit')
+    fit_cmd_py = os.path.join(fit_dir, 'fit_cmd.py')
+
+    # Prefer Python FIT wrapper when available.
+    if os.path.isfile(fit_cmd_py):
+        return [sys.executable, fit_cmd_py]
+
+    # Fallback to binary FIT tool (different packs use different names/casing).
+    candidates = [
+        'FITm_cmd', 'FITm_cmd.exe',
+        'fitm_cmd', 'fitm_cmd.exe',
+    ]
+    for name in candidates:
+        fitm_cmd = os.path.join(fit_dir, name)
+        if os.path.isfile(fitm_cmd):
+            return [fitm_cmd]
+
+    raise FileNotFoundError(
+        "Could not find FIT tool in '%s'. Expected one of: fit_cmd.py, %s" % (fit_dir, ', '.join(candidates))
+    )
+
 def gen_xml_file(stitch_dir, stitch_cfg_file, btg_profile, platform, plt_params_list, tpm):
     print ("Generating xml file .........")
 
-    fit_tool     = os.path.join (stitch_dir, 'Fit', 'FITm_cmd')
     new_xml_file = os.path.join (stitch_dir, 'Temp', 'new.xml')
     updated_xml_file = os.path.join (stitch_dir, 'Temp', 'updated.xml')
-    cmd = [fit_tool, '--skip_access_check', '--save_xml', new_xml_file]
+    cmd = get_fit_tool_cmd(stitch_dir) + ['--skip_access_check', '--save_xml', new_xml_file]
     run_process (cmd)
 
     tree = ET.parse(new_xml_file)
@@ -178,9 +200,8 @@ def stitch (stitch_dir, stitch_cfg_file, sbl_file, btg_profile, plt_params_list,
         shutil.copy(os.path.join(temp_dir, "SlimBootloader.bin"), os.path.join(temp_dir, "BiosRegion.bin"))
 
     print ("Run fit tool to generate ifwi.........")
-    fit_tool     = os.path.join (stitch_dir, 'Fit', 'FITm_cmd')
     updated_xml_file = os.path.join (stitch_dir, 'Temp', 'updated.xml')
-    run_process ([fit_tool,  "--skip_access_check", '-b', '-i', updated_xml_file])
+    run_process (get_fit_tool_cmd(stitch_dir) + ["--skip_access_check", '-b', '-i', updated_xml_file])
     return 0
 
 def get_para_list (plt_para):
