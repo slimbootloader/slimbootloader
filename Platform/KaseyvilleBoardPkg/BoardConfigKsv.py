@@ -388,6 +388,7 @@ class Board(BaseBoard):
 
         img_list.extend ([
             ('NON_REDUNDANT.bin', [
+                ('SIIPFW.bin'       , ''     , self.SIIPFW_SIZE,        STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
                 ('ACTM.bin'         , ''     , self.ACTM_SIZE,          STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
                 ('SBLRSVD.bin'      , ''     , self.SBLRSVD_SIZE,       STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
                 ('VARIABLE.bin'     , ''     , self.VARIABLE_SIZE,      STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
