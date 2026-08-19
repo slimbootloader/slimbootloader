@@ -33,6 +33,29 @@ IsValidFvHeader (
 
 
 /**
+  Check whether a size-byte range starting at Offset fits inside the FV.
+
+  Take care not to let any of the arithmetic overflow.
+
+  @param[in]   FvHeader   Pointer to a firmware volume header.
+  @param[in]   Offset     Byte offset from the start of the FV.
+  @param[in]   Size       Number of bytes required at Offset.
+
+  @retval TRUE      [Offset, Offset + Size) is within the FV.
+  @retval FALSE     The range would fall outside the FV.
+**/
+STATIC
+BOOLEAN
+IsOffsetInFv (
+  IN    EFI_FIRMWARE_VOLUME_HEADER   *FvHeader,
+  IN    UINT64                        Offset,
+  IN    UINT64                        Size
+)
+{
+  return (Size <= FvHeader->FvLength) && (Offset <= FvHeader->FvLength - Size);
+}
+
+/**
   Get first FFS file inside a FV.
 
   @param[in]   Pointer to a firmware volume header.
@@ -52,13 +75,27 @@ GetFirstFfsFileInFv (
     return NULL;
   }
 
+  if (!IsOffsetInFv (FvHeader, FvHeader->HeaderLength, sizeof (EFI_FFS_FILE_HEADER))) {
+    return NULL;
+  }
+
   // Get the first file
   CurrentFile = (EFI_FFS_FILE_HEADER *) ((UINTN)FvHeader + FvHeader->HeaderLength);
   if (FvHeader->ExtHeaderOffset != 0) {
+    if (!IsOffsetInFv (FvHeader, FvHeader->ExtHeaderOffset, sizeof (EFI_FIRMWARE_VOLUME_EXT_HEADER))) {
+      return NULL;
+    }
     FvExHeader  = (EFI_FIRMWARE_VOLUME_EXT_HEADER *)(((UINT8 *)FvHeader) + FvHeader->ExtHeaderOffset);
+    if (!IsOffsetInFv (FvHeader, (UINT64)FvHeader->ExtHeaderOffset, FvExHeader->ExtHeaderSize) ||
+        !IsOffsetInFv (FvHeader, (UINT64)FvHeader->ExtHeaderOffset + FvExHeader->ExtHeaderSize, sizeof (EFI_FFS_FILE_HEADER))) {
+      return NULL;
+    }
     CurrentFile = (EFI_FFS_FILE_HEADER *)(((UINT8 *)FvExHeader) + FvExHeader->ExtHeaderSize);
   }
   CurrentFile = (EFI_FFS_FILE_HEADER *) ALIGN_POINTER (CurrentFile, 8);
+  if (!IsOffsetInFv (FvHeader, (UINTN)CurrentFile - (UINTN)FvHeader, sizeof (EFI_FFS_FILE_HEADER))) {
+    return NULL;
+  }
   return CurrentFile;
 }
 
