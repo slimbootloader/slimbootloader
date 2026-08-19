@@ -726,6 +726,10 @@ BuildExtraInfoHob (
   TPM_EVENT_LOG_INFO               *TpmEventLogHob;
   SECUREBOOT_INFO                  *SecureBootInfoHob;
 
+  EFI_PHYSICAL_ADDRESS          TcgBuffer;
+  UINTN                         TcgPages;
+  TCG2_ACPI_COMMUNICATE_BUFFER  *TcgHobData;
+
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
 
   // Build library data hob
@@ -900,6 +904,25 @@ BuildExtraInfoHob (
       TpmEventLogHob->Revision  = PAYLOAD_TPM_EVENT_LOG_HOB_REVISION;
       GetTpmEventLog (&TpmEventLogHob->Tcg2Lasa, &TpmEventLogHob->Tcg2EventSize);
     }
+
+    //
+    // Build Tcg2AcpiCommunicateBuffer HOB for Tcg2Acpi driver for UEFI payload
+    // Allocate ACPI NVS memory for TCG_NVS so Tcg2Acpi can locate it
+    // via GetFirstGuidHob() during DXE phase.
+    //
+      TcgPages  = EFI_SIZE_TO_PAGES (sizeof (TCG_NVS));
+      TcgBuffer = (EFI_PHYSICAL_ADDRESS)(UINTN)AllocatePages (TcgPages);
+      if (TcgBuffer != 0) {
+        ZeroMem ((VOID *)(UINTN)TcgBuffer, EFI_PAGES_TO_SIZE (TcgPages));
+        TcgHobData = BuildGuidHob (&gEdkiiTcg2AcpiCommunicateBufferHobGuid, sizeof (TCG2_ACPI_COMMUNICATE_BUFFER));
+        if (TcgHobData != NULL) {
+          TcgHobData->Tcg2AcpiCommunicateBuffer = TcgBuffer;
+          TcgHobData->Pages                     = TcgPages;
+          DEBUG ((DEBUG_INFO, "Built Tcg2AcpiCommunicateBuffer HOB: Buffer=0x%lx Pages=0x%lx\n", TcgBuffer, (UINT64)TcgPages));
+        }
+      } else {
+        DEBUG ((DEBUG_ERROR, "Failed to allocate ACPI NVS pages for TCG_NVS\n"));
+      }
   }
 
   BuildUniversalPayloadHob ();

@@ -109,6 +109,7 @@
   gNvVariableInfoGuid
   gPldS3CommunicationGuid
   gTpmEventLogInfoGuid
+  gEdkiiTcg2AcpiCommunicateBufferHobGuid
   gSecureBootInfoGuid
   gUniversalPayloadBaseGuid
   gSmmBaseHobGuid
