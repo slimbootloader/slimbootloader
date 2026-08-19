@@ -343,6 +343,8 @@ DmarTableUpdate (
   UINT16              GttMode;
   UINT32              IgdMemSize;
   UINT32              GttMemSize;
+  UINT32              Tolud;
+  UINT64              IgdMemSize64;
 
   IgdMemSize  = 0;
   GttMemSize  = 0;
@@ -379,9 +381,9 @@ DmarTableUpdate (
   DEBUG ((DEBUG_INFO, "McD0BaseAddress 0x%08X, IgdMode 0x%04X\n", McD0BaseAddress, IgdMode));
 
   if (IgdMode < 0xF0) {
-    IgdMemSize = IgdMode * 32 * (1024) * (1024);
+    IgdMemSize64 = (UINT64) IgdMode * 32 * (1024) * (1024);
   } else {
-    IgdMemSize = 4 * (IgdMode - 0xF0 + 1) * (1024) * (1024);
+    IgdMemSize64 = (UINT64) 4 * (IgdMode - 0xF0 + 1) * (1024) * (1024);
   }
   ///
   /// Calculate GTT mem size
@@ -392,8 +394,21 @@ DmarTableUpdate (
     GttMemSize = (1 << GttMode) * (1024) * (1024);
   }
 
-  DmarTable->RmrrIgd.RmrrHeader.ReservedMemoryRegionBaseAddress   = (PciRead32 ((UINTN)McD0BaseAddress + R_SA_TOLUD) & ~(0x01)) - IgdMemSize - GttMemSize;
-  DmarTable->RmrrIgd.RmrrHeader.ReservedMemoryRegionLimitAddress  = DmarTable->RmrrIgd.RmrrHeader.ReservedMemoryRegionBaseAddress + IgdMemSize + GttMemSize - 1;
+  Tolud = PciRead32 ((UINTN)McD0BaseAddress + R_SA_TOLUD) & ~(0x01);
+
+  //
+  // If IgdMemSize is invalid, set Base and Limit to 0. Limit == 0 makes UpdateRmrr() drop this entry.
+  //
+  if ((IgdMemSize64 > MAX_UINT32) || (IgdMemSize64 + GttMemSize > Tolud)) {
+    DEBUG ((DEBUG_ERROR, "IgdMode 0x%04X gives an invalid IGD memory size, dropping IGD RMRR\n", IgdMode));
+    ASSERT(FALSE);
+    DmarTable->RmrrIgd.RmrrHeader.ReservedMemoryRegionBaseAddress  = 0;
+    DmarTable->RmrrIgd.RmrrHeader.ReservedMemoryRegionLimitAddress = 0;
+  } else {
+    IgdMemSize = (UINT32) IgdMemSize64;
+    DmarTable->RmrrIgd.RmrrHeader.ReservedMemoryRegionBaseAddress   = Tolud - IgdMemSize - GttMemSize;
+    DmarTable->RmrrIgd.RmrrHeader.ReservedMemoryRegionLimitAddress  = DmarTable->RmrrIgd.RmrrHeader.ReservedMemoryRegionBaseAddress + IgdMemSize + GttMemSize - 1;
+  }
 
   DEBUG ((DEBUG_INFO, "RMRR Base  address IGD %016lX\n", DmarTable->RmrrIgd.RmrrHeader.ReservedMemoryRegionBaseAddress));
   DEBUG ((DEBUG_INFO, "RMRR Limit address IGD %016lX\n", DmarTable->RmrrIgd.RmrrHeader.ReservedMemoryRegionLimitAddress));
