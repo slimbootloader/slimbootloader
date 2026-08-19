@@ -947,7 +947,10 @@ GpioInit (
     ChipsetId = CNL_LP_CHIPSET_ID;
   }
 
-  for (Index = 0; Index  < GpioCfgHdr->GpioItemCount; Index++) {
+  for (Index = 0;
+       Index < GpioCfgHdr->GpioItemCount &&
+       Index < (ARRAY_SIZE(GpioCfgCurrHdr->GpioBaseTableBitMask)*8);
+       Index++) {
     if (GpioCfgCurrHdr->GpioBaseTableBitMask[Index >> 3] & (1 << (Index & 7))) {
       GpioTable = FillGpioTable (GpioTable, GpioCfgHdr, Offset, ChipsetId);
       GpioEntries++;

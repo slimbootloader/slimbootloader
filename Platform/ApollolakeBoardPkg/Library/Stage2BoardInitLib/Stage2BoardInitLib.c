@@ -279,7 +279,10 @@ GpioInit (
     }
 
     SmipEntry = (GPIO_CONFIG_SMIP *)GpioCfgBaseHdr->GpioTableData;
-    for (Index = 0; Index < GpioCfgBaseHdr->GpioItemCount; Index++) {
+    for (Index = 0;
+         Index < GpioCfgBaseHdr->GpioItemCount &&
+         Index < (ARRAY_SIZE(GpioCfgCurrHdr->GpioBaseTableBitMask)*8);
+         Index++) {
       if (GpioCfgCurrHdr->GpioBaseTableBitMask[Index >> 3] & (1 << (Index & 7))) {
         CopyMem (GpioConfigSmip, SmipEntry, sizeof (GPIO_CONFIG_SMIP));
         GpioConfigSmip->Half0.r.HostSw        = (GpioConfigSmip->Half1.r.Reserved0 & BIT0);
