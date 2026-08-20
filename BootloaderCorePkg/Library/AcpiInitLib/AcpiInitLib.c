@@ -10,6 +10,7 @@
 #include <Library/DebugLib.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/BootloaderCommonLib.h>
 #include <Library/SocInitLib.h>
 #include <Library/BoardInitLib.h>
 #include <Library/DebugDataLib.h>
@@ -105,12 +106,15 @@ UpdateAcpiGnvs (
   /*
    * Loop through the ASL looking for values that we must fix up.
    */
-  for (; Ptr < End; Ptr++) {
-    if (* (UINT32 *)Ptr != SIGNATURE_32 ('G', 'N', 'V', 'S')) {
+  for (; IsPtrRangeValid (Ptr, sizeof (UINT32), End); Ptr++) {
+    if ((Ptr == (UINT8 *)Dsdt) || (* (UINT32 *)Ptr != SIGNATURE_32 ('G', 'N', 'V', 'S'))) {
       continue;
     }
     if (* (Ptr - 1) != AML_EXT_REGION_OP) {
       continue;
+    }
+    if (!IsPtrRangeValid (Ptr, 11 + sizeof (UINT16), End)) {
+      break;
     }
     * (UINT32 *) (Ptr + 6)  = GnvsBase;
     * (UINT16 *) (Ptr + 11) = (UINT16)GetAcpiGnvsSize();

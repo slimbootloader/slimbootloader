@@ -386,7 +386,7 @@ InternalGetVariable (
   VarEndPtr = (UINT8 *)VarStoreHdrPtr + VarStoreHdrPtr->Size;
 
   FindVarHdrPtr = NULL;
-  while ((UINT8 *)VarHdrPtr < VarEndPtr) {
+  while (IsPtrRangeValid ((UINT8 *)VarHdrPtr, sizeof (VARIABLE_HEADER), VarEndPtr)) {
     State = VarHdrPtr->State;
     if (!IS_HEADER_VALID (State)) {
       break;
@@ -528,7 +528,7 @@ GetNextVariableName (
   } else {
     // Find current variable
     FindVarHdrPtr = NULL;
-    while ((UINT8 *)VarHdrPtr < VarEndPtr) {
+    while (IsPtrRangeValid ((UINT8 *)VarHdrPtr, sizeof (VARIABLE_HEADER), VarEndPtr)) {
       State = VarHdrPtr->State;
       if (VarHdrPtr->StartId != VARIABLE_DATA) {
         break;
@@ -553,7 +553,7 @@ GetNextVariableName (
   // Find the next valid variable
   VarHdrPtr     = FindVarHdrPtr;
   FindVarHdrPtr = NULL;
-  while ((UINT8 *)VarHdrPtr < VarEndPtr) {
+  while (IsPtrRangeValid ((UINT8 *)VarHdrPtr, sizeof (VARIABLE_HEADER), VarEndPtr)) {
     State = VarHdrPtr->State;
     if (VarHdrPtr->StartId != VARIABLE_DATA) {
       break;
@@ -1049,7 +1049,7 @@ QueryVariableInfo (
   UsedSize  = 0;
   VarHdrPtr = (VARIABLE_HEADER *)&VarStoreHdrPtr[1];
   VarEndPtr = (UINT8 *)VarStoreHdrPtr + VarStoreHdrPtr->Size;
-  while ((UINT8 *)VarHdrPtr < VarEndPtr) {
+  while (IsPtrRangeValid ((UINT8 *)VarHdrPtr, sizeof (VARIABLE_HEADER), VarEndPtr)) {
     if (VarHdrPtr->StartId != VARIABLE_DATA) {
       break;
     }
