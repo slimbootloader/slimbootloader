@@ -57,6 +57,8 @@
   VtdPmrLib
   VtdLib
   MadtLib
+  BootloaderCommonLib
+
 [Guids]
   gSmmInformationGuid
   gCpuInitDataHobGuid

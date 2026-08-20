@@ -55,6 +55,7 @@
   S3SaveRestoreLib
   BoardSupportLib
   MadtLib
+  BootloaderCommonLib
 
 [Guids]
   gSmmInformationGuid

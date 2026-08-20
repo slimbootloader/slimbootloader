@@ -6,6 +6,7 @@
 **/
 
 #include "Stage2BoardInitLib.h"
+#include <Library/BootloaderCommonLib.h>
 
 #define AML_STA_PRESENT           0x01
 #define AML_STA_ENABLED           0x02
@@ -207,36 +208,37 @@ PatchDsdtTable (
 
   Ptr = (UINT8 *)Table;
   End = (UINT8 *)Table + Table->Length;
-  for (; Ptr < End; Ptr++) {
-    if (*(Ptr - 1) == AML_NAME_OP) {
-      if (*(UINT32 *)Ptr == SIGNATURE_32 ('P','N','V','B')) {
-        Base = (UINT32) (UINTN) &GlobalNvs->PchNvs;
-        DEBUG ((DEBUG_INFO, "PNVB Old=0x%08X New=0x%08X\n", *(UINT32 *)(Ptr + 5), Base));
-        *(UINT32 *)(Ptr + 5) = Base;
-      } else if (*(UINT32 *)Ptr == SIGNATURE_32 ('P','N','V','L')) {
-        Size = sizeof (PCH_NVS_AREA);
-        DEBUG ((DEBUG_INFO, "PNVL Old=0x%08X New=0x%08X\n", *(UINT16 *)(Ptr + 5), Size));
-        *(UINT16 *)(Ptr + 5) = Size;
-      } else if (*(UINT32 *)Ptr == SIGNATURE_32 ('B','N','V','B')) {
-        Base = (UINT32) (UINTN) &GlobalNvs->BiosAcpiParam;
-        DEBUG ((DEBUG_INFO, "BNVB Old=0x%08X New=0x%08X\n", *(UINT32 *)(Ptr + 5), Base));
-        *(UINT32 *)(Ptr + 5) = Base;
-      } else if (*(UINT32 *)Ptr == SIGNATURE_32 ('B','N','V','L')) {
-        Size = sizeof (BIOS_ACPI_PARAM);
-        DEBUG ((DEBUG_INFO, "BNVL Old=0x%08X New=0x%08X\n", *(UINT16 *)(Ptr + 5), Size));
-        *(UINT16 *)(Ptr + 5) = Size;
-      } else if ((Ptr[0] == 'A') && (Ptr[1] == 'P') && (Ptr[2] == 'T') && (Ptr[3] == '0')) {
-        if (CpuInfo == NULL) {
-          continue;
-        }
+  for (; IsPtrRangeValid (Ptr, sizeof (UINT32), End); Ptr++) {
+    if ((Ptr == (UINT8 *) Table) || (*(Ptr - 1) != AML_NAME_OP)) {
+      continue;
+    }
+    if ((*(UINT32 *)Ptr == SIGNATURE_32 ('P','N','V','B')) && IsPtrRangeValid (Ptr, 5 + sizeof (UINT32), End)) {
+      Base = (UINT32) (UINTN) &GlobalNvs->PchNvs;
+      DEBUG ((DEBUG_INFO, "PNVB Old=0x%08X New=0x%08X\n", *(UINT32 *)(Ptr + 5), Base));
+      *(UINT32 *)(Ptr + 5) = Base;
+    } else if ((*(UINT32 *)Ptr == SIGNATURE_32 ('P','N','V','L')) && IsPtrRangeValid (Ptr, 5 + sizeof (UINT16), End)) {
+      Size = sizeof (PCH_NVS_AREA);
+      DEBUG ((DEBUG_INFO, "PNVL Old=0x%08X New=0x%08X\n", *(UINT16 *)(Ptr + 5), Size));
+      *(UINT16 *)(Ptr + 5) = Size;
+    } else if ((*(UINT32 *)Ptr == SIGNATURE_32 ('B','N','V','B')) && IsPtrRangeValid (Ptr, 5 + sizeof (UINT32), End)) {
+      Base = (UINT32) (UINTN) &GlobalNvs->BiosAcpiParam;
+      DEBUG ((DEBUG_INFO, "BNVB Old=0x%08X New=0x%08X\n", *(UINT32 *)(Ptr + 5), Base));
+      *(UINT32 *)(Ptr + 5) = Base;
+    } else if ((*(UINT32 *)Ptr == SIGNATURE_32 ('B','N','V','L')) && IsPtrRangeValid (Ptr, 5 + sizeof (UINT16), End)) {
+      Size = sizeof (BIOS_ACPI_PARAM);
+      DEBUG ((DEBUG_INFO, "BNVL Old=0x%08X New=0x%08X\n", *(UINT16 *)(Ptr + 5), Size));
+      *(UINT16 *)(Ptr + 5) = Size;
+    } else if ((Ptr[0] == 'A') && (Ptr[1] == 'P') && (Ptr[2] == 'T') && (Ptr[3] == '0')) {
+      if ((CpuInfo == NULL) || !IsPtrRangeValid (Ptr, 9 + CpuCount, End)) {
+        continue;
+      }
 
-        Current = Ptr + 9;
-        DEBUG ((DEBUG_VERBOSE, "APT0\n"));
-        for (Index = 0; Index < CpuCount; Index++) {
-          DEBUG ((DEBUG_VERBOSE, " %d: 0x%02X ->", Index, Current[Index]));
-          Current[Index] = (UINT8)CpuInfo->CpuInfo[Index].ApicId;
-          DEBUG ((DEBUG_VERBOSE, " 0x%02X\n", Current[Index]));
-        }
+      Current = Ptr + 9;
+      DEBUG ((DEBUG_VERBOSE, "APT0\n"));
+      for (Index = 0; Index < CpuCount; Index++) {
+        DEBUG ((DEBUG_VERBOSE, " %d: 0x%02X ->", Index, Current[Index]));
+        Current[Index] = (UINT8)CpuInfo->CpuInfo[Index].ApicId;
+        DEBUG ((DEBUG_VERBOSE, " 0x%02X\n", Current[Index]));
       }
     }
   }
@@ -280,7 +282,7 @@ SkipExternalSbOpcodes (
   //
   // Skip external op
   //
-  for (Ptr = CurrPtr; Ptr <= EndPtr; ++Ptr) {
+  for (Ptr = CurrPtr; IsPtrRangeValid (Ptr, 9, EndPtr); ++Ptr) {
     Signature = *(UINT32 *) Ptr;
     if ((Signature == SIGNATURE_32 ('_', 'S', 'B', '_'))
       && ((Ptr[4] == 'S') && (Ptr[5] == 'C') && (Ptr[6] == 'K') && (Ptr[7] == '0') && (Ptr[8] == 'C'))
@@ -290,7 +292,7 @@ SkipExternalSbOpcodes (
     }
   }
 
-  if (Ptr < EndPtr) {
+  if (IsPtrRangeValid (Ptr, 9, EndPtr)) {
     return Ptr;
   } else {
     DEBUG ((DEBUG_INFO, "SkipExternalSbOpcodes - Not found!\n"));
@@ -344,7 +346,7 @@ PatchCpuPmSsdtTable (
   ThreadIndex = 0;
   DomnValue = 0;
   NcpuValue = 0;
-  for (Ptr = CurrPtr; Ptr <= EndPtr; ++Ptr) {
+  for (Ptr = CurrPtr; IsPtrRangeValid (Ptr, 12, EndPtr); ++Ptr) {
     Signature = *(UINT32 *) Ptr;
     if ((Signature == SIGNATURE_32 ('_', 'S', 'B', '_'))
       && ((Ptr[4] == 'S') && (Ptr[5] == 'C') && (Ptr[6] == 'K') && (Ptr[8] == 'C'))) {
@@ -493,7 +495,7 @@ PatchOem1SsdtTable (
   ThreadCount = (CpuInfo != NULL) ? (UINT8)CpuInfo->CpuCount : 1;
   CpuSkt = 0;
   ThreadIndex = 0;
-  for (Ptr = CurrPtr; Ptr <= EndPtr; ++Ptr) {
+  for (Ptr = CurrPtr; IsPtrRangeValid (Ptr, 12, EndPtr); ++Ptr) {
     Signature = *(UINT32 *) Ptr;
     if ((Signature == SIGNATURE_32 ('_', 'S', 'B', '_'))
       && ((Ptr[4] == 'S') && (Ptr[5] == 'C') && (Ptr[6] == 'K') && (Ptr[8] == 'C'))) {
@@ -559,22 +561,28 @@ PatchSpsNmSsdtTable (
   CpuInfo = MpGetInfo ();
   ThreadCount = (CpuInfo != NULL) ? (UINT16)CpuInfo->CpuCount : 1;
 
-  for (Ptr = CurrPtr; Ptr <= EndPtr; ++Ptr) {
+  // In each case, make sure accesses don't exceed the table bounds
+  for (Ptr = CurrPtr; IsPtrRangeValid (Ptr, sizeof(UINT32) + 2, EndPtr); ++Ptr) {
     Signature = *(UINT32 *) Ptr;
 
     if ((Signature == SIGNATURE_32('H', '2', 'S', 'T')) &&
-        (Ptr[4] == AML_BYTE_PREFIX)) {
+        (Ptr[4] == AML_BYTE_PREFIX))
+    {
       DEBUG ((DEBUG_VERBOSE, "[SPS] Updating 'H2ST' 0x%02X", *(UINT8 *)&Ptr[5]));
       *(UINT8 *)&Ptr[5] = AML_STA_PRESENT | AML_STA_ENABLED | AML_STA_FUNCTIONAL;
       DEBUG ((DEBUG_VERBOSE, " -> 0x%02X\n", *(UINT8 *)&Ptr[5]));
     } else if ((Signature == SIGNATURE_32('T', 'H', 'N', 'U')) &&
-               (Ptr[4] == AML_WORD_PREFIX)) {
+               (Ptr[4] == AML_WORD_PREFIX) &&
+               IsPtrRangeValid (Ptr, sizeof(UINT32) + 1 + sizeof(UINT16), EndPtr))
+    {
       DEBUG ((DEBUG_VERBOSE, "[SPS] Updating 'THNU' %d", *(UINT16 *)&Ptr[5]));
       *(UINT16 *)&Ptr[5] = ThreadCount;
       DEBUG ((DEBUG_VERBOSE, " -> %d\n", *(UINT16 *)&Ptr[5]));
     } else if ((Signature == SIGNATURE_32('H', '2', 'C', 'S')) &&
                (Ptr[4] == EFI_ACPI_5_0_SYSTEM_MEMORY) &&
-               (Ptr[5] == AML_QWORD_PREFIX)) {
+               (Ptr[5] == AML_QWORD_PREFIX) &&
+               IsPtrRangeValid (Ptr, sizeof(UINT32) + 2 + sizeof(UINT64), EndPtr))
+    {
       DEBUG ((DEBUG_VERBOSE, "[SPS] Updating 'H2CR' address 0x%16lX", *(UINT32 *)&Ptr[10], *(UINT32 *)&Ptr[6]));
       Base = MM_PCI_ADDRESS (ME_BUS, ME_DEVICE_NUMBER, HECI2_FUNCTION_NUMBER, 0x0);
       *(UINT64 *)&Ptr[6] = (MmioRead32 (Base + 0x14) | (MmioRead32 (Base + 0x10) & (UINT32)~0xF));
