@@ -9,6 +9,7 @@
 #include <Library/PrintLib.h>
 #include <VerInfo.h>
 #include <Library/SmbiosInitLib.h>
+#include <Library/BootloaderCommonLib.h>
 
 #define VTD_RMRR_USB_LENGTH                   0x20000
 #define R_SA_MCHBAR_VTD1_OFFSET               0x6C88  ///< DMA Remapping HW UNIT1 for IGD
@@ -1660,9 +1661,12 @@ UpdateAcpiDsdt (
   End = (UINT8 *)Table+ Table->Length;
 
   // Loop through the ASL looking for values that we must fix up.
-  for (; Ptr < End; Ptr++) {
+  for (; IsPtrRangeValid (Ptr, sizeof (UINT32), End); Ptr++) {
+    if (Ptr == (UINT8 *) Table) {
+      continue;
+    }
     if (!PnvsFound && (*(UINT32 *)Ptr == SIGNATURE_32 ('P', 'N', 'V', 'S')) &&
-         (*(Ptr - 1) == AML_EXT_REGION_OP)) {
+         (*(Ptr - 1) == AML_EXT_REGION_OP) && IsPtrRangeValid (Ptr, 11 + sizeof (UINT16), End)) {
       * (UINT32 *) (Ptr + 6)  = (UINT32)(UINTN)&Gnvs->CpuNvs;
       * (UINT16 *) (Ptr + 11) = (UINT16)sizeof(CPU_NVS_AREA);
       PnvsFound = TRUE;

@@ -6,6 +6,7 @@
 **/
 
 #include "Stage2BoardInitLib.h"
+#include <Library/BootloaderCommonLib.h>
 
 #define AML_STA_PRESENT           0x01
 #define AML_STA_ENABLED           0x02
@@ -316,17 +317,18 @@ PatchDsdtTable (
 
   Ptr = (UINT8 *)Table;
   End = (UINT8 *)Table + Table->Length;
-  for (; Ptr < End; Ptr++) {
-    if (*(Ptr - 1) == AML_NAME_OP) {
-      if (*(UINT32 *)Ptr == SIGNATURE_32 ('P','N','V','B')) {
-        Base = (UINT32) (UINTN) &GlobalNvs->PchNvs;
-        DEBUG ((DEBUG_INFO, "PNVB Old=0x%08X New=0x%08X\n", *(UINT32 *)(Ptr + 5), Base));
-        *(UINT32 *)(Ptr + 5) = Base;
-      } else if (*(UINT32 *)Ptr == SIGNATURE_32 ('P','N','V','L')) {
-        Size = sizeof (PCH_NVS_AREA);
-        DEBUG ((DEBUG_INFO, "PNVL Old=0x%08X New=0x%08X\n", *(UINT16 *)(Ptr + 5), Size));
-        *(UINT16 *)(Ptr + 5) = Size;
-      }
+  for (; IsPtrRangeValid (Ptr, sizeof (UINT32), End); Ptr++) {
+    if ((Ptr == (UINT8 *) Table) || (*(Ptr - 1) != AML_NAME_OP)) {
+      continue;
+    }
+    if ((*(UINT32 *)Ptr == SIGNATURE_32 ('P','N','V','B')) && IsPtrRangeValid (Ptr, 5 + sizeof (UINT32), End)) {
+      Base = (UINT32) (UINTN) &GlobalNvs->PchNvs;
+      DEBUG ((DEBUG_INFO, "PNVB Old=0x%08X New=0x%08X\n", *(UINT32 *)(Ptr + 5), Base));
+      *(UINT32 *)(Ptr + 5) = Base;
+    } else if ((*(UINT32 *)Ptr == SIGNATURE_32 ('P','N','V','L')) && IsPtrRangeValid (Ptr, 5 + sizeof (UINT16), End)) {
+      Size = sizeof (PCH_NVS_AREA);
+      DEBUG ((DEBUG_INFO, "PNVL Old=0x%08X New=0x%08X\n", *(UINT16 *)(Ptr + 5), Size));
+      *(UINT16 *)(Ptr + 5) = Size;
     }
   }
 
@@ -372,7 +374,7 @@ SkipExternalSbOpcodes (
   //
   // Skip external op
   //
-  for (Ptr = CurrPtr; Ptr <= EndPtr; ++Ptr) {
+  for (Ptr = CurrPtr; IsPtrRangeValid (Ptr, sizeof(UINT32) + 5, EndPtr); ++Ptr) {
     Signature = *(UINT32 *) Ptr;
     if ((Signature == SIGNATURE_32 ('_', 'S', 'B', '_'))
       && ((Ptr[4] == 'S') && (Ptr[5] == 'C') && (Ptr[6] == 'K') && (Ptr[7] == '0') && (Ptr[8] == 'C'))
@@ -382,7 +384,7 @@ SkipExternalSbOpcodes (
     }
   }
 
-  if (Ptr < EndPtr) {
+  if (IsPtrRangeValid (Ptr, sizeof(UINT32) + 5, EndPtr)) {
     return Ptr;
   } else {
     DEBUG ((DEBUG_INFO, "SkipExternalSbOpcodes - Not found!\n"));
@@ -436,7 +438,7 @@ PatchCpuPmSsdtTable (
   ThreadIndex = 0;
   DomnValue = 0;
   NcpuValue = 0;
-  for (Ptr = CurrPtr; Ptr <= EndPtr; ++Ptr) {
+  for (Ptr = CurrPtr; IsPtrRangeValid (Ptr, 12, EndPtr); ++Ptr) {
     Signature = *(UINT32 *) Ptr;
     if ((Signature == SIGNATURE_32 ('_', 'S', 'B', '_'))
       && ((Ptr[4] == 'S') && (Ptr[5] == 'C') && (Ptr[6] == 'K') && (Ptr[8] == 'C'))) {
@@ -586,7 +588,7 @@ PatchOem1SsdtTable (
   ThreadCount = (CpuInfo != NULL) ? (UINT8)CpuInfo->CpuCount : 1;
   CpuSkt = 0;
   ThreadIndex = 0;
-  for (Ptr = CurrPtr; Ptr <= EndPtr; ++Ptr) {
+  for (Ptr = CurrPtr; IsPtrRangeValid (Ptr, 12, EndPtr); ++Ptr) {
     Signature = *(UINT32 *) Ptr;
     if ((Signature == SIGNATURE_32 ('_', 'S', 'B', '_'))
       && ((Ptr[4] == 'S') && (Ptr[5] == 'C') && (Ptr[6] == 'K') && (Ptr[8] == 'C'))) {

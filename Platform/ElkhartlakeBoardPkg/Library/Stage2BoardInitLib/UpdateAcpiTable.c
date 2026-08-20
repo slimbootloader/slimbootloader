@@ -30,6 +30,7 @@
 #include <Library/PchSciLib.h>
 #include <PlatformData.h>
 #include <Library/MadtLib.h>
+#include <Library/BootloaderCommonLib.h>
 
 #define ICH_IOAPIC_ID                   0x02
 #define NHLT_ACPI_TABLE_SIGNATURE  SIGNATURE_32 ('N', 'H', 'L', 'T')
@@ -94,11 +95,16 @@ PatchCpuSsdtTable (
 {
   CPU_NVS_AREA            *CpuNvs;
   UINT8                   *CurrPtr;
+  UINT8                   *End;
   UINT32                  *Signature;
 
   CpuNvs      = (CPU_NVS_AREA *) &GlobalNvs->CpuNvs;
-  CurrPtr     = (UINT8 *) Table;
-  for (CurrPtr = (UINT8 *) Table; CurrPtr <= ((UINT8 *) Table + Table->Length); CurrPtr++) {
+  End         = (UINT8 *) Table + Table->Length;
+  // Make sure we stop searching when there's not enough room left for the entire PNVS structure
+  for (CurrPtr = (UINT8 *) Table;
+    IsPtrRangeValid (CurrPtr, 1 + sizeof (*Signature) + 2 + sizeof (UINT32) + 1 + sizeof(UINT16), End);
+    CurrPtr++)
+  {
     Signature = (UINT32 *) (CurrPtr + 1);
     ///
     /// Update the CPU GlobalNvs area
@@ -191,7 +197,9 @@ AcpiPatchPss (
   ///
   CurrPtr     = (UINT8 *) Table;
   EndOfTable  = (UINT8 *) (CurrPtr + Table->Length);
-  for (CurrPtr = (UINT8 *) Table; CurrPtr <= EndOfTable; CurrPtr++) {
+  for (CurrPtr = (UINT8 *) Table;
+       IsPtrRangeValid (CurrPtr, sizeof (UINT8) + 3 * sizeof (UINT32), EndOfTable); // reserve room for the Signature+2 read below
+       CurrPtr++) {
     Signature = (UINT32 *) (CurrPtr + 1);
     ///
     /// If we find the _SB_PR00 scope, save a pointer to the package length
@@ -417,14 +425,14 @@ PlatformUpdateAcpiTable (
   End  = (UINT8 *)Table + Table->Length;
 
   if (Table->Signature == EFI_ACPI_5_0_DIFFERENTIATED_SYSTEM_DESCRIPTION_TABLE_SIGNATURE) {
-    for (; Ptr < End; Ptr++) {
-      if (*(Ptr-1) != AML_NAME_OP)
+    for (; IsPtrRangeValid (Ptr, sizeof (UINT32), End); Ptr++) {
+      if ((Ptr == (UINT8 *) Table) || (*(Ptr-1) != AML_NAME_OP))
         continue;
-      if (*(UINT32 *)Ptr == SIGNATURE_32 ('P','N','V','B')) {
+      if ((*(UINT32 *)Ptr == SIGNATURE_32 ('P','N','V','B')) && IsPtrRangeValid (Ptr, 5 + sizeof (UINT32), End)) {
         Base = (UINT32) (UINTN) &GlobalNvs->PchNvs;
         DEBUG ((DEBUG_INFO, "PNVS Old=0x%08X New=0x%08X\n", *(UINT32 *)(Ptr + 5), Base));
         *(UINT32 *)(Ptr + 5) = Base;
-      } else if (*(UINT32 *)Ptr == SIGNATURE_32 ('P','N','V','L')) {
+      } else if ((*(UINT32 *)Ptr == SIGNATURE_32 ('P','N','V','L')) && IsPtrRangeValid (Ptr, 5 + sizeof (UINT16), End)) {
         Size = sizeof (PCH_NVS_AREA);
         DEBUG ((DEBUG_INFO, "PNVL Old=0x%08X New=0x%08X\n", *(UINT16 *)(Ptr + 5), Size));
         *(UINT16 *)(Ptr + 5) = Size;
@@ -437,14 +445,14 @@ PlatformUpdateAcpiTable (
     MmCfg = (EFI_ACPI_MEMORY_MAPPED_ENHANCED_CONFIGURATION_SPACE_BASE_ADDRESS_ALLOCATION_STRUCTURE *)
             ((EFI_ACPI_MEMORY_MAPPED_CONFIGURATION_BASE_ADDRESS_TABLE_HEADER *)Ptr + 1);
     Base  = 0;
-    while ((UINT8 *)MmCfg < End) {
+    while (IsPtrRangeValid ((UINT8 *)MmCfg, sizeof (*MmCfg), End)) {
       MmCfg->BaseAddress = PcdGet64 (PcdPciExpressBaseAddress) + Base;
       Base += 0x10000000;
       MmCfg++;
     }
   } else if (Table->OemTableId == SIGNATURE_64 ('S', 'a', 'S', 's', 'd', 't', ' ', 0)) {
-    for (; Ptr < End; Ptr++) {
-      if (*(UINT32 *)Ptr == SIGNATURE_32 ('S','A','N','V')) {
+    for (; IsPtrRangeValid (Ptr, sizeof (UINT32), End); Ptr++) {
+      if ((*(UINT32 *)Ptr == SIGNATURE_32 ('S','A','N','V')) && IsPtrRangeValid (Ptr, 11 + sizeof (UINT16), End)) {
         Base = (UINT32) (UINTN) &GlobalNvs->SaNvs;
         DEBUG ((DEBUG_INFO, "SANV Base Old=0x%08X New=0x%08X\n", *(UINT32 *)(Ptr + 6), Base));
         *(UINT32 *)(Ptr + 6) = Base;

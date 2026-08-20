@@ -47,6 +47,7 @@
   KsvVtdLib
   DmarLib
   MadtLib
+  BootloaderCommonLib
   PrintLib
   AspeedGfxLib
   UefiVariableLib

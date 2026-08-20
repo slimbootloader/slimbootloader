@@ -101,6 +101,7 @@
 #include <Register/RtcRegs.h>
 #include <Library/CrashLogLib.h>
 #include <Acpi/AcpiCommon.h>
+#include <Library/BootloaderCommonLib.h>
 
 #define NHLT_ACPI_TABLE_SIGNATURE  SIGNATURE_32 ('N', 'H', 'L', 'T')
 #define V_EPOC_XTAL_38_4_MHZ  0x249F000
