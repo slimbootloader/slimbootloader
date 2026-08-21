@@ -73,6 +73,7 @@
   TxtLib
   DmarLib
   MadtLib
+  BootloaderCommonLib
 
 [Guids]
   gOsConfigDataGuid

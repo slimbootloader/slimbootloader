@@ -40,6 +40,7 @@
   BaseLib
   DebugLib
   BootloaderCoreLib
+  BootloaderCommonLib
   DebugDataLib
   MpInitLib
   TimeStampLib

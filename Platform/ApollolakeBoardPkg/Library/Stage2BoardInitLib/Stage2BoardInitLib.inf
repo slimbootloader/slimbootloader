@@ -61,6 +61,7 @@
   BoardSupportLib
   VtdPmrLib
   MadtLib
+  BootloaderCommonLib
 
 [Guids]
   gOsConfigDataGuid

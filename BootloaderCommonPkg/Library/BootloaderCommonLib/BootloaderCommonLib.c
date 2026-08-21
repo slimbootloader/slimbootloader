@@ -814,6 +814,27 @@ CompareMemConstantTime (
 }
 
 /**
+  Check if Size bytes at Ptr are still within the buffer ending at End.
+
+  @param[in]  Ptr    Current scan pointer.
+  @param[in]  Size   Number of bytes to be accessed at Ptr.
+  @param[in]  End    One byte past the end of the valid buffer.
+
+  @retval TRUE      [Ptr, Ptr + Size) is within the buffer.
+  @retval FALSE     The range would fall outside the buffer.
+**/
+BOOLEAN
+EFIAPI
+IsPtrRangeValid (
+  IN CONST UINT8   *Ptr,
+  IN UINTN          Size,
+  IN CONST UINT8   *End
+  )
+{
+  return (Ptr < End) && (((UINTN)End - (UINTN)Ptr) >= Size);
+}
+
+/**
   Match a given hash with the ones in hash store.
 
   @param[in]  Usatge      Hash usage.

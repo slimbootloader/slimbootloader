@@ -63,6 +63,7 @@
   WatchDogTimerLib
   ResetSystemLib
   MadtLib
+  BootloaderCommonLib
 
 [Guids]
   gOsConfigDataGuid
