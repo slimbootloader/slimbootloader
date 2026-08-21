@@ -49,6 +49,21 @@ __m128i __cdecl _mm_loadu_si128 (__m128i const*);
 void    __cdecl _mm_storeu_si128(__m128i*, __m128i);
 __m128i __cdecl _mm_xor_si128   (__m128i, __m128i);
 
+// IA32-only declarations required by the current MSVC C2164 errors.
+#if defined(MDE_CPU_IA32) || defined(_M_IX86)
+__m128i __cdecl _mm_cvtsi32_si128 (int);
+__m128i __cdecl _mm_shuffle_epi32 (__m128i, int);
+__m128i __cdecl _mm_set1_epi32    (int);
+__m128i __cdecl _mm_srli_epi64    (__m128i, int);
+__m128i __cdecl _mm_srli_si128    (__m128i, int);
+__m128i __cdecl _mm_setzero_si128 (void);
+__m128i __cdecl _mm_load_si128    (__m128i const*);
+void    __cdecl _mm_store_si128   (__m128i*, __m128i);
+__m128i __cdecl _mm_add_epi64     (__m128i, __m128i);
+__m128i __cdecl _mm_mul_epu32     (__m128i, __m128i);
+__m128i __cdecl _mm_and_si128     (__m128i, __m128i);
+#endif
+
 #endif /* _MSC_VER */
 
 #endif /* IPP_SBL_INTRIN_H_ */
