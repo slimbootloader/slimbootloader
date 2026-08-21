@@ -955,3 +955,23 @@ TxtS3Resume()
   DEBUG ((DEBUG_INFO, "TxtS3Resume: Exit\n"));
   return EFI_SUCCESS;
 }
+
+EFI_STATUS
+EFIAPI
+DisableSmxOnBSP (
+  VOID
+  )
+{
+  DisableCR4Smx ();
+  return EFI_SUCCESS;
+}
+
+EFI_STATUS
+EFIAPI
+DisableSmiSources (
+  IN TXT_LIB_CONTEXT *TxtLibCtx,
+  IN BOOLEAN         Operation
+  )
+{
+  return EFI_SUCCESS;
+}

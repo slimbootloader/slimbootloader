@@ -483,8 +483,13 @@ class Build(object):
 
         # ACM
         if self._board.ACM_SIZE > 0:
+            if getattr(self._board, 'ADD_LEGACY_ACM_FIT_ENTRY', 0):
+                fit_entry = FIT_ENTRY.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
+                fit_entry.set_values(self._board.ACM_BASE, 0, 0x100, 0x2, 0)
+                print ('  Patching entry %d with 0x%08X:0x%08X - ACM' % (num_fit_entries, fit_entry.address, fit_entry.size))
+                num_fit_entries += 1
+
             if self._board.ACM_FIT_VERISON == 0x200:
-                # Add all the CPUIDs for ACM FIT Version 0x200
                 for CPU_FMS in self._board._ACM_CPU_FMS :
                     fit_entry = FIT_ENTRY_V200.from_buffer(rom, fit_offset + (num_fit_entries+1)*16)
                     fit_entry.set_values(self._board.ACM_BASE, CPU_FMS, self._board.ACM_FIT_VERISON, 0x2, self._board._ACM_CPU_EXT_FM_FM_MASK)

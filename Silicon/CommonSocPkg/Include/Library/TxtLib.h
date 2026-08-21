@@ -10,6 +10,8 @@
 #define R_IOPORT_CMOS_STANDARD_DATA             0x71
 #define TXT_CMOS_STATUS_REG                     0x2A
 
+typedef struct _TXT_LIB_CONTEXT_ TXT_LIB_CONTEXT;
+
 /**
   Determines whether or not the platform requires initialization for TXT use.
 
@@ -52,12 +54,39 @@ EFIAPI
 TxtS3Restore();
 
 /**
+  Disable or restore possible SMI sources before or after ACM launch.
+
+  @param[in] TxtLibCtx   A pointer to initialized TXT context data.
+  @param[in] Operation   TRUE to save/disable sources, FALSE to restore.
+
+  @retval EFI_SUCCESS    Always returns EFI_SUCCESS.
+**/
+EFI_STATUS
+EFIAPI
+DisableSmiSources (
+  IN TXT_LIB_CONTEXT *TxtLibCtx,
+  IN BOOLEAN         Operation
+  );
+
+/**
   Disable CR4.SMXE bit on current processor.
-  This function clears the SMX enable bit on the BSP.
+  This function clears the SMX enable bit on the current CPU.
+
 **/
 VOID
 EFIAPI
 DisableCR4Smx (
+  VOID
+  );
+
+/**
+  Disable CR4.SMXE on BSP when TXT is enabled before payload loading.
+
+  @retval EFI_SUCCESS     CR4.SMXE disabled on BSP successfully.
+**/
+EFI_STATUS
+EFIAPI
+DisableSmxOnBSP (
   VOID
   );
 

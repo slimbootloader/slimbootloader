@@ -103,3 +103,19 @@ DisableCR4Smx (
 {
   // Null implementation - nothing to do when TXT is disabled
 }
+
+/**
+  Disable CR4.SMXE on BSP when TXT is enabled before payload loading.
+
+  Null implementation for platforms without TXT support.
+
+  @retval EFI_SUCCESS     CR4.SMXE disabled on BSP successfully.
+**/
+EFI_STATUS
+EFIAPI
+DisableSmxOnBSP (
+  VOID
+  )
+{
+  return EFI_SUCCESS;
+}

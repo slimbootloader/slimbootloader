@@ -790,7 +790,35 @@ DisableSmxOnBSP (
   )
 {
   // Disable CR4.SMXE on BSP only
-  DisableCR4Smx (0);
+  DisableCR4Smx ();
 
+  return EFI_SUCCESS;
+}
+
+EFI_STATUS
+EFIAPI
+TxtS3Restore (
+  VOID
+  )
+{
+  return EFI_SUCCESS;
+}
+
+EFI_STATUS
+EFIAPI
+TxtS3Resume (
+  VOID
+  )
+{
+  return EFI_SUCCESS;
+}
+
+EFI_STATUS
+EFIAPI
+DisableSmiSources (
+  IN TXT_LIB_CONTEXT *TxtLibCtx,
+  IN BOOLEAN         Operation
+  )
+{
   return EFI_SUCCESS;
 }
