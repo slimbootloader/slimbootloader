@@ -903,6 +903,25 @@ AuthenticateCapsule (
 
   PubKeyHdr       = (PUB_KEY_HDR *) (FwImage + Header->PubKeyOffset);
   SignatureHdr    = (SIGNATURE_HDR *) (FwImage + Header->SignatureOffset);
+
+  // Bind inner header-declared sizes against the outer capsule-validated region sizes.
+  // ValidateCapsuleLayout guarantees the outer regions fit within FwSize, but it
+  // cannot know the inner KeySize / SigSize fields because they are inside the
+  // attacker-supplied buffer.  Without these checks, DoRsaVerify would consume
+  // PubKeyHdr->KeySize (UINT16, up to 65535) bytes for hashing/CopyMem before any
+  // authentication has been established - an OOB read of up to 64 KB.
+  if (((UINT32)sizeof (PUB_KEY_HDR) + (UINT32)PubKeyHdr->KeySize) > Header->PubKeySize) {
+    DEBUG ((DEBUG_ERROR, "Invalid capsule: PubKeyHdr->KeySize (0x%x) exceeds PubKey region (0x%x)\n",
+            PubKeyHdr->KeySize, Header->PubKeySize));
+    return EFI_SECURITY_VIOLATION;
+  }
+
+  if (((UINT32)sizeof (SIGNATURE_HDR) + (UINT32)SignatureHdr->SigSize) > Header->SignatureSize) {
+    DEBUG ((DEBUG_ERROR, "Invalid capsule: SignatureHdr->SigSize (0x%x) exceeds Signature region (0x%x)\n",
+            SignatureHdr->SigSize, Header->SignatureSize));
+    return EFI_SECURITY_VIOLATION;
+  }
+
   Status = DoRsaVerify (FwImage, Header->SignatureOffset, HASH_USAGE_PUBKEY_FWU, SignatureHdr, PubKeyHdr, PcdGet8(PcdCompSignHashAlg), NULL, NULL);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Image verification failed, %r!\n", Status));
