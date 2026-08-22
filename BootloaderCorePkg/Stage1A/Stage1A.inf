@@ -59,6 +59,7 @@
   StageLib
   TopSwapLib
   CryptoLib
+  CompilerIntrinsicsLib
 
 [Guids]
   gPlatformModuleTokenSpaceGuid

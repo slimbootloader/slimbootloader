@@ -138,6 +138,7 @@
   CrashLogLib|Silicon/CommonSocPkg/Library/CrashLogLibNull/CrashLogLibNull.inf
   FusaConfigLib|Silicon/CommonSocPkg/Library/FusaConfigLibNull/FusaConfigLibNull.inf
   IppCryptoPerfLib|BootloaderCommonPkg/Library/IppCryptoPerfLib/IppCryptoPerfLib.inf
+  CompilerIntrinsicsLib|MdePkg/Library/CompilerIntrinsicsLib/CompilerIntrinsicsLib.inf
 
 ################################################################################
 #

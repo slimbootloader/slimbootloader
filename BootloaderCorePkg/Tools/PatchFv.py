@@ -436,6 +436,16 @@ class Symbols:
             matchKeyGroupIndex = 2
             matchSymbolGroupIndex  = 1
             prefix = ''
+        elif re.match(r"Address\s+Size\s+Align\s+Out\s+In\s+Symbol", reportLine) is not None:
+            #CLANG
+            # IA32
+            #00000220 00000000     0                 __ModuleEntryPoint
+            # X64
+            #00000220 00000000     0                 _ModuleEntryPoint
+            patchMapFileMatchString = r"^([0-9a-fA-F]{8})\s+[0-9a-fA-F]{8}\s+[0-9a-fA-F]+\s+(\S+)$"
+            matchKeyGroupIndex = 2
+            matchSymbolGroupIndex  = 1
+            prefix = ''
         else:
             #MSFT
             #0003:00000190       _gComBase                     00007a50     SerialPort
@@ -447,7 +457,8 @@ class Symbols:
         for reportLine in reportLines:
             match = re.match(patchMapFileMatchString, reportLine)
             if match is not None:
-                if prefix == '' and len(match.group(matchSymbolGroupIndex)) > 10:
+                if prefix == '' and (len(match.group(matchSymbolGroupIndex)) > 10 or
+                                     re.match(r"^.*CLANGPDB.*X64", match.group(matchKeyGroupIndex))):
                     prefix = '_'
                 keyname = '%s' % (prefix + match.group(matchKeyGroupIndex))
                 modSymbols[keyname] = match.group(matchSymbolGroupIndex)
