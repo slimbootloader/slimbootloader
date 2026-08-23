@@ -907,9 +907,23 @@ AuthenticateCapsule (
   // Bind inner header-declared sizes against the outer capsule-validated region sizes.
   // ValidateCapsuleLayout guarantees the outer regions fit within FwSize, but it
   // cannot know the inner KeySize / SigSize fields because they are inside the
-  // attacker-supplied buffer.  Without these checks, DoRsaVerify would consume
-  // PubKeyHdr->KeySize (UINT16, up to 65535) bytes for hashing/CopyMem before any
-  // authentication has been established - an OOB read of up to 64 KB.
+  // attacker-supplied buffer.
+  //
+  // Whitelist the supported RSA sizes so DoRsaVerify/DoHashVerify never consume
+  // attacker-selected short/odd lengths.
+  //
+  if ((SignatureHdr->SigSize != RSA2048_MOD_SIZE) && (SignatureHdr->SigSize != RSA3072_MOD_SIZE)) {
+    DEBUG ((DEBUG_ERROR, "Invalid capsule: SignatureHdr->SigSize (0x%x) is unsupported\n",
+            SignatureHdr->SigSize));
+    return EFI_SECURITY_VIOLATION;
+  }
+
+  if (PubKeyHdr->KeySize != (SignatureHdr->SigSize + RSA_E_SIZE)) {
+    DEBUG ((DEBUG_ERROR, "Invalid capsule: PubKeyHdr->KeySize (0x%x) does not match signature size (0x%x)\n",
+            PubKeyHdr->KeySize, SignatureHdr->SigSize));
+    return EFI_SECURITY_VIOLATION;
+  }
+
   if (((UINT32)sizeof (PUB_KEY_HDR) + (UINT32)PubKeyHdr->KeySize) > Header->PubKeySize) {
     DEBUG ((DEBUG_ERROR, "Invalid capsule: PubKeyHdr->KeySize (0x%x) exceeds PubKey region (0x%x)\n",
             PubKeyHdr->KeySize, Header->PubKeySize));
