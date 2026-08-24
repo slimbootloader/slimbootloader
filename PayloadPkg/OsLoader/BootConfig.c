@@ -72,6 +72,14 @@ ParseLinuxBootConfig (
       if (!FoundEntry) {
         FoundEntry = TRUE;
       } else {
+        //
+        // EntryNum is an index while parsing and only becomes a count after
+        // the loop, so the last usable index is MAX_BOOT_MENU_ENTRY - 1.
+        // Stop parsing rather than writing past the end of MenuEntry.
+        //
+        if (EntryNum + 1 >= MAX_BOOT_MENU_ENTRY) {
+          break;
+        }
         EntryNum++;
       }
       CurrLine += 9;
