@@ -968,6 +968,7 @@ BuildSmbiosTables (
 {
   SMBIOS_TABLE_ENTRY_POINT      *SmbiosEntryPoint;
   EFI_STATUS                    Status;
+  UINT64                        TopOfMem;
 
   //
   // Create Entry Point structure
@@ -992,7 +993,12 @@ BuildSmbiosTables (
   //
   // Patch common Type headers if necessary
   //
-  mMemArrayMappedAddr.ExtendedEndingAddress = GetMemoryInfo (EnumMemInfoTom) - 1;
+  TopOfMem = GetMemoryInfo (EnumMemInfoTom);
+  if (TopOfMem == 0) {
+    mMemArrayMappedAddr.ExtendedEndingAddress = 0;
+  } else {
+    mMemArrayMappedAddr.ExtendedEndingAddress = TopOfMem - 1;
+  }
 
   //
   // Add common SMBIOS Types' information.
