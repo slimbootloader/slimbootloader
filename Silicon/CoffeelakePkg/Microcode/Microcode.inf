@@ -12,21 +12,26 @@
   FILE_GUID            = 197DB236-F856-4924-90F8-CDF12FB875F3
   MODULE_TYPE          = USER_DEFINED
   VERSION_STRING       = 1.0
+  DEFINE UCODE_NAME1   = 06-8e-0c
+  DEFINE UCODE_NAME2   = 06-8e-0b
+  DEFINE UCODE_NAME3   = 06-9e-0d
+  DEFINE UCODE_NAME4   = 06-9e-0c
+  DEFINE UCODE_NAME5   = 06-9e-0a
 
 [Sources]
-  06-8e-0c.mcb
-  06-8e-0b.mcb
-  06-9e-0d.mcb
-  06-9e-0c.mcb
-  06-9e-0a.mcb
+  $(UCODE_NAME1).mcb
+  $(UCODE_NAME2).mcb
+  $(UCODE_NAME3).mcb
+  $(UCODE_NAME4).mcb
+  $(UCODE_NAME5).mcb
 
 [UserExtensions.SBL."CloneRepo"]
   REPO  = https://github.com/intel/Intel-Linux-Processor-Microcode-Data-Files.git
   TAG   = microcode-20200616
 
 [UserExtensions.SBL."CopyList"]
-  intel-ucode/06-8e-0c  : Silicon/CoffeelakePkg/Microcode/06-8e-0c.mcb
-  intel-ucode/06-8e-0b  : Silicon/CoffeelakePkg/Microcode/06-8e-0b.mcb
-  intel-ucode/06-9e-0d  : Silicon/CoffeelakePkg/Microcode/06-9e-0d.mcb
-  intel-ucode/06-9e-0c  : Silicon/CoffeelakePkg/Microcode/06-9e-0c.mcb
-  intel-ucode/06-9e-0a  : Silicon/CoffeelakePkg/Microcode/06-9e-0a.mcb
+  intel-ucode/$(UCODE_NAME1)  : Silicon/CoffeelakePkg/Microcode/$(UCODE_NAME1).mcb
+  intel-ucode/$(UCODE_NAME2)  : Silicon/CoffeelakePkg/Microcode/$(UCODE_NAME2).mcb
+  intel-ucode/$(UCODE_NAME3)  : Silicon/CoffeelakePkg/Microcode/$(UCODE_NAME3).mcb
+  intel-ucode/$(UCODE_NAME4)  : Silicon/CoffeelakePkg/Microcode/$(UCODE_NAME4).mcb
+  intel-ucode/$(UCODE_NAME5)  : Silicon/CoffeelakePkg/Microcode/$(UCODE_NAME5).mcb

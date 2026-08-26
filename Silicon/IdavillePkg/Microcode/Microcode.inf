@@ -12,9 +12,10 @@
   FILE_GUID            = 197DB236-F856-4924-90F8-CDF12FB875F3
   MODULE_TYPE          = USER_DEFINED
   VERSION_STRING       = 1.0
+  DEFINE UCODE_NAME    = m_10_606c1_01000290
 
 [Sources]
-  m_10_606c1_01000290.mcb
+  $(UCODE_NAME).mcb
 
 [UserExtensions.SBL."CloneRepo"]
   REPO   = https://github.com/slimbootloader/firmwareblob.git
@@ -22,4 +23,4 @@
 
 
 [UserExtensions.SBL."CopyList"]
-  Microcode/Idaville/m_10_606c1_01000290.pdb  : Silicon/IdavillePkg/Microcode/m_10_606c1_01000290.mcb
+  Microcode/Idaville/$(UCODE_NAME).pdb  : Silicon/IdavillePkg/Microcode/$(UCODE_NAME).mcb

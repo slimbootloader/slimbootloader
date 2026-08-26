@@ -12,13 +12,14 @@
   FILE_GUID            = AFE664F7-8665-4F7D-AEB2-DDC394352C5F
   MODULE_TYPE          = USER_DEFINED
   VERSION_STRING       = 1.0
+  DEFINE UCODE_NAME    = m_80_b0650_0000000d
 
 [Sources]
-  m_80_b0650_0000000d.mcb # ARL U A0 PO Version
+  $(UCODE_NAME).mcb # ARL U A0 PO Version
 
 [UserExtensions.SBL."CloneRepo"]
   REPO   = https://github.com/slimbootloader/firmwareblob.git
   COMMIT = b2c1cb936f53d8abb68330b75b715059a4851c93
 
 [UserExtensions.SBL."CopyList"]
-  Microcode/ArrowLake/m_80_b0650_0000000d.pdb  : Silicon/ArrowlakePkg/Arlh/Microcode/m_80_b0650_0000000d.mcb
+  Microcode/ArrowLake/$(UCODE_NAME).pdb  : Silicon/ArrowlakePkg/Arlh/Microcode/$(UCODE_NAME).mcb

@@ -12,13 +12,14 @@
   FILE_GUID            = 197DB236-F856-4924-90F8-CDF12FB875F3
   MODULE_TYPE          = USER_DEFINED
   VERSION_STRING       = 1.0
+  DEFINE UCODE_NAME    = m_97_a06e1_01000310
 
 [Sources]
-  m_97_a06e1_01000310.mcb  # B0 SKU (production signed)
+  $(UCODE_NAME).mcb  # B0 SKU (production signed)
 
 [UserExtensions.SBL."CloneRepo"]
   REPO   = https://github.com/slimbootloader/firmwareblob.git
   COMMIT = cbb699ab304ade34dfc2add5b1a37aa42a1278f4
 
 [UserExtensions.SBL."CopyList"]
-  Microcode/Kaseyville/m_97_a06e1_01000310.pdb  : Silicon/KaseyvillePkg/Ksv/Microcode/m_97_a06e1_01000310.mcb
+  Microcode/Kaseyville/$(UCODE_NAME).pdb  : Silicon/KaseyvillePkg/Ksv/Microcode/$(UCODE_NAME).mcb

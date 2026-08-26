@@ -12,13 +12,14 @@
   FILE_GUID            = 197DB236-F856-4924-90F8-CDF12FB875F3
   MODULE_TYPE          = USER_DEFINED
   VERSION_STRING       = 1.0
+  DEFINE UCODE_NAME    = m_e6_a06a4_00000025
 
 [Sources]
-  m_e6_a06a4_00000025.mcb
+  $(UCODE_NAME).mcb
 
 [UserExtensions.SBL."CloneRepo"]
   REPO   = https://github.com/slimbootloader/firmwareblob.git
   COMMIT = 66a5f4a71c34767065cf53cb1c85283f6805a46e
 
 [UserExtensions.SBL."CopyList"]
-  Microcode/MeteorLake/m_e6_a06a4_00000025.pdb  : Silicon/MeteorlakePkg/Microcode/m_e6_a06a4_00000025.mcb
+  Microcode/MeteorLake/$(UCODE_NAME).pdb  : Silicon/MeteorlakePkg/Microcode/$(UCODE_NAME).mcb

@@ -12,16 +12,18 @@
   FILE_GUID            = 5822532C-2C2C-4DA1-9688-009A56E939FD
   MODULE_TYPE          = USER_DEFINED
   VERSION_STRING       = 1.0
+  DEFINE UCODE_NAME1   = m_80_806c1_000000bc
+  DEFINE UCODE_NAME2   = m_c2_806d1_00000052
 
 [Sources]
-  m_80_806c1_000000bc.mcb
-  m_c2_806d1_00000052.mcb
+  $(UCODE_NAME1).mcb
+  $(UCODE_NAME2).mcb
 
 [UserExtensions.SBL."CloneRepo"]
   REPO   = https://github.com/slimbootloader/firmwareblob.git
   COMMIT = 2235a0676dcc83fe5fea16b1ad6999ab97c89cf3
 
 [UserExtensions.SBL."CopyList"]
-  Microcode/TigerLake/m_80_806c1_000000bc.pdb  : Silicon/TigerlakePkg/Microcode/m_80_806c1_000000bc.mcb
-  Microcode/TigerLake/m_c2_806d1_00000052.pdb  : Silicon/TigerlakePkg/Microcode/m_c2_806d1_00000052.mcb
+  Microcode/TigerLake/$(UCODE_NAME1).pdb  : Silicon/TigerlakePkg/Microcode/$(UCODE_NAME1).mcb
+  Microcode/TigerLake/$(UCODE_NAME2).pdb  : Silicon/TigerlakePkg/Microcode/$(UCODE_NAME2).mcb
 

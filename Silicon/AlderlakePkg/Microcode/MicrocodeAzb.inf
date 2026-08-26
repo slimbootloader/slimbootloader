@@ -12,13 +12,14 @@
   FILE_GUID            = 40762366-24D3-4A6E-9F43-5AC5085D34EB
   MODULE_TYPE          = USER_DEFINED
   VERSION_STRING       = 1.0
+  DEFINE UCODE_NAME    = m_40_906a4_0000000c
 
 [Sources]
-  m_40_906a4_0000000c.mcb
+  $(UCODE_NAME).mcb
 
 [UserExtensions.SBL."CloneRepo"]
   REPO   = https://github.com/slimbootloader/firmwareblob.git
   COMMIT = dea1d00ad95eeda95f815576ebecc91810ea5c89
 
 [UserExtensions.SBL."CopyList"]
-  Microcode/AlderLake/m_40_906a4_0000000c.pdb  : Silicon/AlderlakePkg/Microcode/m_40_906a4_0000000c.mcb
+  Microcode/AlderLake/$(UCODE_NAME).pdb  : Silicon/AlderlakePkg/Microcode/$(UCODE_NAME).mcb

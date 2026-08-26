@@ -12,15 +12,17 @@
   FILE_GUID            = 197DB236-F856-4924-90F8-CDF12FB875F3
   MODULE_TYPE          = USER_DEFINED
   VERSION_STRING       = 1.0
+  DEFINE UCODE_NAME1   = m22A0653_000000EA
+  DEFINE UCODE_NAME2   = m22A0655_000000EC
 
 [Sources]
- m22A0653_000000EA.mcb  # CML G1-Step
- m22A0655_000000EC.mcb  # CML Q0-Step
+  $(UCODE_NAME1).mcb  # CML G1-Step
+  $(UCODE_NAME2).mcb  # CML Q0-Step
 
 [UserExtensions.SBL."CloneRepo"]
   REPO  = https://github.com/tianocore/edk2-non-osi.git
   COMMIT= bf2ba5e5136bfe5efe6052fb565d8597bcbeec17
 
 [UserExtensions.SBL."CopyList"]
-  Silicon/Intel/CometlakeSiliconBinPkg/Microcode/m22A0653_000000EA.mcb  : Silicon/CometlakePkg/Microcode/m22A0653_000000EA.mcb
-  Silicon/Intel/CometlakeSiliconBinPkg/Microcode/m22A0655_000000EC.mcb  : Silicon/CometlakePkg/Microcode/m22A0655_000000EC.mcb
+  Silicon/Intel/CometlakeSiliconBinPkg/Microcode/$(UCODE_NAME1).mcb  : Silicon/CometlakePkg/Microcode/$(UCODE_NAME1).mcb
+  Silicon/Intel/CometlakeSiliconBinPkg/Microcode/$(UCODE_NAME2).mcb  : Silicon/CometlakePkg/Microcode/$(UCODE_NAME2).mcb

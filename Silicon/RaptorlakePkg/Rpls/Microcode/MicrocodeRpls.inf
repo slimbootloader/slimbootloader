@@ -12,15 +12,17 @@
   FILE_GUID            = 197DB236-F856-4924-90F8-CDF12FB875F3
   MODULE_TYPE          = USER_DEFINED
   VERSION_STRING       = 1.0
+  DEFINE UCODE_NAME1   = m_32_b0671_00000130
+  DEFINE UCODE_NAME2   = m_07_90672_00000036
 
 [Sources]
-  m_32_b0671_00000130.mcb  # RPL-S B0
-  m_07_90672_00000036.mcb  # ADLS  C0
+  $(UCODE_NAME1).mcb  # RPL-S B0
+  $(UCODE_NAME2).mcb  # ADLS  C0
 
 [UserExtensions.SBL."CloneRepo"]
   REPO   = https://github.com/slimbootloader/firmwareblob.git
   COMMIT = 944b1f3c48fa224fb62639f7f5d59486f22715b4
 
 [UserExtensions.SBL."CopyList"]
-  Microcode/RaptorLake/m_32_b0671_00000130.pdb  : Silicon/RaptorlakePkg/Rpls/Microcode/m_32_b0671_00000130.mcb
-  Microcode/AlderLake/m_07_90672_00000036.pdb   : Silicon/RaptorlakePkg/Rpls/Microcode/m_07_90672_00000036.mcb
+  Microcode/RaptorLake/$(UCODE_NAME1).pdb  : Silicon/RaptorlakePkg/Rpls/Microcode/$(UCODE_NAME1).mcb
+  Microcode/AlderLake/$(UCODE_NAME2).pdb   : Silicon/RaptorlakePkg/Rpls/Microcode/$(UCODE_NAME2).mcb

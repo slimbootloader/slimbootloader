@@ -12,17 +12,20 @@
   FILE_GUID            = 197DB236-F856-4924-90F8-CDF12FB875F3
   MODULE_TYPE          = USER_DEFINED
   VERSION_STRING       = 1.0
+  DEFINE UCODE_NAME1   = m_32_b0671_00000133
+  DEFINE UCODE_NAME2   = m_07_90672_0000003e
+  DEFINE UCODE_NAME3   = m_04_d0670_00000005
 
 [Sources]
-  m_32_b0671_00000133.mcb  # BTL-S Hybrid Prod
-  m_07_90672_0000003e.mcb  # BTL-S Hybrid Prod
-  m_04_d0670_00000005.mcb  # BTL-S 12P Prod
+  $(UCODE_NAME1).mcb  # BTL-S Hybrid Prod
+  $(UCODE_NAME2).mcb  # BTL-S Hybrid Prod
+  $(UCODE_NAME3).mcb  # BTL-S 12P Prod
 
 [UserExtensions.SBL."CloneRepo"]
   REPO   = https://github.com/slimbootloader/firmwareblob.git
   COMMIT = 9987889d6250bb74c140bb378fde36386ba10a90
 
 [UserExtensions.SBL."CopyList"]
-  Microcode/RaptorLake/m_32_b0671_00000133.pdb  : Silicon/RaptorlakePkg/Btls/Microcode/m_32_b0671_00000133.mcb
-  Microcode/AlderLake/m_07_90672_0000003e.pdb   : Silicon/RaptorlakePkg/Btls/Microcode/m_07_90672_0000003e.mcb
-  Microcode/RaptorLake/m_04_d0670_00000005.pdb  : Silicon/RaptorlakePkg/Btls/Microcode/m_04_d0670_00000005.mcb
+  Microcode/RaptorLake/$(UCODE_NAME1).pdb  : Silicon/RaptorlakePkg/Btls/Microcode/$(UCODE_NAME1).mcb
+  Microcode/AlderLake/$(UCODE_NAME2).pdb   : Silicon/RaptorlakePkg/Btls/Microcode/$(UCODE_NAME2).mcb
+  Microcode/RaptorLake/$(UCODE_NAME3).pdb  : Silicon/RaptorlakePkg/Btls/Microcode/$(UCODE_NAME3).mcb
