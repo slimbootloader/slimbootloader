@@ -14,15 +14,15 @@
   VERSION_STRING       = 1.0
 
 [Sources]
-  m_32_b0671_00000133.mcb  # BTL-S Hybrid Prod
+  m_36_b0671_00000137.mcb  # BTL-S Hybrid Prod
   m_07_90672_0000003e.mcb  # BTL-S Hybrid Prod
   m_04_d0670_00000005.mcb  # BTL-S 12P Prod
 
 [UserExtensions.SBL."CloneRepo"]
   REPO   = https://github.com/slimbootloader/firmwareblob.git
-  COMMIT = 9987889d6250bb74c140bb378fde36386ba10a90
+  COMMIT = 87afea2b4510df26f25d0348597d08e1f33ba94d
 
 [UserExtensions.SBL."CopyList"]
-  Microcode/RaptorLake/m_32_b0671_00000133.pdb  : Silicon/RaptorlakePkg/Btls/Microcode/m_32_b0671_00000133.mcb
+  Microcode/RaptorLake/m_36_b0671_00000137.pdb  : Silicon/RaptorlakePkg/Btls/Microcode/m_36_b0671_00000137.mcb
   Microcode/AlderLake/m_07_90672_0000003e.pdb   : Silicon/RaptorlakePkg/Btls/Microcode/m_07_90672_0000003e.mcb
   Microcode/RaptorLake/m_04_d0670_00000005.pdb  : Silicon/RaptorlakePkg/Btls/Microcode/m_04_d0670_00000005.mcb
