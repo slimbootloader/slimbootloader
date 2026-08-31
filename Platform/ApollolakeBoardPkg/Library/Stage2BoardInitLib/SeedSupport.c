@@ -177,6 +177,18 @@ SeedRetrievalAndDerivation (
   ZeroMem (SeedList, sizeof (MKHI_BOOTLOADER_SEED_LIST));
   Status = GetSeedfromCSE (SeedList);
   if (!EFI_ERROR (Status)) {
+    //
+    // Validate CSE-supplied NumOfSeeds before use as a loop bound.
+    // MKHI_BOOTLOADER_SEED_LIST.List[] and LOADER_SEED_LIST.UseedList[]/DseedList[]
+    // are both fixed at BOOTLOADER_SEED_MAX_ENTRIES (4). A value exceeding this from
+    // an untrusted HECI response would cause OOB reads and heap OOB writes.
+    //
+    if (SeedList->NumOfSeeds > BOOTLOADER_SEED_MAX_ENTRIES) {
+      DEBUG ((DEBUG_ERROR, "SeedRetrievalAndDerivation: NumOfSeeds (%u) exceeds max (%u), rejecting CSE response\n",
+              SeedList->NumOfSeeds, BOOTLOADER_SEED_MAX_ENTRIES));
+      ZeroMem (SeedList, sizeof (MKHI_BOOTLOADER_SEED_LIST));
+      return EFI_SECURITY_VIOLATION;
+    }
     // If CseSVN = 1, it is RPMB seed. Populate RPMB seed
     for(Idx=0; Idx < SeedList->NumOfSeeds; Idx++) {
       if(SeedList->List[Idx].CseSvn == 1) {
