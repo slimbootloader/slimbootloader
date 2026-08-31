@@ -186,6 +186,10 @@ SeedRetrievalAndDerivation (
     if (SeedList->NumOfSeeds > BOOTLOADER_SEED_MAX_ENTRIES) {
       DEBUG ((DEBUG_ERROR, "SeedRetrievalAndDerivation: NumOfSeeds (%u) exceeds max (%u), rejecting CSE response\n",
               SeedList->NumOfSeeds, BOOTLOADER_SEED_MAX_ENTRIES));
+      LdrSeedList->NumofSeeds = 0;
+      ZeroMem (LdrSeedList->UseedList, sizeof (LdrSeedList->UseedList));
+      ZeroMem (LdrSeedList->DseedList, sizeof (LdrSeedList->DseedList));
+      ZeroMem (LdrSeedList->RpmbHeciSeeds, sizeof (LdrSeedList->RpmbHeciSeeds));
       ZeroMem (SeedList, sizeof (MKHI_BOOTLOADER_SEED_LIST));
       return EFI_SECURITY_VIOLATION;
     }
