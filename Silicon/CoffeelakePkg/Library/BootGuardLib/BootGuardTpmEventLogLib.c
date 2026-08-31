@@ -362,6 +362,10 @@ FindBpmElement (
   if (StructureId == BOOT_POLICY_MANIFEST_IBB_ELEMENT_STRUCTURE_ID) {
     return Buffer;
   }
+  if (IbbElement->SegmentCount == 0) {
+    DEBUG ((DEBUG_ERROR, "FindBpmElement: SegmentCount is 0, malformed BPM\n"));
+    return NULL;
+  }
   Buffer += sizeof(IBB_ELEMENT) + sizeof(IBB_SEGMENT_ELEMENT) * (IbbElement->SegmentCount - 1);
 
   PmElement = (PLATFORM_MANUFACTURER_ELEMENT *)Buffer;
