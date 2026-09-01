@@ -67,6 +67,7 @@ UpdateBgrt (
   BMP_IMAGE_HEADER                           *OrgBmpHdr;
   UINT32                                      ImageLen;
   UINT32                                      FileLen;
+  UINT64                                      ImageLen64;
 
   if (PcdGet32 (PcdSplashLogoAddress) == 0) {
     return EFI_UNSUPPORTED;
@@ -89,22 +90,30 @@ UpdateBgrt (
   Bgrt->ImageAddress = (UINTN)OrgBmpHdr;
   if (!((OrgBmpHdr->BitPerPixel == 24) || (OrgBmpHdr->BitPerPixel == 32))) {
     // Need to convert the BMP image into 32bit BMP supported by BGRT
-    ImageLen = (UINT32)MultU64x32 (OrgBmpHdr->PixelWidth << 2,  OrgBmpHdr->PixelHeight);
-    FileLen  = sizeof(BMP_IMAGE_HEADER) + ImageLen;
-    BmpHdr = (BMP_IMAGE_HEADER *)AllocatePages (EFI_SIZE_TO_PAGES (FileLen));
-    if (BmpHdr != NULL) {
-      CopyMem (BmpHdr, OrgBmpHdr, sizeof(BMP_IMAGE_HEADER));
-      BmpHdr->Size = FileLen;
-      BmpHdr->ImageOffset = sizeof(BMP_IMAGE_HEADER);
-      BmpHdr->HeaderSize  = sizeof(BMP_IMAGE_HEADER) - OFFSET_OF(BMP_IMAGE_HEADER, HeaderSize);
-      BmpHdr->BitPerPixel = 32;
-      BmpHdr->CompressionType = 0;
-      BmpHdr->ImageSize = 0;
-      BmpHdr->NumberOfColors  = 0;
-      BmpHdr->ImportantColors = 0;
-      Status = DisplayBmpToFrameBuffer (OrgBmpHdr, PcdGet32(PcdSplashLogoSize), &BmpHdr[1], ImageLen, GfxInfoHob);
-      if (!EFI_ERROR(Status)) {
-        Bgrt->ImageAddress = (UINTN)BmpHdr;
+    // Widen PixelWidth to UINT64 before the shift; a UINT32 shift can overflow
+    // before MultU64x32 ever sees it, defeating the ImageLen64 check below.
+    ImageLen64 = MultU64x32 (LShiftU64 ((UINT64) OrgBmpHdr->PixelWidth, 2), OrgBmpHdr->PixelHeight);
+    if (ImageLen64 > (MAX_UINT32 - sizeof (BMP_IMAGE_HEADER))) {
+      DEBUG ((DEBUG_ERROR, "BGRT: BMP image size overflows UINT32, skip 32bit conversion.\n"));
+      return EFI_UNSUPPORTED;
+    } else {
+      ImageLen = (UINT32)ImageLen64;
+      FileLen  = sizeof(BMP_IMAGE_HEADER) + ImageLen;
+      BmpHdr = (BMP_IMAGE_HEADER *)AllocatePages (EFI_SIZE_TO_PAGES (FileLen));
+      if (BmpHdr != NULL) {
+        CopyMem (BmpHdr, OrgBmpHdr, sizeof(BMP_IMAGE_HEADER));
+        BmpHdr->Size = FileLen;
+        BmpHdr->ImageOffset = sizeof(BMP_IMAGE_HEADER);
+        BmpHdr->HeaderSize  = sizeof(BMP_IMAGE_HEADER) - OFFSET_OF(BMP_IMAGE_HEADER, HeaderSize);
+        BmpHdr->BitPerPixel = 32;
+        BmpHdr->CompressionType = 0;
+        BmpHdr->ImageSize = 0;
+        BmpHdr->NumberOfColors  = 0;
+        BmpHdr->ImportantColors = 0;
+        Status = DisplayBmpToFrameBuffer (OrgBmpHdr, PcdGet32(PcdSplashLogoSize), &BmpHdr[1], ImageLen, GfxInfoHob);
+        if (!EFI_ERROR(Status)) {
+          Bgrt->ImageAddress = (UINTN)BmpHdr;
+        }
       }
     }
   }
