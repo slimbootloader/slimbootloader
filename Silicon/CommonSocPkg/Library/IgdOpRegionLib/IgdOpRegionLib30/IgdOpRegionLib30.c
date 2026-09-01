@@ -125,6 +125,11 @@ IgdOpRegionInit (
 
   if ((VbtFileBuffer->HeaderVbtSize) > (6 * SIZE_1KB)) {
     DEBUG ((DEBUG_INFO, "Extended VBT supported\n"));
+    // Reject a size whose 512-byte round-up would overflow the UINT16 ExtendedVbtSize.
+    if ((VbtFileBuffer->HeaderVbtSize) > (UINT16)(MAX_UINT16 - 0x200)) {
+      DEBUG ((DEBUG_ERROR, "VBT HeaderVbtSize invalid, too large for extended OpRegion\n"));
+      return EFI_UNSUPPORTED;
+    }
     ExtendedVbtSize = ((VbtFileBuffer->HeaderVbtSize) & (UINT32)~(0x1FF)) + 0x200;
   }
 
@@ -200,7 +205,7 @@ IgdOpRegionInit (
 
   if (ExtendedVbtSize > 0) {
     mIgdOpRegion.OpRegion->MBox3.RVDA = sizeof (IGD_OPREGION_STRUCTURE_VER_3_0); // Relative offset at the end of Op-region.
-    mIgdOpRegion.OpRegion->MBox3.RVDS = ((VbtFileBuffer->HeaderVbtSize) & (UINT32)~(0x1FF)) + 0x200;; // Aligned VBT Data Size to 512 bytes.
+    mIgdOpRegion.OpRegion->MBox3.RVDS = ExtendedVbtSize; // Aligned VBT Data Size to 512 bytes. Must match the allocation/copy size above.
     CopyMem ((CHAR8 *)(UINTN)(mIgdOpRegion.OpRegion) + sizeof (IGD_OPREGION_STRUCTURE_VER_3_0), VbtFileBuffer, ExtendedVbtSize);
   } else {
     mIgdOpRegion.OpRegion->MBox3.RVDA = 0;

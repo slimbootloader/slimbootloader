@@ -99,6 +99,11 @@ IgdOpRegionInit (
 
   if ((VbtFileBuffer->HeaderVbtSize) > (6 * SIZE_1KB)) {
     DEBUG ((DEBUG_INFO, "Extended VBT supported\n"));
+    // Reject a size whose 512-byte round-up would overflow the UINT16 ExtendedVbtSize.
+    if ((VbtFileBuffer->HeaderVbtSize) > (UINT16)(MAX_UINT16 - 0x200)) {
+      DEBUG ((DEBUG_ERROR, "VBT HeaderVbtSize invalid, too large for extended OpRegion\n"));
+      return EFI_UNSUPPORTED;
+    }
     ExtendedVbtSize = ((VbtFileBuffer->HeaderVbtSize) & (UINT32)~(0x1FF)) + 0x200;
   }
 

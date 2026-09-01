@@ -461,7 +461,12 @@ UpdateFspConfig (
     FspsConfig->PeiGraphicsPeimInit = 1;
     if (VbtPtr != NULL) {
       DEBUG ((DEBUG_INFO, "VbtPtr != NULL\n"));
-      FspsConfig->VbtSize = ((VbtPtr->HeaderVbtSize) & (UINT32)~(0x1FF)) + 0x200;
+      // Reject a size whose 512-byte round-up would overflow when added below.
+      if ((VbtPtr->HeaderVbtSize) > (UINT16)(MAX_UINT16 - 0x200)) {
+        DEBUG ((DEBUG_ERROR, "VBT HeaderVbtSize invalid, skip VbtSize update\n"));
+      } else {
+        FspsConfig->VbtSize = ((VbtPtr->HeaderVbtSize) & (UINT32)~(0x1FF)) + 0x200;
+      }
     }
     FspsConfig->LidStatus = 0x1;
   } else {
