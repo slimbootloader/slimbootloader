@@ -263,6 +263,10 @@ GetBpdtDataByType (
       DEBUG ((DEBUG_ERROR, "Signature of BPDT Header is invalid - Stop Parsing RawBP.\n"));
       return EFI_NOT_FOUND;
     }
+    if (BpdtHeaderPtr->DscCount > MAX_PARTITION_NUM) {
+      DEBUG ((DEBUG_ERROR, "BPDT DscCount exceeds MAX_PARTITION_NUM - Stop Parsing RawBP.\n"));
+      return EFI_NOT_FOUND;
+    }
     for (Index=0; Index < BpdtHeaderPtr->DscCount; Index++, BpdtEntryPtr++) {
       if (BpdtEntryPtr->LbpOffset == 0) {
         DEBUG ((DEBUG_INFO, "Skipping Stub-entry for Bpdt type: %d\n", BpdtEntryPtr->Type));
