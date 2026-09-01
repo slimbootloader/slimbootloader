@@ -313,6 +313,8 @@ SmbiosStringBufferInit (
   CHAR8                *SmbiosStrTbl;
   BOOT_LOADER_VERSION  *VerInfoTbl;
   CHAR8                 TempStrBuf[SMBIOS_STRING_MAX_LENGTH];
+  STATIC CONST CHAR8    MonthNames[] = "JanFebMarAprMayJunJulAugSepOctNovDec";
+  UINT8                 Month;
 
   SmbiosStrTbl = (CHAR8 *)(UINTN)PcdGet32 (PcdSmbiosStringsPtr);
   if (SmbiosStrTbl != NULL) {
@@ -342,7 +344,36 @@ SmbiosStringBufferInit (
     AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a\0", "SBL version Unknown");
   }
   SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_BIOS_INFORMATION, 2, TempStrBuf);
-  SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_BIOS_INFORMATION, 3, __DATE__);
+
+  // Convert the compile date __DATE__ (Mmm DD YYYY) to MM/DD/YYYY format string.
+  if (__DATE__[0] != '?') { // Check if tool chain returned a valid date
+    for (Month = 0; Month < 12; Month++) {
+      if (CompareMem (__DATE__, &MonthNames[Month * 3], 3) == 0) {
+        break;
+      }
+    }
+    if (Month >= 12) {
+      // Invalid month in __DATE__, set as unknown string.
+      AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a", SMBIOS_STRING_UNKNOWN);
+    } else {
+      AsciiSPrint (
+        TempStrBuf,
+        sizeof (TempStrBuf),
+        "%02d/%c%c/%c%c%c%c",
+        Month + 1,
+        (__DATE__[4] == ' ') ? '0' : __DATE__[4],
+        __DATE__[5],
+        __DATE__[7],
+        __DATE__[8],
+        __DATE__[9],
+        __DATE__[10]
+        );
+    }
+  } else {
+    // Tool chain did not provide a valid build date.
+    AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%a", SMBIOS_STRING_UNKNOWN);
+  }
+  SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_BIOS_INFORMATION, 3, TempStrBuf);
 
   AsciiSPrint (TempStrBuf, sizeof (TempStrBuf), "%.8a (ID:%02X)", (CHAR8 *) GetPlatformName(), GetPlatformId ());
   SmbiosStrTbl = AddSmbiosTypeString (SmbiosStrTbl, SMBIOS_TYPE_BASEBOARD_INFORMATION, 2, TempStrBuf);
