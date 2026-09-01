@@ -59,6 +59,7 @@ CheckSmbiosOverflow (
 {
   SMBIOS_TABLE_ENTRY_POINT     *SmbiosEntry;
   UINT16                        NewLength;
+  UINT32                        NewLength32;
 
   SmbiosEntry = (SMBIOS_TABLE_ENTRY_POINT *)(UINTN)PcdGet32 (PcdSmbiosTablesBase);
   if (SmbiosEntry == NULL) {
@@ -66,10 +67,15 @@ CheckSmbiosOverflow (
   }
 
   if (NumStr > 0) {
-    NewLength = HdrLen + (SMBIOS_STRING_MAX_LENGTH + 1) * NumStr + sizeof (CHAR8);
+    NewLength32 = (UINT32)HdrLen + (SMBIOS_STRING_MAX_LENGTH + 1) * (UINT32)NumStr + sizeof (CHAR8);
   } else {
-    NewLength = HdrLen + 2 * sizeof (CHAR8);
+    NewLength32 = (UINT32)HdrLen + 2 * sizeof (CHAR8);
   }
+  // Reject a sum that would truncate/wrap when narrowed to the UINT16 NewLength below.
+  if (NewLength32 > MAX_UINT16) {
+    return EFI_BUFFER_TOO_SMALL;
+  }
+  NewLength = (UINT16)NewLength32;
 
   if ( (UINT32)(SmbiosEntry->EntryPointLength + sizeof (UINT8) + SmbiosEntry->TableLength + NewLength) > (UINT32)PcdGet16(PcdSmbiosTablesSize) ) {
     return EFI_BUFFER_TOO_SMALL;
@@ -206,9 +212,17 @@ FindSmbiosStringTableTerminator (
   SMBIOS_TYPE_STRINGS  *SmbiosStrings;
   UINT16                Index;
   CHAR8                *StringPtr;
+  UINTN                 Offset;
+  UINTN                 RemainingBytes;
+  UINTN                 StrLen;
 
   SmbiosStrings = (SMBIOS_TYPE_STRINGS *)SmbiosStrTbl;
   for (Index = 0; Index < PcdGet16 (PcdSmbiosStringsCnt); Index++) {
+    // Bound against SIZE_4KB must cover the Type/Idx read below, not just the pointer itself.
+    if ((UINTN)SmbiosStrings - (UINTN)SmbiosStrTbl +
+        (sizeof (SmbiosStrings->Type) + sizeof (SmbiosStrings->Idx)) > SIZE_4KB) {
+      return NULL;
+    }
     StringPtr = (CHAR8 *)SmbiosStrings + sizeof (SmbiosStrings->Type) + sizeof (SmbiosStrings->Idx);
     if ((SmbiosStrings->Type == SMBIOS_TYPE_END_OF_TABLE) && (SmbiosStrings->Idx == 0)) {
       if (EntryCount != NULL) {
@@ -216,7 +230,18 @@ FindSmbiosStringTableTerminator (
       }
       return (CHAR8 *)SmbiosStrings;
     }
-    SmbiosStrings = (SMBIOS_TYPE_STRINGS *)(StringPtr + AsciiStrSize (StringPtr));
+
+    Offset = (UINTN)StringPtr - (UINTN)SmbiosStrTbl;
+    if (Offset >= SIZE_4KB) {
+      return NULL;
+    }
+    // Bound the string scan itself; a missing NUL must not read past the buffer.
+    RemainingBytes = SIZE_4KB - Offset;
+    StrLen = AsciiStrnLenS (StringPtr, RemainingBytes);
+    if (StrLen >= RemainingBytes) {
+      return NULL;
+    }
+    SmbiosStrings = (SMBIOS_TYPE_STRINGS *)(StringPtr + StrLen + 1);
   }
 
   return NULL;
@@ -517,6 +542,10 @@ GetSmbiosString (
   UINT16                    Index;
   CHAR8                     *StringPtr;
   CHAR8                     *StringFound;
+  CHAR8                     *TblBase;
+  UINTN                      Offset;
+  UINTN                      RemainingBytes;
+  UINTN                      StrLen;
 
   if ((SMBIOS_TYPE_STRINGS *)(UINTN)PcdGet32 (PcdSmbiosStringsPtr) == NULL) {
     return SMBIOS_STRING_UNKNOWN;
@@ -525,13 +554,33 @@ GetSmbiosString (
   // Search PcdSmbiosStringsPtr, if multiple strings are found, use the last occurrence
   StringFound   = SMBIOS_STRING_UNKNOWN;
   SmbiosStrings = (SMBIOS_TYPE_STRINGS *)(UINTN)PcdGet32 (PcdSmbiosStringsPtr);
+  TblBase       = (CHAR8 *)SmbiosStrings;
 
   for (Index = 0; Index < PcdGet16 (PcdSmbiosStringsCnt); Index++) {
+    // Bound against SIZE_4KB must cover the Type/Idx read below, not just the pointer itself.
+    if ((UINTN)SmbiosStrings - (UINTN)TblBase +
+        (sizeof (SmbiosStrings->Type) + sizeof (SmbiosStrings->Idx)) > SIZE_4KB) {
+      break;
+    }
     StringPtr = (CHAR8 *)SmbiosStrings + sizeof(SmbiosStrings->Type) + sizeof (SmbiosStrings->Idx);
     if (Type == SmbiosStrings->Type && StringId == SmbiosStrings->Idx) {
       StringFound = StringPtr;
     }
-    SmbiosStrings = (SMBIOS_TYPE_STRINGS *)(StringPtr + AsciiStrSize (StringPtr));
+
+    Offset = (UINTN)StringPtr - (UINTN)TblBase;
+    if (Offset >= SIZE_4KB) {
+      break;
+    }
+    // Bound the string scan itself; a missing NUL must not read past the buffer.
+    RemainingBytes = SIZE_4KB - Offset;
+    StrLen = AsciiStrnLenS (StringPtr, RemainingBytes);
+    if (StrLen >= RemainingBytes) {
+      break;
+    }
+    SmbiosStrings = (SMBIOS_TYPE_STRINGS *)(StringPtr + StrLen + 1);
+    if ((UINTN)SmbiosStrings - (UINTN)TblBase >= SIZE_4KB) {
+      break;
+    }
     if (SmbiosStrings->Type == SMBIOS_TYPE_END_OF_TABLE) {
       break;
     }
