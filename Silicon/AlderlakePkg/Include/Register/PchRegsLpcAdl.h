@@ -8,6 +8,7 @@
 #define _PCH_REGS_LPC_ADL_H_
 
 #define V_LPC_CFG_DID_ADL_S                       0x7A80
+#define V_LPC_CFG_DID_RPL_S                       0x7A00  ///< RPL-S PCH 700-series (Z790/H770/B760/etc); DID 0x7A04..0x7A1F all mask to 0x7A00
 #define V_LPC_CFG_DID_ADL_P                       0x5180
 #define V_LPC_CFG_DID_ADL_PS                      0x5188
 #define V_LPC_CFG_DID_ADL_N                       0x5480

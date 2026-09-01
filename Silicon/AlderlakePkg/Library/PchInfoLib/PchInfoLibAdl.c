@@ -443,6 +443,7 @@ PchSeriesFromLpcDid (
   switch (LpcDeviceId & B_LPC_CFG_DID) {
 
     case V_LPC_CFG_DID_ADL_S:
+    case V_LPC_CFG_DID_RPL_S:  ///< RPL-S PCH 700-series (Z790/H770/B760) DIDs 0x7A00-0x7A1F
       return PCH_S;
 
     case V_LPC_CFG_DID_ADL_P:

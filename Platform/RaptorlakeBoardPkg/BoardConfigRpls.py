@@ -42,7 +42,7 @@ class Board(BaseBoard):
 
         self.PCI_EXPRESS_BASE     = 0xC0000000
         self.PCI_IO_BASE          = 0x00002000
-        self.PCI_MEM32_BASE       = 0x80000000
+        self.PCI_MEM32_BASE       = 0x81000000
         self.ACPI_PM_TIMER_BASE   = 0x1808
 
         self.MADT_USE_PLATFORM_LAPIC = 1
