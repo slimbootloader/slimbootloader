@@ -121,8 +121,10 @@ LegacySerialPortInitialize (
   PciWrite16 (eSPIBaseAddr + R_LPC_CFG_IOD, Data16);
 
   Data16 = PciRead16 (eSPIBaseAddr + R_LPC_CFG_IOE);
+  Data16 |= B_LPC_CFG_IOE_SE;
   Data16 |= B_LPC_CFG_IOE_CBE;
   Data16 |= B_LPC_CFG_IOE_CAE;
+  Data16 |= B_LPC_CFG_IOE_ME1;
   MmioWrite16 (PCH_PCR_ADDRESS (PID_DMI, R_PCH_DMI_PCR_LPCIOE), Data16);
   PciWrite16 (eSPIBaseAddr + R_LPC_CFG_IOE, Data16);
 
