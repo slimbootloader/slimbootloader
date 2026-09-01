@@ -519,8 +519,10 @@ FatReadNextDirectoryEntry (
   UINTN               LfnBufferLen;
   UINT32              DirEntryCount;
   UINT32              LfnEntryCount;
+  BOOLEAN             LfnChainValid;
 
-  LfnBufferLen = 0;
+  LfnBufferLen  = 0;
+  LfnChainValid = FALSE;
   ZeroMem ((UINT8 *) SubFile, sizeof (PEI_FAT_FILE));
   DirEntryCount = 0;
 
@@ -532,8 +534,15 @@ FatReadNextDirectoryEntry (
     //
     // Read one entry
     //
-    LfnOrdinal   = 0;
+    LfnOrdinal    = 0;
     LfnEntryCount = 0;
+    // Only a chain that completed validly last iteration may hand its name
+    // to this entry; otherwise drop whatever LfnBufferLen/LongFileName held.
+    if (!LfnChainValid) {
+      LfnBufferLen = 0;
+      SubFile->LongFileName[0] = 0;
+    }
+    LfnChainValid = FALSE;
 
     //
     // If it is LFN entry, read all of the following LFN entries.
@@ -572,6 +581,9 @@ FatReadNextDirectoryEntry (
           CopyMem (LfnBufferPointer, LfnEntry->Name3, sizeof (CHAR16) * LFN_CHAR3_LEN);
           LfnBufferPointer += LFN_CHAR3_LEN;
           LfnOrdinal--;
+          if (LfnOrdinal == 0) {
+            LfnChainValid = TRUE;
+          }
         }
       } else if (LfnOrdinal > 0) {
         LfnOrdinal = 0;
