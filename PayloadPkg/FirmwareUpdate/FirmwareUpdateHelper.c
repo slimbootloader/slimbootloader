@@ -403,6 +403,9 @@ GetVersionfromFv (
   // Stage 1A FD has FSPT FV first, so move on to the next FV
   //
   if (IsFd) {
+    if (!IsValidFvHeader ((VOID *)FvHeader)) {
+      return EFI_ABORTED;
+    }
     FvHeader = (EFI_FIRMWARE_VOLUME_HEADER *)((UINTN)FvHeader + (UINTN)FvHeader->FvLength);
   }
 

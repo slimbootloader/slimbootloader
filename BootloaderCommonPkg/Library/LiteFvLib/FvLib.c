@@ -24,7 +24,10 @@ IsValidFvHeader (
   EFI_FIRMWARE_VOLUME_HEADER   *FvHeader;
 
   FvHeader = (EFI_FIRMWARE_VOLUME_HEADER *)Buffer;
-  if ((FvHeader != NULL) && (FvHeader->Signature == EFI_FVH_SIGNATURE)) {
+  // Reject a FvLength that would truncate/wrap when narrowed to UINTN for pointer math.
+  if ((FvHeader != NULL) && (FvHeader->Signature == EFI_FVH_SIGNATURE) &&
+      (FvHeader->FvLength >= sizeof (EFI_FIRMWARE_VOLUME_HEADER)) && (FvHeader->FvLength <= MAX_UINTN) &&
+      (FvHeader->FvLength <= (UINT64)(MAX_UINTN - (UINTN)FvHeader))) {
     return TRUE;
   } else {
     return FALSE;
@@ -261,6 +264,7 @@ GetFfsFileByType (
   @retval EFI_UNSUPPORTED Section type is not supported.
   @retval EFI_NOT_FOUND   Section of the specified type was not
                           found. SectionData contains NULL.
+  @retval EFI_ABORTED     File has a malformed or out-of-range FFS size.
 **/
 EFI_STATUS
 EFIAPI
@@ -273,6 +277,7 @@ GetSectionByType (
 {
   UINT8                      *SearchEnd;
   EFI_COMMON_SECTION_HEADER  *CommonSecHeader;
+  EFI_COMMON_SECTION_HEADER  *NextSecHeader;
   UINT32                      Count;
 
   //
@@ -285,14 +290,18 @@ GetSectionByType (
   //
   // Initialize the number of matching sections found.
   //
-  SearchEnd = (UINT8 *) ((UINTN)File + GET_FFS_LENGTH (File)),
+  if (GET_FFS_LENGTH (File) < sizeof (EFI_FFS_FILE_HEADER) ||
+      GET_FFS_LENGTH (File) > (MAX_UINTN - (UINTN)File)) {
+    return EFI_ABORTED;
+  }
+  SearchEnd = (UINT8 *) ((UINTN)File + GET_FFS_LENGTH (File));
 
   //
   // Get the first section
   //
   Count = 0;
   CommonSecHeader = (EFI_COMMON_SECTION_HEADER *) ((UINTN)File + sizeof (EFI_FFS_FILE_HEADER));
-  while ((UINTN)CommonSecHeader < (UINTN)SearchEnd) {
+  while ((UINTN)CommonSecHeader <= (UINTN)SearchEnd - sizeof (EFI_COMMON_SECTION_HEADER)) {
     if (CommonSecHeader->Type == SectionType) {
       if (Count == Instance) {
         *SectionData = (VOID *) ((UINTN)CommonSecHeader + sizeof (EFI_COMMON_SECTION_HEADER));
@@ -304,8 +313,14 @@ GetSectionByType (
     //
     // Find next section (including compensating for alignment issues.
     //
-    CommonSecHeader = (EFI_COMMON_SECTION_HEADER *) ((((UINTN)CommonSecHeader) + \
+    NextSecHeader = (EFI_COMMON_SECTION_HEADER *) ((((UINTN)CommonSecHeader) + \
                       GET_SEC_LENGTH (CommonSecHeader) + 0x03) & (~ (UINTN)3));
+    // A malformed Size (e.g. 0, or one that wraps the pointer) must not leave
+    // CommonSecHeader stuck or moving backward, or this loop never terminates.
+    if (NextSecHeader <= CommonSecHeader) {
+      break;
+    }
+    CommonSecHeader = NextSecHeader;
   }
 
   //
