@@ -163,6 +163,7 @@ DoHashVerify (
   RETURN_STATUS        Status2;
   UINT8                Digest[HASH_DIGEST_MAX];
   UINT8                DigestSize;
+  UINT32               DumpSize;
 
 
   if ((Data == NULL) ||
@@ -208,17 +209,21 @@ DoHashVerify (
   if (EFI_ERROR(Status)) {
     DEBUG_CODE_BEGIN();
 
-    DEBUG ((DEBUG_INFO, "First %d Bytes Input Data\n", DigestSize));
-    DumpHex (2, 0, DigestSize, (VOID *)Data);
+    DumpSize = MIN (Length, DigestSize);
 
-    DEBUG ((DEBUG_INFO, "Last %d Bytes Input Data\n", DigestSize));
-    DumpHex (2, 0, DigestSize, (VOID *) (Data + Length - DigestSize));
+    DEBUG ((DEBUG_INFO, "First %u Bytes Input Data\n", DumpSize));
+    DumpHex (2, 0, DumpSize, (VOID *)Data);
+
+    DEBUG ((DEBUG_INFO, "Last %u Bytes Input Data\n", DumpSize));
+    DumpHex (2, 0, DumpSize, (VOID *) (Data + Length - DumpSize));
 
     DEBUG ((DEBUG_INFO, "Image Digest\n"));
     DumpHex (2, 0, DigestSize, (VOID *)Digest);
 
-    DEBUG ((DEBUG_INFO, "HashStore Digest\n"));
-    DumpHex (2, 0, DigestSize, (VOID *)HashData);
+    if (HashData != NULL) {
+      DEBUG ((DEBUG_INFO, "HashStore Digest\n"));
+      DumpHex (2, 0, DigestSize, (VOID *)HashData);
+    }
 
     DEBUG_CODE_END();
   }

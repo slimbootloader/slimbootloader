@@ -1144,10 +1144,12 @@ LoadComponentWithCallback (
   UINT32                    CompLoc;
   UINT32                    AllocLen;
   UINT64                    AllocLen64;
+  UINT64                    CompBufSize64;
   UINT32                    SignedDataLen;
   UINT64                    SignedDataLen64;
   UINT32                    AuthDataOffset;
   UINT32                    AuthDataLen;
+  UINT8                    *AuthData;
   UINT32                    DstLen;
   UINT32                    ScrLen;
   BOOLEAN                   IsInFlash;
@@ -1278,9 +1280,10 @@ LoadComponentWithCallback (
   // If it is on flash, the data needs to be copied into memory first
   // before authentication for security concern.
   IsInFlash = IS_FLASH_ADDRESS (CompData);
+  CompBufSize64 = ((UINT64)CompLen + (TEMP_BUF_ALIGN - 1)) & ~((UINT64)TEMP_BUF_ALIGN - 1);
   AllocLen64 = (UINT64)ScrLen + ((UINT64)TEMP_BUF_ALIGN * 2);
   if (IsInFlash) {
-    AllocLen64 += (UINT64)SignedDataLen;
+    AllocLen64 += CompBufSize64;
   }
   if (AllocLen64 > MAX_UINT32) {
     DEBUG ((DEBUG_ERROR, "Invalid temporary allocation length overflow (Scr=0x%x Signed=0x%x)\n",
@@ -1296,14 +1299,14 @@ LoadComponentWithCallback (
 
   if (IsInFlash) {
     // Authenticate component and decompress it if required
-    if (SignedDataLen > AllocLen) {
-      DEBUG ((DEBUG_ERROR, "Invalid copy length (Signed=0x%x Alloc=0x%x)\n", SignedDataLen, AllocLen));
+    if (CompLen > AllocLen) {
+      DEBUG ((DEBUG_ERROR, "Invalid copy length (Component=0x%x Alloc=0x%x)\n", CompLen, AllocLen));
       FreeTemporaryMemory (AllocBuf);
       return EFI_SECURITY_VIOLATION;
     }
     CompBuf = AllocBuf;
-    ScrBuf  = (UINT8 *)AllocBuf + ALIGN_UP (SignedDataLen, TEMP_BUF_ALIGN);
-    CopyMem (CompBuf, CompData, SignedDataLen);
+    ScrBuf  = (UINT8 *)AllocBuf + (UINTN)CompBufSize64;
+    CopyMem (CompBuf, CompData, CompLen);
     if (LoadComponentCallback != NULL) {
       LoadComponentCallback (PROGESS_ID_COPY, NULL);
     }
@@ -1321,15 +1324,22 @@ LoadComponentWithCallback (
   }
   AuthDataLen = CompLen - AuthDataOffset;
 
+  // Authenticate against a stable in-memory auth block when source is flash.
+  if (IsInFlash) {
+    AuthData = CompBuf + AuthDataOffset;
+  } else {
+    AuthData = CompData + AuthDataOffset;
+  }
+
   // Verify the component
   Status = AuthenticateComponent (CompBuf, SignedDataLen, AuthType,
-             CompData + AuthDataOffset, AuthDataLen, HashData, Usage);
+             AuthData, AuthDataLen, HashData, Usage);
   if (LoadComponentCallback != NULL) {
     if(Status == EFI_SUCCESS){
       // Update component Call back info after authenticaton is done
       // This info will used by firmware stage to extend to TPM
       CbInfo.ComponentType    = ComponentId;
-      CbInfo.CompBuf          = CompData;
+      CbInfo.CompBuf          = CompBuf;
       CbInfo.CompLen          = SignedDataLen;
       CbInfo.HashAlg          = GetHashAlg(AuthType);
       CbInfo.HashData         = HashData;
