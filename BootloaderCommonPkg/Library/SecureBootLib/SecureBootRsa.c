@@ -9,6 +9,7 @@
 #include <Library/DebugLib.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/MemoryAllocationLib.h>
 #include <Library/CryptoLib.h>
 #include <Library/SecureBootLib.h>
 #include <Library/BootloaderCommonLib.h>
@@ -48,8 +49,15 @@ DoRsaVerify (
 {
   RETURN_STATUS    Status;
   PUB_KEY_HDR     *PublicKey;
+  PUB_KEY_HDR     *PublicKeyCopy;
+  SIGNATURE_HDR   *SignatureCopy;
   UINT8            Digest[HASH_DIGEST_MAX];
   UINT8            DigestSize;
+  UINT32           DumpSize;
+  UINT64           PublicKeyBytes;
+  UINT64           SignatureBytes;
+  UINT8           *PublicKeyBuf;
+  UINT8           *SignatureBuf;
 
   ZeroMem (&Digest, sizeof(Digest));
 
@@ -58,28 +66,65 @@ DoRsaVerify (
     return RETURN_INVALID_PARAMETER;
   }
 
-  // Verify public key first
-  Status = DoHashVerify (PublicKey->KeyData, PublicKey->KeySize, Usage, PubKeyHashAlg, PubKeyHash);
-  if (RETURN_ERROR (Status)) {
-    return Status;
-  }
-
-  // Verify payload data
-  if (SignatureHdr->HashAlg == HASH_TYPE_SHA256) {
-    DigestSize = SHA256_DIGEST_SIZE;
-  } else if (SignatureHdr->HashAlg == HASH_TYPE_SHA384) {
-    DigestSize = SHA384_DIGEST_SIZE;
-  } else {
+  SignatureBytes = (UINT64)sizeof (SIGNATURE_HDR) + (UINT64)SignatureHdr->SigSize;
+  PublicKeyBytes = (UINT64)sizeof (PUB_KEY_HDR) + (UINT64)PublicKey->KeySize;
+  if ((SignatureBytes > MAX_UINT32) || (PublicKeyBytes > MAX_UINT32)) {
     return RETURN_INVALID_PARAMETER;
   }
 
-  DEBUG ((DEBUG_INFO, "SignType (0x%x) SignSize (0x%x)  SignHashAlg (0x%x)\n", \
-                  SignatureHdr->SigType, SignatureHdr->SigSize, SignatureHdr->HashAlg));
+  SignatureBuf = AllocatePool ((UINTN)SignatureBytes);
+  PublicKeyBuf = AllocatePool ((UINTN)PublicKeyBytes);
+  if ((SignatureBuf == NULL) || (PublicKeyBuf == NULL)) {
+    if (SignatureBuf != NULL) {
+      FreePool (SignatureBuf);
+    }
+    if (PublicKeyBuf != NULL) {
+      FreePool (PublicKeyBuf);
+    }
+    return RETURN_OUT_OF_RESOURCES;
+  }
 
-  if(SignatureHdr->SigType == SIGNING_TYPE_RSA_PKCS_1_5) {
-    Status = CalculateHash  (Data, Length, SignatureHdr->HashAlg, Digest);
+  CopyMem (SignatureBuf, SignatureHdr, (UINTN)SignatureBytes);
+  CopyMem (PublicKeyBuf, PublicKey, (UINTN)PublicKeyBytes);
+
+  SignatureCopy = (SIGNATURE_HDR *)SignatureBuf;
+  PublicKeyCopy = (PUB_KEY_HDR *)PublicKeyBuf;
+
+  if ((PublicKeyCopy->Identifier != PUBKEY_IDENTIFIER) || (SignatureCopy->Identifier != SIGNATURE_IDENTIFIER)) {
+    Status = RETURN_INVALID_PARAMETER;
+    goto Exit;
+  }
+
+  if (((UINT64)sizeof (SIGNATURE_HDR) + (UINT64)SignatureCopy->SigSize != SignatureBytes) ||
+      ((UINT64)sizeof (PUB_KEY_HDR) + (UINT64)PublicKeyCopy->KeySize != PublicKeyBytes)) {
+    Status = RETURN_INVALID_PARAMETER;
+    goto Exit;
+  }
+
+  // Verify public key first
+  Status = DoHashVerify (PublicKeyCopy->KeyData, PublicKeyCopy->KeySize, Usage, PubKeyHashAlg, PubKeyHash);
+  if (RETURN_ERROR (Status)) {
+    goto Exit;
+  }
+
+  // Verify payload data
+  if (SignatureCopy->HashAlg == HASH_TYPE_SHA256) {
+    DigestSize = SHA256_DIGEST_SIZE;
+  } else if (SignatureCopy->HashAlg == HASH_TYPE_SHA384) {
+    DigestSize = SHA384_DIGEST_SIZE;
+  } else {
+    Status = RETURN_INVALID_PARAMETER;
+    goto Exit;
+  }
+
+  DEBUG ((DEBUG_INFO, "SignType (0x%x) SignSize (0x%x)  SignHashAlg (0x%x)\n", \
+                  SignatureCopy->SigType, SignatureCopy->SigSize, SignatureCopy->HashAlg));
+
+  if(SignatureCopy->SigType == SIGNING_TYPE_RSA_PKCS_1_5) {
+    Status = CalculateHash  (Data, Length, SignatureCopy->HashAlg, Digest);
     if (EFI_ERROR(Status)) {
-      return RETURN_UNSUPPORTED;
+      Status = RETURN_UNSUPPORTED;
+      goto Exit;
     }
 
     if (OutHash != NULL) {
@@ -88,24 +133,25 @@ DoRsaVerify (
 
 #if FixedPcdGetBool(PcdIppcrypto2Lib)
     // RSA Pkcs 1.5 requires to pass message to be verified
-    Status = RsaVerify2_Pkcs_1_5 (PublicKey, SignatureHdr, Data, Length);
+    Status = RsaVerify2_Pkcs_1_5 (PublicKeyCopy, SignatureCopy, Data, Length);
 #else
-    Status = RsaVerify_Pkcs_1_5 (PublicKey, SignatureHdr, Digest);
+    Status = RsaVerify_Pkcs_1_5 (PublicKeyCopy, SignatureCopy, Digest);
 #endif
 
-  } else if(SignatureHdr->SigType == SIGNING_TYPE_RSA_PSS) {
+  } else if(SignatureCopy->SigType == SIGNING_TYPE_RSA_PSS) {
 
     // Calculate Hash only when OutHash is valid
     // RSA PSS requires to pass message to be verified
     if (OutHash != NULL) {
-      Status = CalculateHash  (Data, Length, SignatureHdr->HashAlg, Digest);
+      Status = CalculateHash  (Data, Length, SignatureCopy->HashAlg, Digest);
       if (EFI_ERROR(Status)) {
-        return RETURN_UNSUPPORTED;
+        Status = RETURN_UNSUPPORTED;
+        goto Exit;
       }
       CopyMem (OutHash, Digest, DigestSize);
     }
 
-    Status = RsaVerify_PSS (PublicKey, SignatureHdr, Data, Length);
+    Status = RsaVerify_PSS (PublicKeyCopy, SignatureCopy, Data, Length);
 
   }  else {
     Status = RETURN_UNSUPPORTED;
@@ -115,23 +161,28 @@ DoRsaVerify (
   if (RETURN_ERROR (Status)) {
     DEBUG_CODE_BEGIN();
 
-    DEBUG ((DEBUG_INFO, "First %d Bytes Input Data\n", DigestSize));
-    DumpHex (2, 0, DigestSize, (VOID *)Data);
+    DumpSize = MIN (Length, DigestSize);
 
-    DEBUG ((DEBUG_INFO, "Last %d Bytes Input Data\n", DigestSize));
-    DumpHex (2, 0, DigestSize, (VOID *) (Data + Length - DigestSize));
+    DEBUG ((DEBUG_INFO, "First %u Bytes Input Data\n", DumpSize));
+    DumpHex (2, 0, DumpSize, (VOID *)Data);
+
+    DEBUG ((DEBUG_INFO, "Last %u Bytes Input Data\n", DumpSize));
+    DumpHex (2, 0, DumpSize, (VOID *) (Data + Length - DumpSize));
 
     DEBUG ((DEBUG_INFO, "Image Digest\n"));
     DumpHex (2, 0, DigestSize, (VOID *)Digest);
 
     DEBUG ((DEBUG_INFO, "Signature\n"));
-    DumpHex (2, 0, SignatureHdr->SigSize, (VOID *)(SignatureHdr->Signature));
+    DumpHex (2, 0, SignatureCopy->SigSize, (VOID *)(SignatureCopy->Signature));
 
     DEBUG ((DEBUG_INFO, "Public Key\n"));
-    DumpHex (2, 0, PubKeyHdr->KeySize , PubKeyHdr->KeyData);
+    DumpHex (2, 0, PublicKeyCopy->KeySize , PublicKeyCopy->KeyData);
 
     DEBUG_CODE_END();
   }
 
+Exit:
+  FreePool (SignatureBuf);
+  FreePool (PublicKeyBuf);
   return Status;
 }
