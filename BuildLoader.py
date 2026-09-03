@@ -36,6 +36,118 @@ def print_warning(message):
     else:
         print(message)
 
+# ---------------------------------------------------------------------------
+# Auto-fix support for insufficient Stage FV/FD/flash-region sizes.
+#
+# When a code-size change makes an image outgrow its allocated flash region the
+# build fails in one of two ways:
+#   1. GenFv (during compile) aborts with
+#        "the required fv image size 0xXXXX exceeds the set fv image size 0xYYYY"
+#   2. The stitch step (post-build) aborts in align_pad_file with
+#        "File '<comp>' size 0xXXXX is greater than padding size 0xYYYY !"
+# The helpers below detect either failure, compute a block-aligned size that
+# fits, patch the size in the board BoardConfig*.py and let the build retry.
+# ---------------------------------------------------------------------------
+
+# Map the GenFv FV name to the BoardConfig size variable backing its FD region.
+STAGE_FV_TO_CFG_VAR = {
+    'STAGE1A' : 'STAGE1A_SIZE',
+    'STAGE1B' : 'STAGE1B_SIZE',
+    'STAGE2'  : 'STAGE2_FD_SIZE',
+    'OSLOADER': 'OS_LOADER_FD_SIZE',
+}
+
+class RegionSizeError(Exception):
+    # Raised when a flash region is too small; carries the target config var.
+    def __init__(self, region_name, required, allocated, cfg_var, direct):
+        super().__init__('%s needs 0x%x but only 0x%x is allocated' % (region_name, required, allocated))
+        self.region_name = region_name
+        self.required    = required
+        self.allocated   = allocated
+        self.cfg_var     = cfg_var
+        # direct: getattr(board, cfg_var) currently equals `allocated`.
+        self.direct      = direct
+
+class FvSizeError(RegionSizeError):
+    def __init__(self, fv_name, required, allocated):
+        super().__init__(fv_name, required, allocated, STAGE_FV_TO_CFG_VAR.get(fv_name), False)
+
+class StitchSizeError(RegionSizeError):
+    def __init__(self, component, required, allocated):
+        component_name = os.path.splitext(os.path.basename(component))[0].upper()
+        component_name = re.sub(r'_[AB]$', '', component_name)
+        cfg_var = component_name + '_SIZE'
+        super().__init__(component, required, allocated, cfg_var, True)
+
+def parse_fv_size_error(build_output):
+    # Return (fv_name, required, allocated) for a GenFv size overflow, else None.
+    size_re = re.compile(r'the required fv image size (0x[0-9a-fA-F]+) exceeds the set fv image size (0x[0-9a-fA-F]+)')
+    fv_re   = re.compile(r'Generating (\S+) FV')
+    current_fv = None
+    for line in build_output.splitlines():
+        match = fv_re.search(line)
+        if match:
+            current_fv = match.group(1).strip().upper()
+            continue
+        match = size_re.search(line)
+        if match:
+            return (current_fv, int(match.group(1), 16), int(match.group(2), 16))
+    return None
+
+def run_build_capture(arg_list):
+    # Run a command, stream its output live and also return it as a string.
+    if os.name == 'nt' and os.path.splitext(arg_list[0])[1] == '' and os.path.exists(arg_list[0] + '.exe'):
+        arg_list[0] += '.exe'
+    proc = subprocess.Popen(arg_list, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    captured = []
+    for raw in iter(proc.stdout.readline, b''):
+        text = raw.decode(errors='replace')
+        sys.stdout.write(text)
+        sys.stdout.flush()
+        captured.append(text)
+    proc.stdout.close()
+    return proc.wait(), ''.join(captured)
+
+def board_config_has_assignment(cfg_file, var_name):
+    # True if cfg_file explicitly assigns self.<var_name> = 0x...; False if the
+    # attribute is only inherited from BaseBoard and never set in this file.
+    with open(cfg_file, 'r') as fin:
+        content = fin.read()
+    pattern = re.compile(r'self\.%s\s*=\s*0x[0-9A-Fa-f]+' % re.escape(var_name))
+    return pattern.search(content) is not None
+
+def patch_board_config_size(cfg_file, var_name, new_value, old_value=None):
+    # Update a "self.<var_name> = 0x...." assignment in the board config.
+    # Board configs (e.g. TGL/ADL/RPL) may assign the same variable in several
+    # if/else branches; when old_value is given, prefer the branch whose current
+    # literal matches it so the branch actually used by this build is patched.
+    with open(cfg_file, 'r', newline='') as fin:
+        content = fin.read()
+    pattern = re.compile(r'(self\.%s\s*=\s*)(0x[0-9A-Fa-f]+)' % re.escape(var_name))
+    matches = list(pattern.finditer(content))
+    if not matches:
+        raise Exception('Cannot locate "self.%s = 0x..." in %s' % (var_name, cfg_file))
+    target = None
+    if old_value is not None:
+        # Prefer the last matching assignment. In BoardConfig files the same
+        # variable can be assigned multiple times with the same literal across
+        # conditional branches; the later assignment is the one that wins at run
+        # time, so patching the first match can leave the active value intact.
+        for m in reversed(matches):
+            if int(m.group(2), 16) == old_value:
+                target = m
+                break
+    if target is None:
+        if old_value is not None:
+            raise Exception('Cannot safely locate the active "self.%s = 0x..." assignment in %s'
+                            % (var_name, cfg_file))
+        target = matches[-1]
+    content = content[:target.start()] + '%s0x%08X' % (target.group(1), new_value) + content[target.end():]
+    tmp_file = cfg_file + '.tmp'
+    with open(tmp_file, 'w', newline='') as fout:
+        fout.write(content)
+    os.replace(tmp_file, cfg_file)
+
 def rebuild_basetools ():
     exe_list = 'GenFfs  GenFv  GenFw  GenSec  Lz4Compress  LzmaCompress'.split()
     ret = 0
@@ -328,6 +440,7 @@ class Build(object):
         self._pld_list                     = get_payload_list (board._PAYLOAD_NAME.split(';'))
         self._comp_list                    = []
         self._region_list                  = []
+        self._auto_fix_fv                  = False
 
         # enforce feature configs rules
         if self._board.ENABLE_SBL_SETUP:
@@ -1166,6 +1279,10 @@ class Build(object):
 
                 if mode != STITCH_OPS.MODE_FILE_NOP:
                     dst_path = bas_path + '.pad'
+                    if self._auto_fix_fv and (mode & STITCH_OPS.MODE_FILE_PAD):
+                        src_size = os.path.getsize(src_path)
+                        if src_size > val:
+                            raise StitchSizeError(src, src_size, val)
                     align_pad_file(src_path, dst_path, val, mode, pos)
                     src_path = dst_path
                 else:
@@ -1491,7 +1608,22 @@ class Build(object):
             "-Y",         "PCD",
             "-Y",         "FLASH",
             "-Y",         "LIBRARY"]
-        run_process (cmd_args)
+        if self._auto_fix_fv:
+            ret, output = run_build_capture (cmd_args)
+            if ret:
+                fv_err = parse_fv_size_error (output)
+                if fv_err and fv_err[0] in STAGE_FV_TO_CFG_VAR:
+                    raise FvSizeError (*fv_err)
+                if fv_err:
+                    # An FV overflowed but is not mapped to a BoardConfig size var,
+                    # so it cannot be auto-fixed. Say so instead of failing silently.
+                    print_warning ('[auto-fix-fv] FV "%s" overflowed (needs 0x%x, set 0x%x) '
+                                   'but has no STAGE_FV_TO_CFG_VAR mapping; cannot auto-fix.'
+                                   % fv_err)
+                print ('Error in running process:\n  %s' % ' '.join(cmd_args))
+                sys.exit (1)
+        else:
+            run_process (cmd_args)
 
         # Run post-build
         self.board_build_hook ('post-build:before')
@@ -1627,15 +1759,25 @@ def main():
         prep_env ()
 
         for index, name in enumerate(board_names):
-            if args.board == name:
-                brdcfg = module_names[index]
-                if args.arch.lower() == 'ia32' and brdcfg.Board().BUILD_ARCH == 'X64':
-                    print_warning('ERROR: IA32 build is not supported for platform [%s].' % args.board)
-                    print_warning('ERROR: Platform [%s] supports X64 architecture only. Build stopped.' % args.board)
-                    sys.exit(2)
-                if args.arch == '':
-                    args.arch = 'ia32'
+            if args.board != name:
+                continue
 
+            cfgfile     = module_names[index].__file__
+            module_name = module_names[index].__name__
+            os.environ['PLT_SOURCE'] = os.path.abspath (os.path.join (os.path.dirname (cfgfile), '../..'))
+
+            if args.arch.lower() == 'ia32' and module_names[index].Board().BUILD_ARCH == 'X64':
+                print_warning('ERROR: IA32 build is not supported for platform [%s].' % args.board)
+                print_warning('ERROR: Platform [%s] supports X64 architecture only. Build stopped.' % args.board)
+                sys.exit(2)
+            if args.arch == '':
+                args.arch = 'ia32'
+
+            max_fv_autofix = 8
+            attempt        = 0
+            while True:
+                # Reload the (possibly patched) board config on every attempt.
+                brdcfg = load_source(module_name, cfgfile)
                 board  = brdcfg.Board(
                                         BUILD_ARCH        = args.arch.upper(), \
                                         RELEASE_MODE      = args.release,     \
@@ -1647,9 +1789,44 @@ def main():
                                         _FSP_PATH_NAME    = args.fsppath,     \
                                         KEY_GEN           = args.keygen
                                         );
-                os.environ['PLT_SOURCE']  = os.path.abspath (os.path.join (os.path.dirname (board_cfgs[index]), '../..'))
-                Build(board).build()
-                break
+                builder = Build(board)
+                builder._auto_fix_fv = args.autofixfv
+                try:
+                    builder.build()
+                    break
+                except RegionSizeError as ex:
+                    attempt += 1
+                    cfg_var  = ex.cfg_var
+                    if (isinstance(ex, FvSizeError) and ex.region_name == 'STAGE1B'
+                            and not getattr(board, 'STAGE1B_XIP', 1)):
+                        cfg_var = 'STAGE1B_FD_SIZE'
+                    block    = board.FLASH_BLOCK_SIZE
+                    can_fix  = (args.autofixfv and cfg_var is not None
+                                and hasattr(board, cfg_var) and attempt <= max_fv_autofix)
+                    # cfg_var may be inherited from BaseBoard with no explicit
+                    # assignment in this board's BoardConfig*.py; patching would fail.
+                    if can_fix and not board_config_has_assignment(cfgfile, cfg_var):
+                        can_fix = False
+                    # For a directly-backed region the config var must currently
+                    # equal the allocated size, else the mapping is wrong.
+                    if can_fix and ex.direct and getattr(board, cfg_var) != ex.allocated:
+                        can_fix = False
+                    if not can_fix:
+                        print_warning('ERROR: %s' % str(ex))
+                        sys.exit(1)
+                    cur_size = getattr(board, cfg_var)
+                    new_size = ((cur_size + (ex.required - ex.allocated) + block - 1) // block) * block
+                    try:
+                        patch_board_config_size(cfgfile, cfg_var, new_size, cur_size)
+                    except Exception as patch_error:
+                        print_warning('ERROR: [auto-fix-fv] Failed to patch %s in %s: %s'
+                                      % (cfg_var, os.path.basename(cfgfile), patch_error))
+                        sys.exit(1)
+                    print_warning('[auto-fix-fv] %s overflow: needs 0x%x, had 0x%x. '
+                                  'Updated %s 0x%x -> 0x%x in %s. Rebuilding (attempt %d)...'
+                                  % (ex.region_name, ex.required, ex.allocated, cfg_var,
+                                     cur_size, new_size, os.path.basename(cfgfile), attempt))
+            break
 
     buildp = sp.add_parser('build', help='build SBL firmware')
     buildp.add_argument('-r',  '--release', action='store_true', help='Release build')
@@ -1662,6 +1839,8 @@ def main():
     buildp.add_argument('board', metavar='board', choices=board_names, help='Board Name (%s)' % ', '.join(board_names))
     buildp.add_argument('-k', '--keygen', action='store_true', help='Generate default keys for signing')
     buildp.add_argument('-t', '--toolchain', dest='toolchain', type=str, default='', help='Preferred toolchain name')
+    buildp.add_argument('-af', '--auto-fix-fv-size', dest='autofixfv', action='store_true',
+                        help='Auto-detect stage FV/FD size overflow, grow the size in BoardConfig and rebuild')
     buildp.set_defaults(func=cmd_build)
 
     def cmd_clean(args):
