@@ -246,6 +246,8 @@ def get_xml_change_list (platform, plt_params_list):
         ('./BuildSettings/HarnessGlobalData/SelectedRvp',                            'RPL-S DDR5 SODIMM S17 (ADP-S + RPL-S)'),
         ('./FlashSettings/FlashConfiguration/SpiDualIoReadEnable',                   'Yes'),
         ('./Icc/IccPolicies/Profiles/Profile/PwrManagementConfiguration/ClkreqMapSRC12', 'GPP_D_14'),
+        ('./NetworkingConnectivity/WiredLanConfiguration/PhyConnected',              'No PHY Connected'),
+        ('./NetworkingConnectivity/WiredLanConfiguration/LanEnable',                 'No'),
         ('./NetworkingConnectivity/WiredLanConfiguration/GbeMacSmbAddrsEn',          'No'),
         ('./NetworkingConnectivity/WiredLanConfiguration/GbePCIePortSelect',         'None'),
         ('./InternalPchBuses/SmbusSmlinkConfiguration/SLink0MctpAddress',            '0x62'),
