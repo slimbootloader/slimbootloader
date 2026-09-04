@@ -37,10 +37,3 @@
 
 [Guids]
   gMeBiosPayloadHobGuid
-
-[Pcd]
-  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultOemId
-  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultOemTableId
-  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultOemRevision
-  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultCreatorId
-  gPlatformCommonLibTokenSpaceGuid.PcdAcpiDefaultCreatorRevision

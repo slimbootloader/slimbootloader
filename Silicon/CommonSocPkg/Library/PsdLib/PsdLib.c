@@ -35,10 +35,10 @@ EFI_ACPI_PSD_TABLE mAcpiPsdTableTemplate = {
   .Header.Signature       = EFI_ACPI_PSD_SIGNATURE,
   .Header.Length          = sizeof (EFI_ACPI_PSD_TABLE),
   .Header.Revision        = EFI_ACPI_PSD_TABLE_REVISION,
-  .Header.OemTableId      = FixedPcdGet64 (PcdAcpiDefaultOemTableId),
-  .Header.OemRevision     = FixedPcdGet32 (PcdAcpiDefaultOemRevision),
-  .Header.CreatorId       = FixedPcdGet32 (PcdAcpiDefaultCreatorId),
-  .Header.CreatorRevision = FixedPcdGet32 (PcdAcpiDefaultCreatorRevision),
+  .Header.OemTableId      = PSDS_EFI_ACPI_OEM_TABLE_ID,
+  .Header.OemRevision     = PSDS_EFI_ACPI_OEM_REVISION,
+  .Header.CreatorId       = PSDS_EFI_ACPI_CREATOR_ID,
+  .Header.CreatorRevision = PSDS_EFI_ACPI_CREATOR_REVISION,
 };
 
 /**
@@ -216,7 +216,7 @@ UpdateAcpiPsdTable (
 
   Psdt = (EFI_ACPI_PSD_TABLE *)Table;
   CopyMem (Psdt, &mAcpiPsdTableTemplate, sizeof (EFI_ACPI_PSD_TABLE));
-  CopyMem (Psdt->Header.OemId, FixedPcdGetPtr (PcdAcpiDefaultOemId), 6);
+  CopyMem (Psdt->Header.OemId, PSDS_EFI_ACPI_OEM_ID, sizeof (Psdt->Header.OemId));
 
   Psdt->PsdVersion.PsdVerMajor = PSD_VERSION_MAJOR;
   Psdt->PsdVersion.PsdVerMinor = PSD_VERSION_MINOR;
