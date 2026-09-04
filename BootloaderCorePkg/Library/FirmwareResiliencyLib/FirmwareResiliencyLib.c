@@ -139,16 +139,18 @@ DetectCsmeWdtFailure (
 
   StateMachine = GetFwuStateMachine ();
 
-  // An in-progress update (PART_A/PART_B) boots by design; not a trigger.
+  // Pending switch but still booting the source partition means the Top Swap did not take (target IBB/ACM bad); trigger recovery.
   if (StateMachine == FW_UPDATE_SM_PART_A) {
     if (GetCurrentBootPartition () == PrimaryPartition) {
       DEBUG ((DEBUG_INFO, "Partition to be updated is same as current boot partition (primary)\n"));
+      return TRUE;
     }
     return FALSE;
   }
   if (StateMachine == FW_UPDATE_SM_PART_B) {
     if (GetCurrentBootPartition () == BackupPartition) {
       DEBUG ((DEBUG_INFO, "Partition to be updated is same as current boot partition (backup)\n"));
+      return TRUE;
     }
     return FALSE;
   }
@@ -238,8 +240,16 @@ UnifiedResiliencyCheck (
   BOOLEAN           NeedPartitionSwitch;
   UINT8             NewReason;
   BOOT_PARTITION    NewPartition;
-  // Skip explicit capsule-update boots; still run for recovery-triggered boots.
-  if ((GetBootMode () == BOOT_ON_FLASH_UPDATE) && !IsRecoveryTriggered ()) {
+  BOOLEAN           CsmeWdtFailure;
+
+  CsmeWdtFailure = DetectCsmeWdtFailure ();
+
+  // Skip only on a healthy capsule-update boot; otherwise fall through to recovery handling.
+  if ((GetBootMode () == BOOT_ON_FLASH_UPDATE) &&
+      !IsRecoveryTriggered () &&
+      !CsmeWdtFailure &&
+      !WasBootCausedByTcoTimeout () &&
+      !(PcdGetBool (PcdCsmeResiliencyEnabled) && IsMeCorrupt ())) {
     return;
   }
   // Read existing RecoveryStatus variable (may not exist).
@@ -290,7 +300,7 @@ UnifiedResiliencyCheck (
   //
   // CSME-WDT triggered Top Swap detection (failure detected outside SBL).
   //
-  if (DetectCsmeWdtFailure ()) {
+  if (CsmeWdtFailure) {
     NewReason           |= RECOVERY_REASON_CSME_WDT;
   }
 

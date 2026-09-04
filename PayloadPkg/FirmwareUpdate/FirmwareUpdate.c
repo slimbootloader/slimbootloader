@@ -2253,14 +2253,15 @@ EndOfFwu:
   //
   ConsolePrint ("Exiting Firmware Update (Status: %r)\n", Status);
 
-  //
-  // CSME-only recovery: reset SM to INIT so FSP won't trigger an extra
-  // BOOT_ON_FLASH_UPDATE cycle from a lingering SM_DONE.
-  //
-  if (RecoveryStatusValid &&
-      (RecoveryStatus.Reason == RECOVERY_REASON_CSME) &&
-      (Status == EFI_SUCCESS)) {
-    SetStateMachineFlag (FW_UPDATE_SM_INIT);
+  // Conclude the FW state machine after a successful recovery so the next boot does not loop back into recovery.
+  if (RecoveryStatusValid && (Status == EFI_SUCCESS)) {
+    if (RecoveryStatus.Reason == RECOVERY_REASON_CSME) {
+      // CSME-only recovery: reset SM to INIT so FSP won't trigger an extra BOOT_ON_FLASH_UPDATE cycle from a lingering SM_DONE.
+      SetStateMachineFlag (FW_UPDATE_SM_INIT);
+    } else {
+      // SBL partition recovery concludes the in-progress update so Stage1B does not re-detect the pending switch and loop.
+      SetStateMachineFlag (FW_UPDATE_SM_DONE);
+    }
   }
 
   EndFirmwareUpdate ();
