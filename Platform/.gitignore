@@ -5,6 +5,7 @@ VerInfo.txt
 !AlderlakeBoardPkg/VbtBin/
 !ApollolakeBoardPkg/VbtBin/Vbt_*.*
 !ArrowlakeBoardPkg/VbtBin/*
+!PantherlakeBoardPkg/VbtBin/*
 *.json
 !RaptorlakeBoardPkg/VbtBin/Vbt_rplp*.*
 !RaptorlakeBoardPkg/VbtBin/VbtRplPs*.*
