@@ -313,6 +313,7 @@ class BaseBoard(object):
         self._DACM_CPU_EXT_FM_FM_MASK = 0x0
 
         self.RTCM_RSVD_SIZE        = 0xFF000
+        self._AUTO_FD_SIZE         = True
 
         for key, value in list(kwargs.items()):
             setattr(self, '%s' % key, value)
@@ -857,16 +858,26 @@ class Build(object):
         patch_fv(self._fv_dir, *extra_cmd)
 
         print('Patching STAGE1B')
+        extra_cmd = []
+        if getattr (self._board, '_AUTO_FD_SIZE', False):
+            extra_cmd.append (
+                "<Stage1B:__gPcd_BinaryPatch_PcdFSPSBase>, 0x%08X, @Patch FSP-S Base" % self._board.FSP_S_BASE
+            )
         patch_fv(
                 self._fv_dir,
                 "STAGE1B:STAGE1B",
                 "_OFFS_STAGE1B_,        Stage1B:__ModuleEntryPoint,        @Patch Stage1B Entry",
                 "_OFFS_STAGE1B_+4,      Stage1B:BASE,                      @Patch Stage1B Base",
-                "<Stage1B:__gPcd_BinaryPatch_PcdCfgDataIntBase>, {016E6CD0-4834-4C7E-BCFE-41DFB88A6A6D:0x1C}, @Patch Internal CfgDataBase"
+                "<Stage1B:__gPcd_BinaryPatch_PcdCfgDataIntBase>, {016E6CD0-4834-4C7E-BCFE-41DFB88A6A6D:0x1C}, @Patch Internal CfgDataBase",
+                *extra_cmd
                 )
 
         print('Patching STAGE2')
         extra_cmd = []
+        if getattr (self._board, '_AUTO_FD_SIZE', False):
+            extra_cmd.append (
+                "<Stage2:__gPcd_BinaryPatch_PcdFSPSBase>, 0x%08X, @Patch FSP-S Base" % self._board.FSP_S_BASE
+            )
         if self._board.HAVE_VBT_BIN:
             extra_cmd.append (
                 "<Stage2:__gPcd_BinaryPatch_PcdGraphicsVbtAddress>, {E08CA6D5-8D02-43AE-ABB1-952CC787C933:0x1C}, @Patch VBT"
@@ -1479,11 +1490,67 @@ class Build(object):
         # Check if BaseTools has been compiled
         rebuild_basetools ()
 
+    @staticmethod
+    def _align_size (size, alignment):
+        return (size + alignment - 1) & ~(alignment - 1)
+
+    def _get_fv_taken_size (self, fv_name):
+        report_file = os.path.join (self._fv_dir, '%s.Fv.txt' % fv_name)
+        if not os.path.exists (report_file):
+            raise Exception ("FV report '%s' was not generated" % report_file)
+
+        match = re.search (r'^EFI_FV_TAKEN_SIZE\s*=\s*(0x[0-9a-fA-F]+)', get_file_data (report_file, 'r'), re.MULTILINE)
+        if match is None:
+            raise Exception ("FV report '%s' does not contain EFI_FV_TAKEN_SIZE" % report_file)
+        return int (match.group (1), 0)
+
+    def _prepare_auto_fd_sizes (self):
+        if not getattr (self._board, '_AUTO_FD_SIZE', False):
+            return
+
+        block_size = self._board.FLASH_BLOCK_SIZE
+
+        stage2_fv_size    = self._align_size (self._get_fv_taken_size ('STAGE2'), block_size)
+        os_loader_fv_size = self._align_size (self._get_fv_taken_size ('OSLOADER'), block_size)
+        self._board.STAGE2_FD_SIZE      = self._align_size (stage2_fv_size + self._board.FSP_S_SIZE, block_size)
+        self._board.OS_LOADER_FD_SIZE   = os_loader_fv_size
+        self._board.STAGE2_FD_NUMBLK    = self._board.STAGE2_FD_SIZE // block_size
+        self._board.OS_LOADER_FD_NUMBLK = self._board.OS_LOADER_FD_SIZE // block_size
+
+    def _prepare_auto_fd_bootstrap (self):
+        if not getattr (self._board, '_AUTO_FD_SIZE', False):
+            return
+
+        self._board.STAGE2_FD_SIZE      = 0x00400000
+        self._board.OS_LOADER_FD_SIZE   = 0x00200000
+        self._board.STAGE2_FD_NUMBLK    = self._board.STAGE2_FD_SIZE    // self._board.FLASH_BLOCK_SIZE
+        self._board.OS_LOADER_FD_NUMBLK = self._board.OS_LOADER_FD_SIZE // self._board.FLASH_BLOCK_SIZE
+
+    def _refresh_auto_fd_layout (self):
+        if not getattr (self._board, '_AUTO_FD_SIZE', False):
+            return
+
+        self.create_platform_vars ()
+        platform_dsc_path = os.path.join (os.environ['SBL_SOURCE'], 'BootloaderCorePkg', 'Platform.dsc')
+        self.create_dsc_inc_file (platform_dsc_path)
+        if self._board.HAVE_FSP_BIN:
+            fsp_path = os.path.join (self._fv_dir, 'Fsp.bin')
+            rebase_fsp (fsp_path, self._fv_dir, self._board.FSP_T_BASE, self._board.FSP_M_BASE, self._board.FSP_S_BASE)
+            split_fsp (fsp_path, self._fv_dir)
+
+    def _measure_auto_fd_fvs (self, cmd_args):
+        if not getattr (self._board, '_AUTO_FD_SIZE', False):
+            return
+
+        for fv_name in ['STAGE2', 'OsLoader']:
+            run_process (cmd_args + ['fds', '--fv-image', fv_name])
+
     def build(self):
         print("Build [%s] ..." % self._board.BOARD_NAME)
 
         # Run early build init
         self.early_build_init()
+        self._prepare_auto_fd_bootstrap ()
 
         # Run pre-build
         self.board_build_hook ('pre-build:before')
@@ -1502,7 +1569,11 @@ class Build(object):
             "-Y",         "PCD",
             "-Y",         "FLASH",
             "-Y",         "LIBRARY"]
-        run_process (cmd_args)
+        run_process (cmd_args + ['modules'])
+        self._measure_auto_fd_fvs (cmd_args)
+        self._prepare_auto_fd_sizes ()
+        self._refresh_auto_fd_layout ()
+        run_process (cmd_args + ['fds'])
 
         # Run post-build
         self.board_build_hook ('post-build:before')

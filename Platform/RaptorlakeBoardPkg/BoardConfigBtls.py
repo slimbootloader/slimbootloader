@@ -109,7 +109,6 @@ class Board(RaptorlakeBoardConfig.Board):
             self.STAGE1A_SIZE         = 0x00016000
             self.STAGE1B_SIZE         = 0x000E0000
             self.STAGE2_SIZE          = 0x000C0000
-            self.STAGE2_FD_SIZE       = 0x000F0000
             self.PAYLOAD_SIZE         = 0x00024000
 
         if self.ACM_SIZE > 0:

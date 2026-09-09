@@ -190,7 +190,6 @@ class Board(BaseBoard):
         self.STAGE1B_SIZE         = 0x0037D000
         self.STAGE2_SIZE          = 0x000AE000
         self.STAGE2_FD_BASE       = 0x01000000
-        self.STAGE2_FD_SIZE       = 0x00400000
 
         self.PAYLOAD_SIZE         = 0x00040000
         self.EPAYLOAD_SIZE        = 0x00200000
@@ -208,8 +207,6 @@ class Board(BaseBoard):
 
         self.NON_REDUNDANT_SIZE   = 0x01000000
 
-        self.OS_LOADER_FD_SIZE    = 0x00060000
-        self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         self.SLIMBOOTLOADER_SIZE  = 0x01000000 # 16 MB
         self.PLD_HEAP_SIZE        = 0x09000000 # for UBUNTU

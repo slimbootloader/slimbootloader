@@ -108,9 +108,6 @@ class Board(BaseBoard):
         self.FSP_M_STACK_TOP      = 0xFEF3FF00
 
         self.STAGE2_FD_BASE       = 0x01000000
-        self.STAGE2_FD_SIZE       = 0x000E0000
-        self.OS_LOADER_FD_SIZE    = 0x0005B000
-        self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         self.STAGE1_STACK_SIZE    = 0x00002000
         self.STAGE1_DATA_SIZE     = 0x00014000
