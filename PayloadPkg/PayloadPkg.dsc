@@ -53,6 +53,7 @@
   ModuleEntryLib | BootloaderCommonPkg/Library/ModuleEntryLib/ModuleEntryLib.inf
   TimeStampLib | BootloaderCommonPkg/Library/TimeStampLib/TimeStampLib.inf
   LoaderPerformanceLib | BootloaderCommonPkg/Library/LoaderPerformanceLib/LoaderPerformanceLib.inf
+  CsmePerfIdToStrLib | BootloaderCommonPkg/Library/CsmePerfIdToStrLib/CsmePerfIdToStrLib.inf
   BootloaderCommonLib | BootloaderCommonPkg/Library/BootloaderCommonLib/BootloaderCommonLib.inf
   UsbInitLib | BootloaderCommonPkg/Library/UsbInitLib/UsbInitLib.inf
 !if $(ENABLE_USB_KB) == 1
