@@ -1,0 +1,35 @@
+## @file
+#
+#  Slim Bootloader CFGDATA Template File.
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+- !include Platform/CommonBoardPkg/CfgData/Template_CfgHdr.yaml
+
+
+
+- !include Template_Gpio.yaml
+
+MEM_TMPL: >
+  - $ACTION      :
+      page         : MEM_$(1):MEM:"Memory $(1)"
+  - $ACTION      :
+      page         : MEM_$(1)
+
+
+
+- !include Platform/CommonBoardPkg/CfgData/Template_BootOption.yaml
+
+SIL_TMPL: >
+  - $ACTION      :
+      page         : SIL_$(1):SIL:"Silicon $(1)"
+  - $ACTION      :
+      page         : SIL_$(1)
+
+
+
+- !include Template_Spd.yaml

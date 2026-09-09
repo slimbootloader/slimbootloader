@@ -1,0 +1,124 @@
+#/** @file
+#
+#  Platform Configuration Delta File.
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+#**/
+
+
+#
+# Delta configuration values for platform ID 0x0A
+#
+PLATFORMID_CFG_DATA.PlatformId                  | 0x0A
+PLAT_NAME_CFG_DATA.PlatformName                 | 'PtlpRob'
+GEN_CFG_DATA.PayloadId                          | ''
+GEN_CFG_DATA.VbtImageId                         | 3
+GEN_CFG_DATA.BootToShell                        | 0
+SILICON_CFG_DATA.EcAvailable                    | 0
+
+# FIPS mode enablement feature
+FEATURES_CFG_DATA.Features.MeFipsMode           | 0
+
+# TCC mode enablement
+TCC_CFG_DATA.TccEnable                          | 0
+
+#FSPM UPD
+MEMORY_CFG_DATA.SpdDataSel000                   | 4
+MEMORY_CFG_DATA.SpdDataSel010                   | 4
+MEMORY_CFG_DATA.SpdDataSel020                   | 4
+MEMORY_CFG_DATA.SpdDataSel030                   | 4
+MEMORY_CFG_DATA.SpdDataSel100                   | 4
+MEMORY_CFG_DATA.SpdDataSel101                   | 0
+MEMORY_CFG_DATA.SpdDataSel110                   | 4
+MEMORY_CFG_DATA.SpdDataSel120                   | 4
+MEMORY_CFG_DATA.SpdDataSel130                   | 4
+MEMORY_CFG_DATA.SpdAddressTable                 | { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+MEMORY_CFG_DATA.DqsMapCpu2DramMc0Ch0            | {1, 0}
+MEMORY_CFG_DATA.DqsMapCpu2DramMc0Ch1            | {0, 1}
+MEMORY_CFG_DATA.DqsMapCpu2DramMc0Ch2            | {1, 0}
+MEMORY_CFG_DATA.DqsMapCpu2DramMc0Ch3            | {0, 1}
+MEMORY_CFG_DATA.DqsMapCpu2DramMc1Ch0            | {1, 0}
+MEMORY_CFG_DATA.DqsMapCpu2DramMc1Ch1            | {0, 1}
+MEMORY_CFG_DATA.DqsMapCpu2DramMc1Ch2            | {1, 0}
+MEMORY_CFG_DATA.DqsMapCpu2DramMc1Ch3            | {0, 1}
+
+MEMORY_CFG_DATA.MrcFastBoot                     | 1
+MEMORY_CFG_DATA.DqPinsInterleaved               | 0
+MEMORY_CFG_DATA.PchHdaEnable                    | 1
+MEMORY_CFG_DATA.PchHdaDspEnable                 | 1
+MEMORY_CFG_DATA.PchHdaAudioLinkHdaEnable        | 0
+MEMORY_CFG_DATA.DmiGen3DsPortRxPreset           | {0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x02}
+MEMORY_CFG_DATA.UserBd                          | 5
+MEMORY_CFG_DATA.ActiveCoreCount                 | 0xFF
+MEMORY_CFG_DATA.ActiveSmallCoreCount            | 0xFF
+MEMORY_CFG_DATA.PcieClkSrcUsage                 | { 0x0, 0x2, 0x7, 0x4, 0x5, 0x6, 0x8, 0xFF, 0xFF, 0xFF}
+MEMORY_CFG_DATA.DqMapCpu2DramMc0Ch0             | {10,  9,  8, 11, 13, 12, 14, 15,  5,  6,  7,  4,  0,  1,  2,  3}
+MEMORY_CFG_DATA.DqMapCpu2DramMc0Ch1             | { 0,  1,  3,  2,  7,  5,  4,  6, 13, 12, 14, 15, 11, 10,  8,  9}
+MEMORY_CFG_DATA.DqMapCpu2DramMc0Ch2             | {10, 11,  8,  9, 13, 12, 15, 14,  6,  5,  7,  4,  0,  1,  3,  2}
+MEMORY_CFG_DATA.DqMapCpu2DramMc0Ch3             | { 5,  4,  7,  6,  3,  2,  1,  0, 13, 12, 14, 15,  8, 10, 11,  9}
+MEMORY_CFG_DATA.DqMapCpu2DramMc1Ch0             | {10,  8, 11,  9, 13, 12, 14, 15,  6,  7,  5,  4,  0,  1,  3,  2}
+MEMORY_CFG_DATA.DqMapCpu2DramMc1Ch1             | { 1,  3,  0,  2,  7,  6,  5,  4, 10, 11,  8,  9, 13, 14, 12, 15}
+MEMORY_CFG_DATA.DqMapCpu2DramMc1Ch2             | {10,  8, 11,  9, 13, 12, 15, 14,  6,  7,  5,  4,  0,  1,  2,  3}
+MEMORY_CFG_DATA.DqMapCpu2DramMc1Ch3             | { 1,  3,  0,  2,  6,  7,  5,  4, 13, 12, 15, 14, 10, 11,  8,  9}
+MEMORY_CFG_DATA.SaGv                            | 1
+MEMORY_CFG_DATA.PchHdaAudioLinkDmicEnable       | {0x0, 0x0}
+MEMORY_CFG_DATA.PchHdaAudioLinkSndwEnable       | {0x0, 0x0, 0x0, 0x0, 0x0}
+MEMORY_CFG_DATA.PcieClkSrcClkReq                | { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0, 0x1 }
+MEMORY_CFG_DATA.Lp5CccConfig                    | 0xFF
+MEMORY_CFG_DATA.Lp5SplitACTEnable               | 2
+MEMORY_CFG_DATA.Disable2CycleBypass             | 0
+MEMORY_CFG_DATA.FClkFrequency                   | 0
+MEMORY_CFG_DATA.TcssPort0                       | 0x2
+MEMORY_CFG_DATA.TcssPort1                       | 0x1
+MEMORY_CFG_DATA.TcssPort2                       | 0x2
+MEMORY_CFG_DATA.TcssPort3                       | 0x0
+MEMORY_CFG_DATA.TcssPlatConf                    | 0x15
+MEMORY_CFG_DATA.IomUsbCDpConfig                 | {0x00, 0x00, 0x00, 0x02}
+
+#FSPS UPD
+SILICON_CFG_DATA.PcieRpL1Substates              | {0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3}
+SILICON_CFG_DATA.PcieRpLtrEnable                | {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}
+SILICON_CFG_DATA.PcieRpClkReqDetect             | {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}
+SILICON_CFG_DATA.PcieRpAspm                     | {0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4, 0x4}
+SILICON_CFG_DATA.PcieRpMaxPayload               | {0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}
+SILICON_CFG_DATA.PcieRpAdvancedErrorReporting   | {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}
+SILICON_CFG_DATA.PtmEnabled                     | { 0x1, 0x1, 0x1, 0x1}
+SILICON_CFG_DATA.PortUsb30Enable                | {0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+SILICON_CFG_DATA.CpuUsb3OverCurrentPin          | {0x0, 0x1, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+SILICON_CFG_DATA.PortUsb20Enable                | {0x01, 0x01, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01}
+SILICON_CFG_DATA.Usb2OverCurrentPin             | {0x04, 0x05, 0xFF, 0xFF, 0x0, 0x0, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+SILICON_CFG_DATA.Usb3OverCurrentPin             | {0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+SILICON_CFG_DATA.UsbOverCurrentPinType          | {0x02, 0x02, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+SILICON_CFG_DATA.PortResetMessageEnable         | {0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+SILICON_CFG_DATA.SerialIoUartPowerGating        | {0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02}
+SILICON_CFG_DATA.SerialIoUartDmaEnable          | {0x01, 0x01, 0x01, 0x1, 0x1, 0x00, 0x00}
+SILICON_CFG_DATA.SerialIoUartAutoFlow           | {0x0, 0x0, 0x01, 0x01, 0x01, 0x00, 0x00}
+SILICON_CFG_DATA.Usb2PhyPetxiset                | {0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06}
+SILICON_CFG_DATA.Usb2PhyPredeemp                | {0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03}
+SILICON_CFG_DATA.PchSerialIoI2cPadsTermination  | {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01}
+SILICON_CFG_DATA.TurboRatioLimitRatio           | {0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20}
+SILICON_CFG_DATA.TurboRatioLimitNumCore         | {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}
+SILICON_CFG_DATA.AtomTurboRatioLimitRatio       | {0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20}
+SILICON_CFG_DATA.AtomTurboRatioLimitNumCore     | {0x04, 0x08, 0x0c, 0x04, 0x06, 0x08, 0x0a, 0x0c}
+SILICON_CFG_DATA.PchPmSlpSusMinAssert           | 0x0
+SILICON_CFG_DATA.PchPmSlpS3MinAssert            | 0x0
+SILICON_CFG_DATA.UsbTcPortEn                    | 0x3
+
+POWER_CFG_DATA.TurboMode                        | 1
+POWER_CFG_DATA.EnergyEfficientTurbo             | 1
+POWER_CFG_DATA.ThermalMonitor                   | 0
+POWER_CFG_DATA.MaxRatio                         | 4
+POWER_CFG_DATA.Cx                               | 1
+POWER_CFG_DATA.TimedMwait                       | 0
+POWER_CFG_DATA.PkgCStateLimit                   | 0xFF
+POWER_CFG_DATA.Eist                             | 1
+POWER_CFG_DATA.Hwp                              | 1
+POWER_CFG_DATA.EnableHwpAutoEppGrouping         | 1
+POWER_CFG_DATA.EnergyEfficientPState            | 1
+POWER_CFG_DATA.PkgCStateDemotion                | 1
+POWER_CFG_DATA.PkgCStateUnDemotion              | 1
+POWER_CFG_DATA.BootMaxFrequency                 | 1
+POWER_CFG_DATA.TdcEnable                        | {0x01, 0x01, 0x01, 0x01, 0x00, 0x00}

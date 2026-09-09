@@ -1,0 +1,56 @@
+## @file
+#
+#  FuSa feature Configuration Delta File.
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+#
+
+# Note: This file will come into effect only when FUSA_SUPPORT = 1 in BoardConfig file
+
+# Module Lockstep
+FUSA_CFG_DATA.Module0Lockstep                 | 0
+FUSA_CFG_DATA.Module1Lockstep                 | 0
+FUSA_CFG_DATA.LpcLockstep                     | 0
+
+# Parity Options
+FUSA_CFG_DATA.FusaPlatformParityChecking      | 1
+
+# IBECC
+MEMORY_CFG_DATA.Ibecc                         | 1
+# IBECC operation mode: 0:Protect base on address range, 1:Non-protected, 2:All protected
+MEMORY_CFG_DATA.IbeccOperationMode            | 2
+
+# PrmrrSize is enforced by FSP. User modification is not recommended
+MEMORY_CFG_DATA.PrmrrSize                     | 0
+
+# CrashLog - override SILICON_CFG_DATA.CpuCrashLogEnable when FUSA_SUPPORT enabled
+FUSA_CFG_DATA.CpuCrashLogEnable               | 1
+
+# L2 Cache Allocation Technology
+SILICON_CFG_DATA.L2CatEnable                  | 0
+
+# Pre-OS Checker
+FUSA_CFG_DATA.Posc                            | 0
+
+TCC_CFG_DATA.TccEnable                        | 0
+# TCC Power profile settings
+# These are set automatically if TCC is enabled above.
+MEMORY_CFG_DATA.DisPgCloseIdleTimeout         | 0
+
+SILICON_CFG_DATA.PsfTccEnable                 | 0
+SILICON_CFG_DATA.OpioRecenter                 | 1
+SILICON_CFG_DATA.PciePtm                      | {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+SILICON_CFG_DATA.TurboRatioLimitRatio         | {0, 0, 0, 0, 0, 0, 0, 0}
+SILICON_CFG_DATA.TurboRatioLimitNumCore       | {0, 0, 0, 0, 0, 0, 0, 0}
+SILICON_CFG_DATA.AtomTurboRatioLimitRatio     | {0, 0, 0, 0, 0, 0, 0, 0}
+SILICON_CFG_DATA.AtomTurboRatioLimitNumCore   | {0, 0, 0, 0, 0, 0, 0, 0}
+
+# MISC settings that affect FuSa
+SILICON_CFG_DATA.D3ColdEnable                 | 0
+SILICON_CFG_DATA.D3HotEnable                  | 0
+SILICON_CFG_DATA.IehMode                      | 1
+SILICON_CFG_DATA.TcCstateLimit                | 0
+SILICON_CFG_DATA.VccSt                        | 0

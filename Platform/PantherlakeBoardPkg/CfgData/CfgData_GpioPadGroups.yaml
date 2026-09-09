@@ -1,0 +1,12 @@
+## @file
+#
+#  Slim Bootloader CFGDATA PTL Lake GPIO pad groups.
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+>
+0x00:GPP_A, 0x02:GPP_B, 0x05:GPP_C, 0x04:GPP_D, 0x0A:GPP_E, 0x0B:GPP_F, 0x0D:GPP_H,
+0x06:GPP_S, 0x13:GPP_V
