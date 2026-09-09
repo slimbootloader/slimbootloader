@@ -1,0 +1,26 @@
+## @file
+#  File to describe FSP repo information
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+
+[UserExtensions.SBL."CloneRepo"]
+  REPO    = https://github.com/intel/FSP.git
+  COMMIT  = e5a1f82272484435852f916f31e27769d1ee3caa
+
+[UserExtensions.SBL."CopyList"]
+  PantherLakeFspBinPkg/IoT/PantherLake/Fsp.fd                 : Silicon/PantherlakePkg/Ptl/Fsp/FspRel.bin
+  PantherLakeFspBinPkg/IoT/PantherLake/Fsp.fd                 : Silicon/PantherlakePkg/Ptl/Fsp/FspDbg.bin
+  PantherLakeFspBinPkg/IoT/PantherLake/Fsp.bsf                : Silicon/PantherlakePkg/Ptl/Fsp/Fsp.bsf
+  PantherLakeFspBinPkg/IoT/PantherLake/Include/FspUpd.h       : Silicon/PantherlakePkg/Ptl/Fsp/FspUpd.h
+  PantherLakeFspBinPkg/IoT/PantherLake/Include/FsptUpd.h      : Silicon/PantherlakePkg/Ptl/Fsp/FsptUpd.h
+  PantherLakeFspBinPkg/IoT/PantherLake/Include/FspmUpd.h      : Silicon/PantherlakePkg/Ptl/Fsp/FspmUpd.h
+  PantherLakeFspBinPkg/IoT/PantherLake/Include/FspsUpd.h      : Silicon/PantherlakePkg/Ptl/Fsp/FspsUpd.h
+  PantherLakeFspBinPkg/IoT/PantherLake/Include/MemInfoHob.h   : Silicon/PantherlakePkg/Ptl/Fsp/MemInfoHob.h
+  FSP_License.pdf                                           : Silicon/PantherlakePkg/Ptl/Fsp/FSP_License.pdf
+  PantherLakeFspBinPkg/IoT/PantherLake/VbtBin/Vbt.json       : Platform/PantherlakeBoardPkg/VbtBin/Vbt.json

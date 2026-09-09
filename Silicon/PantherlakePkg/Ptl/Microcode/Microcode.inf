@@ -1,0 +1,24 @@
+## @file
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+[Defines]
+  INF_VERSION          = 0x00010005
+  BASE_NAME            = Microcode
+  FILE_GUID            = 2D9C1D91-E869-4EB9-9D83-C6C6BE95C03B
+  MODULE_TYPE          = USER_DEFINED
+  VERSION_STRING       = 1.0
+
+[Sources]
+  m_94_c06c1_0000011c.mcb # uCode PTL-P/H B0 PTL-U G0 (CPUID c06c1) Version
+
+[UserExtensions.SBL."CloneRepo"]
+  REPO   = https://github.com/slimbootloader/firmwareblob.git
+  COMMIT = 5d439021ae6278d59e34af9d3893833ad91305e0
+
+[UserExtensions.SBL."CopyList"]
+  Microcode/PantherLake/m_94_c06c1_0000011c.pdb  : Silicon/PantherlakePkg/Ptl/Microcode/m_94_c06c1_0000011c.mcb
