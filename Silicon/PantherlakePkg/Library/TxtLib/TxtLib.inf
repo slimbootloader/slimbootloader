@@ -29,6 +29,7 @@ IoLib
 PcdLib
 BootloaderCoreLib
 MpInitLib
+ResetSystemLib
 
 
 [Packages]

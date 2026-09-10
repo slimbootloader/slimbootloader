@@ -81,6 +81,7 @@ Register names for Host Bridge block
 #define PTL_U_NEX_SA_DEVICE_ID_1C           0xB028   ///< PantherLake U      (NEX) (1+0+4)      SA DID
 #define PTL_H_4XE_NEX_SA_DEVICE_ID_1C       0xB029   ///< PantherLake H 4Xe  (NEX) (1+0+4+4Xe)  SA DID
 #define PTL_H_4XE_NEX_SA_DEVICE_ID_4C       0xB02A   ///< PantherLake H 4Xe  (NEX) (4+0+4+4Xe)  SA DID
+#define PTL_H_4XE_NEX_SA_DEVICE_ID_4C_2     0xB02B   ///< PantherLake U      (NEX) (4+0+4)      SA DID
 
 //
 // WildcatLake CPU mobile SA Device IDs B0:D0:F0

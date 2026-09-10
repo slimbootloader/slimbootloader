@@ -46,6 +46,8 @@
 // TXT public address space
 #define TXT_ERROR_STATUS_REG_OFF  0x8    ///< Offset of TXT error status register (ESTS)
 #define TXT_CRASHCODE_REG_OFF     0x30   ///< Offset of TXT crash code register (CRASH)
+#define TXT_SPAD_REG_OFF          0xA0   ///< Offset of TXT SPAD register (SPAD)
+#define B_TXT_SPAD_ALIAS_CHECK    BIT22  ///< 1 = Alias check requested; 0 = not requested
 #define TXT_SINIT_BASE_REG_OFF    0x270  ///< Offset of SINIT base address register (SINIT_MEMORY_BASE)
 #define TXT_SINIT_SIZE_REG_OFF    0x278  ///< Offset of SINIT size register (SINIT_MEMORY_SIZE)
 #define TXT_SINIT_SIZE_REG_OFF2   0x27C  ///< Offset of SINIT size register (SINIT_MEMORY_SIZE)

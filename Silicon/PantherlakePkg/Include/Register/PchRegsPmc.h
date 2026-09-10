@@ -155,6 +155,8 @@
 #define V_ACPI_IO_OC_WDT_CTL_STATUS_OK                0
 
 #define R_ACPI_IO_GPE0_STS_31_0                       0x60
+#define R_ACPI_IO_GPE0_STS_63_32                      (R_ACPI_IO_GPE0_STS_31_0 + 0x04)
+#define R_ACPI_IO_GPE0_STS_95_64                      (R_ACPI_IO_GPE0_STS_31_0 + 0x08)
 #define R_ACPI_IO_GPE0_STS_127_96                     0x6C
 #define S_ACPI_IO_GPE0_STS_127_96                     4
 #define B_ACPI_IO_GPE0_STS_127_96_NAC_SX_WAKE_STS     BIT20
@@ -177,6 +179,9 @@
 #define N_ACPI_IO_GPE0_STS_127_96_TC_PME_B0_STS       5
 
 #define R_ACPI_IO_GPE0_EN_127_96                      0x7C
+#define R_ACPI_IO_GPE0_EN_31_0                        (R_ACPI_IO_GPE0_EN_127_96 - 0x0C)
+#define R_ACPI_IO_GPE0_EN_63_32                       (R_ACPI_IO_GPE0_EN_127_96 - 0x08)
+#define R_ACPI_IO_GPE0_EN_95_64                       (R_ACPI_IO_GPE0_EN_127_96 - 0x04)
 #define S_ACPI_IO_GPE0_EN_127_96                      4
 #define B_ACPI_IO_GPE0_EN_127_96_TC_HOT_PLUG_EN       BIT23                             ///< TCSS Hot Plug Enable
 #define B_ACPI_IO_GPE0_EN_127_96_TC_PCI_EXP_EN        BIT22                             ///< TC PCI Express Enable

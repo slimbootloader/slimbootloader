@@ -16,12 +16,18 @@
 #include <Library/HobLib.h>
 #include <Library/LocalApicLib.h>
 #include <Library/BootloaderCoreLib.h>
+#include <Library/ResetSystemLib.h>
 #include <CpuRegs.h>
 #include <Txt.h>
+#include <Register/PchRegsPmc.h>
 #include <Register/Intel/ArchitecturalMsr.h>
 #include <Register/Intel/Cpuid.h>
 #include "TxtCtx.h"
 #include <Library/MpInitLib.h>
+
+#ifndef B_ACPI_IO_SMI_EN_GBL_SMI
+#define B_ACPI_IO_SMI_EN_GBL_SMI  B_ACPI_IO_SMI_EN_GBL_SMI_EN
+#endif
 
 GLOBAL_REMOVE_IF_UNREFERENCED TXT_LIB_CONTEXT mTxtLibCtx;
 
@@ -563,6 +569,7 @@ DoScheck (
   IN TXT_LIB_CONTEXT *TxtLibCtx
   )
 {
+  DEBUG ((DEBUG_INFO, "TxtLib: Calling SCHECK (0x04) to prime ACM state ...\n"));
   return TxtLibLaunchBiosAcm (TxtLibCtx, TXT_LAUNCH_SCHECK);
 }
 
@@ -600,6 +607,8 @@ TxtLibLaunchBiosAcm (
   )
 {
   EFI_PHYSICAL_ADDRESS        AlignedAddr = 0;
+  VOID                        *AcmCopy;
+  UINT32                      AcmSize;
 
   if (TxtLibCtx->TxtInfoData == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -620,6 +629,22 @@ TxtLibLaunchBiosAcm (
     AlignedAddr = TxtLibCtx->TxtInfoData->BiosAcmBase;
   }
 
+  ///
+  /// Copy ACM from flash to WB DRAM before GETSEC[ENTERACCS].
+  /// BIOS PEI LoadAcm() does the same — GETSEC requires the ACM to reside
+  /// in WB-cacheable memory.  The flash address (0xFFF00000) may not be
+  /// reliably cacheable as WB via MTRR overrides on all boot cycles.
+  ///
+  AcmSize = (UINT32)TxtLibCtx->TxtInfoData->BiosAcmSize;
+  AcmCopy = AllocatePages (EFI_SIZE_TO_PAGES (AcmSize));
+  if (AcmCopy != NULL) {
+    CopyMem (AcmCopy, (VOID *)(UINTN)AlignedAddr, AcmSize);
+    AlignedAddr = (EFI_PHYSICAL_ADDRESS)(UINTN)AcmCopy;
+    DEBUG ((DEBUG_INFO, "TxtLib: ACM copied to WB memory at 0x%lx (size=0x%x)\n", AlignedAddr, AcmSize));
+  } else {
+    DEBUG ((DEBUG_WARN, "TxtLib: Failed to alloc for ACM copy, using flash addr\n"));
+  }
+
   SendInitIpiAllExcludingSelf();
 
   /// Give the APs time to enter wait-for-SIPI state
@@ -637,6 +662,10 @@ TxtLibLaunchBiosAcm (
 #endif
 
   LaunchBiosAcm (AlignedAddr, AcmFunction);
+
+  if (AcmCopy != NULL) {
+    FreePages (AcmCopy, EFI_SIZE_TO_PAGES (AcmSize));
+  }
 
   return EFI_SUCCESS;
 }
@@ -705,9 +734,34 @@ InitTxt(
   if ((mTxtLibCtx.TxtInfoData->ChipsetIsTxtCapable) && (IsTxtProcessor ()) && (IsTxtEnabled (&mTxtLibCtx))) {
     DEBUG ((DEBUG_INFO, "TxtLib::TXT Enabled\n"));
 
-  ///
-  /// Allocate and Initialize TXT Device Memory
-  ///
+    ///
+    /// Check SPAD register for alias check request (BIT22).
+    /// BIOS PEI handles this in AliasCheck() before calling LOCK_CONFIG.
+    /// If the bit is set, we must call ACHECK first — the ACM will clear
+    /// the alias check flag and the assembly will trigger a system reset.
+    /// On the NEXT boot, the flag will be cleared and LOCK_CONFIG will work.
+    ///
+    {
+      UINT32 SpadValue;
+      SpadValue = MmioRead32 (TXT_PUBLIC_BASE + TXT_SPAD_REG_OFF);
+      DEBUG ((DEBUG_INFO, "TxtLib: SPAD = 0x%08x\n", SpadValue));
+      if ((SpadValue & B_TXT_SPAD_ALIAS_CHECK) != 0) {
+        DEBUG ((DEBUG_INFO, "TxtLib: SPAD alias check bit set — launching ACHECK (will reset)\n"));
+        TxtLibLaunchBiosAcm (&mTxtLibCtx, TXT_LAUNCH_ACHECK);
+        ///
+        /// Should not reach here — ACHECK triggers a system reset via
+        /// the assembly (invd + ResetSystem). If we somehow return,
+        /// force a reset.
+        ///
+        DEBUG ((DEBUG_ERROR, "TxtLib: ACHECK returned unexpectedly, forcing reset\n"));
+        ResetSystem (EfiResetCold);
+        CpuDeadLoop ();
+      }
+    }
+
+    ///
+    /// Allocate and Initialize TXT Device Memory
+    ///
     Status = SetupTxtDeviceMemory (&mTxtLibCtx);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "TxtLib::SetupTxtDeviceMemory failed.... Unloading\n"));
@@ -717,17 +771,17 @@ InitTxt(
     DEBUG ((DEBUG_INFO, "TxtLib::Running of DoScheck\n"));
     DoScheck (&mTxtLibCtx);
   } else {
-  ///
-  /// TXT is not enabled, so make sure TPM Establishment
-  /// bit is de-asserted
-  ///
+    ///
+    /// TXT is not enabled, so make sure TPM Establishment
+    /// bit is de-asserted
+    ///
     DEBUG ((DEBUG_INFO, "TxtLib::TXT Disabled\n"));
 
     if (IsTxtEstablished (&mTxtLibCtx)) {
-  ///
-  /// We can invoke BIOS ACM function only if CS and CPU are TXT
-  /// capable
-  ///
+      ///
+      /// We can invoke BIOS ACM function only if CS and CPU are TXT
+      /// capable
+      ///
       if ((mTxtLibCtx.TxtInfoData->ChipsetIsTxtCapable) &&
           (IsTxtProcessor ()) &&
           !(mTxtLibCtx.TxtInfoData->Flags & TPM_INIT_FAILED)
@@ -736,13 +790,186 @@ InitTxt(
         ResetTpmEstBit (&mTxtLibCtx);
       }
     }
-  ///
-  /// Reset AUX
-  ///
+    ///
+    /// Reset AUX
+    ///
     Status = ResetTpmAux (&mTxtLibCtx);
     ASSERT_EFI_ERROR (Status);
   }
 
+  return EFI_SUCCESS;
+}
+
+/**
+  Restores TXT Device Memory registers (HEAP and SINIT) during S3 resume.
+  This function restores register state without touching actual memory content,
+  which must be preserved across S3 for TBOOT/MLE.
+  @param[in] TxtLibCtx - A pointer to an initialized TXT DXE Context data structure
+  @retval EFI_SUCCESS     - TXT Device memory registers restored successfully.
+  @retval EFI_UNSUPPORTED - Required TXT info not available.
+**/
+EFI_STATUS
+RestoreTxtDeviceMemoryRegisters (
+  IN TXT_LIB_CONTEXT *TxtLibCtx
+  )
+{
+  UINT64        *Ptr64;
+  UINT64        TxtHeapMemoryBase;
+  UINT64        TxtSinitMemoryBase;
+  EFI_PHYSICAL_ADDRESS TopAddr;
+  TXT_INFO_DATA *TxtInfoData;
+
+  TxtInfoData = TxtLibCtx->TxtInfoData;
+
+  if ((TxtInfoData == 0) ||
+      (TxtInfoData->TxtDprMemoryBase == 0) ||
+      (TxtInfoData->TxtDprMemorySize == 0) ||
+      (TxtInfoData->TxtHeapMemorySize == 0) ||
+      (TxtInfoData->SinitMemorySize == 0)
+      ) {
+    return EFI_UNSUPPORTED;
+  }
+
+  ///
+  /// Calculate addresses using same formulas as SetupTxtDeviceMemory
+  ///
+  TopAddr = TxtInfoData->TxtDprMemoryBase + TxtInfoData->TxtDprMemorySize;
+  ASSERT ((TopAddr & 0x0FFFFF) == 0);
+
+  TxtHeapMemoryBase = (UINT64)(TopAddr - TxtInfoData->TxtHeapMemorySize);
+  TxtSinitMemoryBase = TxtHeapMemoryBase - TxtInfoData->SinitMemorySize;
+
+  ///
+  /// Restore DPR register
+  /// BIOS saves DPR to S3 boot script for automatic restore. SBL must
+  /// restore it manually. The value matches what SetupTxtDeviceMemory
+  /// programmed on cold boot.
+  ///
+  Ptr64 = (UINT64 *)(UINTN)(TXT_PUBLIC_BASE + TXT_DPR_SIZE_REG_OFF);
+  *Ptr64 = (RShiftU64(TxtInfoData->TxtDprMemorySize, 16) | 1) | TopAddr;
+  DEBUG ((DEBUG_INFO, "TxtLib: S3 Restore - DPR=0x%lx\n", *Ptr64));
+
+  ///
+  /// Restore HEAP registers
+  ///
+  Ptr64 = (UINT64 *)(UINTN)(TXT_PUBLIC_BASE + TXT_HEAP_SIZE_REG_OFF);
+  *Ptr64 = TxtInfoData->TxtHeapMemorySize;
+
+  Ptr64 = (UINT64 *)(UINTN)(TXT_PUBLIC_BASE + TXT_HEAP_BASE_REG_OFF);
+  *Ptr64 = TxtHeapMemoryBase;
+
+  ///
+  /// Restore SINIT registers
+  ///
+  Ptr64 = (UINT64 *)(UINTN)(TXT_PUBLIC_BASE + TXT_SINIT_SIZE_REG_OFF);
+  *Ptr64 = TxtInfoData->SinitMemorySize;
+
+  Ptr64 = (UINT64 *)(UINTN)(TXT_PUBLIC_BASE + TXT_SINIT_BASE_REG_OFF);
+  *Ptr64 = TxtSinitMemoryBase;
+
+  DEBUG ((DEBUG_INFO, "TxtLib: S3 Restore - HEAP_BASE=%lx, HEAP_SIZE=%lx\n",
+          TxtHeapMemoryBase, TxtInfoData->TxtHeapMemorySize));
+  DEBUG ((DEBUG_INFO, "TxtLib: S3 Restore - SINIT_BASE=%lx, SINIT_SIZE=%lx\n",
+          TxtSinitMemoryBase, TxtInfoData->SinitMemorySize));
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Restores Intel TXT device memory registers (HEAP and SINIT) for S3 resume.
+  This function restores the TXT register state without touching actual memory
+  content, which must be preserved across S3 for TBOOT/MLE operation.
+  @retval EFI_SUCCESS     - TXT registers restored successfully
+  @retval EFI_UNSUPPORTED - Required TXT information not available
+  @retval Other           - Error during initialization
+**/
+EFI_STATUS
+EFIAPI
+TxtS3Restore()
+{
+  EFI_STATUS Status;
+
+  ///
+  /// Initialize the platform specific code
+  ///
+  Status = InitializeTxtLib (&mTxtLibCtx);
+  ///
+  /// If failure - assume TXT is not enabled
+  ///
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "TxtLib::InitializeTxtLib failed.... Unloading\n"));
+    return Status;
+  }
+
+  ///
+  /// Restore TXT device memory registers (HEAP and SINIT)
+  /// Note: Does not touch actual memory content - preserved for TBOOT/MLE
+  ///
+  Status = RestoreTxtDeviceMemoryRegisters (&mTxtLibCtx);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "TxtLib::RestoreTxtDeviceMemoryRegisters failed\n"));
+    return Status;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Initializes Intel TXT for S3 resume on PTL.
+  On PTL S3, ME Phase 2 handles LOCK_CONFIG automatically during startup ACM when
+  Boot Guard policy enables TXT, so this routine does not issue GETSEC calls.
+  It prepares the system by disabling SMI sources and sending INIT IPI to put
+  APs into wait-for-SIPI state.
+
+  @retval EFI_SUCCESS   - TXT S3 resume preparation completed
+**/
+EFI_STATUS
+EFIAPI
+TxtS3Resume()
+{
+  UINT64                      SavedThermInterrupt;
+  UINT32                      SavedSmiControl;
+  UINTN                       SmiEnAddr;
+
+  DEBUG ((DEBUG_INFO, "TxtS3Resume: Entry\n"));
+
+  if (mTxtLibCtx.TxtInfoData == NULL) {
+    DEBUG ((DEBUG_ERROR, "TxtS3Resume: TXT context is not available\n"));
+    return EFI_UNSUPPORTED;
+  }
+
+  ///
+  /// Disable SMI sources before GETSEC[ENTERACCS].
+  /// GETSEC precondition: no pending SMIs. Keep GBL_SMI_EN (BIT0) but
+  /// clear all individual SMI source enables (PEI approach from BIOS).
+  ///
+  SmiEnAddr = (UINTN)(mTxtLibCtx.TxtInfoData->AcpiBase + R_ACPI_IO_SMI_EN);
+
+  SavedThermInterrupt = AsmReadMsr64 (MSR_IA32_THERM_INTERRUPT);
+  AsmWriteMsr64 (
+    MSR_IA32_THERM_INTERRUPT,
+    SavedThermInterrupt & ~(UINT64)(BIT0 | BIT1 | BIT2 | BIT4 | BIT15 | BIT23)
+    );
+
+  SavedSmiControl = IoRead32 (SmiEnAddr);
+  IoWrite32 (SmiEnAddr, SavedSmiControl & B_ACPI_IO_SMI_EN_GBL_SMI);
+
+  ///
+  /// Send INIT IPI to put all APs into wait-for-SIPI state
+  /// This is required before launching BIOS ACM
+  ///
+  SendInitIpiAllExcludingSelf();
+
+  /// Give the APs time to enter wait-for-SIPI state
+  MicroSecondDelay (10 * STALL_ONE_MILLI_SECOND);
+
+  ///
+  /// Restore SMI sources
+  ///
+  IoWrite32 (SmiEnAddr, SavedSmiControl);
+  AsmWriteMsr64 (MSR_IA32_THERM_INTERRUPT, SavedThermInterrupt);
+
+  DEBUG ((DEBUG_INFO, "TxtS3Resume: Exit\n"));
   return EFI_SUCCESS;
 }
 
