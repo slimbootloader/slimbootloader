@@ -1,7 +1,7 @@
 /** @file
   This code provides a initialization of Intel VT-d (Virtualization Technology for Directed I/O).
 
-  Copyright (c) 1999 - 2024, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 

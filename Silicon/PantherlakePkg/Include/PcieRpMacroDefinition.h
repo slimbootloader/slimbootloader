@@ -1,7 +1,6 @@
 /** @file
   This file contains definitions of PCIE RP MACRO.
 
-@copyright
   Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
