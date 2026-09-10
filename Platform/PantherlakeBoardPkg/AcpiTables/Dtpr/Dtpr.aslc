@@ -1,0 +1,94 @@
+/** @file
+  DTPR (DMA Protected Range) ACPI Table Template
+
+  This table provides information about DMA protected memory regions
+  for Intel TXT (Trusted Execution Technology).
+
+  The table structure includes:
+  - TPR (Total Protected Range) instances
+  - Drain control register addresses for various IP blocks
+
+  NOTE: The actual values are populated at runtime from TPR_INFO_HOB
+  provided by FSP during silicon initialization.
+
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+#include <Dtpr.h>
+
+/**
+  DTPR ACPI Table Template
+
+  This template structure is updated at runtime by UpdateDtprAcpiTable()
+  based on data from TPR_INFO_HOB:
+
+  - InsCnt: Set from TprInfoHob->InstanceCount (max 2 instances)
+  - TprIns[]: Populated from TprInfoHob->InstanceArray[2]
+    - TprCnt: Number of TPRs (typically 2)
+    - TprArr[0].TprBase: From Tpr0BaseOffset
+    - TprArr[1].TprBase: From Tpr1BaseOffset
+  - SrlCnt: Count of non-zero drain control registers (max 10)
+  - SrlRegArr[]: Extracted from TprInfoHob->DrainControlArray (DRAIN_CTL_REG)
+    - GtDrainControl, MediaDrainControl, DisplayDrainControl
+    - IaxDrainControl, IocDrainControl, IvtuDrainControl
+    - SvtuDrainControl, IpuDrainControl, NpuDrainControl, PunitDrainControl
+**/
+
+DTPR_TABLE_STRUCT DtprTable = {
+  //
+  // ACPI Table Header
+  //
+  {
+    DTPR_ACPI_TABLE_SIGNATURE,          // Signature 'DTPR'
+    sizeof(DTPR_TABLE_STRUCT),          // Length (recalculated at runtime)
+    1,                                  // Revision
+    0x00,                               // Checksum (calculated by AcpiPlatform)
+    {'I','N','T','E','L',' '},          // OEM ID
+    SIGNATURE_64('P','t','l','D','t','p','r',0),  // OEM Table ID
+    0x00000001,                         // OEM Revision
+    SIGNATURE_32('I','N','T','L'),     // Creator ID
+    0x20240101                          // Creator Revision
+  },
+
+  //
+  // DTPR Table Body
+  //
+  0,                                    // Flags (reserved)
+  1,                                    // InsCnt: Instance Count (default 1, updated from HOB)
+
+  //
+  // TPR Instances - Placeholder array (populated at runtime from TPR_INFO_HOB)
+  // TPR_INFO_HOB.InstanceArray[2] -> DtprTable.TprIns[MAX_TPR_INSTANCES]
+  //
+  {
+    {
+      0,                                // Flags (reserved)
+      2,                                // TprCnt: Number of TPRs (typically 2)
+      {                                 // TprArr: TPR entries
+        {0},                            // TPR[0].TprBase (from Tpr0BaseOffset)
+        {0}                             // TPR[1].TprBase (from Tpr1BaseOffset)
+      }
+    }
+  },
+
+  //
+  // SrlCnt: Drain Control Register Count (updated at runtime, max 10)
+  //
+  0,
+
+  //
+  // SrlRegArr: Drain Control Registers (populated from DRAIN_CTL_REG structure)
+  // Extracted from TPR_INFO_HOB.DrainControlArray which contains 10 UINT64 fields
+  //
+  {0}
+};
+
+VOID*
+ReferenceAcpiTable (
+  VOID
+  )
+{
+  return (VOID*)&DtprTable;
+}
