@@ -161,6 +161,14 @@ class Board(BaseBoard):
             self.STAGE2_FD_SIZE       = 0x000FE000
             self.PAYLOAD_SIZE         = 0x00027000
 
+        self.ENABLE_UI_SETUP   = 0
+        if self.ENABLE_UI_SETUP:
+            self.PAYLOAD_SIZE            += 0x00058000
+            self.OS_LOADER_FD_SIZE       += 0x00170000
+            self.CONSOLE_OUT_DEVICE_MASK  = 0x00000003
+            self.CONSOLE_IN_DEVICE_MASK   = 0x00000003
+            self.ENABLE_USB_KB            = 1
+
         self.UEFI_VARIABLE_SIZE = 0x1000
         if len(self._PAYLOAD_NAME.split(';')) > 1:
             self.UEFI_VARIABLE_SIZE = 0x00040000

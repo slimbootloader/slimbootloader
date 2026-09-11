@@ -73,8 +73,6 @@ configs:
 
   - !include CfgData_Security.yaml
 
-  - !include CfgData_PepConstraints.yaml
-
   - !include CfgData_FuSa.yaml
 
   - $ACTION      :
