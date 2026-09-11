@@ -115,7 +115,6 @@ class Board(BaseBoard):
         self.STAGE1B_SIZE         = 0x00200000
         self.STAGE2_SIZE          = 0x000C2000
         self.STAGE2_FD_BASE       = 0x01000000
-        self.STAGE2_FD_SIZE       = 0x001F0000
 
         self.PAYLOAD_SIZE         = 0x00030000
         self.EPAYLOAD_SIZE        = 0x00161000
@@ -134,7 +133,6 @@ class Board(BaseBoard):
             self.STAGE1A_SIZE         = 0x00016000
             self.STAGE1B_SIZE         = 0x000D1000
             self.STAGE2_SIZE          = 0x00072000
-            self.STAGE2_FD_SIZE       = 0x000F0000
             self.PAYLOAD_SIZE         = 0x0001F000
 
 
@@ -149,8 +147,6 @@ class Board(BaseBoard):
         self.SBLRSVD_SIZE         = 0x00001000
         self.FWUPDATE_SIZE        = 0x00020000 if self.ENABLE_FWU else 0
 
-        self.OS_LOADER_FD_SIZE    = 0x00060000
-        self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         self.TOP_SWAP_SIZE        = 0x00080000
         self.REDUNDANT_SIZE       = self.UCODE_SIZE + self.STAGE2_SIZE + self.STAGE1B_SIZE + \

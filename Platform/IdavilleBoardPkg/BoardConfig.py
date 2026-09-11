@@ -144,7 +144,6 @@ class Board(BaseBoard):
 
         self.STAGE2_SIZE          = 0x000A0000
         self.STAGE2_FD_BASE       = 0x01000000
-        self.STAGE2_FD_SIZE       = 0x00210000
 
         self.PAYLOAD_SIZE         = 0x00040000
         self.EPAYLOAD_SIZE        = 0x00200000
@@ -161,8 +160,6 @@ class Board(BaseBoard):
         self.FWUPDATE_SIZE        = 0x00020000 if self.ENABLE_FWU else 0
 
         # Need a little bit more for full paging table
-        self.OS_LOADER_FD_SIZE    = 0x00060000
-        self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         self.TOP_SWAP_SIZE        = 0x00080000
         self.REDUNDANT_SIZE       = self.UCODE_SIZE + self.STAGE2_SIZE + self.STAGE1B_SIZE + \

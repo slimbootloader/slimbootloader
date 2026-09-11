@@ -120,7 +120,6 @@ class Board(BaseBoard):
         else:
             self.STAGE2_SIZE      = 0x000CA000
         self.STAGE2_FD_BASE       = 0x01000000
-        self.STAGE2_FD_SIZE       = 0x001F0000
 
         self.PAYLOAD_SIZE         = 0x00031000
         self.EPAYLOAD_SIZE        = 0x00161000
@@ -139,7 +138,6 @@ class Board(BaseBoard):
             self.STAGE1A_SIZE         = 0x00016000
             self.STAGE1B_SIZE         = 0x000D1000
             self.STAGE2_SIZE          = 0x00079000
-            self.STAGE2_FD_SIZE       = 0x000F0000
             self.PAYLOAD_SIZE         = 0x0001F000
 
         self.UEFI_VARIABLE_SIZE = 0x1000

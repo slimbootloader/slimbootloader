@@ -157,9 +157,6 @@ class Board(BaseBoard):
         # For Stage2, it is always compressed.
         # if STAGE2_LOAD_HIGH is 1, STAGE2_FD_BASE will be ignored
         self.STAGE2_FD_BASE       = 0x01000000
-        self.STAGE2_FD_SIZE       = 0x00060000
-
-        self.OS_LOADER_FD_SIZE    = 0x0006A000
 
         if self.NO_OPT_MODE:
             if self.FSPDEBUG_MODE == 1:
@@ -167,17 +164,14 @@ class Board(BaseBoard):
             else:
                 self.STAGE2_SIZE     += 0x2000
             self.PAYLOAD_SIZE        += 0xA000
-            self.OS_LOADER_FD_SIZE   += 0x23000
             self.FWUPDATE_SIZE       += 0x8000
 
         if self.ENABLE_UI_SETUP:
             self.PAYLOAD_SIZE            += 0x00005000
-            self.OS_LOADER_FD_SIZE       += 0x00010000
             self.CONSOLE_OUT_DEVICE_MASK  = 0x00000003
             self.CONSOLE_IN_DEVICE_MASK   = 0x00000003
             self.ENABLE_USB_KB            = 1
 
-        self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         self.STAGE1_STACK_SIZE    = 0x00002000
         self.STAGE1_DATA_SIZE     = 0x0000E000

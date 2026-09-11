@@ -70,13 +70,10 @@ class Board(AlderlakeBoardConfig.Board):
         self.STAGE1B_SIZE         = 0x00200000
         self.STAGE2_SIZE          = 0x000C2000
         self.STAGE2_FD_BASE       = 0x01000000
-        self.STAGE2_FD_SIZE       = 0x001F0000
 
         self.PAYLOAD_SIZE         = 0x00030000
         self.EPAYLOAD_SIZE        = 0x00240000
 
-        self.OS_LOADER_FD_SIZE    = 0x0005F000
-        self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         self.ENABLE_FAST_BOOT = 0
         if self.ENABLE_FAST_BOOT:
@@ -91,7 +88,6 @@ class Board(AlderlakeBoardConfig.Board):
             self.STAGE1A_SIZE         = 0x00016000
             self.STAGE1B_SIZE         = 0x000E0000
             self.STAGE2_SIZE          = 0x000C0000
-            self.STAGE2_FD_SIZE       = 0x000F0000
             self.PAYLOAD_SIZE         = 0x00024000
 
         self.PLD_HEAP_SIZE        = 0x09000000

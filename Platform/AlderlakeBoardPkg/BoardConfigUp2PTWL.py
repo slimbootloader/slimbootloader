@@ -113,13 +113,10 @@ class Board(BaseBoard):
         self.STAGE1B_SIZE         = 0x000DD000
         self.STAGE2_SIZE          = 0x000A0000
         self.STAGE2_FD_BASE       = 0x000B0000
-        self.STAGE2_FD_SIZE       = 0x001F0000
 
         self.EPAYLOAD_SIZE        = 0x00161000
         self.PAYLOAD_SIZE         = 0x0002E000
 
-        self.OS_LOADER_FD_SIZE    = 0x0005B000
-        self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         self.ENABLE_FAST_BOOT = 0
         if self.ENABLE_FAST_BOOT:
@@ -134,7 +131,6 @@ class Board(BaseBoard):
             self.STAGE1A_SIZE         = 0x00016000
             self.STAGE1B_SIZE         = 0x000E0000
             self.STAGE2_SIZE          = 0x000C0000
-            self.STAGE2_FD_SIZE       = 0x000F0000
             self.PAYLOAD_SIZE         = 0x00024000
 
         self.UEFI_VARIABLE_SIZE = 0x1000
