@@ -1,4 +1,4 @@
-## @ SblBuilder03_AboutPage.py
+## @ SblBuilder04_AboutPage.py
 #
 # Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -22,7 +22,8 @@ class AboutPage(TabPage):
             "Main functions:\n"
             "- Setup workspace and source repository\n"
             "- Build selected board targets\n"
-            "- Manage payload-related options\n\n"
+            "- Manage payload-related options\n"
+            "- Generate signed firmware update capsules (FwUpdate)\n\n"
         )
 
         self.about_message = tk.Message(
