@@ -9,7 +9,7 @@
 
 
 - $ACTION      :
-    page         : FEATURES:PLT:"Features"
+    page         : FEATURES:GEN:"Features"
 - $ACTION      :
     page         : FEATURES
 - FEATURES_CFG_DATA :

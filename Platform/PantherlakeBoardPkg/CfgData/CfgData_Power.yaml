@@ -9,7 +9,7 @@
 
 
 - $ACTION      :
-    page         : PWR
+    page         : PWR::"Power Settings"
 - POWER_CFG_DATA :
   - !expand { CFGHDR_TMPL : [ POWER_CFG_DATA, 0x610, 0, 0 ] }
   - Hwp          :
