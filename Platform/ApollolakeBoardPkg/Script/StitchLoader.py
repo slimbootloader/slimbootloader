@@ -8,6 +8,7 @@
 
 import os
 import re
+import ntpath
 import sys
 import struct
 import argparse
@@ -463,6 +464,36 @@ def patch_flash_map (image_data, platform_data = 0xffffffff):
     return 0
 
 
+def safe_extract_zip (zf, dest_dir):
+    # Extract a ZipFile object into dest_dir, rejecting any member whose
+    # resolved path would land outside of dest_dir (a.k.a. "Zip Slip").
+    # zf.extractall() does not sanitize member names, so a maliciously
+    # crafted stitching zip (this path is user/CLI supplied via -s) could
+    # contain entries like '../../../etc/passwd', an absolute path such as
+    # '/etc/passwd' or 'C:\Windows\...', or a symlink member pointing
+    # outside dest_dir, and overwrite arbitrary files on the host running
+    # the stitch script.
+    dest_dir = os.path.realpath (dest_dir)
+    for member in zf.infolist ():
+        member_name = member.filename
+        # Reject absolute POSIX paths, backslash-rooted paths and drive
+        # letters (e.g. 'C:/...') outright. Use ntpath explicitly so a
+        # Windows-style drive-letter path is still detected even when this
+        # script is run on a POSIX host, where posixpath.splitdrive() is a
+        # no-op and os.path.isabs() would not catch it.
+        if (os.path.isabs (member_name) or member_name.startswith ('\\') or
+            ntpath.splitdrive (member_name)[0] != ''):
+            raise Exception ("Unsafe zip member path (absolute): %s" % member_name)
+
+        target_path = os.path.realpath (os.path.join (dest_dir, member_name))
+        # Ensure target_path is dest_dir itself or a real child of it.
+        if target_path != dest_dir and \
+           not target_path.startswith (dest_dir + os.sep):
+            raise Exception ("Unsafe zip member path (escapes destination): %s" % member_name)
+
+    zf.extractall (dest_dir)
+
+
 def create_ifwi_image (ifwi_in, ifwi_out, bios_out, platform_data, non_redundant, stitch_dir):
 
     redundant_payload = True
@@ -653,7 +684,7 @@ if __name__ == '__main__':
     if os.path.exists(stitch_dir):
         shutil.rmtree(stitch_dir)
     zf = zipfile.ZipFile(args.stitch_in, 'r', zipfile.ZIP_DEFLATED)
-    zf.extractall(stitch_dir)
+    safe_extract_zip (zf, stitch_dir)
     zf.close()
 
     # Create new IFWI

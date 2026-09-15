@@ -9,6 +9,7 @@
 import sys
 import os
 import re
+import ntpath
 import struct
 import argparse
 import zipfile
@@ -440,13 +441,43 @@ def clean (stitch_dir, dist_mode):
     return 0
 
 
+def safe_extract_zip (zf, dest_dir):
+    # Extract a ZipFile object into dest_dir, rejecting any member whose
+    # resolved path would land outside of dest_dir (a.k.a. "Zip Slip").
+    # zf.extractall() does not sanitize member names, so a maliciously
+    # crafted stitching zip (this path is user/CLI supplied, e.g. via -s)
+    # could contain entries like '../../../etc/passwd', an absolute path
+    # such as '/etc/passwd' or 'C:\Windows\...', or a symlink member
+    # pointing outside dest_dir, and overwrite arbitrary files on the host
+    # running the stitch script.
+    dest_dir = os.path.realpath (dest_dir)
+    for member in zf.infolist ():
+        member_name = member.filename
+        # Reject absolute POSIX paths, backslash-rooted paths and drive
+        # letters (e.g. 'C:/...') outright. Use ntpath explicitly so a
+        # Windows-style drive-letter path is still detected even when this
+        # script is run on a POSIX host, where posixpath.splitdrive() is a
+        # no-op and os.path.isabs() would not catch it.
+        if (os.path.isabs (member_name) or member_name.startswith ('\\') or
+            ntpath.splitdrive (member_name)[0] != ''):
+            raise Exception ("Unsafe zip member path (absolute): %s" % member_name)
+
+        target_path = os.path.realpath (os.path.join (dest_dir, member_name))
+        # Ensure target_path is dest_dir itself or a real child of it.
+        if target_path != dest_dir and \
+           not target_path.startswith (dest_dir + os.sep):
+            raise Exception ("Unsafe zip member path (escapes destination): %s" % member_name)
+
+    zf.extractall (dest_dir)
+
+
 def stitch (stitch_dir, stitch_zip, btg_profile, spi_quad_mode, platform_data, full_rdundant = True):
 
     cfg_var    = get_config ()
 
     print ("\nUnpack files from stitching zip file ...")
     zf = zipfile.ZipFile(stitch_zip, 'r', zipfile.ZIP_DEFLATED)
-    zf.extractall(os.path.join(stitch_dir, cfg_var['fitinput']))
+    safe_extract_zip (zf, os.path.join(stitch_dir, cfg_var['fitinput']))
     zf.close()
 
     os.chdir(stitch_dir)

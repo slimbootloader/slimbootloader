@@ -1,6 +1,6 @@
 ## @ PrepareFspBin.py
 #
-# Copyright (c) 2018 - 2023, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2018 - 2026, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
@@ -11,15 +11,61 @@ import re
 import shutil
 import subprocess
 import glob
+from urllib.parse import urlsplit
 
 def Fatal (msg):
     sys.stdout.flush()
     raise Exception (msg)
 
+# Matches a well-formed git ref/tag/commit-id: alnum leading char followed by
+# alnum, '.', '_', '/' or '-'. Deliberately rejects a leading '-' so the value
+# can never be mistaken for a command line option.
+_GIT_REF_RE = re.compile (r'^[A-Za-z0-9][A-Za-z0-9._/-]*$')
+
+# All REPO values in this tree are plain 'https://<host>/...' URLs. Rather
+# than trying to blocklist every dangerous git transport/shorthand (e.g.
+# 'ext::', 'fd::', 'file://', scp-like 'user@host:path', or an option-like
+# leading '-'), only allow the scheme(s) that are actually expected/needed.
+# Anything else is rejected outright.
+_GIT_REPO_SCHEME_ALLOWLIST = ('https',)
+
+# Conservative allowlist for characters permitted in the host/path portion of
+# a REPO URL once the scheme has already been validated.
+_GIT_REPO_RE = re.compile (r'^[A-Za-z0-9._~/-]+$')
+
+def ValidateGitRepo (repo):
+    # REPO/TAG/COMMIT values are parsed out of a component's .inf file and are
+    # not necessarily trustworthy (e.g. a 3rd-party board/FSP package). Since
+    # they are handed to 'git' as argv entries, only accept a well-formed URL
+    # whose scheme is on the allowlist; reject everything else (unknown/
+    # unsafe transports, scp-like shorthand, option-like leading '-', etc.)
+    # before it ever reaches subprocess.
+    if (not repo) or any (c.isspace () for c in repo):
+        Fatal ('Invalid or unsafe REPO value: %r' % repo)
+
+    parts = urlsplit (repo)
+    if parts.scheme.lower () not in _GIT_REPO_SCHEME_ALLOWLIST:
+        Fatal ('Invalid or unsafe REPO value (scheme not allowed): %r' % repo)
+    if not parts.netloc or not parts.path:
+        Fatal ('Invalid or unsafe REPO value (malformed URL): %r' % repo)
+    if not _GIT_REPO_RE.match (parts.netloc + parts.path):
+        Fatal ('Invalid or unsafe REPO value (unexpected characters): %r' % repo)
+    return repo
+
+def ValidateGitRef (ref):
+    if (not ref) or (not _GIT_REF_RE.match (ref)):
+        Fatal ('Invalid or unsafe TAG/COMMIT value: %r' % ref)
+    return ref
+
 def CloneRepo (clone_dir, driver_inf):
     repo, commit = GetRepoAndCommit (driver_inf)
     if repo == '' or commit == '':
         Fatal ('Failed to find repo and commit information!')
+
+    # Validate untrusted input from the INF file before building any git
+    # command line with it.
+    repo   = ValidateGitRepo (repo)
+    commit = ValidateGitRef (commit)
 
     base_dir = os.path.basename(clone_dir)
     if base_dir == '$AUTO':
@@ -30,8 +76,10 @@ def CloneRepo (clone_dir, driver_inf):
 
     if not os.path.exists(clone_dir + '/.git'):
         print ('Cloning the repo ... %s' % repo)
-        cmd = 'git clone %s %s' % (repo, clone_dir)
-        ret = subprocess.call(cmd.split(' '))
+        # Build argv directly (no string formatting + split()) and use '--'
+        # to stop git from treating 'repo'/'clone_dir' as options.
+        cmd = ['git', 'clone', '--', repo, clone_dir]
+        ret = subprocess.call(cmd)
         if ret:
             Fatal ('Failed to clone repo to directory %s !' % clone_dir)
         print ('Done\n')
@@ -39,23 +87,23 @@ def CloneRepo (clone_dir, driver_inf):
         # If the repository already exists, then try to check out the correct
         # revision without going to the network
         print ('Attempting to check out specified version ... %s' % commit)
-        cmd = 'git checkout %s' % commit
-        ret = subprocess.call(cmd.split(' '), cwd=clone_dir)
+        cmd = ['git', 'checkout', commit]
+        ret = subprocess.call(cmd, cwd=clone_dir)
         if ret == 0:
             print ('Done\n')
             return clone_dir
 
         print ('Specified version not available. Update the repo ...')
-        cmd = 'git fetch origin'
-        ret = subprocess.call(cmd.split(' '), cwd=clone_dir)
+        cmd = ['git', 'fetch', 'origin']
+        ret = subprocess.call(cmd, cwd=clone_dir)
         if ret:
             Fatal ('Failed to update repo in directory %s !' % clone_dir)
         print ('Done\n')
 
     print ('Checking out specified version ... %s' % commit)
 
-    cmd = 'git checkout %s' % commit
-    ret = subprocess.call(cmd.split(' '), cwd=clone_dir)
+    cmd = ['git', 'checkout', commit]
+    ret = subprocess.call(cmd, cwd=clone_dir)
     if ret:
         Fatal ('Failed to check out specified version !')
     print ('Done\n')
@@ -253,12 +301,14 @@ def BuildFspBins (fsp_dir, sbl_dir, fsp_inf, silicon_pkg_name, flag):
             os.makedirs(abs_dep_dir)
 
     print ('Applying QEMU FSP patch ...')
-    patch_dir = os.path.join(sbl_dir, 'Silicon/QemuSocPkg/FspBin/Patches')
-    cmd = 'git am --abort'
+    patch_dir  = os.path.join(sbl_dir, 'Silicon/QemuSocPkg/FspBin/Patches')
+    patch_file = os.path.join(patch_dir, '0001-PATCH-Build-QEMU-FSP-2.0-binaries-with-edk2stable202.patch')
     with open(os.devnull, 'w') as fnull:
-        ret = subprocess.call(cmd.split(' '), cwd=fsp_dir, stdout=fnull, stderr=subprocess.STDOUT)
-    cmd = 'git am --keep-cr --whitespace=fix %s/0001-PATCH-Build-QEMU-FSP-2.0-binaries-with-edk2stable202.patch' % patch_dir
-    ret = subprocess.call(cmd.split(' '), cwd=fsp_dir)
+        ret = subprocess.call(['git', 'am', '--abort'], cwd=fsp_dir, stdout=fnull, stderr=subprocess.STDOUT)
+    # Build argv directly and use '--' to guard against patch_file (derived
+    # from a locally computed, but path-containing-spaces-unsafe) string
+    # being misparsed by 'git am' via a naive split(' ').
+    ret = subprocess.call(['git', 'am', '--keep-cr', '--whitespace=fix', '--', patch_file], cwd=fsp_dir)
     if ret:
         Fatal ('Failed to apply QEMU FSP patch !')
 
@@ -383,5 +433,3 @@ def ProcessFspAndMicrocodeInf (sbl_dir, silicon_pkg_name, fsp_inf, microcode_inf
         CopyBins (fsp_repo_dir, sbl_dir, fsp_inf)
 
     CopyBins (ucode_repo_dir, sbl_dir, microcode_inf)
-
-
