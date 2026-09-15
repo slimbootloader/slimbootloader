@@ -9,6 +9,7 @@
 import sys
 import os
 import re
+import ntpath
 import struct
 import argparse
 import zipfile
@@ -394,6 +395,36 @@ def replace_components (ifwi_src_path, stitch_cfg_file):
     for flash_path, file_path, comp_alg, pri_key in replace_list:
         replace_component (ifwi_src_path, flash_path, file_path, comp_alg, pri_key)
 
+
+def safe_extract_zip (zf, dest_dir):
+    # Extract a ZipFile object into dest_dir, rejecting any member whose
+    # resolved path would land outside of dest_dir (a.k.a. "Zip Slip").
+    # zf.extractall() does not sanitize member names, so a maliciously
+    # crafted stitching zip (this path is user/CLI supplied) could contain
+    # entries like '../../../etc/passwd', an absolute path such as
+    # '/etc/passwd' or 'C:\\Windows\\...', or a symlink member pointing
+    # outside dest_dir, and overwrite arbitrary files on the host running
+    # the stitch script.
+    dest_dir = os.path.realpath (dest_dir)
+    for member in zf.infolist ():
+        member_name = member.filename
+        # Reject absolute POSIX paths, backslash-rooted paths and drive
+        # letters (e.g. 'C:/...') outright. Use ntpath explicitly so a
+        # Windows-style drive-letter path is still detected even when this
+        # script is run on a POSIX host, where posixpath.splitdrive() is a
+        # no-op and os.path.isabs() would not catch it.
+        if (os.path.isabs (member_name) or member_name.startswith ('\\') or
+            ntpath.splitdrive (member_name)[0] != ''):
+            raise Exception ("Unsafe zip member path (absolute): %s" % member_name)
+
+        target_path = os.path.realpath (os.path.join (dest_dir, member_name))
+        # Ensure target_path is dest_dir itself or a real child of it.
+        if target_path != dest_dir and \
+           not target_path.startswith (dest_dir + os.sep):
+            raise Exception ("Unsafe zip member path (escapes destination): %s" % member_name)
+
+    zf.extractall (dest_dir)
+
 def stitch (stitch_dir, stitch_cfg_file, sbl_file, btg_profile, platform_data, platform, tpm, full_rdundant = True):
 
     temp_dir = os.path.abspath(os.path.join (stitch_dir, 'Temp'))
@@ -410,7 +441,7 @@ def stitch (stitch_dir, stitch_cfg_file, sbl_file, btg_profile, platform_data, p
     else:
         print ("\nUnpack files from zip file ...")
         zf = zipfile.ZipFile(sbl_file, 'r', zipfile.ZIP_DEFLATED)
-        zf.extractall(temp_dir)
+        safe_extract_zip (zf, temp_dir)
         zf.close()
 
     if platform_data:
