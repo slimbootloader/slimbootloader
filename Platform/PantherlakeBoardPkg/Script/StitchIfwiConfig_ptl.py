@@ -218,7 +218,6 @@ def get_xml_change_list (platform, plt_params_list):
         ('./FlashLayout/SubPartitions/EsePackage/SocSphySubPartition/SocSphyBinary', '$SourceDir\SocSphyBinary.bin'),
         ('./PlatformProtection/PlatformIntegrity/OemPublicKeyHash',                  'F8 F0 E3 69 15 81 76 99 0A 54 9E D4 C3 6D 1A 86 39 D8 87 3D EF F7 ED 2D E3 4C B4 1B CC B3 04 76 CE 0A A0 63 BC 5B 7A AC FF D9 50 9E 96 40 C6 99'),
         ('./PlatformProtection/PlatformIntegrity/OemExtInputFile',                   '$SourceDir\OemExtInputFile.bin'),
-        ('./PlatformProtection/TxtConfiguration/TxtSupported',                       'Yes'),
         ('./IntegratedSensorHub/IshImage/InputFile',                                 '$SourceDir\IshImage.bin'),
         ('./IntegratedSensorHub/IshData/PdtBinary',                                  '$SourceDir\PdtBinary.bin'),
         ('./FlexIO/Type-CSubsystemConfiguration/IomBinaryFile',                      '$SourceDir\IomBinary.bin'),

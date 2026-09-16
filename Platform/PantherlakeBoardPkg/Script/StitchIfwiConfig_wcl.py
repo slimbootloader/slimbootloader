@@ -221,7 +221,6 @@ def get_xml_change_list (platform, plt_params_list):
         ('./FlashLayout/SubPartitions/EsePackage/SocSphySubPartition/SocSphyBinary',    '$SourceDir\SseSSPH.bin'),
         ('./FlashLayout/SubPartitions/EsePackage/PunitSubPartition/PunitGresetTimerEn', 'No'),
         ('./PlatformProtection/BootGuardConfiguration/BtGuardCpuDebugEnable',           'Enabled'),
-        ('./PlatformProtection/TxtConfiguration/TxtSupported',                          'Yes'),
         ('./NetworkingConnectivity/WiredLanConfiguration/LanEnable',                    'Yes'),
         ('./NetworkingConnectivity/WiredLanConfiguration/PhyConnected',                 'PHY on SMLink0'),
         ('./Icc/SocClkOutCfg/SRC_MUXSEL_CFG0',                                          'GPP_C_9(SRCCLKREQ0#)'),
