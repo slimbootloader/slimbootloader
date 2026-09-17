@@ -1,18 +1,19 @@
 ## @ StitchLoader.py
-#  This is a python stitching script for Slim Bootloader WHL/CFL build
+#  This is a python stitching script for Slim Bootloader PTL build
 #
 # Copyright (c) 2026, Intel Corporation. All rights reserved. <BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
 import os
+import re
 import sys
 import argparse
 from   ctypes import *
 from   functools import reduce
 
 sys.dont_write_bytecode = True
-sblopen_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), '../../../../', 'SblOpen')
+sblopen_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../'))
 if not os.path.exists (sblopen_dir):
     sblopen_dir = os.getenv('SBL_SOURCE', '')
 
@@ -58,7 +59,6 @@ Please follow steps below:
       EX:
       python StitchLoader.py -i IFWI.bin
 """
-import re
 
 def read_platform_ids():
     ids = {}
@@ -103,8 +103,87 @@ def add_platform_data (bios_data, platform_data = None):
     return bios_data
 
 
+def parse_fit_acm_addr (ifwi_data, fit_off):
+    # Returns the ACM address from the FIT type 2 entry, or None if not a valid FIT
+    size = len (ifwi_data)
+    if not (0 <= fit_off < size - 16):
+        return None
+    if bytes (ifwi_data[fit_off : fit_off + 8]) != b'_FIT_   ':
+        return None
+    num_entries = int.from_bytes (ifwi_data[fit_off + 8 : fit_off + 11], 'little')
+    if not (1 <= num_entries <= 0xFF) or fit_off + num_entries * 16 > size:
+        return None
+    if (ifwi_data[fit_off + 14] & 0x7F) != 0:
+        return None
+    for idx in range (num_entries):
+        entry = ifwi_data[fit_off + idx * 16 : fit_off + (idx + 1) * 16]
+        if (entry[14] & 0x7F) == 2:
+            return int.from_bytes (entry[0:8], 'little')
+    return None
+
+
+def find_fit_offsets (ifwi_data):
+    # Each top swap partition carries its own FIT, so scan the whole image
+    offsets = []
+    pos = 0
+    while True:
+        pos = ifwi_data.find (b'_FIT_   ', pos)
+        if pos < 0:
+            break
+        if parse_fit_acm_addr (ifwi_data, pos) is not None:
+            offsets.append (pos)
+        pos += 8
+    return offsets
+
+
+def get_fit_acm (ifwi_data):
+    # Returns (offset, length) of the ACM named by the FIT pointer at the image end
+    size = len (ifwi_data)
+    flash_base = (1 << 32) - size
+    fit_off = int.from_bytes (ifwi_data[size - 0x40 : size - 0x3C], 'little') - flash_base
+    acm_addr = parse_fit_acm_addr (ifwi_data, fit_off)
+    if acm_addr is None:
+        return (None, None, 0)
+    acm_off = acm_addr - flash_base
+    if not (0 <= acm_off < size - 0x20):
+        return (None, None, 0)
+    acm_len = int.from_bytes (ifwi_data[acm_off + 0x18 : acm_off + 0x1C], 'little') * 4
+    return (fit_off, acm_off, acm_len)
+
+
+def preserve_base_acm (ifwi_data, base_ifwi_data):
+    # SBL only builds a 0xFF filled ACM placeholder, so keep the real one from the base IFWI
+    _, src_off, src_len = get_fit_acm (base_ifwi_data)
+    if src_off is None:
+        print ("No startup ACM found in base image, nothing to preserve")
+        return 0
+
+    if src_len == 0 or src_off + src_len > len (base_ifwi_data):
+        print ("Invalid ACM length 0x%X in base image!" % src_len)
+        return -1
+
+    ref_fit_off, ref_acm_off, _ = get_fit_acm (ifwi_data)
+    if ref_acm_off is None:
+        print ("Could not locate FIT ACM entry in the stitched image!")
+        return -1
+
+    acm_bin = base_ifwi_data[src_off : src_off + src_len]
+
+    # Every FIT names the same ACM address because it is written for the post
+    # top swap view, so shift it by each partition's distance from the last FIT.
+    for fit_off in find_fit_offsets (ifwi_data):
+        dst_off = ref_acm_off - (ref_fit_off - fit_off)
+        if not (0 <= dst_off and dst_off + src_len <= len (ifwi_data)):
+            print ("ACM target 0x%X for FIT 0x%X is out of range!" % (dst_off, fit_off))
+            return -1
+        ifwi_data[dst_off : dst_off + src_len] = acm_bin
+        print ("Preserved ACM (0x%X bytes) from base 0x%X to 0x%X" % (src_len, src_off, dst_off))
+    return 0
+
+
 def create_ifwi_image (ifwi_in, ifwi_out, sbl_in, platform_data):
     ifwi_data   = bytearray (get_file_data (ifwi_in))
+    base_data   = bytearray (ifwi_data)
     ifwi_parser = IFWI_PARSER ()
     ifwi = ifwi_parser.parse_ifwi_binary (ifwi_data)
     if not ifwi:
@@ -133,6 +212,10 @@ def create_ifwi_image (ifwi_in, ifwi_out, sbl_in, platform_data):
     if ret != 0:
         print ("Failed to replace BIOS region!")
         return -5
+
+    ret = preserve_base_acm (ifwi_data, base_data)
+    if ret != 0:
+        return -6
 
     # create new ifwi
     print("Creating IFWI image ...")

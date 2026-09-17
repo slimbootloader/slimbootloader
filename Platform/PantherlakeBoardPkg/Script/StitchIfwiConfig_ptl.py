@@ -1,5 +1,5 @@
 ## @ StitchIfwiConfig_ptl.py
-#  This is an IFWI stitch config script for PTL/PTL-A Slim Bootloader
+#  This is an IFWI stitch config script for PTL Slim Bootloader
 #
 # Copyright (c) 2026, Intel Corporation. All rights reserved. <BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
