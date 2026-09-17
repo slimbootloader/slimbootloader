@@ -161,6 +161,7 @@ PlatformPrePciEnumeration (
       TempRange               = &TempRes->ResourceRange[TempRes->NumOfEntries];
       TempRange->BusBase      = PciRootRes->BusBase;
       TempRange->BusLimit     = PciRootRes->BusLimit;
+      TempRange->Segment      = 0;
       TempRange->Reserved     = 0;
       TempRange->IoBase       = PciRootRes->IoBase;
       TempRange->IoLimit      = PciRootRes->IoLimit;
