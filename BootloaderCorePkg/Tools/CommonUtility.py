@@ -20,8 +20,8 @@ import hashlib
 import string
 from   ctypes import *
 from   functools import reduce
-from   importlib.machinery import SourceFileLoader
 from   SingleSign import *
+import importlib.util
 
 
 # Key types  defined should match with cryptolib.h
@@ -186,8 +186,11 @@ def check_files_exist (base_name_list, dir = '', ext = ''):
     return True
 
 def load_source (name, filepath):
-    mod = SourceFileLoader (name, filepath).load_module()
-    return  mod
+    spec = importlib.util.spec_from_file_location(name, filepath)
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[name] = mod
+    spec.loader.exec_module(mod)
+    return mod
 
 def get_openssl_path ():
     if os.name == 'nt':
