@@ -1,0 +1,24 @@
+## @file
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+[Defines]
+  INF_VERSION          = 0x00010005
+  BASE_NAME            = Microcode
+  FILE_GUID            = 2D9C1D91-E869-4EB9-9D83-C6C6BE95C03B
+  MODULE_TYPE          = USER_DEFINED
+  VERSION_STRING       = 1.0
+
+[Sources]
+  m_c0_d0650_0000000d.mcb # uCode WCL A0/A1 (CPUID d0650) Version
+
+[UserExtensions.SBL."CloneRepo"]
+  REPO   = https://github.com/slimbootloader/firmwareblob.git
+  COMMIT = e54a72b9a92ab9320073a38375c90d371f36630c
+
+[UserExtensions.SBL."CopyList"]
+  Microcode/WildcatLake/m_c0_d0650_0000000d.pdb  : Silicon/PantherlakePkg/Wcl/Microcode/m_c0_d0650_0000000d.mcb
