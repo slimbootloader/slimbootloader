@@ -22,4 +22,4 @@
   COMMIT = dede1d692246a7002e72d612824270817c453d23
 
 [UserExtensions.SBL."CopyList"]
-  ACTM/Kaseyville/$(ACTM_NAME).bin  : Silicon/KaseyvillePkg/Ksv/Actm/$(ACTM_NAME).bin
+  ACTM/Kaseyville/$(ACTM_NAME).bin  : Silicon/KaseyvillePkg/Actm/$(ACTM_NAME).bin
