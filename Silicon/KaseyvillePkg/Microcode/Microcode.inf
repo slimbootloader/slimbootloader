@@ -22,4 +22,4 @@
   COMMIT = cbb699ab304ade34dfc2add5b1a37aa42a1278f4
 
 [UserExtensions.SBL."CopyList"]
-  Microcode/Kaseyville/$(UCODE_NAME).pdb  : Silicon/KaseyvillePkg/Ksv/Microcode/$(UCODE_NAME).mcb
+  Microcode/Kaseyville/$(UCODE_NAME).pdb  : Silicon/KaseyvillePkg/Microcode/$(UCODE_NAME).mcb
