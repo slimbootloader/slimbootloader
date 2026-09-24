@@ -1798,6 +1798,10 @@ def main():
             files.extend ([
             ])
 
+        # FSP UPD YAML files that GenFspUpdYaml.py writes into board CfgData folders
+        for root in [r for r in dict.fromkeys([sbl_dir, os.environ.get('PLT_SOURCE', '')]) if r]:
+            files.extend(glob.glob(os.path.join(root, 'Platform', '*', 'CfgData', 'CfgData_Fsp[MS].yaml')))
+
         # Remove files in [UserExtensions.SBL."CopyList"] in INF files
         PreBuild.ProcessInfFileCopyList (sbl_dir, [], True)
 
