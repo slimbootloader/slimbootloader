@@ -38,13 +38,39 @@ class AboutPage(TabPage):
         )
         self.about_message.pack(padx=50, pady=(5, 10), anchor="w")
 
+        self.build_host_setup_url = "https://slimbootloader.github.io/getting-started/build-host-setup.html"
+        self.manual_frame = tk.Frame(self, bg="white")
+        self.manual_frame.pack(padx=50, pady=(0, 10), anchor="w")
+
+        self.manual_label = tk.Label(
+            self.manual_frame,
+            text="Build Environment Guide: ",
+            font=FONT_CONTENT,
+            fg="black",
+            bg="white",
+            justify="left"
+        )
+        self.manual_label.pack(side="left")
+
+        self.manual_link = tk.Label(
+            self.manual_frame,
+            text="Build Environment Guide",
+            font=(FONT_CONTENT[0], FONT_CONTENT[1], "underline"),
+            fg="blue",
+            bg="white",
+            cursor="hand2",
+            justify="left"
+        )
+        self.manual_link.pack(side="left")
+        self.manual_link.bind("<Button-1>", self.open_build_host_setup)
+
         self.user_manual_url = "https://slimbootloader.github.io/tools/SblBuilderGui.html"
         self.manual_frame = tk.Frame(self, bg="white")
         self.manual_frame.pack(padx=50, pady=(0, 10), anchor="w")
 
         self.manual_label = tk.Label(
             self.manual_frame,
-            text="User Manual: ",
+            text="SBL Builder GUI User Manual: ",
             font=FONT_CONTENT,
             fg="black",
             bg="white",
@@ -95,6 +121,10 @@ class AboutPage(TabPage):
     def open_user_manual(self, event=None):
         if self.user_manual_url:
             webbrowser.open(self.user_manual_url)
+
+    def open_build_host_setup(self, event=None):
+        if self.build_host_setup_url:
+            webbrowser.open(self.build_host_setup_url)
 
     def on_closing(self):
         print("AboutPage: on_closing called.")
