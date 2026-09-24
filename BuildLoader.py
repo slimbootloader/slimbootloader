@@ -383,16 +383,46 @@ class Build(object):
 
         When FSP_UPD_DLT_SUPPORT is enabled, the pre-build hook copies and
         patches the headers into <fv_dir>/Fsp/.  Use that directory so the
-        original repo headers are never modified.
+        original repo headers are never modified.  Otherwise use headers next
+        to the FSP binary, then the FSP INF CopyList, then the board's include dirs.
         """
         if self._board.FSP_UPD_DLT_SUPPORT:
             patched = os.path.join(self._fv_dir, 'Fsp')
             if os.path.isdir(patched):
                 return patched
-        return os.path.join(
-            os.environ.get('PLT_SOURCE',
-                           os.environ.get('SBL_SOURCE', '')),
-            self._board._FSP_PATH_NAME)
+
+        roots = [r for r in dict.fromkeys([os.environ.get('PLT_SOURCE', ''), os.environ.get('SBL_SOURCE', '')]) if r]
+        fsp_path_name = self._board._FSP_PATH_NAME or os.path.join('Silicon', self._board.SILICON_PKG_NAME, 'FspBin')
+        inc_dirs = [fsp_path_name] + list(self._board._EXTRA_INC_PATH)
+        inc_set  = {os.path.normcase(os.path.normpath(d)) for d in inc_dirs}
+
+        # Headers next to the FSP binary always match it
+        for root in roots:
+            cand = os.path.join(root, fsp_path_name)
+            if os.path.isfile(os.path.join(cand, 'FspmUpd.h')):
+                return cand
+
+        # The FSP INF CopyList says where the headers are copied from the FSP repo
+        for root in roots:
+            fsp_inf = os.path.join(root, self._board.FSP_INF_FILE)
+            if not os.path.exists(fsp_inf):
+                continue
+            hdr_dirs = [os.path.dirname(dst) for _, dst in PreBuild.GetCopyList(fsp_inf)
+                        if os.path.basename(dst) == 'FspmUpd.h']
+            # An INF may cover several SoCs; pick the one this board includes
+            match = [d for d in hdr_dirs if os.path.normcase(os.path.normpath(d)) in inc_set]
+            if match or len(hdr_dirs) == 1:
+                return os.path.join(root, (match or hdr_dirs)[0])
+            break
+
+        # No CopyList entry (e.g. headers checked in): look in the board's include dirs
+        for root in roots:
+            for inc in inc_dirs[1:] + [os.path.join('Silicon', self._board.SILICON_PKG_NAME, 'Include')]:
+                cand = os.path.join(root, inc)
+                if os.path.isfile(os.path.join(cand, 'FspmUpd.h')):
+                    return cand
+
+        raise Exception('FspmUpd.h/FspsUpd.h not found via %s CopyList or in %s' % (self._board.FSP_INF_FILE, inc_dirs))
 
     def _gen_ui_setup_desc (self):
         if not getattr(self._board, 'ENABLE_UI_SETUP', 0):
