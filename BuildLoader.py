@@ -1582,6 +1582,10 @@ class Build(object):
         self.early_build_init()
         self._prepare_auto_fd_bootstrap ()
 
+        # Drop patched FSP UPD headers left by a previous build; the board hook recreates them if needed
+        if self._board.FSP_UPD_DLT_SUPPORT:
+            shutil.rmtree(os.path.join(self._fv_dir, 'Fsp'), ignore_errors=True)
+
         # Run pre-build
         self.board_build_hook ('pre-build:before')
         self.pre_build()
