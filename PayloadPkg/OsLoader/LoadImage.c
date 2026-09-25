@@ -590,7 +590,8 @@ GetTraditionalLinux (
   // prevent an out-of-bounds copy of the kernel payload or a later jump to
   // an unvalidated, attacker-controlled entry address.
   //
-  if (!IsBzImage (LinuxImage->BootFile.Addr)) {
+  if ((LinuxImage->BootFile.Size < (UINT32)(OFFSET_OF (BOOT_PARAMS, Hdr) + sizeof (SETUP_HEADER))) ||
+      !IsBzImage (LinuxImage->BootFile.Addr)) {
     DEBUG ((DEBUG_ERROR, "Traditional Linux image is not a valid bzImage!\n"));
     FreeImageData (&LinuxImage->BootFile);
     Status = RETURN_LOAD_ERROR;
@@ -603,10 +604,11 @@ GetTraditionalLinux (
   KernelLimit   = (UINT64)LINUX_KERNEL_BASE + KernelSize;
 
   if ((KernelSize == 0) ||
+      (KernelSize > (BASE_4GB - LINUX_KERNEL_BASE)) ||
       (BootParamSize >= LinuxImage->BootFile.Size) ||
       (KernelSize > (UINT64)(LinuxImage->BootFile.Size - BootParamSize)) ||
       (Bp->Hdr.Code32Start < LINUX_KERNEL_BASE) ||
-      ((UINT64)Bp->Hdr.Code32Start >= KernelLimit)) {
+      ((UINT64)Bp->Hdr.Code32Start + (((Bp->Hdr.XloadFlags & BIT0) != 0) ? 0x200 : 0) >= KernelLimit)) {
     DEBUG ((DEBUG_ERROR, "Traditional Linux image has invalid SysSize/EntryAddress, rejecting!\n"));
     FreeImageData (&LinuxImage->BootFile);
     Status = RETURN_LOAD_ERROR;
