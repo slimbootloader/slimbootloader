@@ -133,9 +133,11 @@ int VerifyRsaPkcs1Signature (CONST PUB_KEY_HDR *PubKeyHdr, CONST SIGNATURE_HDR *
 
   Done:
     if (scratch_buf) {
+      ZeroMem (scratch_buf, sz_scratch);
       FreeTemporaryMemory (scratch_buf);
     }
     if (bn_buf) {
+      ZeroMem (bn_buf, sz_rsa + sz_n + sz_e);
       FreeTemporaryMemory (bn_buf);
     }
     if (err != ippStsNoErr) {
@@ -264,10 +266,12 @@ int VerifyRsaPssSignature (CONST PUB_KEY_HDR *PubKeyHdr, CONST SIGNATURE_HDR *Si
   }
 
   Done:
-    if (scratch_buf != NULL) {
+    if (scratch_buf) {
+      ZeroMem (scratch_buf, sz_scratch);
       FreeTemporaryMemory (scratch_buf);
     }
     if (bn_buf) {
+      ZeroMem (bn_buf, sz_rsa + sz_n + sz_e);
       FreeTemporaryMemory (bn_buf);
     }
     if (err != ippStsNoErr) {
@@ -317,4 +321,3 @@ RsaVerify_PSS (CONST PUB_KEY_HDR *PubKeyHdr, CONST SIGNATURE_HDR *SignatureHdr, 
       return RETURN_UNSUPPORTED;
   }
 }
-
