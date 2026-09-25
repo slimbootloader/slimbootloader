@@ -79,14 +79,42 @@ GetHostBridgeTable (
 {
   STATIC PCI_HOST_BRIDGE_TABLE  mFallback;
   PCI_HOST_BRIDGE_TABLE        *Table;
+  UINT8                         Index;
+  UINT8                         Index2;
+  BOOLEAN                       Valid;
 
   Table = (PCI_HOST_BRIDGE_TABLE *)(UINTN)PcdGet32 (PcdPciHostBridgeTableBase);
   if ((Table != NULL) && (Table->Count > 0)) {
     if (Table->Count <= MAX_HOST_BRIDGES) {
-      return Table;
+      //
+      // Make sure platform-supplied table entries are valid
+      //
+      Valid = TRUE;
+      for (Index = 0; Index < Table->Count; Index++) {
+        if ((Table->HostBridge[Index].McfgBase == 0) ||
+            (Table->HostBridge[Index].BusBase > Table->HostBridge[Index].BusLimit)) {
+          Valid = FALSE;
+          break;
+        }
+        for (Index2 = 0; Index2 < Index; Index2++) {
+          if (Table->HostBridge[Index2].Segment == Table->HostBridge[Index].Segment) {
+            DEBUG ((DEBUG_WARN, "Duplicate PCI segment %u found in index %u and %u of host bridge table\n", Table->HostBridge[Index].Segment, Index2, Index));
+            Valid = FALSE;
+            break;
+          }
+        }
+        if (!Valid) {
+          break;
+        }
+      }
+      if (Valid) {
+        return Table;
+      }
+      DEBUG ((DEBUG_WARN, "PCI host bridge table entry %u is malformed; using fallback\n", Index));
+    } else {
+      DEBUG ((DEBUG_WARN, "PCI host bridge table Count %u exceeds MAX_HOST_BRIDGES %u; using fallback\n",
+              Table->Count, MAX_HOST_BRIDGES));
     }
-    DEBUG ((DEBUG_WARN, "PCI host bridge table Count %u exceeds MAX_HOST_BRIDGES %u; using fallback\n",
-            Table->Count, MAX_HOST_BRIDGES));
   }
 
   //
