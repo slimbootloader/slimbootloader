@@ -380,6 +380,8 @@ PlatformFeaturesInit (
   UINTN                        HeciBaseAddress;
   UINT32                       LdrFeatures;
 
+  // These features are enabled below from PCD configuration.
+  LdrFeatures &= ~(FEATURE_VERIFIED_BOOT | FEATURE_ACPI | FEATURE_MEASURED_BOOT);
   // Set common features
   LdrFeatures  = GetFeatureCfg ();
   LdrFeatures |= FeaturePcdGet (PcdAcpiEnabled)?FEATURE_ACPI:0;
