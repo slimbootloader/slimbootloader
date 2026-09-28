@@ -34,7 +34,7 @@
 #define RECOVERY_REASON_SBL             0x01    // TCO timeout detected SBL failure
 #define RECOVERY_REASON_CSME_WDT        0x02    // CSME triggered Top Swap (WDT expiry) due to failure outside SBL
 #define RECOVERY_REASON_CSME            0x04    // CSME firmware code corruption (HFSTS1/HFSTS2)
-#define RECOVERY_REASON_IOE             0x08    // IOE CSME firmware failure - to be implemented
+#define RECOVERY_REASON_IOE             0x08    // IOE CSME firmware code corruption (HFSTS1/HFSTS2 via IOE HECI)
 // BIT4..BIT7 reserved for future failure sources
 
 //
