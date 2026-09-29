@@ -710,9 +710,17 @@ SendSpiCmd (
       break;
     case FlashRegionAll:
       ///
-      /// FlashRegionAll indicates address is relative to flash device (i.e., address is Flash Linear Address)
-      /// No error checking for this case
+      /// Since FlashRegionAll bypasses all FRAP enforcement checks for region limits, we'll
+      /// explicitly block FlashRegionAll write/erase op in payload stage to enforce FRAP
+      /// permissions. Early bootloader stages retain full access for potentially legitimate
+      /// firmware operations.
       ///
+      if (((FlashCycleType == FlashCycleWrite) || (FlashCycleType == FlashCycleErase)) &&
+          (GetLoaderStage() >= LOADER_STAGE_PAYLOAD)) {
+        DEBUG ((DEBUG_ERROR, "FlashRegionAll write/erase blocked in payload stage\n"));
+        Status = EFI_ACCESS_DENIED;
+        goto SendSpiCmdEnd;
+      }
       LimitAddress = 0;
       PermissionBit = 0;
       break;
