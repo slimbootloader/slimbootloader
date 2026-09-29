@@ -1623,8 +1623,8 @@ IsRedundantComponent (
   current firmware using new firmware.
 
   @param[in]  RecoveryType    FwUpdateRecoveryNone for a normal capsule update;
-                              FwUpdateRecoveryCsme for CSME firmware code corruption
-                              recovery; FwUpdateRecoveryIoe reserved for future IOE.
+                              FwUpdateRecoveryCsme / FwUpdateRecoveryIoe for CSME / IOE
+                              firmware code corruption recovery.
 
   @retval  EFI_SUCCESS           The operation completed successfully.
   @retval  others                There is error happening.
@@ -2200,15 +2200,22 @@ PayloadMain (
       DEBUG ((DEBUG_ERROR, "RecoveryStatus variable missing/invalid; cannot perform recovery\n"));
     }
 
-    // A valid RecoveryStatus is required (carries reason + retry state).
-    // CSME-only -> CSME capsule; compound or SBL/CSME_WDT -> SBL recovery first.
+    // Pure CSME/IOE code-corruption -> capsule recovery (routed by signature);
+    // any reason also carrying SBL/CSME-WDT goes through SBL partition recovery first.
     if (RecoveryStatusValid) {
-      if (RecoveryStatus.Reason == RECOVERY_REASON_CSME) {
-        DEBUG ((DEBUG_INFO, "CSME firmware recovery via capsule update\n"));
-        Status = InitFirmwareUpdate (FwUpdateRecoveryCsme);
+      if ((RecoveryStatus.Reason == RECOVERY_REASON_CSME) ||
+          (RecoveryStatus.Reason == RECOVERY_REASON_IOE) ||
+          (RecoveryStatus.Reason == (RECOVERY_REASON_CSME | RECOVERY_REASON_IOE))) {
+        if ((RecoveryStatus.Reason & RECOVERY_REASON_IOE) != 0) {
+          DEBUG ((DEBUG_INFO, "IOE firmware recovery via capsule update\n"));
+          Status = InitFirmwareUpdate (FwUpdateRecoveryIoe);
+        } else {
+          DEBUG ((DEBUG_INFO, "CSME firmware recovery via capsule update\n"));
+          Status = InitFirmwareUpdate (FwUpdateRecoveryCsme);
+        }
         if (Status == EFI_ALREADY_STARTED) {
           //
-          // CSME capsule update completed successfully.
+          // CSME/IOE capsule update completed successfully.
           //
           Status = EFI_SUCCESS;
         }
@@ -2255,8 +2262,10 @@ EndOfFwu:
 
   // Conclude the FW state machine after a successful recovery so the next boot does not loop back into recovery.
   if (RecoveryStatusValid && (Status == EFI_SUCCESS)) {
-    if (RecoveryStatus.Reason == RECOVERY_REASON_CSME) {
-      // CSME-only recovery: reset SM to INIT so FSP won't trigger an extra BOOT_ON_FLASH_UPDATE cycle from a lingering SM_DONE.
+    if ((RecoveryStatus.Reason == RECOVERY_REASON_CSME) ||
+        (RecoveryStatus.Reason == RECOVERY_REASON_IOE) ||
+        (RecoveryStatus.Reason == (RECOVERY_REASON_CSME | RECOVERY_REASON_IOE))) {
+      // CSME/IOE recovery: reset SM to INIT so FSP won't trigger an extra BOOT_ON_FLASH_UPDATE cycle from a lingering SM_DONE.
       SetStateMachineFlag (FW_UPDATE_SM_INIT);
     } else {
       // SBL partition recovery concludes the in-progress update so Stage1B does not re-detect the pending switch and loop.
