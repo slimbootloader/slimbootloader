@@ -774,6 +774,7 @@ DEBUG_CODE_END();
     MemCfgData = (MEMORY_CFG_DATA *)FindConfigDataByTag (CDATA_MEMORY_TAG);
     if (MemCfgData == NULL) {
       CpuHalt ("Failed to find memory CFGDATA!");
+      return;
     }
 
     switch (GetPlatformId ()) {
