@@ -14,12 +14,12 @@
   VERSION_STRING       = 1.0
 
 [Sources]
-  m_e0_b06a2_00004130.mcb  # RPL-P J0
+  m_e0_b06a2_00006134.mcb  # RPL-P J0
 
 [UserExtensions.SBL."CloneRepo"]
   REPO   = https://github.com/slimbootloader/firmwareblob.git
-  COMMIT = d08192eed66c238903beea53566671addf3a6647
+  COMMIT = ca59a03e02bdee26a36bbfc0ae134ace478086c1
 
 [UserExtensions.SBL."CopyList"]
-  Microcode/RaptorLake/m_e0_b06a2_00004130.pdb  : Silicon/RaptorlakePkg/Rplp/Microcode/m_e0_b06a2_00004130.mcb
+  Microcode/RaptorLake/m_e0_b06a2_00006134.pdb  : Silicon/RaptorlakePkg/Rplp/Microcode/m_e0_b06a2_00006134.mcb
 
