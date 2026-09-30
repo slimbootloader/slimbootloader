@@ -35,7 +35,7 @@ class Board(BaseBoard):
         self.BOARD_PKG_NAME       = 'AlderlakeBoardPkg'
         self.SILICON_PKG_NAME     = 'AlderlakePkg'
         self.BOARD_PKG_NAME_OVERRIDE = 'RaptorlakeBoardPkg'
-        self.FSP_IMAGE_ID         = 'ADLI-FSP'
+        self.FSP_IMAGE_ID         = '$RPLFSPE'
         self._CFGDATA_DEF_FILE    = 'CfgDataDefRplp.yaml'
         self._EXTRA_INC_PATH      = ['Silicon/RaptorlakePkg/Rplp/Fsp']
         self._FSP_PATH_NAME       = 'Silicon/RaptorlakePkg/Rplp/Fsp'
