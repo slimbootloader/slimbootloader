@@ -134,7 +134,7 @@ class MetaFile:
     """Minimal DSC/INF reader.
 
     Yields (section_name_lower, line) pairs with comments removed, !include
-    expanded and conditional directives flattened (every branch retained).
+    expanded and conditional directives evaluated.
     Also collects DEFINE macros.
     """
 
@@ -263,6 +263,7 @@ class Inf:
     def __init__ (self, path, workspace):
         self.path = path
         meta = MetaFile (path, workspace)
+        self.missing_includes = meta.missing_includes
         self.library_class = None
         self.module_type = None
         for line in meta.section_lines ('defines'):
@@ -315,6 +316,7 @@ class Dsc:
         # [Components] entries may carry a '{ <LibraryClasses> ... }' override
         # block that applies to that module only.
         self.components = []
+        self.component_errors = []
         self.overrides = {}
         current = None
         sub = None
@@ -323,6 +325,13 @@ class Dsc:
             text = line.strip ()
             if not in_block:
                 token = text.split ('{')[0].strip ()
+                if '$(' in token and '|' not in token and '=' not in token:
+                    expanded = self.meta.expand (token)
+                    if '$(' in expanded or not expanded.lower ().endswith ('.inf'):
+                        self.component_errors.append (
+                            '[Components] entry cannot be resolved: %s' % token)
+                        continue
+                    token = expanded
                 if token.lower ().endswith ('.inf'):
                     current = token
                     if current not in self.components:
@@ -375,7 +384,9 @@ class Checker:
             return (['%s: file not found' % label], {})
 
         dsc = Dsc (full, self.workspace, extra_includes)
-        errors = []
+        errors = ['%s: unresolved !include: %s' % (label, inc)
+                  for inc in dsc.missing_includes]
+        errors += ['%s: %s' % (label, err) for err in dsc.component_errors]
         warnings = []
         resolved = set ()
 
@@ -385,6 +396,9 @@ class Checker:
                 errors.append ('%s: [Components] entry not found: %s'
                                % (label, comp))
                 continue
+            errors.extend ('%s: unresolved !include in %s: %s'
+                           % (label, comp, inc)
+                           for inc in comp_inf.missing_includes)
             lib_map = dsc.map_for (comp)
             pending = [(cls, comp) for cls in comp_inf.required]
             visited = set ()
@@ -415,6 +429,9 @@ class Checker:
                         if msg not in errors:
                             errors.append (msg)
                         continue
+                    errors.extend ('%s: unresolved !include in %s: %s'
+                                   % (label, inst, inc)
+                                   for inc in inst_inf.missing_includes)
                     for dep in inst_inf.required:
                         if dep not in visited:
                             pending.append ((dep, inst))
@@ -451,9 +468,8 @@ def _board_module_name (cfg_path):
 def load_boards (workspace):
     """Load every BoardConfig*.py the way BuildLoader.py does.
 
-    Returns {board_name: module}. Files that fail to load are skipped; a
-    board that cannot be loaded is reported later rather than silently
-    passing.
+    Returns ({board_name: module}, {config_path: error}). Failed imports
+    and duplicate names are reported so --all-boards cannot pass them.
     """
     os.environ.setdefault ('SBL_SOURCE', workspace)
     os.environ.setdefault ('WORKSPACE', workspace)
@@ -467,6 +483,7 @@ def load_boards (workspace):
 
     boards = {}
     errors = {}
+    sources = {}
     pattern = os.path.join (workspace, 'Platform', '*', 'BoardConfig*.py')
     # Sorted so a base BoardConfig.py is registered before any override that
     # imports it.
@@ -480,7 +497,13 @@ def load_boards (workspace):
                 '%s: %s' % (type (exc).__name__, exc)
             continue
         if board_name:
-            boards.setdefault (board_name, module)
+            cfg_rel = os.path.relpath (cfg, workspace)
+            if board_name in boards:
+                errors[cfg_rel] = 'duplicate BOARD_NAME %r (already used by %s)' \
+                                  % (board_name, sources[board_name])
+            else:
+                boards[board_name] = module
+                sources[board_name] = cfg_rel
     return boards, errors
 
 
@@ -534,10 +557,6 @@ def main ():
     for dsc_rel in targets:
         errors, stats = checker.check_dsc (dsc_rel)
         checked += 1
-        if stats.get ('missing_includes'):
-            print ('SKIP %s  (unresolved !include: %s)'
-                   % (dsc_rel, ', '.join (stats['missing_includes'])))
-            continue
         failures += report (dsc_rel, errors, stats, args.show_warnings)
 
     boards, board_errors = load_boards (workspace)
@@ -545,9 +564,13 @@ def main ():
 
     if args.all_boards and board_errors:
         for cfg, err in sorted (board_errors.items ()):
-            print ('WARN could not load %s (%s)' % (cfg, err))
+            print ('FAIL could not load %s (%s)' % (cfg, err))
+        failures += len (board_errors)
 
-    if not board_names:
+    if args.all_boards and not board_names and not board_errors:
+        print ('FAIL no BoardConfig files found')
+        failures += 1
+    elif not board_names and not args.all_boards:
         print ('SKIP BootloaderCorePkg/BootloaderCorePkg.dsc  '
                '(needs --board <name> or --all-boards)')
 
@@ -579,7 +602,7 @@ def main ():
 
     print ('')
     if failures:
-        print ('%d unresolved library class error(s) across %d check(s)'
+        print ('%d DSC/board check error(s) across %d check(s)'
                % (failures, checked))
         return 1
     print ('All DSC library classes resolve (%d check(s)).' % checked)
