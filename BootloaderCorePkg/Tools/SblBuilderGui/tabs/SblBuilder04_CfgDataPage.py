@@ -28,7 +28,7 @@ DEFAULT_OUTPUT_FILENAME = "slimbootloader_patched.bin"
 
 class CfgDataPage(TabPage):
     def __init__(self, parent, global_variables, global_flags):
-        super().__init__(parent, tabName="CfgData", tabTitle="Config Data Editor")
+        super().__init__(parent, tabName="CfgData", tabTitle="Patch Config Data")
         self.global_variables = global_variables
         self.global_flags = global_flags
 
@@ -39,12 +39,6 @@ class CfgDataPage(TabPage):
         self.cnfg_page_list = {}
         self.cnfg_current_page = ""
         self.cnfg_widget_map = {}
-
-        LabelFrame(
-            parent=self,
-            info_text="Directory for slimbootloader repo will be cloned, updated, and cleaned.",
-            label_text="SBL Source Code:",
-            bind_variable=self.global_variables["sbl_source_path"])
 
         self.yaml_file_path = StringVar(value="<Empty>")
         yaml_frame = LabelFrame(
