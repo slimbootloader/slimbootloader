@@ -14,6 +14,8 @@
 ##
 
 import os
+import sys
+from types import SimpleNamespace
 
 import pytest
 
@@ -89,6 +91,61 @@ def test_inf_declares_its_own_library_class (workspace):
         'LoaderPerformanceLib.inf'), workspace)
     assert inf.library_class == 'LoaderPerformanceLib'
     assert 'CsmePerfIdToStrLib' in inf.required
+
+
+def test_macro_component_dependencies_are_checked (workspace, tmp_path):
+    """A macro-valued [Components] INF must not hide its library classes."""
+    dsc = tmp_path / 'MacroComponent.dsc'
+    component = 'BootloaderCommonPkg/Library/LoaderPerformanceLib/LoaderPerformanceLib.inf'
+    dsc.write_text (
+        '[Defines]\n'
+        '  DEFINE COMPONENT_INF = %s\n'
+        '[Components]\n'
+        '  $(COMPONENT_INF)\n' % component, encoding='utf-8')
+
+    parsed = Chk.Dsc (str (dsc), workspace)
+    assert parsed.components == [component]
+    errors, stats = Chk.Checker (workspace).check_dsc (str (dsc))
+    assert stats['components'] == 1
+    assert any ('CsmePerfIdToStrLib' in err for err in errors), errors
+
+
+def test_undefined_active_component_macro_fails (workspace, tmp_path):
+    """Only a disabled conditional may omit a board's undefined macro."""
+    dsc = tmp_path / 'UndefinedMacro.dsc'
+    dsc.write_text (
+        '[Components]\n'
+        '  $(UNDEFINED_INF_FILE)\n'
+        '!if FALSE\n'
+        '  $(DISABLED_INF_FILE)\n'
+        '!endif\n', encoding='utf-8')
+    errors, stats = Chk.Checker (workspace).check_dsc (str (dsc))
+    assert stats['components'] == 0
+    assert any ('UNDEFINED_INF_FILE' in err for err in errors), errors
+    assert not any ('DISABLED_INF_FILE' in err for err in errors), errors
+
+
+def test_generated_board_macro_components_are_included (workspace, tmp_path):
+    """Exercise the same generated Platform.dsc path as --all-boards."""
+    boards, load_errors = Chk.load_boards (workspace)
+    assert not load_errors
+    checker = Chk.Checker (workspace)
+    for name in ('qemu', 'arlh'):
+        platform = str (tmp_path / ('%s-Platform.dsc' % name))
+        Chk.gen_platform_dsc (boards[name], platform)
+        dsc = Chk.Dsc (os.path.join (workspace, 'BootloaderCorePkg',
+                                     'BootloaderCorePkg.dsc'),
+                       workspace, {'Platform.dsc': platform})
+        acpi = dsc.meta.defines['ACPI_TABLE_INF_FILE']
+        assert acpi in dsc.components
+        if name == 'arlh':
+            microcode = dsc.meta.defines['MICROCODE_INF_FILE']
+            assert microcode in dsc.components
+        errors, stats = checker.check_dsc (
+            'BootloaderCorePkg/BootloaderCorePkg.dsc',
+            {'Platform.dsc': platform}, name)
+        assert not errors, errors
+        assert stats['components'] == len (dsc.components)
 
 
 # ---------------------------------------------------------------------------
@@ -172,3 +229,62 @@ def test_missing_include_is_reported_not_ignored (workspace, tmp_path):
 
     assert any ('DefinitelyMissing.dsc' in inc for inc in stats['missing_includes']), \
         'unresolved !include was silently ignored: %s' % stats['missing_includes']
+
+
+def test_unresolved_include_fails_standalone_check (workspace, tmp_path,
+                                                    monkeypatch, capsys):
+    """A missing include must fail both the checker and the CLI."""
+    dsc = tmp_path / 'MissingInclude.dsc'
+    dsc.write_text ('[Defines]\n!include NoSuchDirectory/Missing.dsc\n',
+                    encoding='utf-8')
+    errors, _ = Chk.Checker (workspace).check_dsc (str (dsc))
+    assert any ('Missing.dsc' in err for err in errors), errors
+
+    monkeypatch.setattr (Chk, 'STANDALONE_DSC_LIST', [str (dsc)])
+    monkeypatch.setattr (sys, 'argv', ['CheckDscLibraryClasses.py',
+                                      '--workspace', workspace])
+    assert Chk.main () == 1
+    output = capsys.readouterr ().out
+    assert 'FAIL %s' % dsc in output
+    assert 'SKIP %s' % dsc not in output
+
+
+def test_unresolved_inf_include_fails_check (workspace, tmp_path):
+    """An INF include can also hide required library classes."""
+    inf = tmp_path / 'Component.inf'
+    inf.write_text ('[Defines]\n!include MissingInfDefines.inc\n',
+                    encoding='utf-8')
+    dsc = tmp_path / 'Component.dsc'
+    dsc.write_text ('[Components]\n  %s\n' % inf, encoding='utf-8')
+    errors, _ = Chk.Checker (workspace).check_dsc (str (dsc))
+    assert any ('MissingInfDefines.inc' in err for err in errors), errors
+
+
+def test_all_boards_fails_on_board_load_error (workspace, monkeypatch, capsys):
+    """A failed import is not a successful check of every board."""
+    cfg = os.path.join ('Platform', 'BrokenBoardPkg', 'BoardConfig.py')
+    monkeypatch.setattr (Chk, 'load_boards',
+                         lambda workspace: ({}, {cfg: 'ImportError: broken'}))
+    monkeypatch.setattr (sys, 'argv', ['CheckDscLibraryClasses.py',
+                                      '--workspace', workspace, '--all-boards'])
+    assert Chk.main () == 1
+    output = capsys.readouterr ().out
+    assert 'FAIL could not load %s' % cfg in output
+
+
+def test_duplicate_board_name_is_a_load_error (tmp_path, monkeypatch):
+    """Do not silently discard a second BoardConfig with the same name."""
+    import BuildLoader
+
+    for pkg in ('FirstBoardPkg', 'SecondBoardPkg'):
+        cfg = tmp_path / 'Platform' / pkg / 'BoardConfig.py'
+        cfg.parent.mkdir (parents=True)
+        cfg.write_text ('# Test BoardConfig\n', encoding='utf-8')
+    module = SimpleNamespace (
+        Board=lambda: SimpleNamespace (BOARD_NAME='duplicate'))
+    monkeypatch.setattr (BuildLoader, 'load_source',
+                         lambda name, path: module)
+    boards, errors = Chk.load_boards (str (tmp_path))
+    assert list (boards) == ['duplicate']
+    assert any ('duplicate' in err and 'FirstBoardPkg' in err
+                for err in errors.values ()), errors
