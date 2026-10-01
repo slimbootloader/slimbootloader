@@ -1,7 +1,7 @@
 /** @file
   The file for AHCI mode of ATA host controller.
 
-  Copyright (c) 2010 - 2024, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2010 - 2026, Intel Corporation. All rights reserved.<BR>
   (C) Copyright 2015 Hewlett Packard Enterprise Development LP<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -2021,8 +2021,10 @@ AhciDeviceSetFeature (
 /**
   Allocate transfer-related data struct which is used at AHCI mode.
 
-  @param  AhciController                 The AHCI controller protocol instance.
+  @param  AhciController        The AHCI controller protocol instance.
   @param  AhciRegisters         The pointer to the EFI_AHCI_REGISTERS.
+  @param  Capability            HBA capability register value, snapshotted once by the caller.
+  @param  PortImplementBitMap   HBA port-implemented bitmap, snapshotted once by the caller.
 
   @retval EFI_DEVICE_ERROR      The descriptor table could not be created.
   @retval EFI_OUT_OF_RESOURCES  Insufficiant memory.
@@ -2033,13 +2035,13 @@ EFI_STATUS
 EFIAPI
 AhciCreateTransferDescriptor (
   IN     EFI_AHCI_CONTROLLER    *AhciController,
-  IN OUT EFI_AHCI_REGISTERS     *AhciRegisters
+  IN OUT EFI_AHCI_REGISTERS     *AhciRegisters,
+  IN     UINT32                 Capability,
+  IN     UINT32                 PortImplementBitMap
   )
 {
   EFI_STATUS            Status;
   VOID                  *Buffer;
-  UINT32                Capability;
-  UINT32                PortImplementBitMap;
   UINT8                 MaxPortNumber;
   UINT8                 MaxCommandSlotNumber;
   BOOLEAN               Support64Bit;
@@ -2054,16 +2056,11 @@ AhciCreateTransferDescriptor (
 
   Buffer = NULL;
   //
-  // Collect AHCI controller information
-  //
-  Capability           = AhciReadReg (AhciController, EFI_AHCI_CAPABILITY_OFFSET);
-  //
   // Get the number of command slots per port supported by this HBA.
   //
   MaxCommandSlotNumber = (UINT8) (((Capability & 0x1F00) >> 8) + 1);
   Support64Bit         = (BOOLEAN) (((Capability & BIT31) != 0) ? TRUE : FALSE);
 
-  PortImplementBitMap  = AhciReadReg (AhciController, EFI_AHCI_PI_OFFSET);
   //
   // Get the highest bit of implemented ports which decides how many bytes are allocated for recived FIS.
   //
@@ -2309,7 +2306,13 @@ AhciModeInitialization (
   PortImplementBitMap  = AhciReadReg (AhciController, EFI_AHCI_PI_OFFSET);
 
   AhciRegisters = &AhciController->AhciRegisters;
-  Status = AhciCreateTransferDescriptor (AhciController, AhciRegisters);
+
+  //
+  // Pass the single Capability/PortImplementBitMap snapshot taken above into
+  // AhciCreateTransferDescriptor instead of letting it re-read EFI_AHCI_PI_OFFSET
+  // (and EFI_AHCI_CAPABILITY_OFFSET) itself.
+  //
+  Status = AhciCreateTransferDescriptor (AhciController, AhciRegisters, Capability, PortImplementBitMap);
 
   if (EFI_ERROR (Status)) {
     return EFI_OUT_OF_RESOURCES;
@@ -2326,6 +2329,17 @@ AhciModeInitialization (
         //
         ASSERT (FALSE);
         return EFI_SUCCESS;
+      }
+
+      //
+      // Defense-in-depth: confirm this Port index still falls within the
+      // AhciRFis buffer that was actually allocated (sized from the very same
+      // PortImplementBitMap used here), rather than trusting register/loop
+      // consistency alone.
+      //
+      if (((UINT32) (Port + 1) * sizeof (EFI_AHCI_RECEIVED_FIS)) > AhciRegisters->MaxReceiveFisSize) {
+        ASSERT (FALSE);
+        return EFI_DEVICE_ERROR;
       }
 
       //
@@ -2525,4 +2539,3 @@ AhciModeInitialization (
 
   return EFI_SUCCESS;
 }
-
