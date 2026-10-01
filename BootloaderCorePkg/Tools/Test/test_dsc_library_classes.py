@@ -137,6 +137,30 @@ def test_specific_mapping_wins_over_common (workspace, tmp_path):
     assert stats['resolved'] == 1
 
 
+def test_standalone_checks_each_supported_architecture (workspace, tmp_path):
+    """An IA32-only map cannot satisfy an X64 build of the same DSC."""
+    component = tmp_path / 'Component.inf'
+    component.write_text (
+        '[Defines]\n  MODULE_TYPE = PEIM\n'
+        '[LibraryClasses]\n  TestLibraryClass\n', encoding='utf-8')
+    instance = tmp_path / 'Instance.inf'
+    instance.write_text ('[Defines]\n  LIBRARY_CLASS = TestLibraryClass\n',
+                         encoding='utf-8')
+    dsc = tmp_path / 'BothArches.dsc'
+    dsc.write_text (
+        '[Defines]\n  SUPPORTED_ARCHITECTURES = IA32|X64\n'
+        '[LibraryClasses.IA32]\n  TestLibraryClass|%s\n'
+        '[Components]\n  %s\n' % (instance, component),
+        encoding='utf-8')
+
+    errors, stats = Chk.Checker (workspace).check_dsc (str (dsc))
+    assert stats['components'] == 1
+    assert stats['resolved'] == 1
+    assert len (errors) == 1, errors
+    assert '[X64]: library class [TestLibraryClass]' in errors[0], errors
+    assert 'not mapped' in errors[0], errors
+
+
 def test_inf_declares_its_own_library_class (workspace):
     inf = Chk.Inf (os.path.join (
         workspace, 'BootloaderCommonPkg', 'Library', 'LoaderPerformanceLib',

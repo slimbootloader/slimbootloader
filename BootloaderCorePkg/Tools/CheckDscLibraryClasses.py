@@ -304,6 +304,16 @@ class Dsc:
         self.meta = MetaFile (path, workspace, extra_includes)
         self.missing_includes = self.meta.missing_includes
 
+        # SUPPORTED_ARCHITECTURES is a plain [Defines] assignment, not a
+        # DEFINE macro, so it is absent from meta.defines.
+        self.supported_architectures = 'IA32'
+        for section, line in self.meta.entries:
+            if section != 'defines':
+                continue
+            key, _, value = line.partition ('=')
+            if key.strip ().upper () == 'SUPPORTED_ARCHITECTURES':
+                self.supported_architectures = value.strip () or 'IA32'
+
         # Keep the arch and module-type qualifiers. BaseTools' three-level
         # tdict selects arch first, then module type, then class.
         self.lib_map = {}
@@ -413,7 +423,7 @@ class Checker:
         arches = [arch.upper ()] if arch else \
             [a.strip ().upper () for a in
              (dsc.meta.defines.get ('BUILD_ARCH') or
-              dsc.meta.defines.get ('SUPPORTED_ARCHITECTURES', 'IA32')).split ('|')
+              dsc.supported_architectures).split ('|')
              if a.strip ()]
         for checked_arch in arches:
             arch_label = '%s [%s]' % (label, checked_arch) \
