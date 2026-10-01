@@ -304,14 +304,20 @@ class Dsc:
         self.meta = MetaFile (path, workspace, extra_includes)
         self.missing_includes = self.meta.missing_includes
 
+        # Keep the arch and module-type qualifiers. BaseTools' three-level
+        # tdict selects arch first, then module type, then class.
         self.lib_map = {}
-        for line in self.meta.section_lines ('libraryclasses'):
-            pair = parse_map_line (line)
-            if not pair or pair[0].upper () == 'NULL':
-                continue
-            self.lib_map.setdefault (pair[0], [])
-            if pair[1] not in self.lib_map[pair[0]]:
-                self.lib_map[pair[0]].append (pair[1])
+        for section, line in self.meta.entries:
+            for name in section.split (','):
+                parts = name.strip ().split ('.')
+                if parts[0] != 'libraryclasses' or len (parts) > 3:
+                    continue
+                pair = parse_map_line (line)
+                if pair and pair[0].upper () != 'NULL':
+                    arch = parts[1].upper () if len (parts) > 1 else 'COMMON'
+                    module_type = parts[2].upper () if len (parts) > 2 \
+                        else 'COMMON'
+                    self.lib_map[arch, module_type, pair[0]] = pair[1]
 
         # [Components] entries may carry a '{ <LibraryClasses> ... }' override
         # block that applies to that module only.
@@ -355,9 +361,21 @@ class Dsc:
                 if pair and pair[0].upper () != 'NULL':
                     self.overrides[current][pair[0]] = pair[1]
 
-    def map_for (self, component):
-        """Effective class -> [instances] for one component."""
-        merged = dict (self.lib_map)
+    def map_for (self, component, arch, module_type):
+        """Effective class -> [instance] for one arch and module type.
+
+        BaseTools' tdict(True, 3) tries exact arch before common arch,
+        and within each arch tries exact module type before common type.
+        """
+        merged = {}
+        for name in {key[2] for key in self.lib_map}:
+            for key in ((arch, module_type, name),
+                        (arch, 'COMMON', name),
+                        ('COMMON', module_type, name),
+                        ('COMMON', 'COMMON', name)):
+                if key in self.lib_map:
+                    merged[name] = [self.lib_map[key]]
+                    break
         for name, inst in self.overrides.get (component, {}).items ():
             merged[name] = [inst]
         return merged
@@ -377,7 +395,7 @@ class Checker:
         self._inf_cache[key] = inf
         return inf
 
-    def check_dsc (self, dsc_rel, extra_includes=None, label=None):
+    def check_dsc (self, dsc_rel, extra_includes=None, label=None, arch=None):
         label = label or dsc_rel
         full = os.path.normpath (os.path.join (self.workspace, dsc_rel))
         if not os.path.isfile (full):
@@ -390,55 +408,67 @@ class Checker:
         warnings = []
         resolved = set ()
 
-        for comp in dsc.components:
-            comp_inf = self.load_inf (comp)
-            if comp_inf is None:
-                errors.append ('%s: [Components] entry not found: %s'
-                               % (label, comp))
-                continue
-            errors.extend ('%s: unresolved !include in %s: %s'
-                           % (label, comp, inc)
-                           for inc in comp_inf.missing_includes)
-            lib_map = dsc.map_for (comp)
-            pending = [(cls, comp) for cls in comp_inf.required]
-            visited = set ()
-            while pending:
-                cls, requester = pending.pop ()
-                if cls in visited:
+        # A board's generated BUILD_ARCH is the arch used by BuildLoader.
+        # Without a board, check every supported architecture of the DSC.
+        arches = [arch.upper ()] if arch else \
+            [a.strip ().upper () for a in
+             (dsc.meta.defines.get ('BUILD_ARCH') or
+              dsc.meta.defines.get ('SUPPORTED_ARCHITECTURES', 'IA32')).split ('|')
+             if a.strip ()]
+        for checked_arch in arches:
+            arch_label = '%s [%s]' % (label, checked_arch) \
+                if len (arches) > 1 else label
+            for comp in dsc.components:
+                comp_inf = self.load_inf (comp)
+                if comp_inf is None:
+                    errors.append ('%s: [Components] entry not found: %s'
+                                   % (arch_label, comp))
                     continue
-                visited.add (cls)
-                inst_list = lib_map.get (cls)
-                if not inst_list:
-                    errors.append (
-                        '%s: library class [%s] required by %s is not mapped'
-                        % (label, cls, requester))
-                    continue
-                resolved.add (cls)
-                for inst in inst_list:
-                    inst = dsc.meta.expand (inst)
-                    if '$(' in inst:
-                        # Board supplies this path at build time.
-                        msg = ('%s: instance for [%s] is macro-valued, not '
-                               'followed: %s' % (label, cls, inst))
-                        if msg not in warnings:
-                            warnings.append (msg)
+                errors.extend ('%s: unresolved !include in %s: %s'
+                               % (arch_label, comp, inc)
+                               for inc in comp_inf.missing_includes)
+                module_type = (comp_inf.module_type or 'USER_DEFINED').upper ()
+                lib_map = dsc.map_for (comp, checked_arch, module_type)
+                pending = [(cls, comp) for cls in comp_inf.required]
+                visited = set ()
+                while pending:
+                    cls, requester = pending.pop ()
+                    if cls in visited:
                         continue
-                    inst_inf = self.load_inf (inst)
-                    if inst_inf is None:
-                        msg = '%s: instance file not found: %s' % (label, inst)
-                        if msg not in errors:
-                            errors.append (msg)
+                    visited.add (cls)
+                    inst_list = lib_map.get (cls)
+                    if not inst_list:
+                        errors.append (
+                            '%s: library class [%s] required by %s (%s) is not mapped'
+                            % (arch_label, cls, requester, module_type))
                         continue
-                    errors.extend ('%s: unresolved !include in %s: %s'
-                                   % (label, inst, inc)
-                                   for inc in inst_inf.missing_includes)
-                    for dep in inst_inf.required:
-                        if dep not in visited:
-                            pending.append ((dep, inst))
+                    resolved.add (cls)
+                    for inst in inst_list:
+                        inst = dsc.meta.expand (inst)
+                        if '$(' in inst:
+                            # Board supplies this path at build time.
+                            msg = ('%s: instance for [%s] is macro-valued, not '
+                                   'followed: %s' % (arch_label, cls, inst))
+                            if msg not in warnings:
+                                warnings.append (msg)
+                            continue
+                        inst_inf = self.load_inf (inst)
+                        if inst_inf is None:
+                            msg = '%s: instance file not found: %s' \
+                                % (arch_label, inst)
+                            if msg not in errors:
+                                errors.append (msg)
+                            continue
+                        errors.extend ('%s: unresolved !include in %s: %s'
+                                       % (arch_label, inst, inc)
+                                       for inc in inst_inf.missing_includes)
+                        for dep in inst_inf.required:
+                            if dep not in visited:
+                                pending.append ((dep, inst))
 
         stats = {
             'components': len (dsc.components),
-            'mapped': len (dsc.lib_map),
+            'mapped': len ({key[2] for key in dsc.lib_map}),
             'resolved': len (resolved),
             'warnings': warnings,
             'missing_includes': dsc.missing_includes,
@@ -510,7 +540,11 @@ def load_boards (workspace):
 def gen_platform_dsc (module, out_path):
     """Generate Platform.dsc for a board by reusing BuildLoader's own code."""
     import BuildLoader
-    BuildLoader.Build (module.Board ()).create_dsc_inc_file (out_path)
+    # BuildLoader defaults an unspecified board architecture to IA32 before
+    # generating Platform.dsc; do the same for boards such as qemu.
+    default_arch = module.Board ().BUILD_ARCH or 'IA32'
+    build = BuildLoader.Build (module.Board (BUILD_ARCH=default_arch))
+    build.create_dsc_inc_file (out_path)
 
 
 def report (label, errors, stats, show_warnings):

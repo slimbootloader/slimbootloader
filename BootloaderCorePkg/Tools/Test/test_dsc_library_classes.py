@@ -72,7 +72,7 @@ def test_component_override_block_is_parsed (workspace):
     assert 'FspApiLib' in dsc.overrides[stage1a]
     assert dsc.overrides[stage1a]['FspApiLib'].endswith ('FsptApiLib.inf')
     # The override must not leak into the DSC-wide map.
-    assert 'FspApiLib' not in dsc.lib_map
+    assert all (key[2] != 'FspApiLib' for key in dsc.lib_map)
 
 
 def test_override_wins_over_global_map (workspace):
@@ -81,8 +81,60 @@ def test_override_wins_over_global_map (workspace):
     dsc = Chk.Dsc (dsc_path, workspace)
     stage1a = 'BootloaderCorePkg/Stage1A/Stage1A.inf'
     stage1b = 'BootloaderCorePkg/Stage1B/Stage1B.inf'
-    assert dsc.map_for (stage1a)['FspApiLib'] != \
-        dsc.map_for (stage1b)['FspApiLib']
+    assert dsc.map_for (stage1a, 'IA32', 'PEIM')['FspApiLib'] != \
+        dsc.map_for (stage1b, 'IA32', 'PEIM')['FspApiLib']
+
+
+@pytest.mark.parametrize ('section', [
+    'LibraryClasses.X64',
+    'LibraryClasses.common.DXE_DRIVER',
+])
+def test_qualified_mapping_does_not_leak (workspace, tmp_path, section):
+    """An IA32 PEIM cannot consume an X64 or DXE_DRIVER-only mapping."""
+    component = tmp_path / 'Component.inf'
+    component.write_text (
+        '[Defines]\n  MODULE_TYPE = PEIM\n'
+        '[LibraryClasses]\n  TestLibraryClass\n', encoding='utf-8')
+    instance = tmp_path / 'Instance.inf'
+    instance.write_text ('[Defines]\n  LIBRARY_CLASS = TestLibraryClass\n',
+                         encoding='utf-8')
+    dsc = tmp_path / 'Qualified.dsc'
+    dsc.write_text (
+        '[Defines]\n  SUPPORTED_ARCHITECTURES = IA32\n'
+        '[%s]\n  TestLibraryClass|%s\n'
+        '[Components]\n  %s\n' % (section, instance, component),
+        encoding='utf-8')
+
+    errors, stats = Chk.Checker (workspace).check_dsc (str (dsc))
+    assert stats['components'] == 1
+    assert any ('TestLibraryClass' in err and 'not mapped' in err
+                for err in errors), errors
+
+
+def test_specific_mapping_wins_over_common (workspace, tmp_path):
+    """An arch-specific mapping overrides a common module-specific one."""
+    component = tmp_path / 'Component.inf'
+    component.write_text (
+        '[Defines]\n  MODULE_TYPE = PEIM\n'
+        '[LibraryClasses]\n  TestLibraryClass\n', encoding='utf-8')
+    correct = tmp_path / 'Correct.inf'
+    correct.write_text ('[Defines]\n  LIBRARY_CLASS = TestLibraryClass\n',
+                        encoding='utf-8')
+    wrong = tmp_path / 'Wrong.inf'
+    wrong.write_text (
+        '[Defines]\n  LIBRARY_CLASS = TestLibraryClass\n'
+        '[LibraryClasses]\n  WrongOnlyDependency\n', encoding='utf-8')
+    dsc = tmp_path / 'Precedence.dsc'
+    dsc.write_text (
+        '[Defines]\n  SUPPORTED_ARCHITECTURES = IA32\n'
+        '[LibraryClasses.common.PEIM]\n  TestLibraryClass|%s\n'
+        '[LibraryClasses.IA32]\n  TestLibraryClass|%s\n'
+        '[Components]\n  %s\n' % (wrong, correct, component),
+        encoding='utf-8')
+
+    errors, stats = Chk.Checker (workspace).check_dsc (str (dsc))
+    assert errors == [], errors
+    assert stats['resolved'] == 1
 
 
 def test_inf_declares_its_own_library_class (workspace):
@@ -133,6 +185,11 @@ def test_generated_board_macro_components_are_included (workspace, tmp_path):
     for name in ('qemu', 'arlh'):
         platform = str (tmp_path / ('%s-Platform.dsc' % name))
         Chk.gen_platform_dsc (boards[name], platform)
+        generated = Chk.MetaFile (platform, workspace)
+        arch = 'X64' if name == 'arlh' else 'IA32'
+        assert generated.defines['BUILD_ARCH'] == arch
+        assert any (section == 'libraryclasses.%s' % arch.lower ()
+                    for section, _ in generated.entries)
         dsc = Chk.Dsc (os.path.join (workspace, 'BootloaderCorePkg',
                                      'BootloaderCorePkg.dsc'),
                        workspace, {'Platform.dsc': platform})
