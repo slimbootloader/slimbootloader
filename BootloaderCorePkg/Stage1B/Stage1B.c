@@ -133,20 +133,21 @@ AppendHashStore (
   UINT32               OemKeyHashBase;
 
   // Get the Hash store base address
+  OemKeyHashBase = 0;
   Status = LocateComponent ( CONTAINER_KEY_HASH_STORE_SIGNATURE,
                               HASH_STORE_SIGNATURE,
                                 (VOID **)&OemKeyHashBase, NULL);
   DEBUG((DEBUG_INFO, "%a KeyHash Component Base = 0x%x\n", __func__,
                         OemKeyHashBase));
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
   // Component must have LOADER_COMPRESSED_HEADER
   // Update the OEM Key Hash data address
   OemKeyHashBase = (UINT32)(UINTN)(((LOADER_COMPRESSED_HEADER *)(UINTN)OemKeyHashBase)->Data);
   DEBUG((DEBUG_INFO, "%a KeyHash Component Data Base = 0x%x\n", __func__,
                         OemKeyHashBase));
-
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
 
   // Request to load at the end of current hash store in memory
   LdrKeyHashBlob = (HASH_STORE_TABLE *)(UINTN)LdrGlobal->HashStorePtr;
