@@ -27,6 +27,8 @@
 #include <Library/FusaConfigLib.h>
 #include <Library/BoardInitLib.h>
 #include <Library/HobLib.h>
+#include <Library/UefiVariableLib.h>
+#include <Guid/MemoryOverwriteControl.h>
 #include <CpuRegs.h>
 #include <PlatformData.h>
 #include <Register/IgdRegs.h>
@@ -160,8 +162,39 @@ UpdateFspConfig (
   FspmUpd = (FSPM_UPD *)FspmUpdPtr;
   Fspmcfg = &FspmUpd->FspmConfig;
 
+  Fspmcfg->CleanMemory = 0;
+
   FspmUpdCommon = (FSPM_UPD_COMMON_FSP24 *)FspmUpd;
   FspmUpdCommon->FspmArchUpd.NvsBufferPtr         = (UINT32)(UINTN)FindNvsData();
+
+  if ((GetBootMode () == BOOT_ON_FLASH_UPDATE) || (GetBootMode () == BOOT_ON_S3_RESUME)) {
+    DEBUG ((DEBUG_INFO, "MOR: boot mode 0x%X skips MOR clean-memory policy assignment.\n", GetBootMode ()));
+  } else {
+    UINT8                     MorControl;
+    UINTN                     MorControlSize;
+    EFI_STATUS                MorStatus;
+
+    MorControl = 0;
+    MorControlSize = sizeof (MorControl);
+    MorStatus = UefiGetVariable (
+                  MEMORY_OVERWRITE_REQUEST_VARIABLE_NAME,
+                  &gEfiMemoryOverwriteControlDataGuid,
+                  NULL,
+                  &MorControlSize,
+                  &MorControl
+                  );
+
+    DEBUG ((DEBUG_INFO, "MOR: boot mode 0x%X, status=%r, size=%Lu, value=0x%X\n",
+            GetBootMode (), MorStatus, MorControlSize, MorControl));
+
+    if ((MorStatus == EFI_SUCCESS) && (MorControlSize == sizeof (MorControl))) {
+      Fspmcfg->CleanMemory = (BOOLEAN)(MorControl & MOR_CLEAR_MEMORY_BIT_MASK);
+      DEBUG ((DEBUG_INFO, "MOR: effective CleanMemory=%d from bit0\n", Fspmcfg->CleanMemory));
+    } else {
+      Fspmcfg->CleanMemory = 0;
+      DEBUG ((DEBUG_INFO, "MOR: missing or malformed variable; CleanMemory forced to 0\n"));
+    }
+  }
 
   Status = GetTempRamInfo (&CarBase, &CarSize);
   ASSERT_EFI_ERROR (Status);

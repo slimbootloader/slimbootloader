@@ -41,6 +41,10 @@
   WatchDogTimerLib
   PchInfoLib
   FusaConfigLib
+  UefiVariableLib
+
+[Guids]
+  gEfiMemoryOverwriteControlDataGuid
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
