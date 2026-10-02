@@ -236,11 +236,13 @@ InternalSmBusNonBlock (
   // Start the SMBUS transaction and wait for the end.
   //
   ReturnStatus = InternalSmBusStart (IoPortBaseAddress, HostControl);
-  //
-  // Read value from Host Data 0 and Host Data 1 Registers.
-  //
-  Value = (UINT16)(IoRead8 (IoPortBaseAddress + R_SMBUS_IO_HD1) << 8);
-  Value = (UINT16)(Value | IoRead8 (IoPortBaseAddress + R_SMBUS_IO_HD0));
+  if (!RETURN_ERROR (ReturnStatus)) {
+    //
+    // Read value from Host Data 0 and Host Data 1 Registers.
+    //
+    Value = (UINT16)(IoRead8 (IoPortBaseAddress + R_SMBUS_IO_HD1) << 8);
+    Value = (UINT16)(Value | IoRead8 (IoPortBaseAddress + R_SMBUS_IO_HD0));
+  }
   //
   // Clear Host Status Register and Auxiliary Status Register.
   //
