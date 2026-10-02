@@ -294,7 +294,7 @@ UpdateFspConfig (
   Fspmcfg->SmmRelocationEnable      = 0;
 
   Fspmcfg->RMT                      = MemCfgData->RMT;
-  Fspmcfg->BdatEnable               = MemCfgData->BdatEnable;
+  Fspmcfg->MrcBdatEnable            = MemCfgData->BdatEnable;
   Fspmcfg->BdatTestType             = MemCfgData->BdatTestType;
   Fspmcfg->RMC                      = MemCfgData->RMC;
   Fspmcfg->ECT                      = MemCfgData->ECT;
