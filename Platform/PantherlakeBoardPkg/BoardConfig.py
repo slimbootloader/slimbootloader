@@ -232,10 +232,10 @@ class Board(BaseBoard):
             # Allow TCC be enabled by FuSa dlt file
             FusaConfig = ''
 
-            brd_cfg_src_dir = os.path.join(os.environ['PLT_SOURCE'], 'Platform', self.BOARD_PKG_NAME, 'CfgData')
+            brd_cfg_src_dir = os.path.join(os.environ['SBL_SOURCE'], 'Platform', self.BOARD_PKG_NAME, 'CfgData')
             brd_cfg2_src_dir = '.'
             if hasattr(self, 'BOARD_PKG_NAME_OVERRIDE'):
-                brd_cfg2_src_dir = os.path.join(os.environ['PLT_SOURCE'], 'Platform', self.BOARD_PKG_NAME_OVERRIDE, 'CfgData')
+                brd_cfg2_src_dir = os.path.join(os.environ['SBL_SOURCE'], 'Platform', self.BOARD_PKG_NAME_OVERRIDE, 'CfgData')
 
             if os.path.exists(os.path.join(brd_cfg_src_dir, 'CfgData_Fusa_Feature.dlt')):
                 FusaConfig = open (os.path.join(brd_cfg_src_dir, 'CfgData_Fusa_Feature.dlt')).readlines()
@@ -349,10 +349,10 @@ class Board(BaseBoard):
                 os.makedirs(build._fv_dir)
 
             # Generate the dlt files based on feature
-            brd_cfg_src_dir = os.path.join(os.environ['PLT_SOURCE'], 'Platform', self.BOARD_PKG_NAME, 'CfgData')
+            brd_cfg_src_dir = os.path.join(os.environ['SBL_SOURCE'], 'Platform', self.BOARD_PKG_NAME, 'CfgData')
             brd_cfg2_src_dir = '.'
             if hasattr(self, 'BOARD_PKG_NAME_OVERRIDE'):
-                brd_cfg2_src_dir = os.path.join(os.environ['PLT_SOURCE'], 'Platform', self.BOARD_PKG_NAME_OVERRIDE, 'CfgData')
+                brd_cfg2_src_dir = os.path.join(os.environ['SBL_SOURCE'], 'Platform', self.BOARD_PKG_NAME_OVERRIDE, 'CfgData')
             for dlt_file in self._CFGDATA_EXT_FILE:
                 cfg_dlt_file  = os.path.join(brd_cfg_src_dir, dlt_file[len (self._generated_cfg_file_prefix):])
                 if not os.path.exists(cfg_dlt_file):
