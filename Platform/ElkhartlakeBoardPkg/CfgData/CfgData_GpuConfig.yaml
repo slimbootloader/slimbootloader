@@ -95,7 +95,7 @@
       type         : Combo
       option       : $EN_DIS
       help         : >
-                     0- Disable, 1- Enable (Default) Azalia controller
+                     0- Disable (Default), 1- Enable Azalia controller
       length       : 0x01
       value        : 0x00
   - PchHdaDspEnable :

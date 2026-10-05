@@ -424,7 +424,7 @@
       type         : Combo
       option       : 0x1:Enabled, 0x0:Disabled
       help         : >
-                     0- Disable, 1- Enable (Default) Azalia controller
+                     0- Disable (Default), 1- Enable Azalia controller
       length       : 0x0001
       value        : 0x0
   - PchHdaDspEnable :
