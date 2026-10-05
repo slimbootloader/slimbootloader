@@ -264,6 +264,7 @@ class BaseBoard(object):
         self.PLD_HEAP_SIZE         = 0x02000000
         self.PLD_STACK_SIZE        = 0x00010000
         self.PLD_RSVD_MEM_SIZE     = 0x00004000
+        self.EXT_FS_MAX_BLOCK_GROUPS = 0x00002000
 
         # These memory sizes need to be page aligned
         self.LOADER_RSVD_MEM_SIZE         = 0x0038C000

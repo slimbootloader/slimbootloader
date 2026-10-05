@@ -321,6 +321,10 @@
   #     BIT2    - Print CSME boot performance data.<BR>
   gPlatformCommonLibTokenSpaceGuid.PcdBootPerformanceMask | 0x00000001 | UINT32 | 0x00010092
 
+  ## Maximum number of block groups accepted by Ext2/3/4 filesystems.
+  #  This bounds memory allocated for filesystem group descriptors.
+  gPlatformCommonLibTokenSpaceGuid.PcdExtFsMaxBlockGroups | 0x00002000 | UINT32 | 0x00010099
+
   ## Indicates if Universal payload support FDT
   #-  PcdHandOffFdtEnable is TRUE, HandOffData is FDT
   #-  PcdHandOffFdtEnable is FALSE, HandOffData is HOB
