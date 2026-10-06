@@ -305,8 +305,10 @@ GpioInit (
   // GpioItemCount walks a fixed-size bit mask and sizes the output buffer; the config
   // data does not bound it.
   //
-  if (GpioCfgCurrHdr->GpioItemCount > sizeof (GpioCfgCurrHdr->GpioBaseTableBitMask) * 8) {
-    DEBUG ((DEBUG_ERROR, "GPIO CFGDATA item count (%d) out of range\n", GpioCfgCurrHdr->GpioItemCount));
+  if ((GpioCfgCurrHdr->GpioItemCount > sizeof (GpioCfgCurrHdr->GpioBaseTableBitMask) * 8) ||
+      (GpioCfgCurrHdr->GpioItemSize != sizeof (GPIO_CONFIG_SMIP))) {
+    DEBUG ((DEBUG_ERROR, "GPIO CFGDATA item count (%d) or size (%d) out of range\n",
+            GpioCfgCurrHdr->GpioItemCount, GpioCfgCurrHdr->GpioItemSize));
     return;
   }
 
