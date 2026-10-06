@@ -923,7 +923,7 @@
         type         : Combo
         option       : 0x1:Enabled, 0x0:Disabled
         help         : >
-                       Lock PCU Thermal Management registers. Enable(Default)=1, Disable=0
+                       Lock PCU Thermal Management registers. Enable=1, Disable(Default)=0
         length       : 0x0001
         value        : 0x0
   - !expand { MEM_TMPL : [ Training ] }
