@@ -39,6 +39,8 @@ CommonExceptionHandler (
   }
 
   DEBUG ((DEBUG_ERROR, "Exception #%d from 0x%04X:0x%08X !!!\n", ExceptionType, (UINT32)Ptr[1], (UINT32)Ptr[0]));
+  // Print the full RIP and RSP first: the dump below faults again if RIP is not a valid address.
+  DEBUG ((DEBUG_ERROR, "RIP 0x%016lX RSP 0x%016lX RFLAGS 0x%08lX\n", (UINT64)Ptr[0], (UINT64)Ptr[3], (UINT64)Ptr[2]));
   DumpHex(0, Ptr[0] - 32, 64, (UINT8 *)(Ptr[0] - 32));
 
   CpuHalt (NULL);

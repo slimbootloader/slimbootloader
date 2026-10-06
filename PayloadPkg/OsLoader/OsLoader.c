@@ -1432,6 +1432,7 @@ RunShell (
   if (FixedPcdGet8 (PcdShellEnabled)) {
     LocalConsoleInit (FALSE);
 
+    RegisterAsanTestCommand ();
     Shell (Timeout);
   }
 }

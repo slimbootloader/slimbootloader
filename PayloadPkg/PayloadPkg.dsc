@@ -50,6 +50,7 @@
   ConsoleOutLib | BootloaderCommonPkg/Library/ConsoleOutLib/ConsoleOutLib.inf
   GraphicsLib | BootloaderCommonPkg/Library/GraphicsLib/GraphicsLib.inf
   MemoryAllocationLib | BootloaderCommonPkg/Library/FullMemoryAllocationLib/FullMemoryAllocationLib.inf
+  AsanLib | BootloaderCommonPkg/Library/AsanLibNull/AsanLibNull.inf
   ModuleEntryLib | BootloaderCommonPkg/Library/ModuleEntryLib/ModuleEntryLib.inf
   TimeStampLib | BootloaderCommonPkg/Library/TimeStampLib/TimeStampLib.inf
   LoaderPerformanceLib | BootloaderCommonPkg/Library/LoaderPerformanceLib/LoaderPerformanceLib.inf

@@ -549,4 +549,13 @@ CallExtraModule (
   IN   LOADED_IMAGE    *LoadedImage
   );
 
+/**
+  Add the "asan" shell test command when AddressSanitizer is enabled.
+
+**/
+VOID
+RegisterAsanTestCommand (
+  VOID
+  );
+
 #endif

@@ -10,6 +10,33 @@
 #include "ShellCmds.h"
 #include "Shell.h"
 
+#define MAX_ADDED_SHELL_COMMANDS  8
+
+STATIC CONST SHELL_COMMAND  *mAddedShellCommands[MAX_ADDED_SHELL_COMMANDS];
+STATIC UINTN                mAddedShellCommandCount;
+
+/**
+  Add a command to be registered each time the shell starts.
+
+  @param[in]  ShellCommand A Shell Command to be added
+
+  @retval EFI_SUCCESS
+  @retval EFI_OUT_OF_RESOURCES
+**/
+EFI_STATUS
+EFIAPI
+ShellAddCommand (
+  IN  CONST SHELL_COMMAND   *ShellCommand
+  )
+{
+  if (mAddedShellCommandCount >= MAX_ADDED_SHELL_COMMANDS) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  mAddedShellCommands[mAddedShellCommandCount++] = ShellCommand;
+  return EFI_SUCCESS;
+}
+
 /**
   Load shell commands.
 
@@ -25,6 +52,7 @@ LoadShellCommands (
 {
   CONST SHELL_COMMAND **ShellExtensionCmds;
   CONST SHELL_COMMAND **Iter;
+  UINTN               Index;
 
   // Basic Shell commands
   ShellCommandRegister (Shell, &ShellCommandExit);
@@ -35,6 +63,10 @@ LoadShellCommands (
   ShellCommandRegister (Shell, &ShellCommandMtrr);
   ShellCommandRegister (Shell, &ShellCommandUcode);
   ShellCommandRegister (Shell, &ShellCommandCls);
+
+  for (Index = 0; Index < mAddedShellCommandCount; Index++) {
+    ShellCommandRegister (Shell, mAddedShellCommands[Index]);
+  }
 
   if (!FeaturePcdGet (PcdMiniShellEnabled)) {
     // More Shell commands
