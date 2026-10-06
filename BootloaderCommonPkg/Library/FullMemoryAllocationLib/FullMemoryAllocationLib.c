@@ -7,6 +7,7 @@
 **/
 
 #include <Imem.h>
+#include <Library/PcdLib.h>
 #include <Library/BlMemoryAllocationLib.h>
 
 /**
@@ -26,15 +27,29 @@ AddMemoryResourceRange (
   )
 {
   UINTN                   Index;
+  UINTN                   Pages;
+  UINTN                   ShadowPages;
 
   CoreInitializePool ();
   CoreInitializePages ();
 
   for (Index = 0; (Index < Count) && (MemoryRanges[Index].Type != EfiMaxMemoryType); Index++) {
-    if (MemoryRanges[Index].NumberOfPages > 0) {
-      CoreAddMemoryDescriptor (MemoryRanges[Index].Type, MemoryRanges[Index].BaseAddress,
-                               MemoryRanges[Index].NumberOfPages, MEMORY_ATTRIBUTE_DEFAULT);
+    Pages = MemoryRanges[Index].NumberOfPages;
+    if (Pages == 0) {
+      continue;
     }
+
+    // ASAN shadow is carved from the top of the heap
+    if (FeaturePcdGet (PcdEnableAsan) && (MemoryRanges[Index].Type == EfiBootServicesData)) {
+      ShadowPages = EFI_SIZE_TO_PAGES (AsanGetShadowSize (EFI_PAGES_TO_SIZE (Pages)));
+      ASSERT (ShadowPages < Pages);
+      Pages -= ShadowPages;
+      AsanInitialize ((UINTN)MemoryRanges[Index].BaseAddress, EFI_PAGES_TO_SIZE (Pages),
+                      (VOID *)(UINTN)(MemoryRanges[Index].BaseAddress + EFI_PAGES_TO_SIZE (Pages)));
+    }
+
+    CoreAddMemoryDescriptor (MemoryRanges[Index].Type, MemoryRanges[Index].BaseAddress,
+                             Pages, MEMORY_ATTRIBUTE_DEFAULT);
   }
 }
 

@@ -36,3 +36,4 @@
   DebugLib
   BaseMemoryLib
   BootloaderCoreLib
+  AsanLib
