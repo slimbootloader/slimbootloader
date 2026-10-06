@@ -337,6 +337,10 @@ GpioInit (
   }
 
   GpioCfgDataBuffer = (VOID *)AllocateTemporaryMemory (MaxEntries * sizeof (GPIO_CONFIG_SMIP));
+  if (GpioCfgDataBuffer == NULL) {
+    DEBUG ((DEBUG_ERROR, "Cannot allocate GPIO configuration buffer\n"));
+    return;
+  }
   GpioConfigSmip    = (GPIO_CONFIG_SMIP *)GpioCfgDataBuffer;
   SmipEntry         = NULL;
   GpioEntries       = 0;
