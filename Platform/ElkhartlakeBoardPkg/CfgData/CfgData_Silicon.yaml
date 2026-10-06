@@ -33,7 +33,7 @@
       type         : Combo
       option       : $EN_DIS
       help         : >
-                     Enable- Enable PeiGraphicsPeimInit, Disable(Default)- Disable PeiGraphicsPeimInit
+                     Enable(Default)- Enable PeiGraphicsPeimInit, Disable- Disable PeiGraphicsPeimInit
       length       : 0x01
       value        : 0x1
   - LogoPtr      :
