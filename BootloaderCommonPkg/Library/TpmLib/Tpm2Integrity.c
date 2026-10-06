@@ -128,6 +128,11 @@ Tpm2PcrExtend (
     return EFI_BUFFER_TOO_SMALL;
   }
 
+  if (ResultBufSize < sizeof (TPM2_RESPONSE_HEADER)) {
+    DEBUG ((DEBUG_ERROR, "Tpm2PcrExtend: ResultBufSize error - %x\r\n", ResultBufSize));
+    return EFI_DEVICE_ERROR;
+  }
+
   //
   // Validate response headers
   //
@@ -244,6 +249,16 @@ Tpm2PcrAllocate (
   if (ResultBufSize > sizeof (Res)) {
     DEBUG ((DEBUG_ERROR, "Tpm2PcrAllocate: Failed ExecuteCommand: Buffer Too Small\r\n"));
     Status = EFI_BUFFER_TOO_SMALL;
+    goto Done;
+  }
+
+  //
+  // Every field up to SizeAvailable is unmarshalled below; the trailing auth session is
+  // variable length, so it is excluded from the minimum.
+  //
+  if (ResultBufSize < OFFSET_OF (TPM2_PCR_ALLOCATE_RESPONSE, AuthSession)) {
+    DEBUG ((DEBUG_ERROR, "Tpm2PcrAllocate: ResultBufSize error - %x\r\n", ResultBufSize));
+    Status = EFI_DEVICE_ERROR;
     goto Done;
   }
 

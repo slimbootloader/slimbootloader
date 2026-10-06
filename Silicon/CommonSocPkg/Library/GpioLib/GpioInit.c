@@ -151,6 +151,11 @@ GpioUnlockPadsForAGroup (
   Group      = GpioGetGroupFromGpioPad (GpioData->GpioPad);
   GroupIndex = GpioGetGroupIndexFromGpioPad (GpioData->GpioPad);
 
+  if (GroupIndex >= GpioGroupInfoLength) {
+    DEBUG ((GPIO_DEBUG_ERROR, "GPIO ERROR: Group index (%d) exceeds group table length (%d)\n", GroupIndex, GpioGroupInfoLength));
+    return EFI_INVALID_PARAMETER;
+  }
+
   ZeroMem (PadsToUnlock, sizeof (PadsToUnlock));
   //
   // Loop through pads for one group. If pad belongs to a different group then
@@ -242,6 +247,16 @@ GpioConfigurePch (
 
     GpioData   = &GpioInitTableAddress[Index];
     GroupIndex = GpioGetGroupIndexFromGpioPad (GpioData->GpioPad);
+
+    //
+    // Every GpioGroupInfo access below uses this index, so one check covers the group.
+    //
+    if (GroupIndex >= GpioGroupInfoLength) {
+      DEBUG ((GPIO_DEBUG_ERROR, "GPIO ERROR: Group index (%d) for pad 0x%08x exceeds group table length (%d)\n", GroupIndex, GpioData->GpioPad, GpioGroupInfoLength));
+      Index++;
+      continue;
+    }
+
     GpioCom    = GpioGroupInfo[GroupIndex].Community;
 
     DEBUG_CODE_BEGIN();
@@ -652,6 +667,8 @@ ConfigureGpio (
   UINT32         GpioEntries;
   UINT32         Index;
   UINT32         Offset;
+  UINT32         MaxEntries;
+  UINT32         BitMaskBytes;
   UINT8          *GpioCfgDataBuffer;
   UINT8          *GpioTable;
 
@@ -704,7 +721,32 @@ ConfigureGpio (
   }
 
   Offset     = 0;
-  GpioTable  = (UINT8 *)AllocateTemporaryMemory (0);  //allocate new buffer
+
+  //
+  // ItemCount drives both the BaseTableBitMask walk and the output buffer size, and neither
+  // is bounded by the config data itself. The mask lives between the fixed header fields and
+  // HeaderSize, so that is what limits how many entries can be described.
+  //
+  BitMaskBytes = 0;
+  if (GpioCfgCurrHdr->HeaderSize > OFFSET_OF (ARRAY_CFG_HDR, BaseTableBitMask)) {
+    BitMaskBytes = GpioCfgCurrHdr->HeaderSize - OFFSET_OF (ARRAY_CFG_HDR, BaseTableBitMask);
+  }
+
+  if ((GpioCfgHdr->ItemCount > (UINT32)BitMaskBytes * 8) ||
+      (GpioCfgCurrHdr->ItemCount > (UINT32)BitMaskBytes * 8) ||
+      (GpioCfgHdr->ItemSize == 0) ||
+      (GpioCfgHdr->ItemSize > sizeof (GPIO_INIT_CONFIG) - sizeof (GPIO_PAD))) {
+    DEBUG ((GPIO_DEBUG_ERROR, "GPIO CFGDATA item count (%d) or size (%d) out of range\n",
+            GpioCfgHdr->ItemCount, GpioCfgHdr->ItemSize));
+    return EFI_LOAD_ERROR;
+  }
+
+  MaxEntries = GpioCfgHdr->ItemCount;
+  if (GpioCfgBaseHdr != NULL) {
+    MaxEntries += GpioCfgCurrHdr->ItemCount;
+  }
+
+  GpioTable  = (UINT8 *)AllocateTemporaryMemory (MaxEntries * (sizeof (GPIO_PAD) + GpioCfgHdr->ItemSize));
   if (GpioTable == NULL) {
     DEBUG ((GPIO_DEBUG_ERROR, "Cannot allocate buffer for GpioTable\n"));
     return EFI_OUT_OF_RESOURCES;

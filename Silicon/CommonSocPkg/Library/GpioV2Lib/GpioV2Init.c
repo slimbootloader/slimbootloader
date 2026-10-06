@@ -1363,6 +1363,8 @@ ConfigureGpioV2 (
   UINT32                          GpioEntries;
   UINT32                          Index;
   UINT32                          Offset;
+  UINT32                          MaxEntries;
+  UINT32                          BitMaskBytes;
   GPIOV2_INIT_CONFIG              *GpioCfgBuffer;
   UINT8                           *GpioTable;
 
@@ -1405,7 +1407,31 @@ ConfigureGpioV2 (
     GpioCfgHdr = GpioCfgCurrHdr;
   }
 
-  GpioTable = (UINT8 *) AllocateTemporaryMemory (0);
+  //
+  // ItemCount drives both the BaseTableBitMask walk and the output buffer size, and neither
+  // is bounded by the config data itself. The mask lives between the fixed header fields and
+  // HeaderSize, so that is what limits how many entries can be described.
+  //
+  BitMaskBytes = 0;
+  if (GpioCfgCurrHdr->HeaderSize > OFFSET_OF (ARRAY_CFG_HDR, BaseTableBitMask)) {
+    BitMaskBytes = GpioCfgCurrHdr->HeaderSize - OFFSET_OF (ARRAY_CFG_HDR, BaseTableBitMask);
+  }
+
+  if ((GpioCfgHdr->ItemCount > (UINT32)BitMaskBytes * 8) ||
+      (GpioCfgCurrHdr->ItemCount > (UINT32)BitMaskBytes * 8) ||
+      (GpioCfgHdr->ItemSize == 0) ||
+      (GpioCfgHdr->ItemSize > sizeof (GPIOV2_INIT_CONFIG) - sizeof (GPIOV2_PAD))) {
+    DEBUG ((DEBUG_ERROR, "GPIO CFGDATA item count (%d) or size (%d) out of range\n",
+            GpioCfgHdr->ItemCount, GpioCfgHdr->ItemSize));
+    return EFI_LOAD_ERROR;
+  }
+
+  MaxEntries = GpioCfgHdr->ItemCount;
+  if (GpioCfgBaseHdr != NULL) {
+    MaxEntries += GpioCfgCurrHdr->ItemCount;
+  }
+
+  GpioTable = (UINT8 *) AllocateTemporaryMemory (MaxEntries * (sizeof (GPIOV2_PAD) + GpioCfgHdr->ItemSize));
   ASSERT (GpioTable != NULL);
   GpioCfgBuffer = (GPIOV2_INIT_CONFIG *) GpioTable;
 
