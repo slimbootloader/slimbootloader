@@ -119,9 +119,10 @@ EnableFlashProtection (
     // Initialize flash protection
     //
     Status = SpiGetRegionAddress (FlashRegionBios, &BaseAddress, &RegionSize);
-    DEBUG ((DEBUG_INFO, "SpiGetRegionAddress Status: %r, BaseAddress: %08x, RegionSize: %08x\n", Status, BaseAddress, RegionSize));
+    DEBUG ((DEBUG_INFO, "SpiGetRegionAddress Status: %r\n", Status));
 
     if (!EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_INFO, "BIOS region BaseAddress: %08x, RegionSize: %08x\n", BaseAddress, RegionSize));
       FlashProtectionConfig.ProtectRange[0].WriteProtectionEnable = TRUE;
       FlashProtectionConfig.ProtectRange[0].ReadProtectionEnable  = FALSE;
       FlashProtectionConfig.ProtectRange[2].WriteProtectionEnable = FALSE;
@@ -130,18 +131,22 @@ EnableFlashProtection (
       FlashProtectionConfig.ProtectRange[3].ReadProtectionEnable  = FALSE;
       FlashProtectionConfig.ProtectRange[4].WriteProtectionEnable = FALSE;
       FlashProtectionConfig.ProtectRange[4].ReadProtectionEnable  = FALSE;
-      if (GetPayloadId() != 0) {
-        FlashProtectionConfig.ProtectRange[1].WriteProtectionEnable = TRUE;
-        FlashProtectionConfig.ProtectRange[1].ReadProtectionEnable  = FALSE;
+      if (GetPayloadId() == UEFI_PAYLOAD_ID_SIGNATURE) {
         //If payloadID is UEFI, then making UEFI variable region as Un protected
         Status = GetComponentInfo (FLASH_MAP_SIG_UEFIVARIABLE, &UEFIVarAddress, &UEFIVarSize);
-        DEBUG ((DEBUG_INFO, "GetComponentInfo Status: %r, UEFIVarAddress: %08x, UEFIVarSize: %08x\n", Status, UEFIVarAddress, UEFIVarSize));
         if (!EFI_ERROR (Status)) {
+          DEBUG ((DEBUG_INFO, "GetComponentInfo Status: %r, UEFIVarAddress: %08x, UEFIVarSize: %08x\n", Status, UEFIVarAddress, UEFIVarSize));
+          FlashProtectionConfig.ProtectRange[1].WriteProtectionEnable = TRUE;
+          FlashProtectionConfig.ProtectRange[1].ReadProtectionEnable  = FALSE;
           UEFIVarAddress -= ((UINT32)(~RegionSize) + 1);
           FlashProtectionConfig.ProtectRange[0].ProtectedRangeBase  = (UINT16)(BaseAddress >> 12);
           FlashProtectionConfig.ProtectRange[0].ProtectedRangeLimit = (UINT16)((BaseAddress + UEFIVarAddress - 1) >> 12);
           FlashProtectionConfig.ProtectRange[1].ProtectedRangeBase  = (UINT16)((BaseAddress + UEFIVarAddress + UEFIVarSize) >> 12);
           FlashProtectionConfig.ProtectRange[1].ProtectedRangeLimit = (UINT16)(((BaseAddress + RegionSize) - 1) >> 12);
+        } else {
+          DEBUG ((DEBUG_ERROR, "GetComponentInfo for UEFI variables failed: %r; protecting the full BIOS region\n", Status));
+          FlashProtectionConfig.ProtectRange[0].ProtectedRangeBase  = (UINT16)(BaseAddress >> 12);
+          FlashProtectionConfig.ProtectRange[0].ProtectedRangeLimit = (UINT16)(((BaseAddress + RegionSize) - 1) >> 12);
         }
       } else {
         FlashProtectionConfig.ProtectRange[1].WriteProtectionEnable = FALSE;
