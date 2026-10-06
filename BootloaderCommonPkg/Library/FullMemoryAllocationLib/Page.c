@@ -264,6 +264,8 @@ AllocateMemoryMapEntry (
     FreeDescriptorEntries = CoreAllocatePoolPages (EfiBootServicesData, EFI_SIZE_TO_PAGES (DEFAULT_PAGE_ALLOCATION),
                             DEFAULT_PAGE_ALLOCATION);
     if (FreeDescriptorEntries != NULL) {
+      // Pool pages bypass CoreAllocatePages(), so clear the heap poison left by AsanInitialize().
+      AsanUnpoison (FreeDescriptorEntries, DEFAULT_PAGE_ALLOCATION);
       //
       // Enque the free memmory map entries into the list
       //
@@ -611,6 +613,8 @@ CoreConvertPagesEx (
       } else {
         DEBUG_CLEAR_MEMORY ((VOID *) (UINTN) Start, (UINTN) (RangeEnd - Start + 1));
       }
+      // Poison before CoreFreeMemoryMapStack() may reuse these pages for descriptors.
+      AsanPoison ((VOID *)(UINTN)Start, (UINTN)(RangeEnd - Start + 1), ASAN_SHADOW_HEAP_FREED);
     }
 
     //
@@ -999,6 +1003,9 @@ CoreAllocatePages (
   EFI_STATUS  Status;
 
   Status = CoreInternalAllocatePages (Type, MemoryType, NumberOfPages, Memory);
+  if (!EFI_ERROR (Status)) {
+    AsanUnpoison ((VOID *)(UINTN)*Memory, EFI_PAGES_TO_SIZE (NumberOfPages));
+  }
   return Status;
 }
 
@@ -1100,11 +1107,9 @@ CoreFreePages (
   IN UINTN                 NumberOfPages
   )
 {
-  EFI_STATUS        Status;
   EFI_MEMORY_TYPE   MemoryType;
 
-  Status = CoreInternalFreePages (Memory, NumberOfPages, &MemoryType);
-  return Status;
+  return CoreInternalFreePages (Memory, NumberOfPages, &MemoryType);
 }
 
 /**

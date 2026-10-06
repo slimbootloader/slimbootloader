@@ -1,0 +1,32 @@
+## @file
+#  Minimal AddressSanitizer runtime for modules built with clang -fsanitize=address.
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = AsanLib
+  FILE_GUID                      = 19A66B4B-A328-4181-AA76-93C9196846C6
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = AsanLib
+
+[Sources]
+  AsanLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  PrintLib
+
+[BuildOptions]
+  # The report walks frame pointers for its backtrace.
+  GCC:*_CLANGPDB_*_CC_FLAGS = -fno-omit-frame-pointer

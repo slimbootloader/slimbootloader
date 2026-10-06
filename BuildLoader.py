@@ -28,6 +28,12 @@ from   BuildUtility import *
 
 import glob
 
+# Keep identical to the ASAN flags of the Stage2, OsLoader and FirmwareUpdate components in BootloaderCorePkg.dsc
+ASAN_CC_FLAGS = ('-fsanitize=address -fsanitize-address-use-after-return=never -fno-sanitize-address-use-odr-indicator '
+                 '-mllvm -asan-instrumentation-with-call-threshold=0 -mllvm -asan-max-inline-poisoning-size=0 '
+                 '-mllvm -asan-force-dynamic-shadow=1 -mllvm -asan-stack=1 -mllvm -asan-stack-dynamic-alloca=0 '
+                 '-mllvm -asan-globals=1 -mllvm -asan-constructor-kind=none -fno-omit-frame-pointer -fno-lto')
+
 
 def print_warning(message):
     # Use ANSI yellow for warnings when output is a terminal.
@@ -200,6 +206,75 @@ class BaseBoard(object):
         self.ENABLE_UPL_HANDOFF_FDT = 0
         self.ENABLE_FIPS_SELFTEST   = 0
         self.ENABLE_FSP_S_FV_REBASE = 0
+        # AddressSanitizer for Stage2 and the OsLoader/FirmwareUpdate payloads, CLANGPDB only
+        self.ENABLE_ASAN            = 0
+        # Library INFs instrumented when ENABLE_ASAN is set, written to the generated AsanComponents.dsc.
+        # Boards extend it with their own libraries. Some shared libraries also link in Stage1A/1B, where the ASAN
+        # runtime is disconnected and checks do not run; their instrumentation still increases code and stack size.
+        # Deliberately exclude libraries AsanLib or AsanStubLib use, the allocators, payload startup code and AP code.
+        self._ASAN_LIBS             = [
+            # Payloads
+            'BootloaderCommonPkg/Library/ShellLib/ShellLib.inf',
+            'BootloaderCommonPkg/Library/ShellExtensionLibNull/ShellExtensionLibNull.inf',
+            'BootloaderCommonPkg/Library/ConsoleInLib/ConsoleInLib.inf',
+            'BootloaderCommonPkg/Library/MultibootLib/MultibootLib.inf',
+            'BootloaderCommonPkg/Library/RpmbLib/RpmbLib.inf',
+            'BootloaderCommonPkg/Library/SeedListInfoLib/SeedListInfoLib.inf',
+            'BootloaderCommonPkg/Library/UsbKbLib/UsbKbLib.inf',
+            'PayloadPkg/Library/AbSupportLib/AbSupportLib.inf',
+            'PayloadPkg/Library/SblParameterLib/SblParameterLib.inf',
+            'PayloadPkg/Library/UiSetupLib/UiSetupLib.inf',
+            'BootloaderCommonPkg/Library/AhciLib/AhciLib.inf',
+            'BootloaderCommonPkg/Library/BootOptionLib/BootOptionLib.inf',
+            'BootloaderCommonPkg/Library/Ext23Lib/Ext23Lib.inf',
+            'BootloaderCommonPkg/Library/FatLib/FatLib.inf',
+            'BootloaderCommonPkg/Library/FileSystemLib/FileSystemLib.inf',
+            'BootloaderCommonPkg/Library/IoMmuLib/IoMmuLib.inf',
+            'BootloaderCommonPkg/Library/MediaAccessLib/MediaAccessLib.inf',
+            'BootloaderCommonPkg/Library/MemoryDeviceBlockIoLib/MemoryDeviceBlockIoLib.inf',
+            'BootloaderCommonPkg/Library/MmcAccessLib/MmcAccessLib.inf',
+            'BootloaderCommonPkg/Library/MmcTuningLib/MmcTuningLib.inf',
+            'BootloaderCommonPkg/Library/NvmExpressLib/NvmExpressLib.inf',
+            'BootloaderCommonPkg/Library/PartitionLib/PartitionLib.inf',
+            'BootloaderCommonPkg/Library/SpiBlockIoLib/SpiBlockIoLib.inf',
+            'BootloaderCommonPkg/Library/StringSupportLib/StringSupportLib.inf',
+            'BootloaderCommonPkg/Library/UfsBlockIoLib/UfsBlockIoLib.inf',
+            'BootloaderCommonPkg/Library/UsbBlockIoLib/UsbBlockIoLib.inf',
+            'BootloaderCommonPkg/Library/UsbBusLib/UsbBusLib.inf',
+            'BootloaderCommonPkg/Library/UsbInitLib/UsbInitLib.inf',
+            'BootloaderCommonPkg/Library/XhciLib/XhciLib.inf',
+            # Payloads and Stage2
+            'BootloaderCommonPkg/Library/ElfLib/ElfLib.inf',
+            'BootloaderCommonPkg/Library/LinuxLib/LinuxLib.inf',
+            'BootloaderCommonPkg/Library/UniversalPayloadLib/UniversalPayloadLib.inf',
+            # Stage2
+            '$(SOC_INIT_STAGE2_LIB_INF_FILE)',
+            '$(BRD_INIT_STAGE2_LIB_INF_FILE)',
+            'BootloaderCorePkg/Library/AcpiInitLib/AcpiInitLib.inf',
+            'BootloaderCorePkg/Library/SmbiosInitLib/SmbiosInitLib.inf',
+            'BootloaderCorePkg/Library/S3SaveRestoreLib/S3SaveRestoreLib.inf',
+            'BootloaderCorePkg/Library/FspApiLib/FspsApiLib.inf',
+            'BootloaderCorePkg/Library/PciEnumerationLib/PciEnumerationLib.inf',
+            'BootloaderCommonPkg/Library/FitLib/FitLib.inf',
+            'BootloaderCommonPkg/Library/BuildFdtLib/BuildFdtLib.inf',
+            'MdePkg/Library/BaseFdtLib/BaseFdtLib.inf',
+            # Shared with Stage1A/1B: instrumented code runs unchecked there because no runtime is connected.
+            # This increases Stage1 code and stack size, and can slow operations such as decompression.
+            'BootloaderCommonPkg/Library/ContainerLib/ContainerLib.inf',
+            'BootloaderCommonPkg/Library/LitePeCoffLib/LitePeCoffLib.inf',
+            'BootloaderCommonPkg/Library/LiteFvLib/LiteFvLib.inf',
+            'BootloaderCommonPkg/Library/DecompressLib/DecompressLib.inf',
+            'BootloaderCommonPkg/Library/LzmaCustomDecompressLib/LzmaCustomDecompressLib.inf',
+            'BootloaderCommonPkg/Library/Lz4CompressLib/Lz4CompressLib.inf',
+            'BootloaderCommonPkg/Library/ConfigDataLib/ConfigDataLib.inf',
+            'BootloaderCommonPkg/Library/SecureBootLib/SecureBootLib.inf',
+            'BootloaderCommonPkg/Library/TpmLib/TpmLib.inf',
+            'BootloaderCommonPkg/Library/HobLib/HobLib.inf',
+            'BootloaderCorePkg/Library/HobBuildLib/HobBuildLib.inf',
+            'BootloaderCommonPkg/Library/Crc32Lib/Crc32Lib.inf',
+            'BootloaderCommonPkg/Library/SortLib/SortLib.inf',
+            'BootloaderCommonPkg/Library/LiteVariableLib/LiteVariableLib.inf',
+        ]
 
         self.SUPPORT_ARI           = 0
         self.SUPPORT_SR_IOV        = 0
@@ -238,6 +313,7 @@ class BaseBoard(object):
         self.STAGE1B_XIP           = 1
         self.REMAP_STAGE1B         = 0
         self.STAGE1_STACK_BASE_OFFSET = 0
+
         self.STAGE2_XIP            = 0
         self.STAGE2_LOAD_HIGH      = 1
         self.PAYLOAD_LOAD_HIGH     = 1
@@ -320,6 +396,66 @@ class BaseBoard(object):
 
         for key, value in list(kwargs.items()):
             setattr(self, '%s' % key, value)
+
+    def AddPlatformDscAsanLibraries(self, dsc):
+        """Add eligible, resolved library instances from GetPlatformDsc to ASAN."""
+        excluded_classes = {
+            'AsanLib', 'AspeedGfxLib', 'BaseLib', 'BaseMemoryLib',
+            'ConsoleOutLib', 'CryptoLib', 'DebugLib', 'DebugLogBufferLib',
+            'GraphicsInitLib', 'GraphicsLib', 'MemoryAllocationLib',
+            'BootloaderLib', 'ModuleEntryLib', 'MpInitLib', 'MpServiceLib',
+            'MtrrLib', 'PagingLib', 'PayloadEntryLib', 'PayloadSupportLib',
+            'PcdLib', 'PlatformHookLib', 'PrintLib', 'SerialPortLib', 'StageLib',
+            'SynchronizationLib', 'CpuExceptionLib', 'FspSupportLib',
+        }
+        excluded_infs = {
+            'asanlib.inf', 'asanlibnull.inf', 'asanstublib.inf',
+            'serialportlib.inf', 'debuglogbufferlib.inf',
+            'fullmemoryallocationlib.inf', 'memoryallocationlib.inf',
+            'payloadentrylib.inf', 'payloadlib.inf', 'payloadsupportlib.inf',
+            'platformhooklib.inf', 'mpinitlib.inf', 'mpservicelib.inf',
+            'mtrrlib.inf', 'basesynchronizationlib.inf', 'stagelib.inf',
+            'moduleentrylib.inf', 'paginglib.inf', 'cpuexceptionlib.inf',
+            'fspsupportlib.inf', 'fsptapilib.inf', 'fspmapilib.inf',
+            'bootloadercorelib.inf', 'bootloaderlib.inf', 'pcdlib.inf',
+            'ippcrypto2liby8.inf', 'emugfxinitlib.inf', 'aspeedgfxlib.inf',
+            'graphicslib.inf', 'consoleoutlib.inf',
+        }
+        asan_libs = getattr(self, '_ASAN_LIBS', None)
+        if asan_libs is None:
+            return
+
+        # DSC macro values are the board's exported attributes. Expand them
+        # before adding entries; a library-class name is not an INF path.
+        macro_values = {
+            name: value for name, value in vars(self).items()
+            if isinstance(value, (str, int, float))
+        }
+
+        def resolve_inf(inf):
+            for _ in range(len(macro_values) + 1):
+                previous = inf
+                for name, value in macro_values.items():
+                    inf = inf.replace('$({})'.format(name), str(value))
+                if inf == previous:
+                    break
+            return inf.replace('\\', '/')
+
+        existing = {resolve_inf(inf).lower() for inf in asan_libs}
+        for section, entries in dsc.items():
+            if not section.startswith('LibraryClasses'):
+                continue
+            for entry in entries:
+                library_class, separator, inf = entry.partition('|')
+                if not separator or not inf.strip().lower().endswith('.inf'):
+                    continue
+                inf = resolve_inf(inf.strip())
+                inf_name = os.path.basename(inf).lower()
+                if ('$(' in inf or library_class.strip() in excluded_classes or
+                        inf_name in excluded_infs or inf.lower() in existing):
+                    continue
+                asan_libs.append(inf)
+                existing.add(inf.lower())
 
 
 class Build(object):
@@ -988,6 +1124,20 @@ class Build(object):
         if update:
                 open (file, 'w').write(text)
 
+        # Included by the [Components] section of BootloaderCorePkg.dsc when ENABLE_ASAN is set
+        lines = ['%s\n' % AUTO_GEN_DSC_HDR, '# Libraries instrumented with AddressSanitizer\n']
+        if self._board.ENABLE_ASAN:
+            libs = list(getattr(self._board, '_ASAN_LIBS', []))
+            if self._board.ENABLE_FWU:
+                libs.append('$(SOC_FWU_LIB_INF_FILE)')
+            # GetPlatformDsc () may extend _ASAN_LIBS each time it runs, and a component may be listed only once
+            for inf in dict.fromkeys(libs):
+                lines.append('  %s {\n    <BuildOptions>\n      *_CLANGPDB_*_CC_FLAGS = %s\n  }\n' % (inf, ASAN_CC_FLAGS))
+        text = ''.join(lines)
+        asan_file = os.path.join(os.path.dirname(file), 'AsanComponents.dsc')
+        if not os.path.exists(asan_file) or get_file_data (asan_file, 'r') != text:
+            open (asan_file, 'w').write(text)
+
 
     def create_platform_vars (self):
         for comp in self._comp_list:
@@ -1518,6 +1668,8 @@ class Build(object):
         # Verify toolchains first
         verify_toolchains(self._board._TOOL_CHAIN, toolchain_dict)
         self._toolchain = os.environ['TOOL_CHAIN']
+        if self._board.ENABLE_ASAN and self._toolchain != 'CLANGPDB':
+            raise Exception ('ENABLE_ASAN requires the CLANGPDB toolchain (use -t clang), not %s !' % self._toolchain)
         self._fv_dir = os.path.join(self._workspace, 'Build', 'BootloaderCorePkg', '%s_%s' % (self._target, self._toolchain), 'FV')
 
         # Check if BaseTools has been compiled
@@ -1753,7 +1905,8 @@ def main():
                                         _TOOL_CHAIN       = args.toolchain,   \
                                         _PAYLOAD_NAME     = args.payload,     \
                                         _FSP_PATH_NAME    = args.fsppath,     \
-                                        KEY_GEN           = args.keygen
+                                        KEY_GEN           = args.keygen,      \
+                                        ENABLE_ASAN       = 1 if args.asan else 0,
                                         );
                 os.environ['PLT_SOURCE']  = os.path.abspath (os.path.join (os.path.dirname (board_cfgs[index]), '../..'))
                 Build(board).build()
@@ -1770,6 +1923,7 @@ def main():
     buildp.add_argument('board', metavar='board', choices=board_names, help='Board Name (%s)' % ', '.join(board_names))
     buildp.add_argument('-k', '--keygen', action='store_true', help='Generate default keys for signing')
     buildp.add_argument('-t', '--toolchain', dest='toolchain', type=str, default='', help='Preferred toolchain name')
+    buildp.add_argument('--asan', action='store_true', help='Instrument Stage2, OsLoader/FirmwareUpdate payloads and selected libraries with clang AddressSanitizer (requires -t clang, clang >= 15)')
     buildp.set_defaults(func=cmd_build)
 
     def cmd_clean(args):

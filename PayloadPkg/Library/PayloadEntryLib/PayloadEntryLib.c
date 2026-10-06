@@ -24,9 +24,47 @@
 #include <Library/TimeStampLib.h>
 #include <Library/GraphicsLib.h>
 #include <Library/PagingLib.h>
+#include <Library/AsanLib.h>
+#include <Service/AsanService.h>
 #include <Guid/BootLoaderVersionGuid.h>
 #include <Guid/LoaderPlatformInfoGuid.h>
 #include <UniversalPayload/AcpiTable.h>
+
+/**
+  Use the AddressSanitizer runtime Stage2 publishes, so Stage2 and the payload share one.
+
+  The payload global data does not exist yet, so the service list is read from the HOB.
+
+  @param[in] HobList         The HOB list pointer for payload.
+
+**/
+STATIC
+VOID
+UseStage2Asan (
+  IN VOID  *HobList
+  )
+{
+  EFI_HOB_GUID_TYPE  *GuidHob;
+  SERVICES_LIST      *ServiceList;
+  UINT32             Index;
+
+  if (AsanGetShadowSize (EFI_PAGE_SIZE) == 0) {
+    return;
+  }
+
+  GuidHob = GetNextGuidHob (&gBootLoaderServiceGuid, HobList);
+  if (GuidHob == NULL) {
+    return;
+  }
+
+  ServiceList = &((BOOT_LOADER_SERVICES_LIST *)GET_GUID_HOB_DATA (GuidHob))->ServiceList;
+  for (Index = 0; Index < ServiceList->Count; Index++) {
+    if ((ServiceList->Header[Index] != NULL) && (ServiceList->Header[Index]->Signature == ASAN_SERVICE_SIGNATURE)) {
+      AsanUseService (ServiceList->Header[Index]);
+      return;
+    }
+  }
+}
 
 /**
   Initialize critical payload global data.
@@ -65,6 +103,7 @@ PayloadInit (
   EFI_MEMORY_RANGE_ENTRY    MemoryRanges[3];
 
   PcdStatus1 = PcdSet32S (PcdPayloadHobList, (UINT32)(UINTN)HobList);
+  UseStage2Asan (HobList);
 
   //
   // Payload Memmap
@@ -166,6 +205,30 @@ PayloadInit (
 }
 
 /**
+  Allocate AddressSanitizer shadow memory for a region from the heap.
+
+  @param[in] Size     Region size in bytes.
+
+  @retval    Shadow buffer, or NULL if AddressSanitizer is disabled or memory is short.
+
+**/
+STATIC
+VOID *
+AllocateAsanShadow (
+  IN UINTN  Size
+  )
+{
+  UINTN  ShadowSize;
+
+  ShadowSize = AsanGetShadowSize (Size);
+  if (ShadowSize == 0) {
+    return NULL;
+  }
+
+  return AllocatePages (EFI_SIZE_TO_PAGES (ShadowSize));
+}
+
+/**
   The payload common Entry Point for C code.
 
   @param[in] Params         The HOB list pointer for payload.
@@ -195,6 +258,9 @@ SecStartup (
   UINT32                    StackBase;
   UINT32                    StackSize;
   LOADER_PLATFORM_INFO      *LoaderPlatformInfo;
+  VOID                      *AsanShadow;
+  UINTN                     AsanGlobalsBase;
+  UINTN                     AsanGlobalsSize;
 
   TimeStamp = ReadTimeStamp ();
 
@@ -289,6 +355,18 @@ SecStartup (
     STACK_DEBUG_FILL_PATTERN
     );
   DEBUG_CODE_END ();
+
+  // Track the stack before switching to it so no instrumented frame predates its shadow.
+  AsanShadow = AllocateAsanShadow (StackSize);
+  if (AsanShadow != NULL) {
+    AsanTrackStack (StackBase, StackSize, AsanShadow);
+  }
+
+  AsanGlobalsSize = AsanGetGlobalsRange (&AsanGlobalsBase);
+  AsanShadow      = AllocateAsanShadow (AsanGlobalsSize);
+  if (AsanShadow != NULL) {
+    AsanTrackGlobals (AsanGlobalsBase, AsanGlobalsSize, AsanShadow);
+  }
 
   SwitchStack ((SWITCH_STACK_ENTRY_POINT)PayloadMain, &Params, PldBase, (VOID *) (UINTN)HeapBase);
 }
