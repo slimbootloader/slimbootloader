@@ -806,8 +806,7 @@ GpioInit (
   //
   if ((GpioCfgHdr->GpioItemCount > sizeof (GpioCfgCurrHdr->GpioBaseTableBitMask) * 8) ||
       (GpioCfgCurrHdr->GpioItemCount > sizeof (GpioCfgCurrHdr->GpioBaseTableBitMask) * 8) ||
-      (GpioCfgHdr->GpioItemSize == 0) ||
-      (GpioCfgHdr->GpioItemSize > sizeof (GPIO_INIT_CONFIG) - sizeof (GPIO_PAD))) {
+      (GpioCfgHdr->GpioItemSize != sizeof (GPIO_INIT_CONFIG) - sizeof (GPIO_PAD))) {
     DEBUG ((DEBUG_ERROR, "GPIO CFGDATA item count (%d) or size (%d) out of range\n",
             GpioCfgHdr->GpioItemCount, GpioCfgHdr->GpioItemSize));
     return EFI_LOAD_ERROR;

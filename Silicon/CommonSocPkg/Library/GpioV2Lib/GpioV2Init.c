@@ -1419,8 +1419,7 @@ ConfigureGpioV2 (
 
   if ((GpioCfgHdr->ItemCount > (UINT32)BitMaskBytes * 8) ||
       (GpioCfgCurrHdr->ItemCount > (UINT32)BitMaskBytes * 8) ||
-      (GpioCfgHdr->ItemSize == 0) ||
-      (GpioCfgHdr->ItemSize > sizeof (GPIOV2_INIT_CONFIG) - sizeof (GPIOV2_PAD))) {
+      (GpioCfgHdr->ItemSize != sizeof (GPIOV2_INIT_CONFIG) - sizeof (GPIOV2_PAD))) {
     DEBUG ((DEBUG_ERROR, "GPIO CFGDATA item count (%d) or size (%d) out of range\n",
             GpioCfgHdr->ItemCount, GpioCfgHdr->ItemSize));
     return EFI_LOAD_ERROR;
@@ -1432,7 +1431,9 @@ ConfigureGpioV2 (
   }
 
   GpioTable = (UINT8 *) AllocateTemporaryMemory (MaxEntries * (sizeof (GPIOV2_PAD) + GpioCfgHdr->ItemSize));
-  ASSERT (GpioTable != NULL);
+  if (GpioTable == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
   GpioCfgBuffer = (GPIOV2_INIT_CONFIG *) GpioTable;
 
   GpioEntries = 0;
