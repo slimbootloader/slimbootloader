@@ -332,7 +332,9 @@ DEBUG_CODE_BEGIN ();
   }
 
   Status = GetComponentInfo (FLASH_MAP_SIG_UEFIVARIABLE, &Address, &VarSize);
-  DEBUG ((DEBUG_INFO, "UEfi Variable Address 0x%0X, VariSize 0x%0X \n", (VOID *)(UINTN)Address, (VOID *)(UINTN)VarSize));
+  if (!EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "UEfi Variable Address 0x%0X, VariSize 0x%0X \n", (VOID *)(UINTN)Address, (VOID *)(UINTN)VarSize));
+  }
 
   VariableLen = sizeof (mBootVarName) / 2;
   DEBUG ((DEBUG_INFO, "VariableLen of BootVariName %0d\n", VariableLen));
