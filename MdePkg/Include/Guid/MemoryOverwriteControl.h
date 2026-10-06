@@ -7,7 +7,7 @@
   indicate to the platform that secrets are present in memory and that the platform firmware must clear memory upon
   a restart. The OS loader should not create the variable. Rather, the firmware is required to create it.
 
-  Copyright (c) 2009 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/

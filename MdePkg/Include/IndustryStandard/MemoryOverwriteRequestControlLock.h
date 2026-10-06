@@ -3,7 +3,7 @@
   Microsoft Secure MOR implementation.
   https://msdn.microsoft.com/en-us/library/windows/hardware/mt270973(v=vs.85).aspx
 
-  Copyright (c) 2015 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
