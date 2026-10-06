@@ -168,12 +168,10 @@ UpdateFspConfig (
   FspmUpdCommon = (FSPM_UPD_COMMON_FSP24 *)FspmUpd;
   FspmUpdCommon->FspmArchUpd.NvsBufferPtr         = (UINT32)(UINTN)FindNvsData();
 
-  if ((GetBootMode () == BOOT_ON_FLASH_UPDATE) ||
-      (GetBootMode () == BOOT_ON_S3_RESUME) ||
-      (GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE)) {
+  if ((GetBootMode () == BOOT_ON_FLASH_UPDATE) || (GetBootMode () == BOOT_ON_S3_RESUME)) {
     DEBUG ((DEBUG_INFO, "MOR: boot mode 0x%X, payload 0x%X skips MOR clean-memory policy assignment.\n",
             GetBootMode (), GetPayloadId ()));
-  } else {
+  } else if (GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE) {
     UINT8                     MorControl;
     UINTN                     MorControlSize;
     EFI_STATUS                MorStatus;
@@ -195,9 +193,10 @@ UpdateFspConfig (
       Fspmcfg->CleanMemory = (BOOLEAN)(MorControl & MOR_CLEAR_MEMORY_BIT_MASK);
       DEBUG ((DEBUG_INFO, "MOR: effective CleanMemory=%d from bit0\n", Fspmcfg->CleanMemory));
     } else {
-      Fspmcfg->CleanMemory = 0;
-      DEBUG ((DEBUG_INFO, "MOR: missing or malformed variable; CleanMemory forced to 0\n"));
+      DEBUG ((DEBUG_INFO, "MOR: variable missing or malformed; no memory clear requested.\n"));
     }
+  } else {
+    DEBUG ((DEBUG_INFO, "MOR: payload 0x%X is not UEFI; CleanMemory remains 0.\n", GetPayloadId ()));
   }
 
   Status = GetTempRamInfo (&CarBase, &CarSize);
