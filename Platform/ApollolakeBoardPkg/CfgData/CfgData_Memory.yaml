@@ -246,7 +246,7 @@
       type         : Combo
       option       : 0:Disable, 1:Enable, 2:Debugger, 3:Auto
       help         : >
-                     Enable/Disable Npk. 0:Disable, 1:Enable, 2:Debugger, 3:Auto(Default)
+                     Enable/Disable Npk. 0:Disable(Default), 1:Enable, 2:Debugger, 3:Auto
       length       : 0x01
       value        : 0x0
   - MemRsvd      :
