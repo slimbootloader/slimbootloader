@@ -178,6 +178,12 @@ AppendDrhd (
     return EFI_INVALID_PARAMETER;
   }
 
+  if (IioUdsHobData->PlatformData.IIO_resource[0].StackRes[Stack].PciRootBridgeNum > MAX_IIO_PCIROOTS_PER_STACK) {
+    DEBUG ((DEBUG_ERROR, "Invalid PCI root bridge count %u for stack %u\n",
+      IioUdsHobData->PlatformData.IIO_resource[0].StackRes[Stack].PciRootBridgeNum, Stack));
+    return EFI_INVALID_PARAMETER;
+  }
+
   VtdBase = IioUdsHobData->PlatformData.IIO_resource[0].StackRes[Stack].VtbarAddress;
 
   DEBUG ((DEBUG_VERBOSE, "VtdBase 0x%llx\n", VtdBase));

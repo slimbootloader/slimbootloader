@@ -139,6 +139,7 @@ PlatformPrePciEnumeration (
   VOID                      *FspHobList;
   UINT32                    P2sbBase;
   UDS_PCIROOT_RES           *PciRootRes;
+  UDS_STACK_RES             *StackRes;
   UINT8                     Root;
 
   GuidHob = NULL;
@@ -156,8 +157,13 @@ PlatformPrePciEnumeration (
   TempRes = (PCI_RES_ALLOC_TABLE *)AllocateTemporaryMemory (0);
   ZeroMem (TempRes, sizeof (PCI_RES_ALLOC_TABLE));
   for (Stack = 0; Stack < MAX_LOGIC_IIO_STACK; Stack++) {
-    for(Root = 0; Root < IioUdsHobData->PlatformData.IIO_resource[0].StackRes[Stack].PciRootBridgeNum; Root++) {
-      PciRootRes = &IioUdsHobData->PlatformData.IIO_resource[0].StackRes[Stack].PciRoot[Root];
+    StackRes = &IioUdsHobData->PlatformData.IIO_resource[0].StackRes[Stack];
+    if (StackRes->PciRootBridgeNum > MAX_IIO_PCIROOTS_PER_STACK) {
+      DEBUG ((DEBUG_ERROR, "Invalid PCI root bridge count %u for stack %u\n", StackRes->PciRootBridgeNum, Stack));
+      return;
+    }
+    for (Root = 0; Root < StackRes->PciRootBridgeNum; Root++) {
+      PciRootRes = &StackRes->PciRoot[Root];
       TempRange               = &TempRes->ResourceRange[TempRes->NumOfEntries];
       TempRange->BusBase      = PciRootRes->BusBase;
       TempRange->BusLimit     = PciRootRes->BusLimit;

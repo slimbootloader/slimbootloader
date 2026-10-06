@@ -412,7 +412,8 @@ GetAcpiPciRootResource (
     DSDTDEBUG ("Stack:%d is not present or out of MAX_IIO_STACKS_PER_SOCKET\n", Stack);
     return EFI_UNSUPPORTED;
   }
-  if (Root >= IioUdsPtr->PlatformData.IIO_resource[Socket].StackRes[Stack].PciRootBridgeNum) {
+  if ((IioUdsPtr->PlatformData.IIO_resource[Socket].StackRes[Stack].PciRootBridgeNum > MAX_IIO_PCIROOTS_PER_STACK) ||
+      (Root >= IioUdsPtr->PlatformData.IIO_resource[Socket].StackRes[Stack].PciRootBridgeNum)) {
     DSDTDEBUG ("Root:%d is out of PciRootBridgeNum: %d\n", Root, IioUdsPtr->PlatformData.IIO_resource[Socket].StackRes[Stack].PciRootBridgeNum);
     return EFI_UNSUPPORTED;
   }
@@ -476,6 +477,7 @@ PatchDsdtTableAML (
   UINT8                                   Socket;
   UINT8                                   Stack;
   UINT8                                   Root;
+  UINT8                                   RootCount;
   UINT8                                   Index;
   UINT8                                   LegacyVgaStackSoc;
   UINT8                                   LegacyVgaStackFwInst;
@@ -531,9 +533,14 @@ PatchDsdtTableAML (
     for (Stack = 0; Stack < MAX_IIO_STACKS_PER_SOCKET; Stack++) {
 
       if (IioUdsPtr->PlatformData.CpuQpiInfo[Socket].StackPresentBitmap & (1 << Stack)) {
+        RootCount = IioUdsPtr->PlatformData.IIO_resource[Socket].StackRes[Stack].PciRootBridgeNum;
+        if (RootCount > MAX_IIO_PCIROOTS_PER_STACK) {
+          DSDTERROR ("Invalid PCI root bridge count %u for socket %u stack %u\n", RootCount, Socket, Stack);
+          return EFI_INVALID_PARAMETER;
+        }
 
         if ((Index = IioStack2PeIndex (Socket, Stack)) < MAX_IIO_PCIE_PER_SOCKET) {
-          AcpiParameter->IioPcieRootBitmap[Socket][Index] = (UINT8)-1 >> (8 - IioUdsPtr->PlatformData.IIO_resource[Socket].StackRes[Stack].PciRootBridgeNum);
+          AcpiParameter->IioPcieRootBitmap[Socket][Index] = (UINT8)-1 >> (8 - RootCount);
           if (IioUdsPtr->PlatformData.CpuQpiInfo[Socket].CxlCapableBitmap & (1 << Stack)) {
             AcpiParameter->IioCxlCapableBitmap[Socket] |= 1 << Index;
           }
@@ -548,7 +555,17 @@ PatchDsdtTableAML (
       continue;
     }
 
-    AcpiParameter->IioIoatRootBitmap[Socket][IoatInst] = (UINT8)-1 >> (8 - IioUdsPtr->PlatformData.IIO_resource[Socket].StackRes[Stack].PciRootBridgeNum);
+    if (Stack >= MAX_IIO_STACKS_PER_SOCKET) {
+      DSDTERROR ("Invalid stack %u for socket %u IOAT %u\n", Stack, Socket, IoatInst);
+      return EFI_INVALID_PARAMETER;
+    }
+
+    RootCount = IioUdsPtr->PlatformData.IIO_resource[Socket].StackRes[Stack].PciRootBridgeNum;
+    if (RootCount > MAX_IIO_PCIROOTS_PER_STACK) {
+      DSDTERROR ("Invalid PCI root bridge count %u for socket %u stack %u\n", RootCount, Socket, Stack);
+      return EFI_INVALID_PARAMETER;
+    }
+    AcpiParameter->IioIoatRootBitmap[Socket][IoatInst] = (UINT8)-1 >> (8 - RootCount);
     AcpiParameter->IioIoatSegment[Socket][IoatInst] = IioUdsPtr->PlatformData.IIO_resource[Socket].StackRes[Stack].Segment;
   }
     DSDTDEBUG ("[%d] CXL capable PCIe bitmap: 0x%04X\n", Socket, AcpiParameter->IioCxlCapableBitmap[Socket]);
