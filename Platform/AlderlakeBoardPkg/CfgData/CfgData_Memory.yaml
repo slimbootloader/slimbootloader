@@ -947,7 +947,7 @@
         type         : Combo
         option       : 0x1:Enabled, 0x0:Disabled
         help         : >
-                       Lock PCU Thermal Management registers. Enable(Default)=1, Disable=0
+                       Lock PCU Thermal Management registers. Enable=1, Disable(Default)=0
         length       : 0x0001
         value        : 0x0
   - PrmrrSize    :
@@ -1031,7 +1031,7 @@
       type         : Combo
       option       : $EN_DIS
       help         : >
-                     Enable- Generate BDAT for MRC RMT or SA PCIe data. Disable (Default)- Do not generate it
+                     Enable (Default)- Generate BDAT for MRC RMT or SA PCIe data. Disable- Do not generate it
       length       : 0x01
       value        : 0x1
   - BdatTestType :
