@@ -41,6 +41,7 @@
   WatchDogTimerLib
   PchInfoLib
   FusaConfigLib
+  BootloaderCoreLib
   UefiVariableLib
 
 [Guids]

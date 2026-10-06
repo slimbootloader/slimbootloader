@@ -27,6 +27,7 @@
 #include <Library/FusaConfigLib.h>
 #include <Library/BoardInitLib.h>
 #include <Library/HobLib.h>
+#include <Library/BootloaderCoreLib.h>
 #include <Library/UefiVariableLib.h>
 #include <Guid/MemoryOverwriteControl.h>
 #include <CpuRegs.h>
@@ -167,8 +168,11 @@ UpdateFspConfig (
   FspmUpdCommon = (FSPM_UPD_COMMON_FSP24 *)FspmUpd;
   FspmUpdCommon->FspmArchUpd.NvsBufferPtr         = (UINT32)(UINTN)FindNvsData();
 
-  if ((GetBootMode () == BOOT_ON_FLASH_UPDATE) || (GetBootMode () == BOOT_ON_S3_RESUME)) {
-    DEBUG ((DEBUG_INFO, "MOR: boot mode 0x%X skips MOR clean-memory policy assignment.\n", GetBootMode ()));
+  if ((GetBootMode () == BOOT_ON_FLASH_UPDATE) ||
+      (GetBootMode () == BOOT_ON_S3_RESUME) ||
+      (GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE)) {
+    DEBUG ((DEBUG_INFO, "MOR: boot mode 0x%X, payload 0x%X skips MOR clean-memory policy assignment.\n",
+            GetBootMode (), GetPayloadId ()));
   } else {
     UINT8                     MorControl;
     UINTN                     MorControlSize;
