@@ -151,19 +151,23 @@ class Board(BaseBoard):
             # If so, STAGE1B_FD_BASE/STAGE1B_FD_SIZE need to be defined
             self.STAGE1B_FD_SIZE      = 0x36000
             if self.NO_OPT_MODE:
-                self.STAGE1B_FD_SIZE += 0xE000
+                self.STAGE1B_FD_SIZE += 0x12000
             self.STAGE1B_FD_BASE    = FREE_TEMP_RAM_TOP - self.STAGE1B_FD_SIZE
 
         # For Stage2, it is always compressed.
         # if STAGE2_LOAD_HIGH is 1, STAGE2_FD_BASE will be ignored
         self.STAGE2_FD_BASE       = 0x01000000
 
+        if self.ENABLE_ASAN:
+            self.STAGE2_SIZE         += 0x6000
+            self.PAYLOAD_SIZE        += 0x17000
+            self.FWUPDATE_SIZE       += 0x10000
         if self.NO_OPT_MODE:
             if self.FSPDEBUG_MODE == 1:
-                self.STAGE2_SIZE     += 0x8000
+                self.STAGE2_SIZE     += 0xC000
             else:
-                self.STAGE2_SIZE     += 0x2000
-            self.PAYLOAD_SIZE        += 0xA000
+                self.STAGE2_SIZE     += 0x6000
+            self.PAYLOAD_SIZE        += 0xF000
             self.FWUPDATE_SIZE       += 0x8000
 
         if self.ENABLE_UI_SETUP:

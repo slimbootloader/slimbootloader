@@ -3,6 +3,7 @@
 *.log
 *.pyc
 Platform.dsc
+AsanComponents.dsc
 ConfigDataBlob.h
 ConfigDataDynamic.h
 ConfigDataStruct.h
