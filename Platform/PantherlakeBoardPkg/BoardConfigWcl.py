@@ -240,8 +240,8 @@ class Board(BaseBoard):
                     FusaConfig = open (os.path.join(brd_cfg2_src_dir, 'CfgData_Fusa_Feature.dlt')).readlines()
 
             for line in FusaConfig:
-                if (re.search("TCC_CFG_DATA\.TccEnable\s+\|\s*1",line) != None or
-                    re.search("TCC_CFG_DATA\.TccEnable\s+\|\s*0x0*1",line) != None):
+                if (re.search(r"TCC_CFG_DATA\.TccEnable\s+\|\s*1",line) != None or
+                    re.search(r"TCC_CFG_DATA\.TccEnable\s+\|\s*0x0*1",line) != None):
                     # use setattr() to avoid matching release.py regex
                     setattr(self, 'ENABLE_TCC', 1)
 
