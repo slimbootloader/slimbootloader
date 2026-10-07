@@ -818,6 +818,10 @@ GpioInit (
   }
 
   GpioTable  = (UINT8 *)AllocateTemporaryMemory (MaxEntries * (sizeof (GPIO_PAD) + GpioCfgHdr->GpioItemSize));
+  if (GpioTable == NULL) {
+    DEBUG ((DEBUG_ERROR, "Cannot allocate buffer for GpioTable\n"));
+    return EFI_OUT_OF_RESOURCES;
+  }
   GpioCfgDataBuffer = GpioTable;
 
   ChipsetId = CNL_UNKNOWN_CHIPSET_ID;

@@ -192,6 +192,10 @@ GpioInit (
   }
 
   GpioTable  = (UINT8 *)AllocateTemporaryMemory (MaxEntries * GpioCfgHdr->GpioItemSize);
+  if (GpioTable == NULL) {
+    DEBUG ((DEBUG_ERROR, "Cannot allocate buffer for GpioTable\n"));
+    return;
+  }
   GpioCfgDataBuffer = GpioTable;
 
   if (GpioCfgBaseHdr != NULL) {
