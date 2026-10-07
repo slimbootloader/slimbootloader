@@ -87,6 +87,7 @@
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/MediaAccessLib.h>
+#include <Library/PcdLib.h>
 #include "Ext2Fs.h"
 #include "LibsaFsStand.h"
 
@@ -786,6 +787,7 @@ ReadSBlock (
 {
   PEI_EXT_PRIVATE_DATA *PrivateData;
   RETURN_STATUS Rc;
+  UINT32 MaxBlockGroups;
 
   Rc = 0;
 
@@ -811,8 +813,10 @@ ReadSBlock (
     return EFI_UNSUPPORTED;
   }
 
-  if (FileSystem->Ext2FsNumCylinder > EXT2_MAX_BLOCK_GROUPS) {
-    DEBUG ((DEBUG_ERROR, "Ext2: Too many groups %u (Max %u)\n", FileSystem->Ext2FsNumCylinder, EXT2_MAX_BLOCK_GROUPS));
+  MaxBlockGroups = PcdGet32 (PcdExtFsMaxBlockGroups);
+  if ((MaxBlockGroups == 0) ||
+      (FileSystem->Ext2FsNumCylinder > MaxBlockGroups)) {
+    DEBUG ((DEBUG_ERROR, "Ext2: Too many groups %u (Max %u)\n", FileSystem->Ext2FsNumCylinder, MaxBlockGroups));
     return EFI_UNSUPPORTED;
   }
 
@@ -981,6 +985,11 @@ Ext2fsOpen (
   //
   // read group descriptor blocks
   //
+  if (FileSystem->Ext2FsNumCylinder > (MAX_UINTN / sizeof (EXT2GD))) {
+    Status = EFI_UNSUPPORTED;
+    goto out;
+  }
+
   FileSystem->Ext2FsGrpDes = AllocatePool (sizeof(EXT2GD) * FileSystem->Ext2FsNumCylinder);
   if (FileSystem->Ext2FsGrpDes == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
