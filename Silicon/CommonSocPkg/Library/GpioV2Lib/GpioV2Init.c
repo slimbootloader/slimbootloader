@@ -1356,6 +1356,7 @@ ConfigureGpioV2 (
   IN UINT16                       Entries
   )
 {
+  CDATA_HEADER                    *CdataHdr;
   ARRAY_CFG_HDR                   *GpioCfgCurrHdr;
   ARRAY_CFG_HDR                   *GpioCfgBaseHdr;
   ARRAY_CFG_HDR                   *GpioCfgHdr;
@@ -1363,6 +1364,9 @@ ConfigureGpioV2 (
   UINT32                          GpioEntries;
   UINT32                          Index;
   UINT32                          Offset;
+  UINT32                          MaxEntries;
+  UINT32                          BitMaskBytes;
+  UINT32                          PayloadOffset;
   GPIOV2_INIT_CONFIG              *GpioCfgBuffer;
   UINT8                           *GpioTable;
 
@@ -1383,9 +1387,21 @@ ConfigureGpioV2 (
   //
   // Find the GPIO CFG data for this platform
   //
-  GpioCfgCurrHdr = (ARRAY_CFG_HDR *)FindConfigDataByTag (Tag);
-  if (GpioCfgCurrHdr == NULL) {
+  CdataHdr = FindConfigHdrByTag (Tag);
+  if (CdataHdr == NULL) {
     return EFI_NOT_FOUND;
+  }
+
+  PayloadOffset = sizeof (CDATA_HEADER) + CdataHdr->ConditionNum * sizeof (CDATA_COND);
+  if (CdataHdr->Length * sizeof (UINT32) < PayloadOffset + OFFSET_OF (ARRAY_CFG_HDR, BaseTableBitMask)) {
+    DEBUG ((DEBUG_ERROR, "GPIO CFGDATA header exceeds item length\n"));
+    return EFI_LOAD_ERROR;
+  }
+
+  GpioCfgCurrHdr = (ARRAY_CFG_HDR *)((UINT8 *)CdataHdr + PayloadOffset);
+  if (GpioCfgCurrHdr->HeaderSize > CdataHdr->Length * sizeof (UINT32) - PayloadOffset) {
+    DEBUG ((DEBUG_ERROR, "GPIO CFGDATA header exceeds item length\n"));
+    return EFI_LOAD_ERROR;
   }
 
   //
@@ -1405,8 +1421,33 @@ ConfigureGpioV2 (
     GpioCfgHdr = GpioCfgCurrHdr;
   }
 
-  GpioTable = (UINT8 *) AllocateTemporaryMemory (0);
-  ASSERT (GpioTable != NULL);
+  //
+  // ItemCount drives both the BaseTableBitMask walk and the output buffer size, and neither
+  // is bounded by the config data itself. The mask lives between the fixed header fields and
+  // HeaderSize, so that is what limits how many entries can be described.
+  //
+  BitMaskBytes = 0;
+  if (GpioCfgCurrHdr->HeaderSize > OFFSET_OF (ARRAY_CFG_HDR, BaseTableBitMask)) {
+    BitMaskBytes = GpioCfgCurrHdr->HeaderSize - OFFSET_OF (ARRAY_CFG_HDR, BaseTableBitMask);
+  }
+
+  if ((GpioCfgHdr->ItemCount > (UINT32)BitMaskBytes * 8) ||
+      (GpioCfgCurrHdr->ItemCount > (UINT32)BitMaskBytes * 8) ||
+      (GpioCfgHdr->ItemSize != sizeof (GPIOV2_INIT_CONFIG) - sizeof (GPIOV2_PAD))) {
+    DEBUG ((DEBUG_ERROR, "GPIO CFGDATA item count (%d) or size (%d) out of range\n",
+            GpioCfgHdr->ItemCount, GpioCfgHdr->ItemSize));
+    return EFI_LOAD_ERROR;
+  }
+
+  MaxEntries = GpioCfgHdr->ItemCount;
+  if (GpioCfgBaseHdr != NULL) {
+    MaxEntries += GpioCfgCurrHdr->ItemCount;
+  }
+
+  GpioTable = (UINT8 *) AllocateTemporaryMemory (MaxEntries * (sizeof (GPIOV2_PAD) + GpioCfgHdr->ItemSize));
+  if (GpioTable == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
   GpioCfgBuffer = (GPIOV2_INIT_CONFIG *) GpioTable;
 
   GpioEntries = 0;

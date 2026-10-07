@@ -252,6 +252,7 @@ GpioInit (
   GPIO_CFG_HDR       *GpioCfgBaseHdr;
   UINT32              Index;
   UINT32              GpioEntries;
+  UINT32              MaxEntries;
   GPIO_CONFIG_SMIP   *GpioConfigSmip;
   GPIO_CONFIG_SMIP   *SmipEntry;
   VOID               *GpioCfgDataBuffer;
@@ -262,11 +263,23 @@ GpioInit (
     return;
   }
 
-  GpioCfgDataBuffer = (VOID *)AllocateTemporaryMemory (0);  //allocate new buffer
-  GpioConfigSmip    = (GPIO_CONFIG_SMIP *)GpioCfgDataBuffer;
-  SmipEntry         = NULL;
-  GpioEntries       = 0;
+  //
+  // GpioItemCount walks a fixed-size bit mask and sizes the output buffer; the config
+  // data does not bound it.
+  //
+  if ((GpioCfgCurrHdr->GpioItemCount > sizeof (GpioCfgCurrHdr->GpioBaseTableBitMask) * 8) ||
+      (GpioCfgCurrHdr->GpioItemSize != sizeof (GPIO_CONFIG_SMIP))) {
+    DEBUG ((DEBUG_ERROR, "GPIO CFGDATA item count (%d) or size (%d) out of range\n",
+            GpioCfgCurrHdr->GpioItemCount, GpioCfgCurrHdr->GpioItemSize));
+    return;
+  }
 
+  MaxEntries = GpioCfgCurrHdr->GpioItemCount;
+  GpioCfgBaseHdr = NULL;
+
+  //
+  // The base table must be resolved before the output buffer can be sized.
+  //
   if (GpioCfgCurrHdr->GpioBaseTableId <= 0xF) {
     GpioCfgBaseHdr = (GPIO_CFG_HDR *)FindConfigDataByPidTag (GpioCfgCurrHdr->GpioBaseTableId, CDATA_GPIO_TAG);
     if (GpioCfgBaseHdr == NULL) {
@@ -279,6 +292,24 @@ GpioInit (
       return;
     }
 
+    if (GpioCfgBaseHdr->GpioItemCount > sizeof (GpioCfgCurrHdr->GpioBaseTableBitMask) * 8) {
+      DEBUG ((DEBUG_ERROR, "Base GPIO CFGDATA item count (%d) out of range\n", GpioCfgBaseHdr->GpioItemCount));
+      return;
+    }
+
+    MaxEntries += GpioCfgBaseHdr->GpioItemCount;
+  }
+
+  GpioCfgDataBuffer = (VOID *)AllocateTemporaryMemory (MaxEntries * sizeof (GPIO_CONFIG_SMIP));
+  if (GpioCfgDataBuffer == NULL) {
+    DEBUG ((DEBUG_ERROR, "Cannot allocate GPIO configuration buffer\n"));
+    return;
+  }
+  GpioConfigSmip    = (GPIO_CONFIG_SMIP *)GpioCfgDataBuffer;
+  SmipEntry         = NULL;
+  GpioEntries       = 0;
+
+  if (GpioCfgBaseHdr != NULL) {
     SmipEntry = (GPIO_CONFIG_SMIP *)GpioCfgBaseHdr->GpioTableData;
     for (Index = 0;
          Index < GpioCfgBaseHdr->GpioItemCount &&

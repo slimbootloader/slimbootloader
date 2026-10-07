@@ -139,6 +139,7 @@ GpioInit (
   UINT32              GpioEntries;
   UINT32              Index;
   UINT32              Offset;
+  UINT32              MaxEntries;
   UINT8              *GpioCfgDataBuffer;
   UINT8              *GpioTable;
 
@@ -172,7 +173,31 @@ GpioInit (
   }
 
   Offset     = 0;
-  GpioTable  = (UINT8 *)AllocateTemporaryMemory (0);  //allocate new buffer
+
+  //
+  // GpioItemCount walks a fixed-size bit mask and sizes the output buffer; the config
+  // data does not bound it.
+  //
+  // QEMU CFGDATA stores each GPIO record as two DWORDs. GPIO_INIT_CONFIG
+  // includes a separate pad field and is larger than this serialized record.
+  if ((GpioCfgHdr->GpioItemCount > sizeof (GpioCfgCurrHdr->GpioBaseTableBitMask) * 8) ||
+      (GpioCfgCurrHdr->GpioItemCount > sizeof (GpioCfgCurrHdr->GpioBaseTableBitMask) * 8) ||
+      (GpioCfgHdr->GpioItemSize != (sizeof (UINT32) * 2))) {
+    DEBUG ((DEBUG_ERROR, "GPIO CFGDATA item count (%d) or size (%d) out of range\n",
+            GpioCfgHdr->GpioItemCount, GpioCfgHdr->GpioItemSize));
+    return;
+  }
+
+  MaxEntries = GpioCfgCurrHdr->GpioItemCount;
+  if (GpioCfgBaseHdr != NULL) {
+    MaxEntries += GpioCfgHdr->GpioItemCount;
+  }
+
+  GpioTable  = (UINT8 *)AllocateTemporaryMemory (MaxEntries * GpioCfgHdr->GpioItemSize);
+  if (GpioTable == NULL) {
+    DEBUG ((DEBUG_ERROR, "Cannot allocate buffer for GpioTable\n"));
+    return;
+  }
   GpioCfgDataBuffer = GpioTable;
 
   if (GpioCfgBaseHdr != NULL) {
