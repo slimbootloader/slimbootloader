@@ -28,15 +28,15 @@ __version__ = "%prog Version " + __version_number__
 __copyright__ = "Copyright (c) 2007-2018, Intel Corporation. All rights reserved."
 
 ## Regular expression for matching Line Control directive like "#line xxx"
-gLineControlDirective = re.compile('^\s*#(?:line)?\s+([0-9]+)\s+"*([^"]*)"')
+gLineControlDirective = re.compile(r'^\s*#(?:line)?\s+([0-9]+)\s+"*([^"]*)"')
 ## Regular expression for matching "typedef struct"
-gTypedefPattern = re.compile("^\s*typedef\s+struct(\s+\w+)?\s*[{]*$", re.MULTILINE)
+gTypedefPattern = re.compile(r"^\s*typedef\s+struct(\s+\w+)?\s*[{]*$", re.MULTILINE)
 ## Regular expression for matching "#pragma pack"
-gPragmaPattern = re.compile("^\s*#pragma\s+pack", re.MULTILINE)
+gPragmaPattern = re.compile(r"^\s*#pragma\s+pack", re.MULTILINE)
 ## Regular expression for matching "typedef"
-gTypedef_SinglePattern = re.compile("^\s*typedef", re.MULTILINE)
+gTypedef_SinglePattern = re.compile(r"^\s*typedef", re.MULTILINE)
 ## Regular expression for matching "typedef struct, typedef union, struct, union"
-gTypedef_MulPattern = re.compile("^\s*(typedef)?\s+(struct|union)(\s+\w+)?\s*[{]*$", re.MULTILINE)
+gTypedef_MulPattern = re.compile(r"^\s*(typedef)?\s+(struct|union)(\s+\w+)?\s*[{]*$", re.MULTILINE)
 
 #
 # The following number pattern match will only match if following criteria is met:
@@ -51,7 +51,7 @@ gDecNumberPattern = re.compile("(?<=[^a-zA-Z0-9_])([0-9]+)U(?=$|[^a-zA-Z0-9_])")
 gLongNumberPattern = re.compile("(?<=[^a-zA-Z0-9_])(0[xX][0-9a-fA-F]+|[0-9]+)U?LL(?=$|[^a-zA-Z0-9_])")
 
 ## Regular expression for matching "Include ()" in asl file
-gAslIncludePattern = re.compile("^(\s*)[iI]nclude\s*\(\"?([^\"\(\)]+)\"\)", re.MULTILINE)
+gAslIncludePattern = re.compile(r"^(\s*)[iI]nclude\s*\(\"?([^\"\(\)]+)\"\)", re.MULTILINE)
 ## Regular expression for matching C style #include "XXX.asl" in asl file
 gAslCIncludePattern = re.compile(r'^(\s*)#include\s*[<"]\s*([-\\/\w.]+)\s*([>"])', re.MULTILINE)
 ## Patterns used to convert EDK conventions to EDK2 ECP conventions
