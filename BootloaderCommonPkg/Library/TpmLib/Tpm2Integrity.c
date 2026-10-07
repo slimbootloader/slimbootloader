@@ -256,7 +256,9 @@ Tpm2PcrAllocate (
   // Every field up to SizeAvailable is unmarshalled below; the trailing auth session is
   // variable length, so it is excluded from the minimum.
   //
-  if (ResultBufSize < OFFSET_OF (TPM2_PCR_ALLOCATE_RESPONSE, AuthSession)) {
+  if ((ResultBufSize < sizeof (TPM2_RESPONSE_HEADER)) ||
+      ((SwapBytes32 (Res.Header.responseCode) == TPM_RC_SUCCESS) &&
+       (ResultBufSize < OFFSET_OF (TPM2_PCR_ALLOCATE_RESPONSE, AuthSession)))) {
     DEBUG ((DEBUG_ERROR, "Tpm2PcrAllocate: ResultBufSize error - %x\r\n", ResultBufSize));
     Status = EFI_DEVICE_ERROR;
     goto Done;
