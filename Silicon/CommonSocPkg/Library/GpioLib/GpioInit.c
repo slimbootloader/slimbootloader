@@ -661,6 +661,7 @@ ConfigureGpio (
   IN  UINT8   *DataBuffer
   )
 {
+  CDATA_HEADER   *CdataHdr;
   ARRAY_CFG_HDR  *GpioCfgCurrHdr;
   ARRAY_CFG_HDR  *GpioCfgBaseHdr;
   ARRAY_CFG_HDR  *GpioCfgHdr;
@@ -669,6 +670,7 @@ ConfigureGpio (
   UINT32         Offset;
   UINT32         MaxEntries;
   UINT32         BitMaskBytes;
+  UINT32         PayloadOffset;
   UINT8          *GpioCfgDataBuffer;
   UINT8          *GpioTable;
 
@@ -693,9 +695,21 @@ ConfigureGpio (
   //
   // Find the GPIO CFG HDR
   //
-  GpioCfgCurrHdr = (ARRAY_CFG_HDR *)FindConfigDataByTag (Tag);
-  if (GpioCfgCurrHdr == NULL) {
+  CdataHdr = FindConfigHdrByTag (Tag);
+  if (CdataHdr == NULL) {
     return EFI_NOT_FOUND;
+  }
+
+  PayloadOffset = sizeof (CDATA_HEADER) + CdataHdr->ConditionNum * sizeof (CDATA_COND);
+  if (CdataHdr->Length * sizeof (UINT32) < PayloadOffset + OFFSET_OF (ARRAY_CFG_HDR, BaseTableBitMask)) {
+    DEBUG ((GPIO_DEBUG_ERROR, "GPIO CFGDATA header exceeds item length\n"));
+    return EFI_LOAD_ERROR;
+  }
+
+  GpioCfgCurrHdr = (ARRAY_CFG_HDR *)((UINT8 *)CdataHdr + PayloadOffset);
+  if (GpioCfgCurrHdr->HeaderSize > CdataHdr->Length * sizeof (UINT32) - PayloadOffset) {
+    DEBUG ((GPIO_DEBUG_ERROR, "GPIO CFGDATA header exceeds item length\n"));
+    return EFI_LOAD_ERROR;
   }
 
   GpioEntries    = 0;
