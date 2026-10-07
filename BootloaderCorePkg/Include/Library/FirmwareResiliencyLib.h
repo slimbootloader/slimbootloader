@@ -54,4 +54,16 @@ IsMeCorrupt (
   VOID
   );
 
+/**
+  Detect IOE CSME firmware code corruption via the IOE HECI (instance CSMEIOE).
+
+  @retval TRUE   IOE firmware corruption detected.
+  @retval FALSE  Healthy, not attached, or no IOE die present.
+**/
+BOOLEAN
+EFIAPI
+IsIoeCorrupt (
+  VOID
+  );
+
 #endif

@@ -527,14 +527,13 @@ GetCapsuleImage (
   DEBUG ((DEBUG_INFO, "\n=================Read Capsule Image==============\n"));
 
   //
-  // For CSME recovery, load the dedicated CSME recovery capsule (tag 0x081).
-  // This block is compiled only on platforms with PcdCsmeResiliencyEnabled.
+  // CSME/IOE recovery: shared recovery capsule (tag 0x081), routed by signature.
   //
 #if FixedPcdGetBool (PcdCsmeResiliencyEnabled)
-  if (RecoveryType == FwUpdateRecoveryCsme) {
+  if ((RecoveryType == FwUpdateRecoveryCsme) || (RecoveryType == FwUpdateRecoveryIoe)) {
     CapsuleInfo = (CAPSULE_INFO_CFG_DATA *) FindConfigDataByTag (CDATA_CSME_CAPSULE_INFO_TAG);
     if (CapsuleInfo == NULL) {
-      DEBUG ((DEBUG_ERROR, " CSME recovery CapsuleInfo (0x081) not found\n"));
+      DEBUG ((DEBUG_ERROR, " CSME/IOE recovery CapsuleInfo (0x081) not found\n"));
       return EFI_NOT_FOUND;
     }
   }
