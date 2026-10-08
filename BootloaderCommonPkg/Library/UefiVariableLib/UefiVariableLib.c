@@ -10,6 +10,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "FtwLastWrite.h"
 #include <Guid/FlashMapInfoGuid.h>
+#include <Library/BaseLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Library/UefiVariableLib.h>
 #include <Library/BlMemoryAllocationLib.h>
@@ -253,6 +254,76 @@ GetVariableDataPtr (
 
 
 /**
+  Translate a variable address into the variable store address space.
+
+  When an FTW last write is in progress, variables at or beyond TargetAddress live
+  in the spare block. Such an address is mapped back so that all bounds checks can
+  be done against the store's own start/end pointers.
+
+  @param  StoreInfo    Pointer to variable store info structure.
+  @param  Address      Address of a variable header.
+
+  @return  The equivalent address within the variable store address space.
+
+**/
+STATIC
+UINTN
+GetVariableStoreAddress (
+  IN  UEFI_VARIABLE_STORE_INFO   *StoreInfo,
+  IN  UINTN                       Address
+  )
+{
+  UINTN  SpareAddress;
+
+  if (StoreInfo->FtwLastWriteData != NULL) {
+    SpareAddress = (UINTN) StoreInfo->FtwLastWriteData->SpareAddress;
+    if (Address >= SpareAddress) {
+      return Address - SpareAddress + (UINTN) StoreInfo->FtwLastWriteData->TargetAddress;
+    }
+  }
+
+  return Address;
+}
+
+/**
+  Check that a variable of the given size lies completely inside the variable store.
+
+  @param  StoreInfo    Pointer to variable store info structure.
+  @param  Variable     Pointer to the Variable Header.
+  @param  Size         Number of bytes required at Variable.
+
+  @retval TRUE         The requested range is inside the variable store.
+  @retval FALSE        The requested range is outside or straddles the end of the store.
+
+**/
+STATIC
+BOOLEAN
+IsVariableInStore (
+  IN  UEFI_VARIABLE_STORE_INFO   *StoreInfo,
+  IN  UEFI_VARIABLE_HEADER       *Variable,
+  IN  UINTN                       Size
+  )
+{
+  UINTN  StoreStart;
+  UINTN  StoreEnd;
+  UINTN  Address;
+
+  if (StoreInfo->VariableStoreHeader == NULL) {
+    return FALSE;
+  }
+
+  StoreStart = (UINTN) GetStartPointer (StoreInfo->VariableStoreHeader);
+  StoreEnd   = (UINTN) GetEndPointer (StoreInfo->VariableStoreHeader);
+  Address    = GetVariableStoreAddress (StoreInfo, (UINTN) Variable);
+
+  if ((StoreEnd < StoreStart) || (Address < StoreStart) || (Address > StoreEnd)) {
+    return FALSE;
+  }
+
+  return (BOOLEAN) (Size <= (StoreEnd - Address));
+}
+
+/**
   This code gets the pointer to the next variable header.
 
   @param  StoreInfo         Pointer to variable store info structure.
@@ -272,6 +343,36 @@ GetNextVariablePtr (
   EFI_PHYSICAL_ADDRESS  TargetAddress;
   EFI_PHYSICAL_ADDRESS  SpareAddress;
   UINTN                 Value;
+  UINTN                 NameSize;
+  UINTN                 DataSize;
+  UINTN                 StoreEnd;
+  UINT64                NextAddress;
+
+  if (StoreInfo->VariableStoreHeader == NULL) {
+    return Variable;
+  }
+
+  NameSize = NameSizeOfVariable (VariableHeader, StoreInfo->AuthFlag);
+  DataSize = DataSizeOfVariable (VariableHeader, StoreInfo->AuthFlag);
+  StoreEnd = (UINTN) GetEndPointer (StoreInfo->VariableStoreHeader);
+
+  //
+  // NameSize/DataSize are untrusted NV store fields; 64-bit math keeps the sum from
+  // wrapping on IA32, where UINTN is 32 bits.
+  //
+  NextAddress = (UINT64) GetVariableStoreAddress (StoreInfo, (UINTN) Variable)
+              + (UINT64) GetVariableHeaderSize (StoreInfo->AuthFlag)
+              + (UINT64) NameSize + (UINT64) GET_PAD_SIZE (NameSize)
+              + (UINT64) DataSize + (UINT64) GET_PAD_SIZE (DataSize);
+  NextAddress = (NextAddress + (HEADER_ALIGNMENT - 1)) & ~(UINT64) (HEADER_ALIGNMENT - 1);
+
+  if (!IsVariableInStore (StoreInfo, Variable, GetVariableHeaderSize (StoreInfo->AuthFlag)) ||
+      (NextAddress > (UINT64) StoreEnd)) {
+    //
+    // Returning NULL stops the walk without aliasing the FTW spare address.
+    //
+    return NULL;
+  }
 
   Value =  (UINTN) GetVariableDataPtr (Variable, VariableHeader, StoreInfo->AuthFlag);
   Value += DataSizeOfVariable (VariableHeader, StoreInfo->AuthFlag);
@@ -433,6 +534,7 @@ CompareWithValidVariable (
 {
   VOID      *Point;
   EFI_GUID  *TempVendorGuid;
+  UINTN      NameSize;
 
   TempVendorGuid = GetVendorGuidPtr (VariableHeader, StoreInfo->AuthFlag);
 
@@ -450,9 +552,15 @@ CompareWithValidVariable (
         (((INT32 *) VendorGuid)[2] == ((INT32 *) TempVendorGuid)[2]) &&
         (((INT32 *) VendorGuid)[3] == ((INT32 *) TempVendorGuid)[3])
         ) {
-      ASSERT (NameSizeOfVariable (VariableHeader, StoreInfo->AuthFlag) != 0);
+      //
+      // The stored name must include exactly the caller's terminating NUL.
+      //
+      NameSize = NameSizeOfVariable (VariableHeader, StoreInfo->AuthFlag);
+      if ((NameSize == 0) || (NameSize != StrSize (VariableName))) {
+        return EFI_NOT_FOUND;
+      }
       Point = (VOID *) GetVariableNamePtr (Variable, StoreInfo->AuthFlag);
-      if (CompareVariableName (StoreInfo, VariableName, Point, NameSizeOfVariable (VariableHeader, StoreInfo->AuthFlag))) {
+      if (CompareVariableName (StoreInfo, VariableName, Point, NameSize)) {
         PtrTrack->CurrPtr = Variable;
         return EFI_SUCCESS;
       }
@@ -492,7 +600,9 @@ GetVariableStore (
   EFI_STATUS                                  Status;
   EFI_STATUS                                  LibStatus;
   UEFI_VAR_STORE_LIBRARY_DATA                *VarStoreLibData;
+  UINT32                                      StoreSizeLimit;
 
+  StoreInfo->VariableStoreHeader = NULL;
   StoreInfo->IndexTable = NULL;
   StoreInfo->FtwLastWriteData = NULL;
   StoreInfo->AuthFlag = FALSE;
@@ -608,6 +718,19 @@ GetVariableStore (
           //
           DEBUG ((DEBUG_INFO, "Both working and spare block are invalid.\n"));
         }
+
+      }
+
+      //
+      // Retain newly allocated library data after FTW state is initialized, even if
+      // subsequent FV/store validation rejects the flash contents. Pool allocations
+      // cannot be freed in this phase, so future lookups must reuse this buffer.
+      //
+      if ((VarStoreLibData != NULL) && (LibStatus == EFI_NOT_FOUND)) {
+        Status = SetLibraryData (PcdGet8 (PcdUefiVariableLibId), VarStoreLibData, sizeof (UEFI_VAR_STORE_LIBRARY_DATA));
+        if (EFI_ERROR (Status)) {
+          return NULL;
+        }
       }
 
       //
@@ -618,12 +741,35 @@ GetVariableStore (
         break;
       }
 
+      //
+      // Bound the FV header offset before locating the variable store header.
+      //
+      StoreSizeLimit = NvStorageSize / 2;
+      if ((StoreSizeLimit < sizeof (UEFI_VARIABLE_STORE_HEADER)) ||
+          (FvHeader->HeaderLength < sizeof (*FvHeader)) ||
+          (FvHeader->HeaderLength > StoreSizeLimit - sizeof (UEFI_VARIABLE_STORE_HEADER))) {
+        VariableStoreHeader = NULL;
+        break;
+      }
+
+      StoreSizeLimit -= FvHeader->HeaderLength;
       VariableStoreHeader = (UEFI_VARIABLE_STORE_HEADER *) ((UINT8 *) FvHeader + FvHeader->HeaderLength);
+
+      if ((VariableStoreHeader->Size < sizeof (UEFI_VARIABLE_STORE_HEADER)) ||
+          (VariableStoreHeader->Size > StoreSizeLimit) ||
+          ((((UINTN) VariableStoreHeader + VariableStoreHeader->Size) & (HEADER_ALIGNMENT - 1)) != 0)) {
+        DEBUG ((DEBUG_ERROR, "Variable store size 0x%x is out of range (limit 0x%x)\n",
+                VariableStoreHeader->Size, StoreSizeLimit));
+        VariableStoreHeader = NULL;
+        break;
+      }
 
       StoreInfo->AuthFlag = (BOOLEAN) (CompareGuid (&VariableStoreHeader->Signature, &gEfiAuthenticatedVariableGuid));
 
-      if (VarStoreLibData!= NULL) {
-        if (LibStatus == EFI_NOT_FOUND) {
+      if (VarStoreLibData != NULL) {
+        if ((LibStatus == EFI_NOT_FOUND) ||
+            (VarStoreLibData->IndexTable.StartPtr != GetStartPointer (VariableStoreHeader)) ||
+            (VarStoreLibData->IndexTable.EndPtr != GetEndPointer (VariableStoreHeader))) {
           //
           // If it's the first time to access variable region in flash, create a guid hob to record
           // VAR_ADDED type variable info.
@@ -638,7 +784,10 @@ GetVariableStore (
           // Set the Lib data after Ftw and Index table info is updated
           //
           VarStoreLibData->StoreLibVarHdrSet = FALSE;
-          Status = SetLibraryData (PcdGet8(PcdUefiVariableLibId), VarStoreLibData, sizeof(UEFI_VAR_STORE_LIBRARY_DATA));
+          Status = SetLibraryData (PcdGet8 (PcdUefiVariableLibId), VarStoreLibData, sizeof (UEFI_VAR_STORE_LIBRARY_DATA));
+          if (EFI_ERROR (Status)) {
+            return NULL;
+          }
         } else {
           StoreInfo->IndexTable = &VarStoreLibData->IndexTable;
         }
@@ -678,6 +827,12 @@ GetVariableHeader (
   UINTN                           PartialHeaderSize;
   EFI_STATUS                      LibStatus;
   UEFI_VAR_STORE_LIBRARY_DATA    *VarStoreLibData;
+  UINT64                          RecordEnd;
+  UINT64                          StoreEnd;
+  UINT64                          RecordSize;
+  UINTN                           NameSize;
+  UINTN                           DataSize;
+  UINTN                           Address;
 
   if (Variable == NULL) {
     return FALSE;
@@ -687,6 +842,13 @@ GetVariableHeader (
   // First assume variable header pointed by Variable is consecutive.
   //
   *VariableHeader = Variable;
+
+  //
+  // Covers the FTW path too, where the checks below only handle the spare block.
+  //
+  if (!IsVariableInStore (StoreInfo, Variable, GetVariableHeaderSize (StoreInfo->AuthFlag))) {
+    return FALSE;
+  }
 
   if (StoreInfo->FtwLastWriteData != NULL) {
     TargetAddress = StoreInfo->FtwLastWriteData->TargetAddress;
@@ -732,7 +894,30 @@ GetVariableHeader (
     }
   }
 
-  return IsValidVariableHeader (*VariableHeader);
+  if (!IsValidVariableHeader (*VariableHeader)) {
+    return FALSE;
+  }
+
+  //
+  // Validate the complete record before callers compare its name or copy its data.
+  // Normalize a spare-block cursor so the extent is checked in store address space.
+  //
+  Address    = GetVariableStoreAddress (StoreInfo, (UINTN) Variable);
+  StoreEnd   = (UINT64) (UINTN) GetEndPointer (StoreInfo->VariableStoreHeader);
+  NameSize   = NameSizeOfVariable (*VariableHeader, StoreInfo->AuthFlag);
+  DataSize   = DataSizeOfVariable (*VariableHeader, StoreInfo->AuthFlag);
+  RecordSize = (UINT64) GetVariableHeaderSize (StoreInfo->AuthFlag)
+             + (UINT64) NameSize + (UINT64) GET_PAD_SIZE (NameSize)
+             + (UINT64) DataSize + (UINT64) GET_PAD_SIZE (DataSize);
+
+  RecordEnd = (UINT64) Address + RecordSize;
+  if ((RecordEnd < (UINT64) Address) ||
+      (RecordEnd > (~(UINT64) 0 - (HEADER_ALIGNMENT - 1)))) {
+    return FALSE;
+  }
+
+  RecordEnd = (RecordEnd + (HEADER_ALIGNMENT - 1)) & ~(UINT64) (HEADER_ALIGNMENT - 1);
+  return (BOOLEAN) (RecordEnd <= StoreEnd);
 }
 
 /**
@@ -780,6 +965,37 @@ GetVariableNameOrData (
   // Variable name/data is consecutive.
   //
   CopyMem (Buffer, NameOrData, Size);
+}
+
+/**
+  Discard cached variable lookup state and force FTW split headers to be rebuilt.
+
+  @param StoreInfo  Pointer to variable store info structure.
+  @param PtrTrack   Validated bounds for the current variable store.
+**/
+STATIC
+VOID
+ResetVariableIndexCache (
+  IN UEFI_VARIABLE_STORE_INFO        *StoreInfo,
+  IN UEFI_VARIABLE_POINTER_TRACK     *PtrTrack
+  )
+{
+  EFI_STATUS                   Status;
+  UEFI_VAR_STORE_LIBRARY_DATA *VarStoreLibData;
+
+  if (StoreInfo->IndexTable != NULL) {
+    StoreInfo->IndexTable->Length      = 0;
+    StoreInfo->IndexTable->GoneThrough = 0;
+    StoreInfo->IndexTable->StartPtr    = PtrTrack->StartPtr;
+    StoreInfo->IndexTable->EndPtr      = PtrTrack->EndPtr;
+  }
+
+  if (StoreInfo->FtwLastWriteData != NULL) {
+    Status = GetLibraryData (PcdGet8 (PcdUefiVariableLibId), (VOID **)&VarStoreLibData);
+    if (!EFI_ERROR (Status) && (VarStoreLibData != NULL)) {
+      VarStoreLibData->StoreLibVarHdrSet = FALSE;
+    }
+  }
 }
 
 /**
@@ -845,11 +1061,31 @@ FindVariableEx (
     // traverse the variable index table to look for varible.
     // The IndexTable->Index[Index] records the distance of two neighbouring VAR_ADDED type variables.
     //
+    if (IndexTable->Length > sizeof (IndexTable->Index) / sizeof (IndexTable->Index[0])) {
+      //
+      // Discard a corrupted cache before reading any of its entries.
+      //
+      ResetVariableIndexCache (StoreInfo, PtrTrack);
+    }
+
     for (Offset = 0, Index = 0; Index < IndexTable->Length; Index++) {
       ASSERT (Index < sizeof (IndexTable->Index) / sizeof (IndexTable->Index[0]));
       Offset   += IndexTable->Index[Index];
       MaxIndex  = (UEFI_VARIABLE_HEADER *) ((UINT8 *) IndexTable->StartPtr + Offset);
-      GetVariableHeader (StoreInfo, MaxIndex, &VariableHeader);
+      if (((Index != 0) && (IndexTable->Index[Index] == 0)) ||
+          !GetVariableHeader (StoreInfo, MaxIndex, &VariableHeader) ||
+          ((VariableHeader->State != UEFI_VAR_ADDED) &&
+           (VariableHeader->State != (UEFI_VAR_IN_DELETED_TRANSITION & UEFI_VAR_ADDED)))) {
+        //
+        // Discard an invalid cached entry and rebuild from the validated store start.
+        //
+        ResetVariableIndexCache (StoreInfo, PtrTrack);
+        InDeletedVariable = NULL;
+        MaxIndex          = NULL;
+        VariableHeader    = NULL;
+        break;
+      }
+
       if (CompareWithValidVariable (StoreInfo, MaxIndex, VariableHeader, VariableName, VendorGuid, PtrTrack) == EFI_SUCCESS) {
         if (VariableHeader->State == (UEFI_VAR_IN_DELETED_TRANSITION & UEFI_VAR_ADDED)) {
           InDeletedVariable = PtrTrack->CurrPtr;
@@ -894,16 +1130,24 @@ FindVariableEx (
       // Record Variable in VariableIndex HOB
       //
       if ((IndexTable != NULL) && !StopRecord) {
-        Offset = (UINTN) Variable - (UINTN) LastVariable;
-        if ((Offset > 0x0FFFF) || (IndexTable->Length >= sizeof (IndexTable->Index) / sizeof (IndexTable->Index[0]))) {
+        if (((UINTN) Variable < (UINTN) LastVariable) ||
+            (((UINTN) Variable == (UINTN) LastVariable) && (IndexTable->Length != 0))) {
           //
-          // Stop to record if the distance of two neighbouring VAR_ADDED variable is larger than the allowable scope(UINT16),
-          // or the record buffer is full.
+          // A non-monotonic cursor cannot produce a usable distance.
           //
           StopRecord = TRUE;
         } else {
-          IndexTable->Index[IndexTable->Length++] = (UINT16) Offset;
-          LastVariable = Variable;
+          Offset = (UINTN) Variable - (UINTN) LastVariable;
+          if ((Offset > 0x0FFFF) || (IndexTable->Length >= sizeof (IndexTable->Index) / sizeof (IndexTable->Index[0]))) {
+            //
+            // Stop to record if the distance of two neighbouring VAR_ADDED variable is larger than the allowable scope(UINT16),
+            // or the record buffer is full.
+            //
+            StopRecord = TRUE;
+          } else {
+            IndexTable->Index[IndexTable->Length++] = (UINT16) Offset;
+            LastVariable = Variable;
+          }
         }
       }
 
@@ -1045,7 +1289,9 @@ UefiGetVariable (
   if (EFI_ERROR (Status)) {
     return Status;
   }
-  GetVariableHeader (&StoreInfo, Variable.CurrPtr, &VariableHeader);
+  if (!GetVariableHeader (&StoreInfo, Variable.CurrPtr, &VariableHeader)) {
+    return EFI_DEVICE_ERROR;
+  }
 
   //
   // Get data size
