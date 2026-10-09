@@ -156,7 +156,7 @@ class Board(BaseBoard):
 
         if self.RELEASE_MODE and self.ENABLE_FAST_BOOT:
             self.STAGE1A_SIZE         = 0x00018000
-            self.STAGE1B_SIZE         = 0x0012E000
+            self.STAGE1B_SIZE         = 0x0012F000
             self.STAGE2_SIZE          = 0x000C0000
             self.STAGE2_FD_SIZE       = 0x000FE000
             self.PAYLOAD_SIZE         = 0x00027000
