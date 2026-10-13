@@ -36,9 +36,9 @@
 #define B_LPSS_IO_MEM_iDMA_RESET_REL      0x04         ///< iDMA Reset Release
 
 #define MM_PCI_OFFSET(Bus, Device, Function) \
-    ( (UINTN)(Bus << 20) +    \
-      (UINTN)(Device << 15) + \
-      (UINTN)(Function << 12) )
+    ( ((UINTN)(Bus) << 20) +    \
+      ((UINTN)(Device) << 15) + \
+      ((UINTN)(Function) << 12) )
 
 CONST UINT32
 mUartMmPciOffset[] = {

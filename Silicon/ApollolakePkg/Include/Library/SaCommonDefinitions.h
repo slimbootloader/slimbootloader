@@ -10,14 +10,12 @@
 #define _SA_COMMON_DEFINITIONS_H_
 
 #include <Library/PcdLib.h>
+#include <Library/BootloaderCommonLib.h>
 
 #define MmPciAddress( Segment, Bus, Device, Function, Register ) \
-  ( (UINTN) PcdGet64 (PcdPciExpressBaseAddress) + \
-    (UINTN)(Bus << 20) + \
-    (UINTN)(Device << 15) + \
-    (UINTN)(Function << 12) + \
-    (UINTN)(Register) \
-  )
+  MmPciAddressFromBase (PcdGet64 (PcdPciExpressBaseAddress), \
+    ((UINTN)(Bus) << 20) + ((UINTN)(Device) << 15) + \
+    ((UINTN)(Function) << 12) + (UINTN)(Register))
 
 //
 // UINT64

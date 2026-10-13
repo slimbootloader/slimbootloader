@@ -26,6 +26,7 @@
   MdePkg/MdePkg.dec
   BootloaderCorePkg/BootloaderCorePkg.dec
   Silicon/CoffeelakePkg/CoffeelakePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
 
 [LibraryClasses]
   BaseLib

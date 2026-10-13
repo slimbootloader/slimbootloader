@@ -27,6 +27,7 @@
   BootloaderCorePkg/BootloaderCorePkg.dec
   Silicon/CommonSocPkg/CommonSocPkg.dec
   Silicon/CometlakevPkg/CometlakevPkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
 
 [LibraryClasses]
   BaseLib

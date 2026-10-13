@@ -28,6 +28,7 @@ PcdLib
 [Packages]
 MdePkg/MdePkg.dec
 Silicon/CometlakePkg/CometlakePkg.dec
+BootloaderCommonPkg/BootloaderCommonPkg.dec
 
 
 [Sources]
