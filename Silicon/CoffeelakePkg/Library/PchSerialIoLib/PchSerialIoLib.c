@@ -7,6 +7,7 @@
 
 #include <Library/PchSerialIoLib.h>
 #include <Library/BaseLib.h>
+#include <Library/DebugLib.h>
 #include <Library/PciLib.h>
 
 CONST SERIAL_IO_BDF_NUMBERS mSerialIoBdf [PCH_MAX_SERIALIO_CONTROLLERS] =
@@ -53,6 +54,10 @@ GetSerialIoDeviceNumber (
   IN PCH_SERIAL_IO_CONTROLLER  SerialIoNumber
   )
 {
+  if ((UINTN)SerialIoNumber >= ARRAY_SIZE (mSerialIoBdf)) {
+    ASSERT (FALSE);
+    return 0xFF;
+  }
   return mSerialIoBdf[SerialIoNumber].DevNum;
 }
 
@@ -68,6 +73,10 @@ GetSerialIoFunctionNumber (
   IN PCH_SERIAL_IO_CONTROLLER  SerialIoNumber
   )
 {
+  if ((UINTN)SerialIoNumber >= ARRAY_SIZE (mSerialIoBdf)) {
+    ASSERT (FALSE);
+    return 0xFF;
+  }
   return mSerialIoBdf[SerialIoNumber].FuncNum;
 }
 
@@ -92,6 +101,11 @@ FindSerialIoBar (
   UINT16   VenId;
   UINT32   Device;
   UINT32   Function;
+
+  if ((UINTN)SerialIoDevice >= ARRAY_SIZE (mSerialIoAcpiAddress)) {
+    ASSERT (FALSE);
+    return 0;
+  }
 
   Device   = GetSerialIoDeviceNumber (SerialIoDevice);
   Function = GetSerialIoFunctionNumber (SerialIoDevice);

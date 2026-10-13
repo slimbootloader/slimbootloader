@@ -15,6 +15,7 @@
 
 [LibraryClasses]
   BaseLib
+  DebugLib
   PciLib
   PcdLib
 
