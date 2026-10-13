@@ -11,6 +11,7 @@
 #include <IndustryStandard/Pci.h>
 #include <Library/IoLib.h>
 #include <Library/PciLib.h>
+#include <Library/BootloaderCommonLib.h>
 #include <BlCommon.h>
 
 //
@@ -50,13 +51,11 @@
 #define DEFAULT_PCI_BUS_NUMBER_PCH      0
 
 #define MM_PCI_OFFSET(Bus, Device, Function) \
-    ( (UINTN)(Bus << 20) +    \
-      (UINTN)(Device << 15) + \
-      (UINTN)(Function << 12) )
+    ( ((UINTN)(Bus) << 20) +    \
+      ((UINTN)(Device) << 15) + \
+      ((UINTN)(Function) << 12) )
 
 #define MmPciBase(Bus, Device, Function) \
-  ( (UINTN)PcdGet64(PcdPciExpressBaseAddress) + \
-    MM_PCI_OFFSET(Bus, Device, Function) \
-  )
+  MmPciAddressFromBase (PcdGet64 (PcdPciExpressBaseAddress), MM_PCI_OFFSET (Bus, Device, Function))
 
 #endif

@@ -25,6 +25,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   Silicon/ElkhartlakePkg/ElkhartlakePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
 
 [LibraryClasses]
   BaseLib
