@@ -683,6 +683,7 @@ BeforeOSJump (
     PlatformDebugEnabled = PlatformDebugStateEnabled (LoaderPlatformInfo->HwState);
     if(TpmIndicateReadyToBoot (PlatformDebugEnabled) != EFI_SUCCESS) {
       DEBUG ((DEBUG_ERROR, "FAILED to complete TPM ReadyToBoot actions. \n"));
+      CpuHalt ("Failed to complete TPM ReadyToBoot actions");
     }
     AddMeasurePoint (0x40F0);
   }

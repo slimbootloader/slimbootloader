@@ -237,6 +237,11 @@ TpmLibGetActivePcrBanks (
   EFI_STATUS                   Status;
   TPM_LIB_PRIVATE_DATA        *PrivateData;
 
+  if (ActivePcrBanks == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  *ActivePcrBanks = 0;
   PrivateData = NULL;
 
   PrivateData = TpmLibGetPrivateData ();
@@ -245,8 +250,9 @@ TpmLibGetActivePcrBanks (
   }
 
   Status = GetLibraryData (PcdGet8 (PcdTpmLibId), (VOID *) &PrivateData);
-
-  *ActivePcrBanks = PrivateData->ActivePcrBanks;
+  if (!EFI_ERROR (Status) && (PrivateData != NULL)) {
+    *ActivePcrBanks = PrivateData->ActivePcrBanks;
+  }
 
   return Status;
 }
@@ -619,8 +625,13 @@ MeasureSeparatorEvent (
   Data = WithError;
   Digests = &PcrEventHdr.Digests;
   Digests->count = 1;
+  PcrBankActive = 0;
 
-  TpmLibGetActivePcrBanks(&PcrBankActive);
+  Status = TpmLibGetActivePcrBanks (&PcrBankActive);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to get active PCR banks: %r\n", Status));
+    return Status;
+  }
 
   Digests->count = 0;
 
@@ -662,10 +673,11 @@ MeasureSeparatorEvent (
     } else {
       DEBUG ((DEBUG_ERROR, "PCR (%u) extend FAIL with error (0x%8x) .\n",
         PcrHandle, Status));
+      break;
     }
   }
 
-  DEBUG ((DEBUG_INFO, "Capped PCR[0-7] with hash value of (%u). Status : %u\n", WithError, Status));
+  DEBUG ((DEBUG_INFO, "Capped PCR[0-7] with hash value of (%u). Status : %r\n", WithError, Status));
   return Status;
 }
 
@@ -709,8 +721,13 @@ IN  CONST  UINT8                     *Event
 
   Digests = &PcrEventHdr.Digests;
   Digests->count = 0;
+  PcrBankActive = 0;
 
-  TpmLibGetActivePcrBanks(&PcrBankActive);
+  Status = TpmLibGetActivePcrBanks (&PcrBankActive);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to get active PCR banks: %r\n", Status));
+    return Status;
+  }
 
   Status = EFI_NOT_FOUND;
 
@@ -906,7 +923,12 @@ TpmChangePlatformAuth (
   RETURN_STATUS        Status;
   UINT32               PcrBankActive;
 
-  TpmLibGetActivePcrBanks(&PcrBankActive);
+  PcrBankActive = 0;
+  Status = TpmLibGetActivePcrBanks (&PcrBankActive);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to get active PCR banks: %r\n", Status));
+    return Status;
+  }
 
   if (PcrBankActive & HASH_ALG_SHA256){
     NewPlatformAuth.size = SHA256_DIGEST_SIZE;
