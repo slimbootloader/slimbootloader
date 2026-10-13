@@ -204,7 +204,9 @@ GetFirmwareUpdateInfo (
 
   AllocateSize    = sizeof (FIRMWARE_UPDATE_PARTITION) + (MAX_UPDATE_REGIONS - 1) * sizeof(FIRMWARE_UPDATE_REGION);
   UpdatePartition = (FIRMWARE_UPDATE_PARTITION *) AllocateZeroPool(AllocateSize);
-  ASSERT (UpdatePartition != NULL);
+  if (UpdatePartition == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
 
   UpdatePartition->RegionCount   = 0;
 
