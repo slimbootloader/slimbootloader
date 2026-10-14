@@ -160,7 +160,7 @@ typedef  VOID (EFIAPI *DRIVER_ENTRY) (VOID *Params);
 typedef enum {
   FwUpdateRecoveryNone = 0,  ///< Normal capsule update (not a recovery path)
   FwUpdateRecoveryCsme,      ///< CSME firmware code corruption recovery
-  FwUpdateRecoveryIoe,       ///< IOE CSME firmware recovery (reserved for future use)
+  FwUpdateRecoveryIoe,       ///< IOE CSME firmware code corruption recovery
 } FW_UPDATE_RECOVERY_TYPE;
 
 /**
@@ -173,10 +173,9 @@ typedef enum {
   @param[out] FwBuffer      The firmware update capsule image.
   @param[out] FwSize        The capsule image size.
   @param[in]  RecoveryType  FwUpdateRecoveryNone for a standard SBL capsule update;
-                            FwUpdateRecoveryCsme for CSME firmware code corruption
-                            recovery capsule; FwUpdateRecoveryIoe reserved for IOE.
-                            CSME and SBL recovery capsules are kept separate
-                            (different versions).
+                            FwUpdateRecoveryCsme / FwUpdateRecoveryIoe for CSME / IOE
+                            firmware code corruption recovery capsule. CSME and SBL
+                            recovery capsules are kept separate (different versions).
 
   @retval  EFI_SUCCESS      Get the capsule image successfully.
   @retval  others           Error happening when getting capsule image.
