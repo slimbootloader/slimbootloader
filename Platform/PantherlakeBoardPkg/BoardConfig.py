@@ -318,7 +318,7 @@ class Board(BaseBoard):
         if self.ENABLE_SBL_SETUP:
             self.HAVE_VERIFIED_BOOT = 0
             self.HAVE_MEASURED_BOOT = 0
-            self.SETUP_MPYM_SIZE    = 0x12000
+            self.SETUP_MPYM_SIZE    = 0x13000
             self.SETUP_STPY_SIZE    = 0x06000
             self.SETUP_CFGJ_SIZE    = 0x0B000
             self.SETUP_CFGD_SIZE    = 0x02000
