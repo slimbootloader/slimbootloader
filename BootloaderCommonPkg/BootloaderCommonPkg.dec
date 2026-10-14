@@ -323,6 +323,7 @@
 
   ## Maximum number of block groups accepted by Ext2/3/4 filesystems.
   #  This bounds memory allocated for filesystem group descriptors.
+  #  Platform values must be between 1 and 0x8000 (inclusive).
   gPlatformCommonLibTokenSpaceGuid.PcdExtFsMaxBlockGroups | 0x00002000 | UINT32 | 0x00010099
 
   ## Indicates if Universal payload support FDT
