@@ -141,8 +141,10 @@ PayloadInit (
     ContainerList = LoaderPlatformData->ContainerList;
     if (ContainerList != NULL) {
       BufPtr = AllocatePool (ContainerList->TotalLength);
-      CopyMem (BufPtr, ContainerList, ContainerList->TotalLength);
-      GlobalDataPtr->ContainerList = ContainerList;
+      if (BufPtr != NULL) {
+        CopyMem (BufPtr, ContainerList, ContainerList->TotalLength);
+        GlobalDataPtr->ContainerList = BufPtr;
+      }
     }
 
   }
