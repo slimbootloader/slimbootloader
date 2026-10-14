@@ -1561,25 +1561,28 @@ DmarTableUpdate (
   BaseAddress = ReadVtdBaseAddress(GFX_VTD);
   Flags   = 0;
   DmarHdr = AddDrhdHdr (AcpiHeader, Flags, SIZE_64KB, 0, BaseAddress);
-  ASSERT (DmarHdr != NULL);
-  AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0, 0, 0, IGD_DEV_NUM, IGD_FUN_NUM);
+  if (DmarHdr != NULL) {
+    AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0, 0, 0, IGD_DEV_NUM, IGD_FUN_NUM);
+  }
 
   BaseAddress = ReadVtdBaseAddress(NON_GFX_VTD);
   if (IsVtdEngineEnabled(NON_GFX_VTD)) {
     DEBUG ((DEBUG_INFO, "%a NON_GFX_VTD Enabled! \n", __FUNCTION__));
 
     DmarHdr = AddDrhdHdr (AcpiHeader, Flags, SIZE_64KB, 0, BaseAddress);
-    ASSERT (DmarHdr != NULL);
-    AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0, 0, 0, 5, 0);
-    AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0, 0, 0, 0xA, 0);
-    AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0, 0, 0, 0xB, 0);
+    if (DmarHdr != NULL) {
+      AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0, 0, 0, 5, 0);
+      AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0, 0, 0, 0xA, 0);
+      AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT, 0, 0, 0, 0xB, 0);
+    }
   }
 
   BaseAddress = ReadVtdBaseAddress(IOP_VTD);
   DmarHdr = AddDrhdHdr (AcpiHeader, 1, SIZE_64KB, 0, BaseAddress);
-  ASSERT (DmarHdr != NULL);
-  AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_IOAPIC, 0, 2, V_P2SB_CFG_IBDF_BUS, V_P2SB_CFG_IBDF_DEV, V_P2SB_CFG_IBDF_FUNC);
-  AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_MSI_CAPABLE_HPET, 0, 0, V_P2SB_CFG_HBDF_BUS, V_P2SB_CFG_HBDF_DEV, V_P2SB_CFG_HBDF_FUNC);
+  if (DmarHdr != NULL) {
+    AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_IOAPIC, 0, 2, V_P2SB_CFG_IBDF_BUS, V_P2SB_CFG_IBDF_DEV, V_P2SB_CFG_IBDF_FUNC);
+    AddScopeData (AcpiHeader, DmarHdr, EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_MSI_CAPABLE_HPET, 0, 0, V_P2SB_CFG_HBDF_BUS, V_P2SB_CFG_HBDF_DEV, V_P2SB_CFG_HBDF_FUNC);
+  }
 
   DmarHdr = AddSatcHdr (AcpiHeader, 1, 0);
   ASSERT (DmarHdr != NULL);

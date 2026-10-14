@@ -235,6 +235,11 @@ GetVtdBar (
 
   Address = MM_PCI_ADDRESS (Bus, 0, 0, 0);
   Value   = MmioRead32 (Address + R_IIO_VTBAR) & ~B_IIO_VT_BAR_EN;
+  if ((Value == 0) || (Value == (MAX_UINT32 & ~B_IIO_VT_BAR_EN))) {
+    DEBUG ((DEBUG_ERROR, "Invalid VT-d BAR 0x%x for bus 0x%x\n", Value, Bus));
+    ASSERT (FALSE);
+    return 0;
+  }
 
   return Value;
 }
@@ -554,6 +559,10 @@ AppendDrhd (
   // Get VtdBase for this stack
   //
   Drhd->RegisterBaseAddress = GetVtdBar (Bus);
+  if (Drhd->RegisterBaseAddress == 0) {
+    ASSERT (FALSE);
+    return EFI_UNSUPPORTED;
+  }
 
   //
   // Start from next byte location for another DMAR type.
@@ -678,6 +687,10 @@ AppendAtsr (
     // Check if device IOTLB is supported by this stack port
     //
     VtdBase = (UINTN) GetVtdBar (Bus);
+    if (VtdBase == 0) {
+      ASSERT (FALSE);
+      continue;
+    }
     VtdExtCap = MmioRead64 (VtdBase + R_VTD_EXT_CAP_LOW);
     if ((VtdExtCap & B_VTD_EXT_CAP_LOW_DT) != 0) {
       //
@@ -829,6 +842,10 @@ UpdateDmarHeader (
   }
 
   VtdBar = (UINTN) GetVtdBar (Bus);
+  if (VtdBar == 0) {
+    ASSERT (FALSE);
+    return EFI_UNSUPPORTED;
+  }
   VtdExtCap = MmioRead64 (VtdBar + R_VTD_EXT_CAP_LOW);
   if ((VtdExtCap & B_VTD_EXT_CAP_LOW_IR) != 0) {
     Dmar->Flags |= EFI_ACPI_DMAR_TABLE_FLAGS_INTR_REMAP_SET; // iff InterruptRemap is enabled in config data also, check later
@@ -892,6 +909,12 @@ UpdateDmarTable (
   }
 
   Dmar = (EFI_ACPI_DMAR_DESCRIPTION_TABLE *) Table;
+  // Structures are appended right after the header and added to Header.Length
+  if (Dmar->Header.Length != sizeof (EFI_ACPI_DMAR_HEADER)) {
+    DEBUG ((DEBUG_ERROR, "Invalid DMAR table length 0x%x\n", Dmar->Header.Length));
+    ASSERT (FALSE);
+    return EFI_INVALID_PARAMETER;
+  }
   Current = (UINT8 *) Dmar + sizeof(EFI_ACPI_DMAR_HEADER);
 
   //
@@ -944,7 +967,10 @@ UpdateDmarTable (
   //
   // Update Dmar header fields
   //
-  UpdateDmarHeader (Dmar, UpldRootBridges);
+  Status = UpdateDmarHeader (Dmar, UpldRootBridges);
+  if (EFI_ERROR(Status)) {
+    DEBUG ((DEBUG_INFO, "Update DMAR header failed, returning\n"));
+  }
 
   return Status;
 }
