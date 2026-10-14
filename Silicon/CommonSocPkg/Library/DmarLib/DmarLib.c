@@ -33,6 +33,33 @@ EFI_ACPI_DMAR_HEADER mAcpiDmarTableTemplate = {
   .Reserved = {0}
 };
 
+/**
+  Check that a DMAR table has a valid length and can grow by AppendSize bytes.
+
+  @param[in]  AcpiHeader  Pointer to the DMAR ACPI table header.
+  @param[in]  AppendSize  Number of bytes to be appended.
+
+  @retval TRUE   The table length is valid.
+  @retval FALSE  The table length is invalid.
+**/
+STATIC
+BOOLEAN
+IsDmarLengthValid (
+  IN EFI_ACPI_DESCRIPTION_HEADER  *AcpiHeader,
+  IN UINT32                       AppendSize
+  )
+{
+  if ((AcpiHeader == NULL) ||
+      (AcpiHeader->Length < sizeof (EFI_ACPI_DMAR_HEADER)) ||
+      (AcpiHeader->Length > (MAX_UINT32 - AppendSize)) ||
+      ((UINTN)AcpiHeader > MAX_UINTN - ((UINTN)AcpiHeader->Length + AppendSize))) {
+    DEBUG ((DEBUG_ERROR, "Invalid DMAR table length\n"));
+    ASSERT (FALSE);
+    return FALSE;
+  }
+  return TRUE;
+}
+
 
 /**
   Initialize and add an ACPI DMAR (DMA Remapping) table header.
@@ -59,6 +86,10 @@ AddAcpiDmarHdr (
 
   if (!FeaturePcdGet (PcdVtdEnabled)) {
     return EFI_UNSUPPORTED;
+  }
+
+  if (!IsDmarLengthValid (AcpiHeader, 0)) {
+    return EFI_INVALID_PARAMETER;
   }
 
   Dmar = (EFI_ACPI_DMAR_HEADER *)AcpiHeader;
@@ -107,6 +138,16 @@ AddDrhdHdr (
 {
   EFI_ACPI_DMAR_DRHD_HEADER           *DrhdHeader;
   UINT8                               SizeField;
+
+  if (!IsDmarLengthValid (AcpiHeader, (UINT32)sizeof (EFI_ACPI_DMAR_DRHD_HEADER))) {
+    return NULL;
+  }
+
+  // A zero base means the engine is absent or disabled
+  if (RegisterBaseAddress == 0) {
+    DEBUG ((DEBUG_INFO, "DRHD register base address is 0, skipping\n"));
+    return NULL;
+  }
 
   DrhdHeader = (EFI_ACPI_DMAR_DRHD_HEADER *) ((UINT8 *)AcpiHeader + AcpiHeader->Length);
   if (DrhdHeader == NULL || SizeInBytes == 0) {
@@ -180,6 +221,10 @@ AddRmrrHdr (
 {
   EFI_ACPI_DMAR_RMRR_HEADER             *RmrrHeader;
 
+  if (!IsDmarLengthValid (AcpiHeader, (UINT32)sizeof (EFI_ACPI_DMAR_RMRR_HEADER))) {
+    return NULL;
+  }
+
   RmrrHeader = (EFI_ACPI_DMAR_RMRR_HEADER *) ((UINT8 *)AcpiHeader + AcpiHeader->Length);
   if (RmrrHeader == NULL || RsvdMemRegionLimit <= RsvdMemRegionBase) {
     return NULL;
@@ -225,6 +270,10 @@ AddSatcHdr (
 {
   EFI_ACPI_DMAR_SATC_HEADER             *SatcHeader;
 
+  if (!IsDmarLengthValid (AcpiHeader, (UINT32)sizeof (EFI_ACPI_DMAR_SATC_HEADER))) {
+    return NULL;
+  }
+
   SatcHeader = (EFI_ACPI_DMAR_SATC_HEADER *) ((UINT8 *)AcpiHeader + AcpiHeader->Length);
 
   // Initialize the SATC structure.
@@ -264,6 +313,10 @@ AddSidpHdr (
   )
 {
   EFI_ACPI_DMAR_SIDP_HEADER           *SidpHeader;
+
+  if (!IsDmarLengthValid (AcpiHeader, (UINT32)sizeof (EFI_ACPI_DMAR_SIDP_HEADER))) {
+    return NULL;
+  }
 
   SidpHeader = (EFI_ACPI_DMAR_SIDP_HEADER *) ((UINT8 *)AcpiHeader + AcpiHeader->Length);
 
@@ -306,21 +359,12 @@ AddAtsrHdr (
   EFI_ACPI_DMAR_ATSR_HEADER           *Atsr;
   UINT32                              AtsrSize;
 
-  if (AcpiHeader == NULL) {
-    return NULL;
-  }
-
   AtsrSize = (UINT32)sizeof(EFI_ACPI_DMAR_ATSR_HEADER);
 
-  // Check for length overflow before calculating the append location and
-  // updating the ACPI table length.
-  // Also, ensure that the existing table length is at least large enough
-  // to accommodate the ACPI header.
-  ASSERT (AcpiHeader->Length >= sizeof(EFI_ACPI_DESCRIPTION_HEADER));
-  if (AcpiHeader->Length > (MAX_UINT32 - AtsrSize)) {
-    DEBUG((DEBUG_ERROR, "Cannot append ATSR structure: table length would overflow!\n"));
+  if (!IsDmarLengthValid (AcpiHeader, AtsrSize)) {
     return NULL;
   }
+
   Atsr = (EFI_ACPI_DMAR_ATSR_HEADER *) ((UINT8 *)AcpiHeader + AcpiHeader->Length);
 
   // Initialize the Atsr structure
@@ -364,21 +408,12 @@ AddRhsaHdr (
   EFI_ACPI_DMAR_RHSA_HEADER           *Rhsa;
   UINT32                              RhsaSize;
 
-  if (AcpiHeader == NULL) {
-    return NULL;
-  }
-
   RhsaSize = (UINT32)sizeof(EFI_ACPI_DMAR_RHSA_HEADER);
 
-  // Check for length overflow before calculating the append location and
-  // updating the ACPI table length.
-  // Also, ensure that the existing table length is at least large enough
-  // to accommodate the ACPI header.
-  ASSERT (AcpiHeader->Length >= sizeof(EFI_ACPI_DESCRIPTION_HEADER));
-  if (AcpiHeader->Length > (MAX_UINT32 - RhsaSize)) {
-    DEBUG((DEBUG_ERROR, "Cannot append RHSA structure: table length would overflow!\n"));
+  if (!IsDmarLengthValid (AcpiHeader, RhsaSize)) {
     return NULL;
   }
+
   Rhsa = (EFI_ACPI_DMAR_RHSA_HEADER *) ((UINT8 *)AcpiHeader + AcpiHeader->Length);
 
   // Initialize the Rhsa structure
@@ -429,6 +464,49 @@ AddScopeData (
   EFI_ACPI_DMAR_DEVICE_SCOPE_STRUCTURE_HEADER *ScopeHeader;
   EFI_ACPI_DMAR_PCI_PATH                      *PciPath;
   UINT16                                      ScopeSize;
+  UINT16                                      MinLength;
+
+  // Calculate the size of the new scope structure.
+  ScopeSize = (UINT16)(sizeof (EFI_ACPI_DMAR_DEVICE_SCOPE_STRUCTURE_HEADER) + sizeof (EFI_ACPI_DMAR_PCI_PATH));
+
+  if (!IsDmarLengthValid (AcpiHeader, ScopeSize)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  // The scope is appended at the table end, so DmarHdr must be the last structure.
+  MinLength = 0;
+  if ((DmarHdr != NULL) &&
+      ((UINTN)DmarHdr >= (UINTN)AcpiHeader + sizeof (EFI_ACPI_DMAR_HEADER)) &&
+      ((UINTN)DmarHdr - (UINTN)AcpiHeader <= AcpiHeader->Length - sizeof (EFI_ACPI_DMAR_STRUCTURE_HEADER))) {
+    switch (DmarHdr->Type) {
+      case EFI_ACPI_DMAR_TYPE_DRHD:
+        MinLength = sizeof (EFI_ACPI_DMAR_DRHD_HEADER);
+        break;
+      case EFI_ACPI_DMAR_TYPE_RMRR:
+        MinLength = sizeof (EFI_ACPI_DMAR_RMRR_HEADER);
+        break;
+      case EFI_ACPI_DMAR_TYPE_ATSR:
+        MinLength = sizeof (EFI_ACPI_DMAR_ATSR_HEADER);
+        break;
+      case EFI_ACPI_DMAR_TYPE_SATC:
+        MinLength = sizeof (EFI_ACPI_DMAR_SATC_HEADER);
+        break;
+      case EFI_ACPI_DMAR_TYPE_SIDP:
+        MinLength = sizeof (EFI_ACPI_DMAR_SIDP_HEADER);
+        break;
+      default:
+        break;
+    }
+  }
+
+  if ((MinLength == 0) ||
+      (DmarHdr->Length < MinLength) ||
+      (DmarHdr->Length > (MAX_UINT16 - ScopeSize)) ||
+      ((UINTN)DmarHdr - (UINTN)AcpiHeader + DmarHdr->Length != AcpiHeader->Length)) {
+    DEBUG ((DEBUG_ERROR, "Invalid DMAR structure for device scope\n"));
+    ASSERT (FALSE);
+    return EFI_INVALID_PARAMETER;
+  }
 
   ScopeHeader = (EFI_ACPI_DMAR_DEVICE_SCOPE_STRUCTURE_HEADER *) ((UINT8 *)AcpiHeader + AcpiHeader->Length);
 
@@ -440,9 +518,6 @@ AddScopeData (
       return EFI_NO_MEDIA;
     }
   }
-
-  // Calculate the size of the new scope structure.
-  ScopeSize = (UINT16)(sizeof (EFI_ACPI_DMAR_DEVICE_SCOPE_STRUCTURE_HEADER) + sizeof (EFI_ACPI_DMAR_PCI_PATH));
 
   ScopeHeader->Type           = ScopeType;
   ScopeHeader->Length         = (UINT8)ScopeSize;

@@ -755,9 +755,11 @@ UpdatePayloadId (
 /**
   Build VT-d information to prepare PMR program
 
+  @retval EFI_SUCCESS       VT-d information was built.
+  @retval EFI_DEVICE_ERROR  MCHBAR or a VT-d BAR is invalid.
 **/
 STATIC
-VOID
+EFI_STATUS
 BuildVtdInfo (
   VOID
   )
@@ -774,18 +776,34 @@ BuildVtdInfo (
   McD0BaseAddress = MM_PCI_ADDRESS (SA_MC_BUS, 0, 0, 0);
   MchBar          = MmioRead32 (McD0BaseAddress + R_SA_MCHBAR_REG) & ~BIT0;
   VtdInfo->HostAddressWidth = 38;
+  VtdInfo->VTdEngineCount   = 0;
+  if ((MchBar == 0) || (MchBar == (MAX_UINT32 & ~BIT0))) {
+    DEBUG ((DEBUG_ERROR, "Invalid MCHBAR 0x%08X\n", MchBar));
+    ASSERT (FALSE);
+    return EFI_DEVICE_ERROR;
+  }
 
   VtdIdx = 0;
   for (Idx = 0; Idx < ARRAY_SIZE(RegOff); Idx++) {
     Data = MmioRead32 (MchBar + RegOff[Idx]) & ~3;
+    if ((Data == (MAX_UINT32 & ~3)) ||
+         ((RegOff[Idx] == R_SA_MCHBAR_VTD2_OFFSET) && (Data == 0))) {
+      DEBUG ((DEBUG_ERROR, "Invalid VT-d BAR at MCHBAR+0x%X\n", RegOff[Idx]));
+      ASSERT (FALSE);
+      return EFI_DEVICE_ERROR;
+    }
     if (Data != 0) {
+      if (VtdIdx >= ARRAY_SIZE(VtdInfo->VTdEngineAddress)) {
+        ASSERT (FALSE);
+        break;
+      }
       DEBUG ((DEBUG_INFO, "VT-d Engine %d @ 0x%08X\n", VtdIdx, Data));
       VtdInfo->VTdEngineAddress[VtdIdx++] = Data;
-      ASSERT (VtdIdx <= ARRAY_SIZE(VtdInfo->VTdEngineAddress));
     }
   }
 
   VtdInfo->VTdEngineCount = VtdIdx;
+  return EFI_SUCCESS;
 }
 
 /**
@@ -898,9 +916,21 @@ BoardInit (
     }
     // Enable DMA protection
     if (FeaturePcdGet (PcdDmaProtectionEnabled)) {
-      BuildVtdInfo ();
+      Status = BuildVtdInfo ();
+      if (EFI_ERROR (Status)) {
+        CpuHalt ("VT-d discovery failed, DMA protection cannot be enabled!\n");
+      }
       VtdInfo = &((PLATFORM_DATA *)GetPlatformDataPtr ())->VtdInfo;
-      SetDmaProtection (VtdInfo, TRUE);
+      if ((VtdInfo->VTdEngineCount == 0) && FeaturePcdGet (PcdVtdEnabled) &&
+          ((PciRead32 (PCI_LIB_ADDRESS (SA_MC_BUS, 0, 0, R_SA_MC_CAPID0_A)) & BIT23) == 0)) {
+        CpuHalt ("No VT-d engines found, DMA protection cannot be enabled!\n");
+      }
+      if (VtdInfo->VTdEngineCount > 0) {
+        Status = SetDmaProtection (VtdInfo, TRUE);
+        if (EFI_ERROR (Status)) {
+          CpuHalt ("Failed to enable DMA protection!\n");
+        }
+      }
     }
     BuildOsConfigDataHob ();
     break;
@@ -951,7 +981,12 @@ BoardInit (
     if (FeaturePcdGet (PcdDmaProtectionEnabled)) {
       // Disable DMA protection
       VtdInfo = &((PLATFORM_DATA *)GetPlatformDataPtr ())->VtdInfo;
-      SetDmaProtection (VtdInfo, FALSE);
+      if (VtdInfo->VTdEngineCount > 0) {
+        Status = SetDmaProtection (VtdInfo, FALSE);
+        if (EFI_ERROR (Status)) {
+          DEBUG ((DEBUG_ERROR, "Failed to disable DMA protection: %r\n", Status));
+        }
+      }
     }
     EnterIaUnTrustMode ();
     // Clear known MCA logged in BANK4 and enable this MCA again
