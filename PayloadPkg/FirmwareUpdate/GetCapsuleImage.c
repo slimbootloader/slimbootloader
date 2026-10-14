@@ -495,10 +495,10 @@ GetOsImageList (
 
   @param[out] CapsuleImage      The firmware update capsule image.
   @param[out] CapsuleImageSize  The capsule image size.
-  @param[in]  RecoveryType      FwUpdateRecoveryNone for the standard SBL capsule
-                                (tag 0x080); FwUpdateRecoveryCsme for the dedicated
-                                CSME recovery capsule (tag 0x081). CSME recovery and
-                                FW update capsules are kept separate (different versions).
+  @param[in]  RecoveryType      FwUpdateRecoveryNone -> standard FW update capsule (tag 0x080).
+                                FwUpdateRecoveryCsme / FwUpdateRecoveryIoe -> shared CSME/IOE
+                                recovery capsule (tag 0x081), routed to the right engine by
+                                payload signature. The two capsules are kept separate.
 
   @retval  EFI_SUCCESS        Get the capsule image successfully.
   @retval  others             Error happening when getting capsule image.
@@ -527,14 +527,13 @@ GetCapsuleImage (
   DEBUG ((DEBUG_INFO, "\n=================Read Capsule Image==============\n"));
 
   //
-  // For CSME recovery, load the dedicated CSME recovery capsule (tag 0x081).
-  // This block is compiled only on platforms with PcdCsmeResiliencyEnabled.
+  // CSME/IOE recovery: shared recovery capsule (tag 0x081), routed by signature.
   //
 #if FixedPcdGetBool (PcdCsmeResiliencyEnabled)
-  if (RecoveryType == FwUpdateRecoveryCsme) {
+  if ((RecoveryType == FwUpdateRecoveryCsme) || (RecoveryType == FwUpdateRecoveryIoe)) {
     CapsuleInfo = (CAPSULE_INFO_CFG_DATA *) FindConfigDataByTag (CDATA_CSME_CAPSULE_INFO_TAG);
     if (CapsuleInfo == NULL) {
-      DEBUG ((DEBUG_ERROR, " CSME recovery CapsuleInfo (0x081) not found\n"));
+      DEBUG ((DEBUG_ERROR, " CSME/IOE recovery CapsuleInfo (0x081) not found\n"));
       return EFI_NOT_FOUND;
     }
   }
