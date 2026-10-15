@@ -257,6 +257,7 @@
 
   gPlatformCommonLibTokenSpaceGuid.PcdSupportedMediaTypeMask   | $(BOOT_MEDIA_SUPPORT_MASK)
   gPlatformCommonLibTokenSpaceGuid.PcdSupportedFileSystemMask  | $(FILE_SYSTEM_SUPPORT_MASK)
+  gPlatformCommonLibTokenSpaceGuid.PcdExtFsMaxBlockGroups      | $(EXT_FS_MAX_BLOCK_GROUPS)
 
   gPlatformCommonLibTokenSpaceGuid.PcdSeedListEnabled     | $(HAVE_SEED_LIST)
   gPlatformCommonLibTokenSpaceGuid.PcdUsbKeyboardPollingTimeout | $(USB_KB_POLLING_TIMEOUT)
