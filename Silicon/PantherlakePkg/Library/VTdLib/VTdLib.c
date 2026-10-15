@@ -8,6 +8,7 @@
 #include <Base.h>
 #include <Uefi/UefiBaseType.h>
 #include <Library/IoLib.h>
+#include <Library/DebugLib.h>
 #include <Library/PtlVTdLib.h>
 #include <Library/PciLib.h>
 #include <Register/SaRegsHostBridge.h>
@@ -40,12 +41,29 @@ ReadVtdBaseAddress (
 {
   UINT64              McD0BaseAddress;
   UINTN               MchBar;
+  UINT32              VtdBar;
 
   McD0BaseAddress = PCI_LIB_ADDRESS (SA_MC_BUS, 0, 0, 0);
   MchBar          = PciRead32 ((UINTN)McD0BaseAddress + R_SA_MCHBAR) & (~BIT0);
+  if ((MchBar == 0) || (MchBar == (MAX_UINT32 & ~BIT0))) {
+    ASSERT (FALSE);
+    return 0;
+  }
 
   if (VtdEngineNumber < VTD_ENGINE_NUMBER) {
-      return ((MmioRead32 (MchBar + R_MCHBAR_VTD1_OFFSET) & (~(BIT0|BIT1|BIT2))) + (VtdEngineNumber * GetVtdBarSize()));
+      VtdBar = MmioRead32 (MchBar + R_MCHBAR_VTD1_OFFSET) & (~(BIT0|BIT1|BIT2));
+      if (VtdBar == (MAX_UINT32 & ~(BIT0|BIT1|BIT2))) {
+        ASSERT (FALSE);
+        return 0;
+      }
+      if (VtdBar == 0) {
+        return 0;
+      }
+      if (VtdBar > (MAX_UINT32 - (VtdEngineNumber * GetVtdBarSize()))) {
+        ASSERT (FALSE);
+        return 0;
+      }
+      return (VtdBar + (VtdEngineNumber * GetVtdBarSize()));
   } else {
       return 0x0;
   }
@@ -71,7 +89,15 @@ IsVtdEngineEnabled (
   if (VtdEngineNumber < VTD_ENGINE_NUMBER) {
     McD0BaseAddress = PCI_LIB_ADDRESS (SA_MC_BUS, 0, 0, 0);
     MchBar = PciRead32 ((UINTN)McD0BaseAddress + R_SA_MCHBAR) & (~BIT0);
+    if ((MchBar == 0) || (MchBar == (MAX_UINT32 & ~BIT0))) {
+      ASSERT (FALSE);
+      return FALSE;
+    }
     Data = MmioRead32 (MchBar + R_MCHBAR_VTD1_OFFSET);
+    if (Data == MAX_UINT32) {
+      ASSERT (FALSE);
+      return FALSE;
+    }
     return ( (Data >> VtdEngineNumber) & 0x1) ? TRUE : FALSE;
   } else {
     return FALSE;

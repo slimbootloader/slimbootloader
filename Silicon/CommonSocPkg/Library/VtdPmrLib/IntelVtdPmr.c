@@ -451,6 +451,12 @@ SetDmaProtection (
   UINT32        DmaEnd;
   EFI_STATUS    Status;
 
+  if ((VtdInfo == NULL) || (VtdInfo->VTdEngineCount > ARRAY_SIZE (VtdInfo->VTdEngineAddress))) {
+    DEBUG ((DEBUG_ERROR, "Invalid VT-d engine info\n"));
+    ASSERT (FALSE);
+    return EFI_INVALID_PARAMETER;
+  }
+
   if (Enable) {
     MemTop   = (UINT32) GetMemoryInfo (EnumMemInfoTodplm);
     MemTop   = ALIGN_UP (MemTop, PcdGet32 (PcdDmaBufferAlignment));
