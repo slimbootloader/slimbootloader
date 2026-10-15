@@ -171,7 +171,7 @@ UpdateFspConfig (
   if ((GetBootMode () == BOOT_ON_FLASH_UPDATE) || (GetBootMode () == BOOT_ON_S3_RESUME)) {
     DEBUG ((DEBUG_INFO, "MOR: boot mode 0x%X, payload 0x%X skips MOR clean-memory policy assignment.\n",
             GetBootMode (), GetPayloadId ()));
-  } else if (GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE) {
+  } else {
     UINT8                     MorControl;
     UINTN                     MorControlSize;
     EFI_STATUS                MorStatus;
@@ -195,8 +195,6 @@ UpdateFspConfig (
     } else {
       DEBUG ((DEBUG_INFO, "MOR: variable missing or malformed; no memory clear requested.\n"));
     }
-  } else {
-    DEBUG ((DEBUG_INFO, "MOR: payload 0x%X is not UEFI; CleanMemory remains 0.\n", GetPayloadId ()));
   }
 
   Status = GetTempRamInfo (&CarBase, &CarSize);
