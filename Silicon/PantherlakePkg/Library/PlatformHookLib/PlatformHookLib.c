@@ -20,9 +20,9 @@
 #include <Register/SerialIoUartRegs.h>
 
 #define MM_PCI_OFFSET(Bus, Device, Function) \
-    ( (UINTN)(Bus << 20) +    \
-      (UINTN)(Device << 15) + \
-      (UINTN)(Function << 12) )
+    ( ((UINTN)(Bus) << 20) +    \
+      ((UINTN)(Device) << 15) + \
+      ((UINTN)(Function) << 12) )
 
 CONST UINT32
 mUartMmPciOffset[] = {
