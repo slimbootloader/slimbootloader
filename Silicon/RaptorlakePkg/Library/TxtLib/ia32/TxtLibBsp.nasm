@@ -116,6 +116,7 @@ SECTION .text
 %define NEXT_MTRR_INDEX      xmm2
 %define NEXT_MTRR_SIZE       xmm3
 %define MTRR_PHYS_MASK_HIGH  xmm4
+%define ACM_SIZE_DWORDS      xmm5
 
 %define BIOS_GDT [ebp-0x10]
 %define BIOS_IDT [ebp-0x20]
@@ -482,6 +483,7 @@ LaunchBiosAcm_ClearMtrrContinue:
     shl     eax, 12
     mov     esi, eax                ; esi = AcmBase
     mov     eax, [esi+ACMOD_SIZE]   ; eax = size of ACM
+    movd    ACM_SIZE_DWORDS, eax    ; Save size of ACM in dwords (single fetch from flash)
     ;Log ACM Size at Port 80
     ;out     0x80, ax
     shl     eax, 2                  ;  ...in bytes (ACM header has size in dwords)
@@ -685,7 +687,7 @@ LaunchBiosAcm_Compatible:
     mov     esi, eax                ; esi = ACM function
     MOVDOUT0                        ; eax = AcmBase
     mov     ebx, eax                ; ebx = AcmBase
-    mov     ecx, DWORD [ebx+ACMOD_SIZE]  ; ecx = size of ACM in dwords
+    movd    ecx, ACM_SIZE_DWORDS    ; ecx = size of ACM in dwords (reused, avoid double fetch)
 
     ;Log ACM Size at Port 80
     mov     eax, ecx
