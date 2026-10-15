@@ -1,7 +1,7 @@
 /** @file
   PCH SMBUS library implementation built upon I/O library.
 
-  Copyright (c) 2019 Intel Corporation. All rights reserved. <BR>
+  Copyright (c) 2019-2026 Intel Corporation. All rights reserved. <BR>
 
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
@@ -14,6 +14,15 @@
 #include <Library/DebugLib.h>
 #include <Library/BootloaderCommonLib.h>
 #include <Register/RegsSmbus.h>
+
+//
+// SMBus block transfers are architecturally limited to 32 data bytes
+// (the byte count is a single SMBus protocol byte, 0-255, but the bus spec
+// caps a block transfer's data payload at 32). All of this library's public
+// block APIs (SmBusReadBlock/SmBusBlockProcessCall) are documented to return
+// at most 32 bytes and require the caller's Buffer to be sized accordingly.
+//
+#define MAX_SMBUS_BLOCK_LENGTH  32
 
 /**
   Gets Io port base address of Smbus Host Controller.
@@ -227,11 +236,13 @@ InternalSmBusNonBlock (
   // Start the SMBUS transaction and wait for the end.
   //
   ReturnStatus = InternalSmBusStart (IoPortBaseAddress, HostControl);
-  //
-  // Read value from Host Data 0 and Host Data 1 Registers.
-  //
-  Value = (UINT16)(IoRead8 (IoPortBaseAddress + R_SMBUS_IO_HD1) << 8);
-  Value = (UINT16)(Value | IoRead8 (IoPortBaseAddress + R_SMBUS_IO_HD0));
+  if (!RETURN_ERROR (ReturnStatus)) {
+    //
+    // Read value from Host Data 0 and Host Data 1 Registers.
+    //
+    Value = (UINT16)(IoRead8 (IoPortBaseAddress + R_SMBUS_IO_HD1) << 8);
+    Value = (UINT16)(Value | IoRead8 (IoPortBaseAddress + R_SMBUS_IO_HD0));
+  }
   //
   // Clear Host Status Register and Auxiliary Status Register.
   //
@@ -768,9 +779,15 @@ InternalSmBusBlock (
 
   if (ReadBuffer != NULL) {
     //
-    // Read the number of block from host block data byte register.
+    // Read the number of block from host block data byte register. This
+    // count comes directly from the SMBus slave and is therefore untrusted.
+    // Clamp the bytecount before ever using it to index ReadBuffer.
     //
     BytesCount = IoRead8 (IoPortBaseAddress + R_SMBUS_IO_HD0);
+    if (BytesCount > MAX_SMBUS_BLOCK_LENGTH) {
+      BytesCount = MAX_SMBUS_BLOCK_LENGTH;
+    }
+
     //
     // Write data block from Host Block Data Register.
     //
@@ -960,4 +977,3 @@ SmBusBlockProcessCall (
            Status
            );
 }
-
