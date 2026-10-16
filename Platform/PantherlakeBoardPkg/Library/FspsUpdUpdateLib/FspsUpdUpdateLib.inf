@@ -45,6 +45,9 @@
   gPlatformModuleTokenSpaceGuid.PcdEnablePciePm
   gPlatformCommonLibTokenSpaceGuid.PcdTxtEnabled
 
+[FeaturePcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdUiSetupEnabled
+
 [FixedPcd]
   gPlatformCommonLibTokenSpaceGuid.PcdTccEnabled
   gPlatformPantherLakeTokenSpaceGuid.PcdWclSupport
