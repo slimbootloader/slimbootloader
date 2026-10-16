@@ -22,6 +22,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <FirmwareUpdateStatus.h>
 #include <RecoveryStatus.h>
 #include <Register/HeciRegs.h>
+#include <MeChipset.h>
 #include <Guid/OsBootOptionGuid.h>
 #include <IndustryStandard/Pci22.h>
 
@@ -218,6 +219,52 @@ IsMeCorrupt (
 }
 
 /**
+  Detect IOE CSME firmware code corruption via the IOE HECI (device-table
+  instance CSMEIOE, a separate bus from the SoC CSME).
+
+  @retval TRUE   IOE firmware corruption detected.
+  @retval FALSE  Healthy, not attached, or no IOE die present.
+**/
+BOOLEAN
+EFIAPI
+IsIoeCorrupt (
+  VOID
+  )
+{
+  HECI_FWS_REGISTER      IoeFwSts1;
+  HECI_GS_SHDW_REGISTER  IoeFwSts2;
+  UINT32                 IoeDeviceAddr;
+  PLT_PCI_DEVICE         IoeDev;
+  UINTN                  HeciBase;
+
+  // Instance is the SECURITY_ENGINE value (CSMEIOE), registered only on IOE-die boards.
+  IoeDeviceAddr = GetDeviceAddr ((UINT8)PlatformDeviceMe, (UINT8)CSMEIOE);
+  if (IoeDeviceAddr == 0) {
+    return FALSE;
+  }
+  CopyMem (&IoeDev, &IoeDeviceAddr, sizeof (UINT32));
+
+  HeciBase = PCI_LIB_ADDRESS (IoeDev.PciBusNumber, IoeDev.PciDeviceNumber, HECI_FUN, 0);
+
+  if (PciRead16 (HeciBase + PCI_DEVICE_ID_OFFSET) == 0xFFFF) {
+    return FALSE;
+  }
+
+  IoeFwSts1.ul = PciRead32 (HeciBase + R_ME_HFS);
+  IoeFwSts2.ul = PciRead32 (HeciBase + R_ME_HFS_2);
+
+  if ((IoeFwSts1.r.CurrentState == ME_STATE_RECOVERY) ||
+      (IoeFwSts1.r.FtBupLdFlr == 1) ||
+      (IoeFwSts2.r.FwUpdIpu == 1)) {
+    DEBUG ((DEBUG_ERROR, "IOE firmware corruption detected (HFSTS1=0x%08x HFSTS2=0x%08x)\n",
+            IoeFwSts1.ul, IoeFwSts2.ul));
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+/**
   Unified resiliency check point.
 
   Consolidates ACM and TCO checks and maintains persistent recovery state.
@@ -249,7 +296,7 @@ UnifiedResiliencyCheck (
       !IsRecoveryTriggered () &&
       !CsmeWdtFailure &&
       !WasBootCausedByTcoTimeout () &&
-      !(PcdGetBool (PcdCsmeResiliencyEnabled) && IsMeCorrupt ())) {
+      !(PcdGetBool (PcdCsmeResiliencyEnabled) && (IsMeCorrupt () || IsIoeCorrupt ()))) {
     return;
   }
   // Read existing RecoveryStatus variable (may not exist).
@@ -305,10 +352,13 @@ UnifiedResiliencyCheck (
   }
 
   //
-  // CSME firmware code corruption detection (HFSTS1/HFSTS2 via HECI-1).
+  // CSME/IOE code corruption detection (distinct reasons; separate HECI buses).
   //
   if (PcdGetBool (PcdCsmeResiliencyEnabled) && IsMeCorrupt ()) {
     NewReason |= RECOVERY_REASON_CSME;
+  }
+  if (PcdGetBool (PcdCsmeResiliencyEnabled) && IsIoeCorrupt ()) {
+    NewReason |= RECOVERY_REASON_IOE;
   }
 
   //
@@ -349,10 +399,10 @@ UnifiedResiliencyCheck (
         Status.AttemptCount++;
         Status.LastResult = RECOVERY_RESULT_PENDING;
         if ((Status.AttemptCount > MaxRecoveryAttempts) ||
-            (((Status.Reason & RECOVERY_REASON_CSME) != 0) && (Status.AttemptCount > 1))) {
-          // Degrade only when CSME is the sole reason; otherwise keep other budgets.
-          if (Status.Reason == RECOVERY_REASON_CSME) {
-            DEBUG ((DEBUG_WARN, "Resiliency: CSME recovery exhausted - booting degraded\n"));
+            (((Status.Reason & (RECOVERY_REASON_CSME | RECOVERY_REASON_IOE)) != 0) && (Status.AttemptCount > 1))) {
+          // Degrade only when CSME/IOE is the sole reason; otherwise keep other budgets.
+          if ((Status.Reason == RECOVERY_REASON_CSME) || (Status.Reason == RECOVERY_REASON_IOE)) {
+            DEBUG ((DEBUG_WARN, "Resiliency: CSME/IOE recovery exhausted - booting degraded\n"));
             ClearRecoveryTrigger ();
             return;
           }
@@ -386,10 +436,10 @@ UnifiedResiliencyCheck (
 
   // Anti-loop: halt or degrade when attempts are exhausted.
   if ((Status.AttemptCount > MaxRecoveryAttempts) ||
-      (((Status.Reason & RECOVERY_REASON_CSME) != 0) && (Status.AttemptCount > 1))) {
-    // Degrade only when CSME is the sole reason; otherwise keep other budgets.
-    if (Status.Reason == RECOVERY_REASON_CSME) {
-      DEBUG ((DEBUG_WARN, "Resiliency: CSME recovery exhausted - booting degraded\n"));
+      (((Status.Reason & (RECOVERY_REASON_CSME | RECOVERY_REASON_IOE)) != 0) && (Status.AttemptCount > 1))) {
+    // Degrade only when CSME/IOE is the sole reason; otherwise keep other budgets.
+    if ((Status.Reason == RECOVERY_REASON_CSME) || (Status.Reason == RECOVERY_REASON_IOE)) {
+      DEBUG ((DEBUG_WARN, "Resiliency: CSME/IOE recovery exhausted - booting degraded\n"));
       ClearRecoveryTrigger ();
       return;
     }
