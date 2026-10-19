@@ -959,6 +959,7 @@ PatchDsdtTableAML (
 
   for (DsdtPointer = CurrPtr; DsdtPointer <= EndPtr; DsdtPointer++) {
 
+    // APT/SPD AML layout: Name(4) BufferOp(1) PkgLength(2) WordPrefix(1) BufferSize(2), so data starts at +10
     for (Socket = 0; Socket < MAX_SOCKET; Socket++) {
       //
       // Find APT##socket name
@@ -969,8 +970,20 @@ PatchDsdtTableAML (
           continue;
         }
 
+        if ((TableHeader->Length < 10 + MAX_THREAD * MAX_CORE * sizeof (UINT32)) ||
+            ((UINTN)(DsdtPointer - (UINT8 *)TableHeader) >
+             TableHeader->Length - (10 + MAX_THREAD * MAX_CORE * sizeof (UINT32))))
+        {
+          DSDTERROR ("APT%x package exceeds table bounds\n", Socket);
+          ASSERT (FALSE);
+          return EFI_COMPROMISED_DATA;
+        }
         Counter16 = *(UINT16 *) &DsdtPointer[8];
-        ASSERT ((Counter16 / sizeof (UINT32)) >= (UINT32) (MAX_THREAD * MAX_CORE));
+        if (Counter16 < MAX_THREAD * MAX_CORE * sizeof (UINT32)) {
+          DSDTERROR ("APT%x package is too small: 0x%X\n", Socket, Counter16);
+          ASSERT (FALSE);
+          return EFI_COMPROMISED_DATA;
+        }
         DSDTDEBUG ("Found 'APT%x'...Counter16 = 0x%x\n", Socket, Counter16);
         for (i = 0; i < (MAX_THREAD * MAX_CORE); i++) {
           *(UINT32 *)&DsdtPointer[i*4+10] = mApicIdMap[Socket][i];
@@ -985,9 +998,21 @@ PatchDsdtTableAML (
           continue;
         }
 
+        if ((TableHeader->Length < 10 + MAX_THREAD * MAX_CORE) ||
+            ((UINTN)(DsdtPointer - (UINT8 *)TableHeader) >
+             TableHeader->Length - (10 + MAX_THREAD * MAX_CORE)))
+        {
+          DSDTERROR ("SPD%x package exceeds table bounds\n", Socket);
+          ASSERT (FALSE);
+          return EFI_COMPROMISED_DATA;
+        }
         Counter16 = *(UINT16 *) &DsdtPointer[8];
         DSDTDEBUG ("Found 'SPD%x'...Counter16 = 0x%x\n", Socket, Counter16);
-        ASSERT (Counter16 >= (UINT32) (MAX_THREAD * MAX_CORE));
+        if (Counter16 < MAX_THREAD * MAX_CORE) {
+          DSDTERROR ("SPD%x package is too small: 0x%X\n", Socket, Counter16);
+          ASSERT (FALSE);
+          return EFI_COMPROMISED_DATA;
+        }
         for (i = 0; i < (MAX_THREAD * MAX_CORE); i++) {
           DsdtPointer[i+10] = (UINT8) mSNCProximityDomainMap[Socket][i];
         }
