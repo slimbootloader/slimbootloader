@@ -598,6 +598,12 @@ PatchDsdtTableAML (
     //
     // Point to offset in DSDT for current item in AmlOffsetTable.
     //
+    if (mAmlOffsetTablePointer[i].Offset >= TableHeader->Length) {
+      DSDTERROR ("Invalid AML offset 0x%X for table length 0x%X\n",
+        mAmlOffsetTablePointer[i].Offset, TableHeader->Length);
+      ASSERT (FALSE);
+      return EFI_COMPROMISED_DATA;
+    }
     DsdtPointer = (UINT8 *) (TableHeader) + mAmlOffsetTablePointer[i].Offset;
 
     DSDTDEBUG ("Patching '%a' OpCode 0x%02X Offset %X\n", mAmlOffsetTablePointer[i].Pathname, mAmlOffsetTablePointer[i].Opcode,mAmlOffsetTablePointer[i].Offset);
@@ -607,12 +613,19 @@ PatchDsdtTableAML (
       // If Opcode is 0x0C, then operator is Name() or OperationRegion().
       // (TableHeader + AmlOffsetTable.Offset) is at offset for value to change.
       //
-      // The assert below confirms that AML structure matches the offsets table.
+      // The check below confirms that AML structure matches the offsets table.
       // If not then patching the AML would just corrupt it and result in OS failure.
-      // If you encounter this assert something went wrong in *.offset.h files
+      // If this check fails something went wrong in *.offset.h files
       // generation. Remove the files and rebuild.
       //
-      ASSERT(DsdtPointer[-1] == mAmlOffsetTablePointer[i].Opcode);
+      if ((mAmlOffsetTablePointer[i].Offset == 0) ||
+          (TableHeader->Length - mAmlOffsetTablePointer[i].Offset < sizeof (UINT32)) ||
+          (DsdtPointer[-1] != mAmlOffsetTablePointer[i].Opcode))
+      {
+        DSDTERROR ("Invalid AML DWORD offset/opcode for '%a'\n", mAmlOffsetTablePointer[i].Pathname);
+        ASSERT (FALSE);
+        return EFI_COMPROMISED_DATA;
+      }
       //
       // AmlOffsetTable.Value has FIX tag, so check that to decide what to modify.
       //
@@ -637,12 +650,18 @@ PatchDsdtTableAML (
       //
       AmlResourceAddress16Pointer = (EFI_ACPI_WORD_ADDRESS_SPACE_DESCRIPTOR *) (DsdtPointer);
       //
-      // The assert below confirms that AML structure matches the offsets table.
+      // The check below confirms that AML structure matches the offsets table.
       // If not then patching the AML would just corrupt it and result in OS failure.
-      // If you encounter this assert something went wrong in *.offset.h files
+      // If this check fails something went wrong in *.offset.h files
       // generation. Remove the files and rebuild.
       //
-      ASSERT(AmlResourceAddress16Pointer->Header.Header.Byte == mAmlOffsetTablePointer[i].Opcode);
+      if ((sizeof (*AmlResourceAddress16Pointer) > TableHeader->Length - mAmlOffsetTablePointer[i].Offset) ||
+          (AmlResourceAddress16Pointer->Header.Header.Byte != mAmlOffsetTablePointer[i].Opcode))
+      {
+        DSDTERROR ("Invalid AML WORD descriptor for '%a'\n", mAmlOffsetTablePointer[i].Pathname);
+        ASSERT (FALSE);
+        return EFI_COMPROMISED_DATA;
+      }
 
       //
       // Last 4 chars of AmlOffsetTable.Pathname has FIX tag.
@@ -795,12 +814,18 @@ PatchDsdtTableAML (
       //
       AmlResourceAddress32Pointer = (EFI_ACPI_DWORD_ADDRESS_SPACE_DESCRIPTOR *) (DsdtPointer);
       //
-      // The assert below confirms that AML structure matches the offsets table.
+      // The check below confirms that AML structure matches the offsets table.
       // If not then patching the AML would just corrupt it and result in OS failure.
-      // If you encounter this assert something went wrong in *.offset.h files
+      // If this check fails something went wrong in *.offset.h files
       // generation. Remove the files and rebuild.
       //
-     ASSERT(AmlResourceAddress32Pointer->Header.Header.Byte == mAmlOffsetTablePointer[i].Opcode);
+      if ((sizeof (*AmlResourceAddress32Pointer) > TableHeader->Length - mAmlOffsetTablePointer[i].Offset) ||
+          (AmlResourceAddress32Pointer->Header.Header.Byte != mAmlOffsetTablePointer[i].Opcode))
+      {
+        DSDTERROR ("Invalid AML DWORD descriptor for '%a'\n", mAmlOffsetTablePointer[i].Pathname);
+        ASSERT (FALSE);
+        return EFI_COMPROMISED_DATA;
+      }
       //
       // Last 4 chars of AmlOffsetTable.Pathname has FIX tag.
       //
@@ -868,12 +893,18 @@ PatchDsdtTableAML (
       //
       AmlResourceAddress64Pointer = (EFI_ACPI_QWORD_ADDRESS_SPACE_DESCRIPTOR *) (DsdtPointer);
       //
-      // The assert below confirms that AML structure matches the offsets table.
+      // The check below confirms that AML structure matches the offsets table.
       // If not then patching the AML would just corrupt it and result in OS failure.
-      // If you encounter this assert something went wrong in *.offset.h files
+      // If this check fails something went wrong in *.offset.h files
       // generation. Remove the files and rebuild.
       //
-      ASSERT(AmlResourceAddress64Pointer->Header.Header.Byte == mAmlOffsetTablePointer[i].Opcode);
+      if ((sizeof (*AmlResourceAddress64Pointer) > TableHeader->Length - mAmlOffsetTablePointer[i].Offset) ||
+          (AmlResourceAddress64Pointer->Header.Header.Byte != mAmlOffsetTablePointer[i].Opcode))
+      {
+        DSDTERROR ("Invalid AML QWORD descriptor for '%a'\n", mAmlOffsetTablePointer[i].Pathname);
+        ASSERT (FALSE);
+        return EFI_COMPROMISED_DATA;
+      }
       //
       // Last 4 chars of AmlOffsetTable.Pathname has FIX tag.
       //
