@@ -256,9 +256,11 @@ class BaseBoard(object):
         self.PAYLOAD_LOAD_BASE     = 0
         self.FWUPDATE_LOAD_BASE    = 0
 
-        # OS Loader FD/FV sizes
-        self.OS_LOADER_FD_SIZE     = 0x00057000
+        # Stage 2 and OS Loader FD/FV sizes
+        self.STAGE2_FD_SIZE        = 0x00400000
+        self.STAGE2_FD_NUMBLK      = self.STAGE2_FD_SIZE // self.FLASH_BLOCK_SIZE
 
+        self.OS_LOADER_FD_SIZE     = 0x00200000
         self.OS_LOADER_FD_NUMBLK   = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         self.PLD_HEAP_SIZE         = 0x02000000
@@ -1534,27 +1536,20 @@ class Build(object):
             raise Exception ("FV report '%s' does not contain EFI_FV_TAKEN_SIZE" % report_file)
         return int (match.group (1), 0)
 
+    def _apply_auto_fd_sizes (self, stage2_fd_size, os_loader_fd_size):
+        block_size = self._board.FLASH_BLOCK_SIZE
+        self._board.STAGE2_FD_SIZE      = self._align_size (stage2_fd_size, block_size)
+        self._board.OS_LOADER_FD_SIZE   = self._align_size (os_loader_fd_size, block_size)
+        self._board.STAGE2_FD_NUMBLK    = self._board.STAGE2_FD_SIZE // block_size
+        self._board.OS_LOADER_FD_NUMBLK = self._board.OS_LOADER_FD_SIZE // block_size
+
     def _prepare_auto_fd_sizes (self):
         if not getattr (self._board, '_AUTO_FD_SIZE', False):
             return
 
-        block_size = self._board.FLASH_BLOCK_SIZE
-
-        stage2_fv_size    = self._align_size (self._get_fv_taken_size ('STAGE2'), block_size)
-        os_loader_fv_size = self._align_size (self._get_fv_taken_size ('OSLOADER'), block_size)
-        self._board.STAGE2_FD_SIZE      = self._align_size (stage2_fv_size + self._board.FSP_S_SIZE, block_size)
-        self._board.OS_LOADER_FD_SIZE   = os_loader_fv_size
-        self._board.STAGE2_FD_NUMBLK    = self._board.STAGE2_FD_SIZE // block_size
-        self._board.OS_LOADER_FD_NUMBLK = self._board.OS_LOADER_FD_SIZE // block_size
-
-    def _prepare_auto_fd_bootstrap (self):
-        if not getattr (self._board, '_AUTO_FD_SIZE', False):
-            return
-
-        self._board.STAGE2_FD_SIZE      = 0x00400000
-        self._board.OS_LOADER_FD_SIZE   = 0x00200000
-        self._board.STAGE2_FD_NUMBLK    = self._board.STAGE2_FD_SIZE    // self._board.FLASH_BLOCK_SIZE
-        self._board.OS_LOADER_FD_NUMBLK = self._board.OS_LOADER_FD_SIZE // self._board.FLASH_BLOCK_SIZE
+        stage2_fd_size = self._get_fv_taken_size ('STAGE2') + self._board.FSP_S_SIZE
+        os_loader_fd_size = self._get_fv_taken_size ('OSLOADER')
+        self._apply_auto_fd_sizes (stage2_fd_size, os_loader_fd_size)
 
     def _refresh_auto_fd_layout (self):
         if not getattr (self._board, '_AUTO_FD_SIZE', False):
@@ -1568,19 +1563,15 @@ class Build(object):
             rebase_fsp (fsp_path, self._fv_dir, self._board.FSP_T_BASE, self._board.FSP_M_BASE, self._board.FSP_S_BASE)
             split_fsp (fsp_path, self._fv_dir)
 
-    def _measure_auto_fd_fvs (self, cmd_args):
-        if not getattr (self._board, '_AUTO_FD_SIZE', False):
-            return
-
-        for fv_name in ['STAGE2', 'OsLoader']:
-            run_process (cmd_args + ['fds', '--fv-image', fv_name])
-
     def build(self):
         print("Build [%s] ..." % self._board.BOARD_NAME)
 
         # Run early build init
         self.early_build_init()
-        self._prepare_auto_fd_bootstrap ()
+        if self._board._AUTO_FD_SIZE:
+            self._apply_auto_fd_sizes (
+                self._board.STAGE2_FD_SIZE,
+                self._board.OS_LOADER_FD_SIZE)
 
         # Drop patched FSP UPD headers left by a previous build; the board hook recreates them if needed
         if self._board.FSP_UPD_DLT_SUPPORT:
@@ -1603,11 +1594,11 @@ class Build(object):
             "-Y",         "PCD",
             "-Y",         "FLASH",
             "-Y",         "LIBRARY"]
-        run_process (cmd_args + ['modules'])
-        self._measure_auto_fd_fvs (cmd_args)
-        self._prepare_auto_fd_sizes ()
-        self._refresh_auto_fd_layout ()
-        run_process (cmd_args + ['fds'])
+        run_process (cmd_args)
+        if self._board._AUTO_FD_SIZE:
+            self._prepare_auto_fd_sizes ()
+            self._refresh_auto_fd_layout ()
+            run_process (cmd_args + ['fds'])
 
         # Run post-build
         self.board_build_hook ('post-build:before')
