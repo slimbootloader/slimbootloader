@@ -504,8 +504,11 @@ GetVariableStore (
       // Works only if emulated non-volatile variable mode
       // is not enabled in UEFI payload.
       //
-      GetComponentInfo (FLASH_MAP_SIG_UEFIVARIABLE, &NvStorageBase, &NvStorageSize);
-      ASSERT (NvStorageBase != 0);
+      Status = GetComponentInfo (FLASH_MAP_SIG_UEFIVARIABLE, &NvStorageBase, &NvStorageSize);
+      if (EFI_ERROR (Status) || (NvStorageBase == 0)) {
+        DEBUG ((DEBUG_ERROR, "UEFI variable region not found in flash map\n"));
+        break;
+      }
 
       //
       // First let FvHeader point to NV storage base.
@@ -956,7 +959,10 @@ FindVariable (
     return EFI_INVALID_PARAMETER;
   }
 
-  GetVariableStore (VariableStoreTypeNv, StoreInfo);
+  if (GetVariableStore (VariableStoreTypeNv, StoreInfo) == NULL) {
+    return EFI_NOT_FOUND;
+  }
+
   Status = FindVariableEx (
               StoreInfo,
               VariableName,
@@ -1028,8 +1034,10 @@ UefiGetVariable (
   // Check for signature/guid and return
   // if a valid NV area is absent
   //
-  GetComponentInfo (FLASH_MAP_SIG_UEFIVARIABLE, &NvStorageBase, &NvStorageSize);
-  ASSERT (NvStorageBase != 0);
+  Status = GetComponentInfo (FLASH_MAP_SIG_UEFIVARIABLE, &NvStorageBase, &NvStorageSize);
+  if (EFI_ERROR (Status) || (NvStorageBase == 0)) {
+    return EFI_NOT_FOUND;
+  }
   FwVolHeader = (EFI_FIRMWARE_VOLUME_HEADER *) (UINTN) NvStorageBase;
   if ((FwVolHeader->Signature != EFI_FVH_SIGNATURE) || (!CompareGuid (&gEfiSystemNvDataFvGuid, &FwVolHeader->FileSystemGuid))) {
     DEBUG ((DEBUG_INFO, "Invalid NV area!\n"));
