@@ -1798,6 +1798,14 @@ PciScanSegment (
     return EFI_INVALID_PARAMETER;
   }
 
+  if (HostBridge->BusBase > HostBridge->BusLimit) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if ((EnumPolicy->BusScanType == BusScanTypeList) && (EnumPolicy->NumOfBus == 0)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
   Bridge = (PCI_IO_DEVICE *)PciAllocatePool (sizeof (PCI_IO_DEVICE));
   ZeroMem (Bridge, sizeof (PCI_IO_DEVICE));
   InitializeListHead (&Bridge->ChildList);
