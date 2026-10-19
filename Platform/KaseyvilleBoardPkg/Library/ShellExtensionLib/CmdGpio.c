@@ -89,6 +89,9 @@ GpioWrite (
 
     GpioPad    = GPIOV2_PAD_ID(0, 1 << BitIndex, 0, 0, 0, 0);
     Controller = GpioGetController (GpioPad);
+    if (Controller == NULL) {
+      continue;
+    }
     for (CommunityIndex = 0; CommunityIndex < Controller->CommunityNum; CommunityIndex++) {
       if (CommunityIdx != CommunityIndex) {
         continue;
@@ -361,6 +364,9 @@ DumpPadsCfg (
 
     GpioPad    = GPIOV2_PAD_ID(0, 1 << BitIndex, 0, 0, 0, 0);
     Controller = GpioGetController (GpioPad);
+    if (Controller == NULL) {
+      continue;
+    }
 
     for (CommunityIndex = 0; CommunityIndex < Controller->CommunityNum; CommunityIndex++) {
       if ((CommunityIdx != 0xFFFF) && (CommunityIdx != CommunityIndex)) {
@@ -432,6 +438,9 @@ DumpPads (
 
     GpioPad    = GPIOV2_PAD_ID(0, 1 << BitIndex, 0, 0, 0, 0);
     Controller = GpioGetController (GpioPad);
+    if (Controller == NULL) {
+      continue;
+    }
     ShellPrint (L"Id=0x%x, Total Communities=%d, P2sbBase=0x%llx, SbRegBar=0x%llx\n", Controller->ChipsetId, Controller->CommunityNum, Controller->P2sbBase, Controller->SbRegBar);
     for (CommunityIndex = 0; CommunityIndex < Controller->CommunityNum; CommunityIndex++) {
       if ((CommunityIdx != 0xFFFF) && (CommunityIdx != CommunityIndex)) {
@@ -490,6 +499,9 @@ ListPadsSummary (
 
     GpioPad    = GPIOV2_PAD_ID(0, 1 << BitIndex, 0, 0, 0, 0);
     Controller = GpioGetController (GpioPad);
+    if (Controller == NULL) {
+      continue;
+    }
     ShellPrint (L"\nChipsetId=0x%x, Total Communities=%d\n", Controller->ChipsetId, Controller->CommunityNum);
     for (CommunityIndex = 0; CommunityIndex < Controller->CommunityNum; CommunityIndex++) {
       Community = &Controller->Communities[CommunityIndex];
