@@ -829,8 +829,11 @@ PlatformUpdateHobInfo (
   OUT      VOID                  *HobInfo
 )
 {
-  ASSERT (Guid != NULL);
-  ASSERT (HobInfo != NULL);
+  if ((Guid == NULL) || (HobInfo == NULL)) {
+    DEBUG ((DEBUG_ERROR, "PlatformUpdateHobInfo received a NULL pointer\n"));
+    ASSERT (FALSE);
+    return;
+  }
 
   // Just compare Guid memory addresses which are in Stage2 data section instead of CompareGuid ()
   if (Guid == &gEfiGraphicsInfoHobGuid) {
