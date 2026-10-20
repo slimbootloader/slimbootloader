@@ -817,8 +817,35 @@ NvmeControllerInit (
     return Status;
   }
 
-  if (Private->Cap.Css != 0x01) {
-    DEBUG ((DEBUG_VERBOSE, "NvmeControllerInit: the controller doesn't support NVMe command set\n"));
+  DEBUG ((DEBUG_INFO, "NvmeControllerInit: CAP Css = 0x%x\n",
+         Private->Cap.Css));
+
+  //
+  // Reject any values containing reserved bits (Bits 5:1).
+  // Valid bits under NVMe v2.4 spec are 0, 6, 7 -> Mask: BIT0 | BIT6 | BIT7 = 0xC1
+  //
+  if ((Private->Cap.Css & (UINT8)~0xC1) != 0) {
+    DEBUG ((DEBUG_ERROR, "NvmeControllerInit: Malformed CAP.Css (0x%x). Reserved bits are set.\n",
+           Private->Cap.Css));
+    return EFI_UNSUPPORTED;
+  }
+
+  //
+  // Prevent mutually exclusive definitions by enforcing NOIOCSS (Bit 7) logical constraints.
+  // If Bit 7 is 1 (NOIOCSS Admin-only), then no I/O command sets are supported.
+  // Therefore, Bit 0 (NCSS) and Bit 6 (IOCSS) MUST be 0.
+  // Note: Per spec, a Discovery Controller uses NCSS (Bit 0) exclusively, not Bit 7.
+  //
+  if (((Private->Cap.Css & BIT7) != 0) && ((Private->Cap.Css & (BIT6 | BIT0)) != 0)) {
+    DEBUG ((DEBUG_ERROR, "NvmeControllerInit: Invalid CAP.Css logic (0x%x). NOIOCSS cannot coexist with NCSS/IOCSS.\n",
+           Private->Cap.Css));
+    return EFI_UNSUPPORTED;
+  }
+
+  // Css is a bitmask: Bit 0 = NVM Command Set NCSS. Newer versions of QEMU reports 0x41 (NVM NCSS + IOCSS).
+  if ((Private->Cap.Css & BIT0) == 0) {
+    DEBUG ((DEBUG_VERBOSE, "NvmeControllerInit: controller doesn't support NVMe command set (Css=0x%x)\n",
+           Private->Cap.Css));
     return EFI_UNSUPPORTED;
   }
 
@@ -977,4 +1004,3 @@ NvmeControllerInit (
 
   return Status;
 }
-
