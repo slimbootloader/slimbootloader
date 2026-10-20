@@ -12,6 +12,21 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define FAT_CASE_NAME_LOWER     0x08
 #define FAT_CASE_EXT_LOWER      0x10
 
+
+/*
+ * Check if the boot sector's media field is valid
+ *
+ * Based on fat_valid_media() from Linux kernel's include/linux/msdos_fs.h
+ */
+STATIC inline
+BOOLEAN
+FatValidMedia (
+  IN UINT8  Media
+  )
+{
+  return (Media >= 0xf8 || Media == 0xf0);
+}
+
 /**
   Converts unicode characters to lower case characters.
 
@@ -30,6 +45,39 @@ UnicodeStrLwr (
     }
     Str += 1;
   }
+}
+
+/**
+  Computes the standard FAT LFN alias checksum over an 11-byte 8.3
+  short-name entry (FileName+Extension), matching the algorithm every
+  FAT-compliant OS uses to bind a chain of long-file-name directory
+  entries to the short entry that terminates the chain. Each LFN slot
+  carries this checksum computed over the *short* entry it belongs to,
+  precisely so the parser can detect a long-name chain that has been
+  desynchronized, truncated, spliced, or otherwise tampered with even
+  though every individual entry still looks structurally valid.
+
+  @param  ShortName   Pointer to the 11-byte FileName[11] field of the
+                       short directory entry.
+
+  @retval             The 8-bit checksum.
+
+**/
+STATIC
+UINT8
+FatLfnChecksum (
+  IN  CONST CHAR8  *ShortName
+  )
+{
+  UINT8  Checksum;
+  UINTN  Index;
+
+  Checksum = 0;
+  for (Index = 0; Index < 11; Index++) {
+    Checksum = (UINT8) (((Checksum & 1) ? 0x80 : 0) + (Checksum >> 1) + (UINT8) ShortName[Index]);
+  }
+
+  return Checksum;
 }
 
 /**
@@ -66,6 +114,7 @@ FatGetBpbInfo (
   UINT64                  FatLba;
   UINT64                  RootLba;
   UINT64                  FirstClusterLba;
+  UINT8                   BootSignature[2];
 
   //
   // Read in the BPB
@@ -79,6 +128,29 @@ FatGetBpbInfo (
              );
   if (EFI_ERROR (Status)) {
     return Status;
+  }
+
+  //
+  // Fail fast: every valid boot sector, regardless of FAT12/16/32, must
+  // end with the 0x55AA boot sector signature at byte offset 510-511 of
+  // the first physical sector. Checking this cheap, well-known marker up
+  // front rejects non-FAT/garbage sectors before any further attacker-
+  // controlled BPB field is trusted, mirroring the very first check
+  // U-Boot's fat_set_blk_dev() performs.
+  //
+  Status = FatReadDisk (
+             PrivateData,
+             Volume->BlockDeviceNo,
+             510,
+             sizeof (BootSignature),
+             BootSignature
+             );
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  if (BootSignature[0] != 0x55 || BootSignature[1] != 0xAA) {
+    return EFI_NOT_FOUND;
   }
 
   CopyMem (
@@ -110,6 +182,19 @@ FatGetBpbInfo (
     return EFI_NOT_FOUND;
   }
 
+  //
+  // SectorSize must be a power of 2 within the range the FAT spec and
+  // real hardware actually use (512-4096 bytes). Bpb.SectorSize was only
+  // checked for being non-zero above; left unchecked it is an arbitrary
+  // attacker-controlled UINT16 (e.g. 3 or 65535) that feeds directly into
+  // Volume->ClusterSize and every subsequent offset/size calculation.
+  // Mirrors U-Boot's is_bootsector_valid() sector_size check.
+  //
+  if (Bpb.SectorSize < 512 || Bpb.SectorSize > 4096 ||
+      (Bpb.SectorSize & (Bpb.SectorSize - 1)) != 0) {
+    return EFI_NOT_FOUND;
+  }
+
   if (Bpb.SectorsPerCluster != 1 &&
       Bpb.SectorsPerCluster != 2 &&
       Bpb.SectorsPerCluster != 4 &&
@@ -126,27 +211,28 @@ FatGetBpbInfo (
     return EFI_NOT_FOUND;
   }
 
-  if (Bpb.Media != 0xf0 &&
-      Bpb.Media != 0xf8 &&
-      Bpb.Media != 0xf9 &&
-      Bpb.Media != 0xfb &&
-      Bpb.Media != 0xfc &&
-      Bpb.Media != 0xfd &&
-      Bpb.Media != 0xfe &&
-      Bpb.Media != 0xff &&
-      //
-      // FujitsuFMR
-      //
-      Bpb.Media != 0x00 &&
-      Bpb.Media != 0x01 &&
-      Bpb.Media != 0xfa
-      ) {
+  if (!FatValidMedia (Bpb.Media)) {
     return EFI_NOT_FOUND;
   }
 
   if (Volume->FatType != Fat32 && Bpb.RootEntries == 0) {
     return EFI_NOT_FOUND;
   }
+
+  //
+  // For FAT12/16, the root directory has a fixed number of 32-byte
+  // entries and must occupy whole sectors: RootEntries * 32 must divide
+  // evenly by SectorSize. An unaligned RootEntries value is a potential
+  // sign of a corrupted/malicious BPB and would otherwise leave the computed
+  // RootDirSectors later on silently rounded, shifting FirstClusterLba/data-area
+  // math away from what the volume actually describes. Mirrors U-Boot's
+  // is_bootsector_valid() dir_entries alignment check.
+  //
+  if (Volume->FatType != Fat32 &&
+      (Bpb.RootEntries % (Bpb.SectorSize / sizeof (FAT_DIRECTORY_ENTRY))) != 0) {
+    return EFI_NOT_FOUND;
+  }
+
   //
   // If this is fat32, refuse to mount mirror-disabled volumes
   //
@@ -160,6 +246,13 @@ FatGetBpbInfo (
   Volume->ClusterSize = Bpb.SectorSize * Bpb.SectorsPerCluster;
   Volume->RootEntries = Bpb.RootEntries;
   Volume->SectorSize  = Bpb.SectorSize;
+
+  //
+  // Ceiling on ClusterSize (see defination of PEI_FAT_MAX_CLUSTER_SIZE_BYTES for further reasoning)
+  //
+  if (Volume->ClusterSize > PEI_FAT_MAX_CLUSTER_SIZE_BYTES) {
+    return EFI_NOT_FOUND;
+  }
 
   RootDirSectors = ((Volume->RootEntries * sizeof (FAT_DIRECTORY_ENTRY)) + (Volume->SectorSize - 1)) / Volume->SectorSize;
 
@@ -176,6 +269,25 @@ FatGetBpbInfo (
   if (FirstClusterLba >= Sectors) {
     return EFI_NOT_FOUND;
   }
+
+  //
+  // Reject any BPB that claims a volume larger than the block device.
+  //
+  // The BPB's Sectors/LargeSectors field, and everything derived from it
+  // (including MaxCluster), comes from the boot sector and is therefore
+  // media-controlled. A crafted BPB could claim billions of sectors on a small
+  // device. That would inflate MaxCluster and let a malicious FAT table keep
+  // the chain-walking loops in FatGetNextCluster()/FatSetFilePos() running
+  // for a very long time, stalling boot (denial of service).
+  //
+  // Cross-check the claimed size against the capacity the block device itself
+  // reports.
+  //
+  if (Volume->VolumeSize > MultU64x32 (PrivateData->BlockDevice[Volume->BlockDeviceNo].LastBlock + 1,
+                                        PrivateData->BlockDevice[Volume->BlockDeviceNo].BlockSize)) {
+    return EFI_NOT_FOUND;
+  }
+
   Volume->MaxCluster      = (UINT32) (Sectors - FirstClusterLba) / Bpb.SectorsPerCluster;
   Volume->RootDirCluster  = BpbEx.RootDirFirstCluster;
 
@@ -317,6 +429,9 @@ FatSetFilePos (
   UINT32      Offset;
   UINT32      Cluster;
   UINT32      PrevCluster;
+  UINT32      HopCount;
+  UINT32      SeekHopsThisCall;
+  UINT32      TargetPos;
 
   if (File->IsFixedRootDir) {
 
@@ -332,11 +447,47 @@ FatSetFilePos (
     DivU64x32Remainder (File->CurrentPos, File->Volume->ClusterSize, &Offset);
     AlignedPos = (UINT32) File->CurrentPos - (UINT32) Offset;
 
+    //
+    // Cycle detection and defense-in-depth against corrupt or malicious FAT chains.
+    //
+    // A valid, acyclic FAT chain can never contain more than (MaxCluster + 2)
+    // distinct clusters. If the chain is walked for more hops than that, at least
+    // one cluster must have been visited twice (pigeonhole principle), which means
+    // the chain contains a cycle or is otherwise corrupt.
+    //
+    // The hop count is tracked in File->TotalClusterHops and accumulates over the
+    // whole lifetime of the File object, rather than being limited per call. A
+    // per-call limit can be bypassed. For example, a directory scan such as
+    // FatReadNextDirectoryEntry reads 32 bytes at a time. Each call then takes
+    // only one hop, yet the same File object is walked cluster by cluster across
+    // many calls. A cumulative count catches the cycle however the hops are
+    // spread across calls.
+    //
+    // This loop advances only as far as the caller has actually consumed file
+    // content. A legitimately large, non-cyclic file will therefore produce a
+    // large hop count too, and that is expected. Other DoS vectors that depend
+    // on volume are bounded separately:
+    //   - Oversized directory scans:            PEI_FAT_MAX_DIR_ENTRY_COUNT
+    //   - Oversized single-shot read-ahead:     PEI_FAT_MAX_STRAIGHT_RUN_CLUSTERS
+    //
+    if (Pos > MAX_UINT32 - File->CurrentPos) {
+      return EFI_INVALID_PARAMETER;
+    }
+
+    TargetPos = (UINT32) File->CurrentPos + Pos;
+    SeekHopsThisCall = 0;
+
     while
     (
       !FAT_CLUSTER_FUNCTIONAL (File->CurrentCluster) &&
-      AlignedPos + File->Volume->ClusterSize <= File->CurrentPos + Pos
+      TargetPos >= AlignedPos &&
+      (TargetPos - AlignedPos) >= File->Volume->ClusterSize
       ) {
+      if (File->TotalClusterHops++ > File->Volume->MaxCluster + 2) {
+        DEBUG ((DEBUG_ERROR, "FatSetFilePos: cluster chain hop limit exceeded, possible cyclic/malicious FAT\n"));
+        return EFI_DEVICE_ERROR;
+      }
+      SeekHopsThisCall++;
       AlignedPos += File->Volume->ClusterSize;
       Status = FatGetNextCluster (
                  PrivateData,
@@ -353,15 +504,51 @@ FatSetFilePos (
       return EFI_INVALID_PARAMETER;
     }
 
-    File->CurrentPos += Pos;
     //
-    // Calculate the amount of consecutive cluster occupied by the file.
-    // FatReadFile() will use it to read these blocks once.
+    // Fast path: the seek loop above took no hops, so we are still in the same
+    // cluster, and a straight-run window is already computed for it. Just
+    // shrink the window by Pos and skip the chain walk.
+    //
+    // Without this, a directory scan that makes many small reads (for example
+    // 32 bytes each) within one cluster would recompute the full look-ahead
+    // window on every call. That multiplies the cost by (ClusterSize / read size).
+    //
+    if ((SeekHopsThisCall == 0) && File->StraightRunValid && (Pos <= File->StraightReadAmount)) {
+      File->CurrentPos         += Pos;
+      File->StraightReadAmount -= Pos;
+      return EFI_SUCCESS;
+    }
+
+    File->CurrentPos += Pos;
+
+    //
+    // Compute the size of the straight run: the number of consecutive clusters
+    // the file occupies from the current cluster. FatReadFile() uses it to read
+    // them in a single batch.
+    //
+    // The look-ahead stops at the first non-contiguous cluster
+    // (Cluster != PrevCluster + 1) and never modifies File->CurrentCluster.
+    // It therefore cannot walk a cycle.
+    //
+    // A crafted but valid volume can still hold a very long sequential chain,
+    // for example a million clusters behind a tiny file. Walking all of it
+    // would cost an unbounded number of disk reads just to size a batch. To
+    // prevent this, the look-ahead is capped at
+    // min (MaxCluster + 2, PEI_FAT_MAX_STRAIGHT_RUN_CLUSTERS) and simply stops
+    // (it does not fail) when it reaches the cap.
+    //
+    // The cap only shrinks the batch size. FatReadFile() still reads arbitrarily
+    // large files correctly, using additional bounded reads.
     //
     File->StraightReadAmount  = 0;
     Cluster                   = File->CurrentCluster;
+    HopCount                  = 0;
     while (!FAT_CLUSTER_FUNCTIONAL (Cluster)) {
       if (File->StraightReadAmount > MAX_UINT32 - File->Volume->ClusterSize) {
+        break;
+      }
+      if (HopCount++ > ((File->Volume->MaxCluster + 2 < (UINT32) PEI_FAT_MAX_STRAIGHT_RUN_CLUSTERS) ?
+                        File->Volume->MaxCluster + 2 : (UINT32) PEI_FAT_MAX_STRAIGHT_RUN_CLUSTERS)) {
         break;
       }
       File->StraightReadAmount += File->Volume->ClusterSize;
@@ -375,6 +562,7 @@ FatSetFilePos (
         break;
       }
     }
+    File->StraightRunValid = TRUE;
 
     DivU64x32Remainder (File->CurrentPos, File->Volume->ClusterSize, &Offset);
     File->StraightReadAmount -= (UINT32) Offset;
@@ -516,13 +704,16 @@ FatReadNextDirectoryEntry (
   CHAR16              Ext[4];
   CHAR16             *LfnBufferPointer;
   UINT8               LfnOrdinal;
+  UINT8               LfnChecksum;
   UINTN               LfnBufferLen;
   UINT32              DirEntryCount;
   UINT32              LfnEntryCount;
   BOOLEAN             LfnChainValid;
+  BOOLEAN             UseLfn;
 
   LfnBufferLen  = 0;
   LfnChainValid = FALSE;
+  LfnChecksum   = 0;
   ZeroMem ((UINT8 *) SubFile, sizeof (PEI_FAT_FILE));
   DirEntryCount = 0;
 
@@ -536,6 +727,14 @@ FatReadNextDirectoryEntry (
     //
     LfnOrdinal    = 0;
     LfnEntryCount = 0;
+    //
+    // Capture whether the previous outer iteration completed a full,
+    // ordinally-consistent LFN chain before it gets reset below -- this is
+    // used after the short entry (found later in *this* iteration) is
+    // accepted, to validate that the chain's alias checksum actually
+    // matches this short entry rather than some unrelated/spliced one.
+    //
+    UseLfn = LfnChainValid;
     // Only a chain that completed validly last iteration may hand its name
     // to this entry; otherwise drop whatever LfnBufferLen/LongFileName held.
     if (!LfnChainValid) {
@@ -561,14 +760,23 @@ FatReadNextDirectoryEntry (
 
       if (DirEntry.Attributes == FAT_ATTR_LFN) {
         LfnEntry = (FAT_DIRECTORY_LFN *)&DirEntry;
+        //
+        // Every LFN slot in a chain carries the alias checksum of the
+        // short entry it belongs to. The first (LAST-flagged) slot sets the
+        // expected checksum; any later slot that disagrees was spliced in
+        // from another chain and invalidates it. The surviving checksum is
+        // then verified against the short entry terminating this chain.
+        //
         if ((LfnEntry->Ordinal & FAT_LFN_LAST) != 0) {
+          LfnChecksum  = LfnEntry->Checksum;
           LfnOrdinal   = LfnEntry->Ordinal & (FAT_LFN_LAST - 1);
           if (LfnOrdinal > MAX_LFN_ENTRIES) {
             LfnOrdinal = 0;
           }
           LfnBufferLen = LfnOrdinal * LFN_CHAR_TOTAL;
         }
-        if ((LfnEntry->Ordinal & (FAT_LFN_LAST - 1)) != LfnOrdinal) {
+        if (((LfnEntry->Ordinal & (FAT_LFN_LAST - 1)) != LfnOrdinal) ||
+            (LfnEntry->Checksum != LfnChecksum)) {
           // Unexpected LFN entry, skip it.
           LfnOrdinal   = 0;
           LfnBufferLen = 0;
@@ -623,6 +831,19 @@ FatReadNextDirectoryEntry (
     // otherwise we will start a new loop to continue to find something meaningful
     //
     if ((UINT8) DirEntry.FileName[0] != DELETE_ENTRY_MARK) {
+      //
+      // The long name accumulated in SubFile->LongFileName only belongs to
+      // this short entry if the chain's alias checksum actually matches
+      // it. A mismatch means the LFN chain was desynchronized, truncated,
+      // or spliced (e.g. by a crafted/corrupted directory) -- fall back to
+      // the short 8.3 name only rather than trusting an unrelated long
+      // name, mirroring U-Boot's extract_vfat_name() checksum check.
+      //
+      if (UseLfn && SubFile->LongFileName[0] != 0) {
+        if (FatLfnChecksum (DirEntry.FileName) != LfnChecksum) {
+          SubFile->LongFileName[0] = 0;
+        }
+      }
       break;
     }
   }

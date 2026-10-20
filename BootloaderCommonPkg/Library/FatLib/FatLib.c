@@ -254,6 +254,11 @@ FatInitFileSystem (
     return EFI_INVALID_PARAMETER;
   }
 
+  if ((PartBlockDev->PartitionType != EnumPartTypeUnknown) &&
+      (PartBlockDev->BlockDevice[SwPart].LastBlock < PartBlockDev->BlockDevice[SwPart].StartBlock)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
   PrivateData = (PEI_FAT_PRIVATE_DATA *) AllocateZeroPool (sizeof (PEI_FAT_PRIVATE_DATA));
   if (PrivateData == NULL) {
     return EFI_OUT_OF_RESOURCES;
@@ -280,7 +285,9 @@ FatInitFileSystem (
     BlockSize = PartBlockDev->BlockInfo.BlockSize;
     FatBlockDevice = &PrivateData->BlockDevice[PrivateData->BlockDeviceCount];
     FatBlockDevice->BlockSize         = BlockSize;
-    FatBlockDevice->LastBlock         = PartBlockDev->BlockDevice[SwPart].LastBlock;
+    // PartitionLib LastBlock is an absolute disk LBA; reads on this device are partition-relative.
+    FatBlockDevice->LastBlock         = PartBlockDev->BlockDevice[SwPart].LastBlock -
+                                        PartBlockDev->BlockDevice[SwPart].StartBlock;
     FatBlockDevice->Logical           = TRUE;
     FatBlockDevice->PartitionChecked  = TRUE;
     FatBlockDevice->StartingPos       = MultU64x32 (

@@ -32,7 +32,48 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define PEI_FAT_MAX_BLOCK_DEVICE                      64
 #define PEI_FAT_MAX_BLOCK_IO_PPI                      32
 #define PEI_FAT_MAX_VOLUME                            64
-#define PEI_FAT_MAX_DIR_ENTRY_COUNT                   0x10000
+
+//
+// Maximum number of directory entries scanned while resolving a single path
+// component. This is a fixed policy limit and does not depend on any value
+// from the volume (MaxCluster, RootEntries, etc.).
+//
+// A crafted volume can describe a huge but valid, non-cyclic directory, such as
+// tens of thousands of decoy entries with no match. A cap derived from the
+// volume's own size would not stop that. Boot-time directories normally hold
+// at most a few hundred entries, so 0x1000 (4096) leaves ample headroom while
+// stopping amplification attacks before they stall boot.
+//
+#define PEI_FAT_MAX_DIR_ENTRY_COUNT                   0x1000
+
+
+//
+// Maximum number of clusters the straight-run look-ahead in FatSetFilePos()
+// follows when sizing a contiguous read batch. This is a fixed limit and does
+// not depend on Volume->MaxCluster.
+//
+// A crafted volume can have a valid, strictly sequential chain far longer than
+// any boot payload needs (for example, a million clusters behind a tiny file).
+// Without a cap, the look-ahead would do an unbounded number of disk reads
+// just to size one batch.
+//
+// The cap only limits the batch size. FatReadFile() reads the rest of a large
+// file with additional bounded reads, so large files still work.
+//
+#define PEI_FAT_MAX_STRAIGHT_RUN_CLUSTERS             0x400
+
+//
+// Maximum allowed Volume->ClusterSize in bytes (SectorSize * SectorsPerCluster).
+// The FAT specification limits this to 32KB (0x8000) for compatible volumes.
+// Some implementations do accept 64KB, but volumes with 64KB clusters are
+// rejected here as a deliberate policy choice.
+//
+// Without a cap, a crafted BPB with a large but individually valid power-of-2
+// SectorSize and SectorsPerCluster could push ClusterSize into the megabytes.
+// That would inflate every per-cluster read and look-ahead buffer and the cost
+// of walking the volume. Compare U-Boot's fs/fat MAX_CLUSTSIZE.
+//
+#define PEI_FAT_MAX_CLUSTER_SIZE_BYTES                0x8000
 #define PEI_FAT_MEMORY_PAGE_SIZE                      0x1000
 
 //
@@ -92,6 +133,29 @@ typedef struct {
   UINT32          CurrentCluster;
   UINT8           Attributes;
   UINT32          FileSize;
+  //
+  // Cumulative count of cluster-chain hops taken over the entire lifetime
+  // of this PEI_FAT_FILE instance (across all FatSetFilePos()/FatReadFile()
+  // calls, not just a single call). A valid, acyclic FAT chain can never
+  // contain more than (Volume->MaxCluster + 2) distinct clusters, so by the
+  // pigeonhole principle, exceeding that many *total* hops while walking
+  // this file's chain proves a cycle (or an otherwise-corrupt/malicious FAT)
+  // regardless of how the hops are spread across many small calls -- e.g.
+  // repeated 32-byte directory-entry reads during a directory scan.
+  //
+  UINT32          TotalClusterHops;
+  //
+  // TRUE once StraightReadAmount has been computed at least once for the
+  // current CurrentCluster. The straight-run look-ahead only needs to be
+  // recomputed (an O(run length) operation) when CurrentCluster actually
+  // changes; for a call that stays within the same cluster (e.g. one of
+  // many small 32-byte directory-entry reads issued while scanning a
+  // single directory cluster), StraightReadAmount can simply be reduced by
+  // the consumed Pos in O(1). Without this, every single small read would
+  // redundantly re-walk the full look-ahead window, multiplying the cost
+  // of a large directory scan by (ClusterSize / entry size).
+  //
+  BOOLEAN         StraightRunValid;
 } PEI_FAT_FILE;
 
 //
