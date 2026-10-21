@@ -148,7 +148,11 @@ UpdateBdatAcpiTable (
     ///
     BufferSize  = 0;
     SchemaCount = 0;
-    ASSERT (BdatSchemaListHob->SchemaHobCount < MAX_SCHEMA_LIST_LENGTH);
+    if (BdatSchemaListHob->SchemaHobCount > MAX_SCHEMA_LIST_LENGTH) {
+      DEBUG ((DEBUG_ERROR, "BDAT schema count %d exceeds %d\n", BdatSchemaListHob->SchemaHobCount, MAX_SCHEMA_LIST_LENGTH));
+      Status = EFI_UNSUPPORTED;
+      break;
+    }
 
     for (SchemaListIndex = 0; SchemaListIndex < BdatSchemaListHob->SchemaHobCount; SchemaListIndex++) {
       Guid = (EFI_GUID *) &(BdatSchemaListHob->SchemaHobGuids[SchemaListIndex]);

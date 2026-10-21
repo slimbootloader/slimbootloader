@@ -8,6 +8,36 @@
 #include "FusaCrashLogLibPrivate.h"
 
 /**
+  Dump the first CRASHLOG_SIZE_DEBUG_PURPOSE bytes of a copied CrashLog, bounded by its size.
+
+  @param[in] Name      Log name used in the debug output.
+  @param[in] Address   Source address of the log.
+  @param[in] Data      Copied log data.
+  @param[in] Size      Log size in bytes.
+
+**/
+STATIC
+VOID
+DumpCrashLogData (
+  IN CONST CHAR8   *Name,
+  IN UINT32        Address,
+  IN CONST UINT32  *Data,
+  IN UINT32        Size
+  )
+{
+  UINT32  Offset;
+
+  if (Size < sizeof (UINT32)) {
+    return;
+  }
+
+  DEBUG ((DEBUG_VERBOSE, "Value at %aCrashLogAddress 0x%x = 0x%x \n ", Name, Address, Data[0]));
+  for (Offset = 0; (Offset + sizeof (UINT32) <= Size) && (Offset < CRASHLOG_SIZE_DEBUG_PURPOSE); Offset += sizeof (UINT32)) {
+    DEBUG ((DEBUG_VERBOSE, "%a CrashData = 0x%x\n", Name, Data[Offset / sizeof (UINT32)]));
+  }
+}
+
+/**
   Get Cpu Crash log from HOB and use data to fill FW boot error records for BERT.
 
   @param[out] MainLogDestination       Destination FW error record for main log.
@@ -24,8 +54,6 @@ GetCpuCrashLog (
   OUT  UINT32         *TraceDestination
   )
 {
-  UINT32              *CrashLogAddr = NULL;
-  UINT32              CrashLogSize = 0;
   EFI_HOB_GUID_TYPE   *RawHob;
   CPU_CRASHLOG_HOB    *CpuCrashLogData;
   UINT32              MainLogDataBuffer;
@@ -63,52 +91,32 @@ GetCpuCrashLog (
     return EFI_NOT_FOUND;
   }
 
-  if ((MainLogDestination == NULL) || (TelemetryDestination == NULL) || (TraceDestination == NULL)) {
+  if (((MainLogSize != 0) && (MainLogDestination == NULL)) ||
+      ((TelemetrySize != 0) && (TelemetryDestination == NULL)) ||
+      ((TraceSize != 0) && (TraceDestination == NULL))) {
     return EFI_INVALID_PARAMETER;
   }
 
   DEBUG ((DEBUG_VERBOSE, "Cpu Crash Data Collection\n"));
 
-  CrashLogAddr = (UINT32 *) (UINTN) MainLogDataBuffer;
-  DEBUG ((DEBUG_VERBOSE, "Value at MainCrashLogAddress 0x%x = 0x%x \n ", (UINTN)CrashLogAddr, (UINT32) *CrashLogAddr));
-  while (CrashLogSize < (MainLogSize)) {
-    *MainLogDestination = *CrashLogAddr;
-    if (CrashLogSize < CRASHLOG_SIZE_DEBUG_PURPOSE) { // Dumping only few bytes to help debug
-      DEBUG ((DEBUG_VERBOSE, "Main CrashData = 0x%x\n", *MainLogDestination));
-    }
-    MainLogDestination++;
-    CrashLogAddr++;
-    CrashLogSize+=4;
+  // Each destination holds exactly its log size; copy no more.
+  if (MainLogSize != 0) {
+    CopyMem (MainLogDestination, (VOID *) (UINTN) MainLogDataBuffer, MainLogSize);
+    DumpCrashLogData ("Main", MainLogDataBuffer, MainLogDestination, MainLogSize);
   }
-  DEBUG ((DEBUG_VERBOSE, "Copied Main CrashLog Size = 0x%x\n", CrashLogSize));
+  DEBUG ((DEBUG_VERBOSE, "Copied Main CrashLog Size = 0x%x\n", MainLogSize));
 
-  CrashLogSize = 0;
-  CrashLogAddr = (UINT32 *) (UINTN) TelemetryDataBuffer;
-  DEBUG ((DEBUG_VERBOSE, "Value at TelemetryCrashLogAddress 0x%x = 0x%x \n ", (UINTN)CrashLogAddr, (UINT32) *CrashLogAddr));
-  while (CrashLogSize < (TelemetrySize)) {
-    *TelemetryDestination = *CrashLogAddr;
-    if (CrashLogSize < CRASHLOG_SIZE_DEBUG_PURPOSE) { // Dumping only few bytes to help debug
-      DEBUG ((DEBUG_VERBOSE, "Telemetry CrashData = 0x%x\n", *TelemetryDestination));
-    }
-    TelemetryDestination++;
-    CrashLogAddr++;
-    CrashLogSize+=4;
+  if (TelemetrySize != 0) {
+    CopyMem (TelemetryDestination, (VOID *) (UINTN) TelemetryDataBuffer, TelemetrySize);
+    DumpCrashLogData ("Telemetry", TelemetryDataBuffer, TelemetryDestination, TelemetrySize);
   }
-  DEBUG ((DEBUG_VERBOSE, "Copied Telemetry CrashLog Size = 0x%x\n", CrashLogSize));
+  DEBUG ((DEBUG_VERBOSE, "Copied Telemetry CrashLog Size = 0x%x\n", TelemetrySize));
 
-  CrashLogSize = 0;
-  CrashLogAddr = (UINT32 *) (UINTN) TraceDataBuffer;
-  DEBUG ((DEBUG_VERBOSE, "Value at TraceCrashLogAddress 0x%x = 0x%x \n ", (UINTN)CrashLogAddr, (UINT32) *CrashLogAddr));
-  while (CrashLogSize < (TraceSize)) {
-    *TraceDestination = *CrashLogAddr;
-    if (CrashLogSize < CRASHLOG_SIZE_DEBUG_PURPOSE) { // Dumping only few bytes to help debug
-      DEBUG ((DEBUG_VERBOSE, "Trace CrashData = 0x%x\n", *TraceDestination));
-    }
-    TraceDestination++;
-    CrashLogAddr++;
-    CrashLogSize+=4;
+  if (TraceSize != 0) {
+    CopyMem (TraceDestination, (VOID *) (UINTN) TraceDataBuffer, TraceSize);
+    DumpCrashLogData ("Trace", TraceDataBuffer, TraceDestination, TraceSize);
   }
-  DEBUG ((DEBUG_VERBOSE, "Copied Trace CrashLog Size = 0x%x\n", CrashLogSize));
+  DEBUG ((DEBUG_VERBOSE, "Copied Trace CrashLog Size = 0x%x\n", TraceSize));
 
   return EFI_SUCCESS;
 }
@@ -284,6 +292,7 @@ UpdateCrashLogBertTable (
 {
   EFI_STATUS                  Status;
   UINT32                      BootErrorRegionSize;
+  UINT64                      RegionSize;
   CPU_CRASHLOG_HOB            *CpuCrashLogData;
   EFI_HOB_GUID_TYPE           *RawHob;
   BOOLEAN                     CpuCrashLogPresent;
@@ -361,7 +370,13 @@ UpdateCrashLogBertTable (
   // Allocate memory space Error status blocks
   // Allocate memort space for Errorlog Address range, Fill EFI_ACPI_6_4_BOOT_ERROR_RECORD_TABLE_HEADER(Bert) structure
   //
-  BootErrorRegionSize = sizeof (EFI_ACPI_6_4_GENERIC_ERROR_STATUS_STRUCTURE) + sizeof (FIRMWARE_GENERIC_ERROR) * CrashLogCount + CpuCrashLogSize;
+  RegionSize = (UINT64) sizeof (EFI_ACPI_6_4_GENERIC_ERROR_STATUS_STRUCTURE) + (UINT64) sizeof (FIRMWARE_GENERIC_ERROR) * CrashLogCount +
+               (UINT64) MainLogSize + TelemetrySize + TraceSize;
+  if (RegionSize > MAX_UINT32) {
+    DEBUG ((DEBUG_ERROR, "CrashLog size too large\n"));
+    return EFI_OUT_OF_RESOURCES;
+  }
+  BootErrorRegionSize = (UINT32) RegionSize;
   Bert->BootErrorRegion = (UINT64)(UINTN)AllocateZeroPool ((UINTN) BootErrorRegionSize);
 
   DEBUG ((DEBUG_VERBOSE, "Bert->BootErrorRegion     = %x\n", (UINTN)Bert->BootErrorRegion));
