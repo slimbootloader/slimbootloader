@@ -218,7 +218,7 @@ class Board(BaseBoard):
                 self.SIIPFW_SIZE += self.POSC_SIZE
             self.FUSA_BIST_PATTERN_SUPPORT  = 0
             if self.FUSA_BIST_PATTERN_SUPPORT:
-                self.FSBP_SIZE        = 0x1000000
+                self.FSBP_SIZE        = 0x2000000
                 self.FUSA_SIZE        = 0x1000 + self.FSBP_SIZE
 
             # Allow TCC be enabled by FuSa dlt file
