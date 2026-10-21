@@ -175,6 +175,8 @@ class CommitMessageCheck:
                     \s* $''',
                    re.VERBOSE | re.MULTILINE)
 
+    signed_off_by_re = re.compile(r'^Signed-off-by\s*:', re.IGNORECASE)
+
     def find_signatures(self, sig):
         if not sig.endswith('-by') and sig != 'Cc':
             sig += '-by'
@@ -291,21 +293,49 @@ class CommitMessageCheck:
                     )
                 print(lines[i])
 
+        # Index of the first line of the trailing signature block; defaults
+        # to count (no signature block found).
+        sig_block_start = count
         last_sig_line = None
         for i in range(count - 1, 0, -1):
             line = lines[i]
+            if line.strip() == '':
+                # Skip trailing blank lines until the signature block is
+                # found, but stop at the blank line preceding it.
+                if last_sig_line is None:
+                    continue
+                break
             mo = self.sig_block_re.match(line)
             if mo is None:
-                if line.strip() == '':
-                    break
-                elif last_sig_line is not None:
+                if last_sig_line is not None:
                     err2 = 'Add empty line before "%s"?' % last_sig_line
                     self.error('The line before the signature block ' +
                                'should be empty', err2)
                 else:
                     self.error('The signature block was not found')
                 break
+            sig_block_start = i
             last_sig_line = line.strip()
+
+        # lines[0] is the subject and lines[1] is the blank separator line, so
+        # the description body is lines[2:sig_block_start]. Recognized
+        # signature/trailer lines are not counted as description content.
+        signature_res = [
+            self.make_signature_re(sig if sig == 'Cc' else sig + '-by')
+            for sig in ('Signed-off',) + self.sig_types
+        ]
+        if not any(line.strip() and
+                   not any(regex.match(line) for regex in signature_res)
+                   for line in lines[2:sig_block_start]):
+            self.error('Commit message is missing a description (body).')
+
+        # Signed-off-by must appear only in the trailing signature block, not
+        # before the description.
+        for i in range(1, sig_block_start):
+            if self.signed_off_by_re.match(lines[i]):
+                self.error('Signed-off-by must be placed in the signature ' +
+                           'block at the end of the commit message.')
+                break
 
 (START, PRE_PATCH, PATCH) = range(3)
 
