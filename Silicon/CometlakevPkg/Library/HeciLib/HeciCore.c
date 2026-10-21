@@ -811,6 +811,7 @@ HeciReceive (
   UINT32                          TotalLength;
   UINT32                          PacketSize;
   UINT32                          PacketBuffer;
+  UINT32                          *PacketData;
   //UINT32                          timer_start;
   //UINT32                          timer_end;
   //volatile UINT32                 *HpetTimer;
@@ -869,11 +870,16 @@ HeciReceive (
     //if (MeHeciTimeoutsEnabled () && Timeout (timer_start, timer_end, HpetTimer) != EFI_SUCCESS) {
     //  return EFI_TIMEOUT;
     //}
+    if (TotalLength < *Length) {
+      PacketData = &MessageBody[TotalLength / 4];
+    } else {
+      PacketData = MessageBody;
+    }
     Status = HeciPacketRead (
                   HeciDev,
                   Blocking,
                   &PacketHeader,
-                  (UINT32 *) &MessageBody[TotalLength / 4],
+                  PacketData,
                   &PacketBuffer,
                   &PacketSize
                   );

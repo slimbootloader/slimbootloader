@@ -685,6 +685,7 @@ HeciReceive (
   UINT32              TotalLength;
   UINT32              PacketSize;
   UINT32              PacketBuffer;
+  UINT32              *PacketData;
   UINT32              ReadTimeout;
   UINT32              InitTimeout;
 
@@ -725,11 +726,16 @@ HeciReceive (
   // Read until MessageComplete bit is set
   //
   while (!PacketHeader.Fields.MessageComplete) {
+    if (TotalLength < *Length) {
+      PacketData = &MessageBody[TotalLength / 4];
+    } else {
+      PacketData = MessageBody;
+    }
     Status = HeciPacketRead (
                   HeciMemBar,
                   ReadTimeout,
                   &PacketHeader,
-                  (UINT32 *) &MessageBody[TotalLength / 4],
+                  PacketData,
                   &PacketBuffer,
                   &PacketSize
                   );
