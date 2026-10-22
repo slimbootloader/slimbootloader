@@ -8,6 +8,7 @@
 #include <Base.h>
 #include <Uefi/UefiBaseType.h>
 #include <Library/IoLib.h>
+#include <Library/DebugLib.h>
 #include <Library/VTdLib.h>
 #include <Register/IgdRegs.h>
 #include <Library/PciLib.h>
@@ -33,6 +34,10 @@ ReadVtdBaseAddress (
 
   McD0BaseAddress = PCI_LIB_ADDRESS (SA_MC_BUS, 0, 0, 0);
   MchBar          = PciRead32 ((UINTN)McD0BaseAddress + R_SA_MCHBAR) & (~BIT0);
+  if ((MchBar == 0) || (MchBar == (MAX_UINT32 & ~BIT0))) {
+    ASSERT (FALSE);
+    return 0;
+  }
 
   BaseAddress = 0;
   switch (VtdEngineNumber) {
@@ -47,6 +52,10 @@ ReadVtdBaseAddress (
       break;
     default:
       break;
+  }
+  if (BaseAddress == (MAX_UINT32 & ~BIT0)) {
+    ASSERT (FALSE);
+    return 0;
   }
   return BaseAddress;
 }

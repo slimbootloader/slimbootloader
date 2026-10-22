@@ -117,7 +117,7 @@ UpdateDrhd (
   }
   if ((DrhdEngine->DeviceScope[0].PciPath.Device == SA_IGD_DEV) && (DrhdEngine->DeviceScope[0].PciPath.Function == SA_IGD_FUN_0) &&
     (PciRead32 (PCI_LIB_ADDRESS (0, DrhdEngine->DeviceScope[0].PciPath.Device, DrhdEngine->DeviceScope[0].PciPath.Function, 0x00)) != 0xFFFFFFFF)) {
-    NeedRemove = IsDisplayOnlySku();
+    NeedRemove = NeedRemove || IsDisplayOnlySku();
   }
   if (NeedRemove) {
     Length -= sizeof (EFI_ACPI_DEV_SCOPE_STRUCTURE);
@@ -178,6 +178,12 @@ UpdateDrhd2 (
   /// Convert DrhdEnginePtr to EFI_ACPI_DRHD_ENGINE3_STRUCT Pointer
   ///
   DrhdEngine      = (EFI_ACPI_DRHD_ENGINE3_STRUCT *) DrhdEnginePtr;
+
+  // Length 0 makes DmarTableUpdate() omit this DRHD
+  if (DrhdEngine->DrhdHeader.RegisterBaseAddress == 0) {
+    DrhdEngine->DrhdHeader.Header.Length = 0;
+    return;
+  }
 
   Length          = DrhdEngine->DrhdHeader.Header.Length;
   DeviceScopeNum  = (DrhdEngine->DrhdHeader.Header.Length - EFI_ACPI_DRHD_ENGINE_HEADER_LENGTH) / sizeof (EFI_ACPI_DEV_SCOPE_STRUCTURE);
@@ -335,24 +341,36 @@ ReadVtdBaseAddress (
 {
   UINT64              McD0BaseAddress;
   UINTN               MchBar;
+  UINT32              VtdBar;
 
   McD0BaseAddress = PCI_LIB_ADDRESS (SA_MC_BUS, 0, 0, 0);
   MchBar          = PciRead32 ((UINTN)McD0BaseAddress + R_SA_MCHBAR) & (~BIT0);
+  if ((MchBar == 0) || (MchBar == (MAX_UINT32 & ~BIT0))) {
+    DEBUG ((DEBUG_ERROR, "Invalid MCHBAR 0x%x\n", MchBar));
+    ASSERT (FALSE);
+    return 0;
+  }
 
   switch (VtdEngineNumber) {
     case 0:
-      return (MmioRead32 (MchBar + R_MCHBAR_VTD1_OFFSET) & (~BIT0));
+      VtdBar = MmioRead32 (MchBar + R_MCHBAR_VTD1_OFFSET) & (~BIT0);
       break;
     case 1:
       return 0x0;
       break;
     case 2:
-      return (MmioRead32 (MchBar + R_MCHBAR_VTD3_OFFSET) & (~BIT0));
+      VtdBar = MmioRead32 (MchBar + R_MCHBAR_VTD3_OFFSET) & (~BIT0);
       break;
     default:
       return 0x0;
       break;
   }
+  if (VtdBar == (MAX_UINT32 & ~BIT0)) {
+    DEBUG ((DEBUG_ERROR, "Invalid VT-d BAR for engine %d\n", VtdEngineNumber));
+    ASSERT (FALSE);
+    return 0;
+  }
+  return VtdBar;
 }
 
 /**
@@ -382,6 +400,18 @@ DmarTableUpdate (
   IgdMemSize  = 0;
   GttMemSize  = 0;
   DmarTable   = (EFI_ACPI_DMAR_TABLE *) TableHeader;
+
+  // Update helpers below derive device scope counts from these lengths
+  if ((DmarTable->DmarHeader.Header.Length < sizeof (EFI_ACPI_DMAR_TABLE)) ||
+      (DmarTable->DrhdEngine1.DrhdHeader.Header.Length != sizeof (DmarTable->DrhdEngine1)) ||
+      (DmarTable->DrhdEngine3.DrhdHeader.Header.Length != sizeof (DmarTable->DrhdEngine3)) ||
+      (DmarTable->RmrrUsb.RmrrHeader.Header.Length != sizeof (DmarTable->RmrrUsb)) ||
+      (DmarTable->RmrrIgd.RmrrHeader.Header.Length != sizeof (DmarTable->RmrrIgd))) {
+    DEBUG ((DEBUG_ERROR, "Invalid DMAR table layout\n"));
+    ASSERT (FALSE);
+    return;
+  }
+
   MemCfgData = (MEMORY_CFG_DATA *)FindConfigDataByTag (CDATA_MEMORY_TAG);
 
   ///

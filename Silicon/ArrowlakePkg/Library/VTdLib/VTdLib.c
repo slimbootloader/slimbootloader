@@ -8,6 +8,7 @@
 #include <Base.h>
 #include <Uefi/UefiBaseType.h>
 #include <Library/IoLib.h>
+#include <Library/DebugLib.h>
 #include <Library/VTdLib.h>
 #include <Library/PciLib.h>
 #include <Register/IgdRegs.h>
@@ -49,16 +50,34 @@ ReadVtdBaseAddress (
 {
   UINT64              McD0BaseAddress;
   UINTN               MchBar;
+  UINT32              VtdBar;
 
   McD0BaseAddress = PCI_LIB_ADDRESS (SA_MC_BUS, 0, 0, 0);
   MchBar          = PciRead32 ((UINTN)McD0BaseAddress + R_SA_MCHBAR) & (~BIT0);
+  if ((MchBar == 0) || (MchBar == (MAX_UINT32 & ~BIT0))) {
+    ASSERT (FALSE);
+    return 0;
+  }
+
+  VtdBar = MmioRead32 (MchBar + R_MCHBAR_VTD1_OFFSET) & (~BIT0);
+  if (VtdBar == (MAX_UINT32 & ~BIT0)) {
+    ASSERT (FALSE);
+    return 0;
+  }
+  if (VtdBar == 0) {
+    return 0;
+  }
 
   switch (VtdEngineNumber) {
     case IGD_VTD:
-      return (MmioRead32 (MchBar + R_MCHBAR_VTD1_OFFSET) & (~BIT0));
+      return VtdBar;
       break;
     case IOP_VTD:
-      return ((MmioRead32 (MchBar + R_MCHBAR_VTD1_OFFSET) & (~BIT0)) + GetVtdBarSize());
+      if (VtdBar > (MAX_UINT32 - GetVtdBarSize())) {
+        ASSERT (FALSE);
+        return 0;
+      }
+      return VtdBar + GetVtdBarSize();
       break;
     default:
       return 0x0;

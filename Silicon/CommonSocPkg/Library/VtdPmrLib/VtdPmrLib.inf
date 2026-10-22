@@ -33,6 +33,7 @@
   PcdLib
   IoLib
   PciLib
+  DebugLib
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
