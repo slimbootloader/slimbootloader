@@ -294,6 +294,11 @@
   # @Prompt Serial Port Register Stride in Bytes
   gPlatformCommonLibTokenSpaceGuid.PcdSerialRegisterStride|1|UINT32|0x0001006d
 
+  ## Secondary debug serial port number. 0xFF for COM1 (0x3F8), 0xFE for COM2 (0x2F8),
+  # 0..2 for LPSS UART, 0xAA to disable secondary debug port.
+  # @Prompt Secondary debug serial port number.
+  gPlatformCommonLibTokenSpaceGuid.PcdDebugPortNumberSecondary|0xAA|UINT8|0x0001006f
+
   ## The maximal block number supported eMMC device in single read/write command.
   # @Prompt Maximal Read/Write Block Number For eMMC Device
   gPlatformCommonLibTokenSpaceGuid.PcdEmmcMaxRwBlockNumber|0xFFFF|UINT16|0x00010070

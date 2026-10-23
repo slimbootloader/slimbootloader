@@ -42,6 +42,72 @@ UINT8   gStop     = 1;
 UINT8   gParity   = 0;
 UINT8   gBreakSet = 0;
 
+#if (FixedPcdGet8 (PcdDebugPortNumberSecondary) != 0xAA)
+STATIC
+UINT8
+UartReadRegister (
+  IN UINTN    Base,
+  IN UINT8    Stride,
+  IN UINTN    Offset
+  )
+{
+  if (Base == 0) {
+    return (Offset == LSR_OFFSET) ? LSR_TXRDY : 0;
+  }
+  Offset = Stride * Offset;
+  if (Base < 0x10000) {
+    return IoRead8 (Base + Offset);
+  } else {
+    return MmioRead8 (Base + Offset);
+  }
+}
+
+STATIC
+VOID
+UartWriteRegister (
+  IN UINTN    Base,
+  IN UINT8    Stride,
+  IN UINTN    Offset,
+  IN UINT8    Value
+  )
+{
+  if (Base == 0) {
+    return;
+  }
+  Offset = Stride * Offset;
+  if (Base < 0x10000) {
+    IoWrite8 (Base + Offset, Value);
+  } else {
+    MmioWrite8 (Base + Offset, Value);
+  }
+}
+
+STATIC
+VOID
+UartInitializePort (
+  IN UINTN    Base,
+  IN UINT8    Stride
+  )
+{
+  UINTN  Divisor;
+
+  if (Base == 0) {
+    return;
+  }
+
+  if (FeaturePcdGet (PcdForceToInitSerialPort) || (UartReadRegister (Base, Stride, SCR_OFFSET) != UART_MAGIC)) {
+    Divisor = 115200 / gBps;
+    UartWriteRegister (Base, Stride, LCR_OFFSET, 0x83);
+    UartWriteRegister (Base, Stride, BAUD_HIGH_OFFSET, (UINT8)(Divisor >> 8));
+    UartWriteRegister (Base, Stride, BAUD_LOW_OFFSET, (UINT8)(Divisor & 0xFF));
+    UartWriteRegister (Base, Stride, LCR_OFFSET, 0x03);
+    UartWriteRegister (Base, Stride, FCR_OFFSET, 0x07);
+    UartWriteRegister (Base, Stride, MCR_OFFSET, 0x0B);
+    UartWriteRegister (Base, Stride, SCR_OFFSET, UART_MAGIC);
+  }
+}
+#endif
+
 /**
   Read from UART controller register.
 
@@ -121,6 +187,25 @@ SerialPortInitialize (
   VOID
   )
 {
+  RETURN_STATUS  Status;
+#if (FixedPcdGet8 (PcdDebugPortNumberSecondary) != 0xAA)
+  UINTN          Base1;
+  UINT8          Stride1;
+  UINTN          Base2;
+  UINT8          Stride2;
+
+  Base1 = (UINTN) GetSerialPortBase ();
+  Stride1 = GetSerialPortStrideSize ();
+  UartInitializePort (Base1, Stride1);
+
+  Base2 = (UINTN) GetSerialPortBase2 ();
+  if (Base2 != 0 && Base2 != Base1) {
+    Stride2 = GetSerialPortStrideSize2 ();
+    UartInitializePort (Base2, Stride2);
+  }
+
+  Status = RETURN_SUCCESS;
+#else
   UINTN  Divisor;
   UINT8  OutputData;
 
@@ -154,7 +239,10 @@ SerialPortInitialize (
     SerialPortWriteRegister (SCR_OFFSET, UART_MAGIC);
   }
 
-  return RETURN_SUCCESS;
+  Status = RETURN_SUCCESS;
+#endif
+
+  return Status;
 }
 
 /**
@@ -163,6 +251,9 @@ SerialPortInitialize (
   Writes NumberOfBytes data bytes from Buffer to the serial device.
   The number of bytes actually written to the serial device is returned.
   If the return value is less than NumberOfBytes, then the write operation failed.
+
+  With secondary output enabled, a byte is counted if either active UART accepts
+  it. Writing stops when neither UART accepts the current byte.
 
   If Buffer is NULL, then ASSERT().
 
@@ -183,6 +274,65 @@ SerialPortWrite (
   )
 {
   UINTN  Result;
+#if (FixedPcdGet8 (PcdDebugPortNumberSecondary) != 0xAA)
+  UINTN  Base1;
+  UINT8  Stride1;
+  UINTN  Base2;
+  UINT8  Stride2;
+  UINT32 Timeout;
+  UINT8  Ch;
+  BOOLEAN ByteWritten;
+
+  if (NULL == Buffer) {
+    return 0;
+  }
+
+  Base1   = (UINTN) GetSerialPortBase ();
+  Stride1 = GetSerialPortStrideSize ();
+
+  Base2   = (UINTN) GetSerialPortBase2 ();
+  if (Base2 == Base1) {
+    Base2 = 0;
+  }
+
+  if (Base2 != 0) {
+    Stride2 = GetSerialPortStrideSize2 ();
+  } else {
+    Stride2 = 1;
+  }
+
+  Result = 0;
+
+  while (NumberOfBytes--) {
+    Ch = *Buffer++;
+    ByteWritten = FALSE;
+
+    if (Base1 != 0) {
+      Timeout = 100000;
+      while (((UartReadRegister (Base1, Stride1, LSR_OFFSET) & LSR_TXRDY) == 0) && (--Timeout > 0));
+      if (Timeout > 0) {
+        UartWriteRegister (Base1, Stride1, 0, Ch);
+        ByteWritten = TRUE;
+      }
+    }
+
+    if (Base2 != 0) {
+      Timeout = 100000;
+      while (((UartReadRegister (Base2, Stride2, LSR_OFFSET) & LSR_TXRDY) == 0) && (--Timeout > 0));
+      if (Timeout > 0) {
+        UartWriteRegister (Base2, Stride2, 0, Ch);
+        ByteWritten = TRUE;
+      }
+    }
+
+    if (!ByteWritten) {
+      break;
+    }
+    Result++;
+  }
+
+  return Result;
+#else
   UINT8  Data;
 
   if (NULL == Buffer) {
@@ -202,6 +352,7 @@ SerialPortWrite (
   }
 
   return Result;
+#endif
 }
 
 /**

@@ -34,3 +34,4 @@
 
 [Pcd]
   gPlatformCommonLibTokenSpaceGuid.PcdForceToInitSerialPort
+  gPlatformCommonLibTokenSpaceGuid.PcdDebugPortNumberSecondary

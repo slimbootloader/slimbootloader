@@ -157,7 +157,8 @@
   # Once in payload, more debug devices can be enabled, such as frame buffer.
   gPlatformCommonLibTokenSpaceGuid.PcdDebugOutputDeviceMask  | $(DEBUG_OUTPUT_DEVICE_MASK) & 0xFFFFFF7F
 
-  gPlatformCommonLibTokenSpaceGuid.PcdDebugPortNumber      | $(DEBUG_PORT_NUMBER)
+  gPlatformCommonLibTokenSpaceGuid.PcdDebugPortNumber          | $(DEBUG_PORT_NUMBER)
+  gPlatformCommonLibTokenSpaceGuid.PcdDebugPortNumberSecondary | $(DEBUG_PORT_NUMBER_SECONDARY)
 
   gPlatformModuleTokenSpaceGuid.PcdPciMmcfgBase           | $(PCI_EXPRESS_BASE)
   gPlatformModuleTokenSpaceGuid.PcdPciEnumPolicyInfo      | $(PCI_ENUM_POLICY_INFO)

@@ -35,6 +35,30 @@ GetSerialPortBase (
   VOID
   );
 
+/**
+  Get secondary serial port stride register size.
+
+  @retval  The serial port register stride size.
+
+**/
+UINT8
+EFIAPI
+GetSerialPortStrideSize2 (
+  VOID
+  );
+
+/**
+  Get secondary serial port register base address.
+
+  @retval  The secondary serial port register base address (0 if none).
+
+**/
+UINT64
+EFIAPI
+GetSerialPortBase2 (
+  VOID
+  );
+
 
 /**
   Performs platform specific initialization required for the CPU to access
