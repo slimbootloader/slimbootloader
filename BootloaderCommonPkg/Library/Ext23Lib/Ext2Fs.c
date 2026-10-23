@@ -87,10 +87,11 @@
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/MediaAccessLib.h>
+#include <Library/PcdLib.h>
 #include "Ext2Fs.h"
 #include "LibsaFsStand.h"
 
-#define HOWMANY(x, y)  (((x)+((y)-1))/(y))
+#define EXT2_MAX_BLOCK_GROUPS  0x8000U
 
 #if defined(LIBSA_FS_SINGLECOMPONENT) && !defined(LIBSA_NO_FS_SYMLINK)
 #define LIBSA_NO_FS_SYMLINK
@@ -786,6 +787,8 @@ ReadSBlock (
 {
   PEI_EXT_PRIVATE_DATA *PrivateData;
   RETURN_STATUS Rc;
+  UINT32 DataBlocks;
+  UINT32 MaxBlockGroups;
 
   Rc = 0;
 
@@ -799,20 +802,22 @@ ReadSBlock (
   //
   // compute in-memory m_ext2fs values
   //
-  FileSystem->Ext2FsNumCylinder       =
-    HOWMANY (FileSystem->Ext2Fs.Ext2FsBlockCount - FileSystem->Ext2Fs.Ext2FsFirstDataBlock,
-             FileSystem->Ext2Fs.Ext2FsBlocksPerGroup);
-
-  //
-  // Validate number of groups: must be > 0 and within safe allocation limit.
-  //
-  if (FileSystem->Ext2FsNumCylinder == 0) {
-    DEBUG ((DEBUG_ERROR, "Ext2: Zero block groups\n"));
+  if (FileSystem->Ext2Fs.Ext2FsBlockCount <= FileSystem->Ext2Fs.Ext2FsFirstDataBlock) {
+    DEBUG ((DEBUG_ERROR, "Ext2: Invalid data block range\n"));
     return EFI_UNSUPPORTED;
   }
 
-  if (FileSystem->Ext2FsNumCylinder > EXT2_MAX_BLOCK_GROUPS) {
-    DEBUG ((DEBUG_ERROR, "Ext2: Too many groups %u (Max %u)\n", FileSystem->Ext2FsNumCylinder, EXT2_MAX_BLOCK_GROUPS));
+  DataBlocks = FileSystem->Ext2Fs.Ext2FsBlockCount - FileSystem->Ext2Fs.Ext2FsFirstDataBlock;
+  FileSystem->Ext2FsNumCylinder = 1 + (DataBlocks - 1) / FileSystem->Ext2Fs.Ext2FsBlocksPerGroup;
+
+  MaxBlockGroups = PcdGet32 (PcdExtFsMaxBlockGroups);
+  if ((MaxBlockGroups == 0) || (MaxBlockGroups > EXT2_MAX_BLOCK_GROUPS)) {
+    DEBUG ((DEBUG_ERROR, "Ext2: Invalid maximum block groups %u (Hard max %u)\n", MaxBlockGroups, EXT2_MAX_BLOCK_GROUPS));
+    return EFI_UNSUPPORTED;
+  }
+
+  if (FileSystem->Ext2FsNumCylinder > MaxBlockGroups) {
+    DEBUG ((DEBUG_ERROR, "Ext2: Too many groups %u (Max %u)\n", FileSystem->Ext2FsNumCylinder, MaxBlockGroups));
     return EFI_UNSUPPORTED;
   }
 
@@ -826,7 +831,7 @@ ReadSBlock (
     FileSystem->Ext2FsGDSize          = FileSystem->Ext2Fs.Ext2FsGDSize;
   }
   FileSystem->Ext2FsNumGrpDesBlock    =
-    HOWMANY (FileSystem->Ext2FsNumCylinder, FileSystem->Ext2FsBlockSize / FileSystem->Ext2FsGDSize);
+    1 + (FileSystem->Ext2FsNumCylinder - 1) / (FileSystem->Ext2FsBlockSize / FileSystem->Ext2FsGDSize);
   FileSystem->Ext2FsInodesPerBlock    = FileSystem->Ext2FsBlockSize / FileSystem->Ext2Fs.Ext2FsInodeSize;
   FileSystem->Ext2FsInodesTablePerGrp = FileSystem->Ext2Fs.Ext2FsINodesPerGroup / FileSystem->Ext2FsInodesPerBlock;
 
@@ -981,6 +986,11 @@ Ext2fsOpen (
   //
   // read group descriptor blocks
   //
+  if (FileSystem->Ext2FsNumCylinder > (MAX_UINTN / sizeof (EXT2GD))) {
+    Status = EFI_UNSUPPORTED;
+    goto out;
+  }
+
   FileSystem->Ext2FsGrpDes = AllocatePool (sizeof(EXT2GD) * FileSystem->Ext2FsNumCylinder);
   if (FileSystem->Ext2FsGrpDes == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
