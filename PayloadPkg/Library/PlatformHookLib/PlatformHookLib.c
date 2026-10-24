@@ -44,6 +44,36 @@ GetSerialPortBase (
 }
 
 /**
+  Get secondary serial port stride register size.
+
+  @retval  The serial port register stride size.
+
+**/
+UINT8
+EFIAPI
+GetSerialPortStrideSize2 (
+  VOID
+  )
+{
+  return 1;
+}
+
+/**
+  Get secondary serial port register base address.
+
+  @retval  The secondary serial port register base address (0 if none).
+
+**/
+UINT64
+EFIAPI
+GetSerialPortBase2 (
+  VOID
+  )
+{
+  return 0;
+}
+
+/**
   Performs platform specific initialization required for the CPU to access
   the hardware associated with a SerialPortLib instance.  This function does
   not intiailzie the serial port hardware itself.  Instead, it initializes
