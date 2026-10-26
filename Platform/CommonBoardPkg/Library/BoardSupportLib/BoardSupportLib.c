@@ -408,6 +408,10 @@ AcpiPatchPssTable (
     return EFI_INVALID_PARAMETER;
   }
 
+  if (PssParams->MinBusRatio > PssParams->MaxBusRatio) {
+    return EFI_INVALID_PARAMETER;
+  }
+
   //
   // PSS params will be updated. Copy input params to keep the original(CONST).
   //
@@ -450,7 +454,12 @@ AcpiPatchPssTable (
     NewPackageLength, *PackageLength));
 
   PowerRange = PackageMaxPower - PackageMinPower;
-  PowerStep = PowerRange / (NumberOfStates - 1 - Turbo);
+  // Only the max (and turbo) state exists when there is no ratio range to step through.
+  if ((UINT32) NumberOfStates > (UINT32) (1 + Turbo)) {
+    PowerStep = PowerRange / ((UINT32) NumberOfStates - 1 - Turbo);
+  } else {
+    PowerStep = 0;
+  }
   for (Index = 0; Index < NumberOfStates; Index++) {
     if (Index == 0) {
       Power = PackageMaxPower;
