@@ -73,7 +73,7 @@ def parse_fsp_upd_header(header_path, struct_name):
 
     Args:
         header_path:  Path to FspmUpd.h or FspsUpd.h
-        struct_name:  'FSP_M_CONFIG' or 'FSP_S_CONFIG'
+        struct_name:  'FSP_M_CONFIG' or 'FSP_S_CONFIG' (also matches 'FSPM_CONFIG'/'FSPS_CONFIG')
 
     Returns:
         list of FspUpdField
@@ -87,14 +87,16 @@ def parse_fsp_upd_header(header_path, struct_name):
     struct_end = -1
 
     # First find the closing line
+    # Server FSPs (e.g. KSV, PMR) name the struct FSPM_CONFIG/FSPS_CONFIG
+    name_re = re.escape(struct_name).replace('FSP_', 'FSP_?', 1)
     for i, line in enumerate(lines):
-        m = re.match(r'}\s+' + re.escape(struct_name) + r'\s*;', line.strip())
+        m = re.match(r'}\s+' + name_re + r'\s*;', line.strip())
         if m:
             struct_end = i
             break
 
     if struct_end < 0:
-        raise ValueError(f"Could not find '}} {struct_name};' in {header_path}")
+        raise ValueError(f"Could not find '}} {struct_name};' or '}} {struct_name.replace('FSP_', 'FSP', 1)};' in {header_path}")
 
     # Scan backwards to find the matching `typedef struct {`
     # Skip comment blocks (/** ... **/) when counting braces

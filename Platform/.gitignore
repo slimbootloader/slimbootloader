@@ -1,4 +1,6 @@
 VerInfo.txt
+*/CfgData/CfgData_FspM.yaml
+*/CfgData/CfgData_FspS.yaml
 */VbtBin/*
 !QemuBoardPkg/VbtBin/
 !CoffeelakeBoardPkg/VbtBin/

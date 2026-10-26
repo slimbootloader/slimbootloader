@@ -9,7 +9,9 @@ import sys
 import os
 from StitchLoader import *
 
-# Global variable to control TXT inclusion - can be overridden by check_parameter()
+# Global variable to control TXT inclusion - set by the 'txt' stitch option in
+# get_xml_change_list(). Only StitchIfwi.py consumes it (BPMGEN2 TxtInclude);
+# StitchLoader.py and BuildLoader.py do not read this file.
 g_txt_enabled = False
 
 extra_usage_txt = \

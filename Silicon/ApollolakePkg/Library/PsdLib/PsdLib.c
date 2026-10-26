@@ -159,21 +159,22 @@ GetIbbHashDataFromBpm (
   DEBUG ((DEBUG_INFO, "SubPartitoinPayload BpmBase=0x%p, size=0x%x\n", BpmBase, BpmSize));
 
   BpmData = (BPMDATA*)(UINTN)BpmBase;
-  //IBBL Hash
-  if(BpmData->IbblHash == NULL) {
-    return RETURN_BUFFER_TOO_SMALL;
+  if ((BpmSize < sizeof (BPMDATA)) ||
+      (BpmData->IbblHashSize != EFI_ACPI_PSD_FW_HASH_DATA_LEN) ||
+      (BpmData->IbbmHashSize != EFI_ACPI_PSD_FW_HASH_DATA_LEN)) {
+    DEBUG ((DEBUG_ERROR, "Invalid BPM hash data, BpmSize=0x%x\n", BpmSize));
+    return EFI_VOLUME_CORRUPTED;
   }
-  CopyMem(FwHashData, BpmData->IbblHash, BpmData->IbblHashSize);
+
+  //IBBL Hash
+  CopyMem(FwHashData, BpmData->IbblHash, EFI_ACPI_PSD_FW_HASH_DATA_LEN);
   DEBUG ((DEBUG_INFO, "BpmData->IbblHash IBBL Hash: 0x%08x\n", BpmData->IbblHash));
-  DumpHex (2, 0, BpmData->IbblHashSize, (VOID *)BpmData->IbblHash);
+  DumpHex (2, 0, EFI_ACPI_PSD_FW_HASH_DATA_LEN, (VOID *)BpmData->IbblHash);
 
   //IBBM Hash
-  if(BpmData->IbbmHash == NULL) {
-    return RETURN_BUFFER_TOO_SMALL;
-  }
-  CopyMem((FwHashData + BpmData->IbblHashSize), BpmData->IbbmHash, BpmData->IbbmHashSize);
+  CopyMem((FwHashData + EFI_ACPI_PSD_FW_HASH_DATA_LEN), BpmData->IbbmHash, EFI_ACPI_PSD_FW_HASH_DATA_LEN);
   DEBUG ((DEBUG_INFO, "BpmData->IbbmHash IBB Hash: 0x%08x\n", BpmData->IbbmHash));
-  DumpHex (2, 0, BpmData->IbbmHashSize, (VOID *)BpmData->IbbmHash);
+  DumpHex (2, 0, EFI_ACPI_PSD_FW_HASH_DATA_LEN, (VOID *)BpmData->IbbmHash);
 
   //OBB Hash, we will calculate Stage-2 HASH from hash store ( OBB = Stage2 + padding ),
 

@@ -32,16 +32,13 @@
 #define DEFAULT_PCI_BUS_NUMBER_PCH  0
 
 #define MM_PCI_OFFSET(Bus, Device, Function) \
-    ( (UINTN)(Bus << 20) +    \
-      (UINTN)(Device << 15) + \
-      (UINTN)(Function << 12) )
+    ( ((UINTN)(Bus) << 20) +    \
+      ((UINTN)(Device) << 15) + \
+      ((UINTN)(Function) << 12) )
 
 #define MmPciBase(Bus, Device, Function) \
-  ( (UINTN)PcdGet64(PcdPciExpressBaseAddress) + \
-    (UINTN)(Bus << 20) +    \
-    (UINTN)(Device << 15) + \
-    (UINTN)(Function << 12) \
-  )
+  MmPciAddressFromBase (PcdGet64 (PcdPciExpressBaseAddress), \
+    ((UINTN)(Bus) << 20) + ((UINTN)(Device) << 15) + ((UINTN)(Function) << 12))
 
 
 #endif

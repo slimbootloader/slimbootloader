@@ -60,6 +60,8 @@ IppCrypto2LibFipsSelftestRsaVerifyPkcsv15 ()
 
     // Check selftest status
     if (IPPCP_ALGO_SELFTEST_OK != selftest_status) {
+        FreeTemporaryMemory(pKeysBuffer);
+        FreeTemporaryMemory(pBuffer);
         return RETURN_UNSUPPORTED; // selftest is not successful -> cannot use this function in FIPS mode.
     }
     //------ FIPS-required part ends (only needed before the first use of algorithm)
@@ -209,6 +211,7 @@ IppCrypto2LibFipsSelftestSHA256Update ()
 
     // Check selftest status
     if (IPPCP_ALGO_SELFTEST_OK != selftest_status) {
+        FreeTemporaryMemory(pBuffer);
         return RETURN_UNSUPPORTED; // selftest is not successful -> cannot use this function in FIPS mode.
     }
     //------ FIPS-required part ends (only needed before the first use of algorithm)
@@ -245,6 +248,7 @@ IppCrypto2LibFipsSelftestSHA384Update ()
 
     // Check selftest status
     if (IPPCP_ALGO_SELFTEST_OK != selftest_status) {
+        FreeTemporaryMemory(pBuffer);
         return RETURN_UNSUPPORTED; // selftest is not successful -> cannot use this function in FIPS mode.
     }
     //------ FIPS-required part ends (only needed before the first use of algorithm)
@@ -357,6 +361,8 @@ IppCrypto2LibFipsSelftestRsaVerifyPSS ()
 
     // Check selftest status
     if (IPPCP_ALGO_SELFTEST_OK != selftest_status) {
+        FreeTemporaryMemory(pKeysBuffer);
+        FreeTemporaryMemory(pBuffer);
         return RETURN_UNSUPPORTED; // selftest is not successful -> cannot use this function in FIPS mode.
     }
     //------ FIPS-required part ends (only needed before the first use of algorithm)

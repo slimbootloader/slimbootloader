@@ -79,6 +79,11 @@ GpioIsPadValid (
   //
   GroupIndex = GpioGetGroupIndexFromGpioPad (GpioPad);
   PadNumber = GpioGetPadNumberFromGpioPad (GpioPad);
+  if (GroupIndex >= GpioGroupInfoLength) {
+    DEBUG ((GPIO_DEBUG_ERROR, "GPIO ERROR: Group index (%d) exceeds group table length (%d)\n", GroupIndex, GpioGroupInfoLength));
+    goto Error;
+  }
+
   if (PadNumber >= GpioGroupInfo[GroupIndex].PadPerGroup) {
     DEBUG ((GPIO_DEBUG_ERROR, "GPIO ERROR: Pin number (%d) exceeds possible range for this group\n", PadNumber));
     goto Error;

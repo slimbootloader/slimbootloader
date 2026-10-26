@@ -16,6 +16,7 @@
 #include <Guid/KeyHashGuid.h>
 #include <Library/BaseLib.h>
 #include <Library/CryptoLib.h>
+#include <Library/DebugLib.h>
 
 #define  IS_X64                       (sizeof(UINT64) == sizeof(UINTN))
 
@@ -72,13 +73,20 @@ typedef struct {
 #define        FEATURE_MMC_FORCE_TUNING         BIT3
 #define        FEATURE_VERIFIED_BOOT            BIT4
 
-#define MM_PCI_ADDRESS( Bus, Device, Function, Register ) \
-  ( (UINTN)PcdGet64(PcdPciExpressBaseAddress) + \
-    (UINTN)((Bus) << 20) + \
-    (UINTN)((Device) << 15) + \
-    (UINTN)((Function) << 12) + \
-    (UINTN)(Register) \
+STATIC __inline UINTN
+MmPciAddressFromBase (
+  IN UINT64  Base,
+  IN UINTN   Offset
   )
+{
+  ASSERT (Base <= MAX_UINTN && (UINT64)Offset <= MAX_UINTN - Base);
+  return (UINTN)(Base + Offset);
+}
+
+#define MM_PCI_ADDRESS( Bus, Device, Function, Register ) \
+  MmPciAddressFromBase (PcdGet64 (PcdPciExpressBaseAddress), \
+    ((UINTN)(Bus) << 20) + ((UINTN)(Device) << 15) + \
+    ((UINTN)(Function) << 12) + (UINTN)(Register))
 
 #define TO_MM_PCI_ADDRESS( Addr ) \
   MM_PCI_ADDRESS ( ((Addr) >> 16) & 0xFF, ((Addr) >> 8) & 0xFF, (Addr) & 0xFF, 0)

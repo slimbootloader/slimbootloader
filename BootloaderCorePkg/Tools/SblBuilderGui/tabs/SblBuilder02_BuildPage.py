@@ -129,19 +129,22 @@ class BuildPage(TabPage):
     # update() function is only used for updating state of the selected tab that depends on latest value
     # of self.global_variables
     def update(self):
-        # On first load, populate platform list if sbl_source_path is already set
-        if self.sbl_source_path is None:
-            saved_path = self.global_variables["sbl_source_path"].get()
+        saved_path = self.global_variables["sbl_source_path"].get()
+        if self.sbl_source_path != saved_path:
+            self.sbl_source_path = saved_path
             if saved_path and saved_path != "<Empty>" and os.path.isdir(saved_path):
-                print("Initial load: SBL source path already set. Refreshing platform list...")
-                self.sbl_source_path = saved_path
+                print("SBL source path changed. Refreshing platform list...")
                 self.find_all_platforms()
+            else:
+                print(f"Invalid SBL source path: {saved_path}")
+                self.clear_platform_list()
+            self.global_flags["sbl_path_update_from_setup"] = False
+            self.reset_build_configurations()
 
-        # Only update platform list when SBL source path is changed
-        if self.global_flags.get("sbl_path_update_from_setup", False):
+        # Refresh the platform list when the repository changed without changing its path.
+        elif self.global_flags.get("sbl_path_update_from_setup", False):
             self.global_flags["sbl_path_update_from_setup"] = False
             print("SBL source code path updated. Refreshing platform list...")
-            self.sbl_source_path = self.global_variables["sbl_source_path"].get()
             if os.path.isdir(self.sbl_source_path):
                 self.find_all_platforms()
             else:

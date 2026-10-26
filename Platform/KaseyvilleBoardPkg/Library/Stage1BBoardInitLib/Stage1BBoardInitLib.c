@@ -250,6 +250,10 @@ UpdateFspConfig (
 
   Status = GetTempRamInfo (&CarBase, &CarSize);
   ASSERT_EFI_ERROR (Status);
+  if (EFI_ERROR (Status)) {
+    // CAR info is required for FSP-M stack setup; continuing would start memory init with an invalid stack.
+    CpuHaltWithStatus ("GetTempRamInfo failed!\n", Status);
+  }
   DEBUG ((DEBUG_INFO, "CAR Base 0x%X (0x%X)\n", CarBase, CarSize));
   FspmUpd->FspmArchUpd.StackBase = CarBase \
                                  + FixedPcdGet32 (PcdStage1StackBaseOffset) \
@@ -484,6 +488,8 @@ PlatformFeaturesInit (
 
   // Set common features
   LdrFeatures  = GetFeatureCfg ();
+  // These features are enabled below from PCD configuration.
+  LdrFeatures &= ~(FEATURE_VERIFIED_BOOT | FEATURE_ACPI | FEATURE_MEASURED_BOOT);
   LdrFeatures |= FeaturePcdGet (PcdAcpiEnabled) ? FEATURE_ACPI : 0;
   LdrFeatures |= FeaturePcdGet (PcdVerifiedBootEnabled) ? FEATURE_VERIFIED_BOOT : 0;
   LdrFeatures |= FeaturePcdGet (PcdMeasuredBootEnabled) ? FEATURE_MEASURED_BOOT : 0;

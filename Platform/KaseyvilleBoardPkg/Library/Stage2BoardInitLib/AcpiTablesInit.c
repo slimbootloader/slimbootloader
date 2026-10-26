@@ -501,7 +501,9 @@ CalculateRelativePower (
   UINT64  Power2;
   UINT32  BasePower;
 
-  ASSERT (CurrRatio <= BaseRatio);
+  if ((BaseRatio == 0) || (CurrRatio > BaseRatio)) {
+    return 0;
+  }
 
   BasePower = (TdpMilliWatt / 1000);
 

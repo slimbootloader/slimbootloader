@@ -134,15 +134,12 @@ class Board(BaseBoard):
         self.STAGE1B_SIZE         = 0x00200000
         self.STAGE2_SIZE          = 0x000C1000
         self.STAGE2_FD_BASE       = 0x01000000
-        self.STAGE2_FD_SIZE       = 0x001F0000
         self.PAYLOAD_SIZE         = 0x00034000
-        self.OS_LOADER_FD_SIZE    = 0x00067000
         self.STAGE1_STACK_BASE_OFFSET = 0x00010000
 
         if self.NO_OPT_MODE:
             self.PAYLOAD_SIZE      = 0x0003C000
             self.STAGE1A_SIZE      = 0x00052000
-            self.OS_LOADER_FD_SIZE = 0x000A1000
         self.EPAYLOAD_SIZE        = 0x00236000
 
         self.ENABLE_FAST_BOOT = 0
@@ -156,15 +153,13 @@ class Board(BaseBoard):
 
         if self.RELEASE_MODE and self.ENABLE_FAST_BOOT:
             self.STAGE1A_SIZE         = 0x00018000
-            self.STAGE1B_SIZE         = 0x0012E000
+            self.STAGE1B_SIZE         = 0x0012F000
             self.STAGE2_SIZE          = 0x000C0000
-            self.STAGE2_FD_SIZE       = 0x000FE000
             self.PAYLOAD_SIZE         = 0x00027000
 
         self.ENABLE_UI_SETUP   = 0
         if self.ENABLE_UI_SETUP:
             self.PAYLOAD_SIZE            += 0x00058000
-            self.OS_LOADER_FD_SIZE       += 0x00170000
             self.CONSOLE_OUT_DEVICE_MASK  = 0x00000003
             self.CONSOLE_IN_DEVICE_MASK   = 0x00000003
             self.ENABLE_USB_KB            = 1
@@ -180,9 +175,6 @@ class Board(BaseBoard):
         self.VARIABLE_SIZE        = 0x00002000
         self.SBLRSVD_SIZE         = 0x00001000
         self.FWUPDATE_SIZE        = 0x00020000 if self.ENABLE_FWU else 0
-        # Need a little bit more for full paging table
-
-        self.OS_LOADER_FD_NUMBLK  = self.OS_LOADER_FD_SIZE // self.FLASH_BLOCK_SIZE
 
         # If ENABLE_SBL_RESILIENCY is 1, BiosRedAssistance FIT strap setting
         # needs to be manually changed to Enabled and TopSwapOverride
@@ -228,10 +220,10 @@ class Board(BaseBoard):
             # Allow TCC to be enabled by FuSa dlt file
             FusaConfig = ''
 
-            brd_cfg_src_dir = os.path.join(os.environ['PLT_SOURCE'], 'Platform', self.BOARD_PKG_NAME, 'CfgData')
+            brd_cfg_src_dir = os.path.join(os.environ['SBL_SOURCE'], 'Platform', self.BOARD_PKG_NAME, 'CfgData')
             brd_cfg2_src_dir = '.'
             if hasattr(self, 'BOARD_PKG_NAME_OVERRIDE'):
-                brd_cfg2_src_dir = os.path.join(os.environ['PLT_SOURCE'], 'Platform', self.BOARD_PKG_NAME_OVERRIDE, 'CfgData')
+                brd_cfg2_src_dir = os.path.join(os.environ['SBL_SOURCE'], 'Platform', self.BOARD_PKG_NAME_OVERRIDE, 'CfgData')
 
             if os.path.exists(os.path.join(brd_cfg_src_dir, 'CfgData_Fusa_Feature.dlt')):
                 FusaConfig = open (os.path.join(brd_cfg_src_dir, 'CfgData_Fusa_Feature.dlt')).readlines()
@@ -240,8 +232,8 @@ class Board(BaseBoard):
                     FusaConfig = open (os.path.join(brd_cfg2_src_dir, 'CfgData_Fusa_Feature.dlt')).readlines()
 
             for line in FusaConfig:
-                if (re.search("TCC_CFG_DATA\.TccEnable\s+\|\s*1",line) != None or
-                    re.search("TCC_CFG_DATA\.TccEnable\s+\|\s*0x0*1",line) != None):
+                if (re.search(r"TCC_CFG_DATA\.TccEnable\s+\|\s*1",line) != None or
+                    re.search(r"TCC_CFG_DATA\.TccEnable\s+\|\s*0x0*1",line) != None):
                     # use setattr() to avoid matching release.py regex
                     setattr(self, 'ENABLE_TCC', 1)
 
@@ -312,7 +304,7 @@ class Board(BaseBoard):
         if self.ENABLE_SBL_SETUP:
             self.HAVE_VERIFIED_BOOT = 0
             self.HAVE_MEASURED_BOOT = 0
-            self.SETUP_MPYM_SIZE    = 0x12000
+            self.SETUP_MPYM_SIZE    = 0x13000
             self.SETUP_STPY_SIZE    = 0x06000
             self.SETUP_CFGJ_SIZE    = 0x0B000
             self.SETUP_CFGD_SIZE    = 0x02000
@@ -343,10 +335,10 @@ class Board(BaseBoard):
                 os.makedirs(build._fv_dir)
 
             # Generate the dlt files based on feature
-            brd_cfg_src_dir = os.path.join(os.environ['PLT_SOURCE'], 'Platform', self.BOARD_PKG_NAME, 'CfgData')
+            brd_cfg_src_dir = os.path.join(os.environ['SBL_SOURCE'], 'Platform', self.BOARD_PKG_NAME, 'CfgData')
             brd_cfg2_src_dir = '.'
             if hasattr(self, 'BOARD_PKG_NAME_OVERRIDE'):
-                brd_cfg2_src_dir = os.path.join(os.environ['PLT_SOURCE'], 'Platform', self.BOARD_PKG_NAME_OVERRIDE, 'CfgData')
+                brd_cfg2_src_dir = os.path.join(os.environ['SBL_SOURCE'], 'Platform', self.BOARD_PKG_NAME_OVERRIDE, 'CfgData')
             for dlt_file in self._CFGDATA_EXT_FILE:
                 cfg_dlt_file  = os.path.join(brd_cfg_src_dir, dlt_file[len (self._generated_cfg_file_prefix):])
                 if not os.path.exists(cfg_dlt_file):

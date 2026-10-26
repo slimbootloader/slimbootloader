@@ -61,7 +61,7 @@ GetGpioTableSize (
 {
   *GpioCount = 0;
   if(GpioTable != NULL) {
-    while (GpioTable[*GpioCount].GpioPad != 0 && *GpioCount < MAX_GPIO_PINS) {
+    while (*GpioCount < MAX_GPIO_PINS && GpioTable[*GpioCount].GpioPad != 0) {
       DEBUG ((DEBUG_VERBOSE, "GpioTable[%d]->GpioPad = %x \n", *GpioCount, GpioTable[*GpioCount].GpioPad));
       (*GpioCount) ++;
     }

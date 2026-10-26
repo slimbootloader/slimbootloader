@@ -15,12 +15,14 @@
 
 [LibraryClasses]
   BaseLib
+  DebugLib
   PciLib
   PcdLib
 
 [Packages]
   MdePkg/MdePkg.dec
   Silicon/CoffeelakePkg/CoffeelakePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
 
 [Sources]
   PchSerialIoLib.c

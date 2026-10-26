@@ -105,8 +105,8 @@ class Board(BaseBoard):
         self.FSP_IMAGE_ID         = '$APLFSP$'
 
         self.STAGE1A_SIZE         = 0x00008000
-        self.STAGE1B_SIZE         = 0x00038000
-        self.STAGE2_SIZE          = 0x00035000
+        self.STAGE1B_SIZE         = 0x00039000
+        self.STAGE2_SIZE          = 0x00036000
         self.PAYLOAD_SIZE         = 0x00025000
 
         if len(self._PAYLOAD_NAME.split(';')) > 1:
@@ -129,9 +129,9 @@ class Board(BaseBoard):
         self.REMAP_STAGE1B        = 1
         self.STAGE1B_LOAD_BASE    = 0xFEF10000
         self.STAGE1B_FD_BASE      = 0xFEF80000
-        self.STAGE1B_FD_SIZE      = 0x0006D000
+        self.STAGE1B_FD_SIZE      = 0x0006E000
         if self.RELEASE_MODE == 0:
-            self.STAGE1B_FD_SIZE += 0x00002000
+            self.STAGE1B_FD_SIZE += 0x00004000
             self.PAYLOAD_SIZE    += 0x00007000
         # For Stage2, it is always compressed.
         # if STAGE2_LOAD_HIGH is 1, STAGE2_FD_BASE will be ignored

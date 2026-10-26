@@ -126,6 +126,12 @@ Tpm2HierarchyChangeAuth (
     goto Done;
   }
 
+  if (ResultBufSize < sizeof (TPM2_RESPONSE_HEADER)) {
+    DEBUG ((DEBUG_ERROR, "HierarchyChangeAuth: ResultBufSize error - %x\r\n", ResultBufSize));
+    Status = EFI_DEVICE_ERROR;
+    goto Done;
+  }
+
   //
   // Validate response headers
   //
@@ -231,6 +237,12 @@ Tpm2HierarchyControl (
   if (ResultBufSize > sizeof (Res)) {
     DEBUG ((DEBUG_ERROR, "HierarchyControl: Failed ExecuteCommand: Buffer Too Small\r\n"));
     Status = EFI_BUFFER_TOO_SMALL;
+    goto Done;
+  }
+
+  if (ResultBufSize < sizeof (TPM2_RESPONSE_HEADER)) {
+    DEBUG ((DEBUG_ERROR, "HierarchyControl: ResultBufSize error - %x\r\n", ResultBufSize));
+    Status = EFI_DEVICE_ERROR;
     goto Done;
   }
 

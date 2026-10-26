@@ -1798,6 +1798,14 @@ PciScanSegment (
     return EFI_INVALID_PARAMETER;
   }
 
+  if (HostBridge->BusBase > HostBridge->BusLimit) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if ((EnumPolicy->BusScanType == BusScanTypeList) && (EnumPolicy->NumOfBus == 0)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
   Bridge = (PCI_IO_DEVICE *)PciAllocatePool (sizeof (PCI_IO_DEVICE));
   ZeroMem (Bridge, sizeof (PCI_IO_DEVICE));
   InitializeListHead (&Bridge->ChildList);
@@ -1910,6 +1918,7 @@ BuildUniversalPayloadSegmentInfoHob (
 {
   UPL_PCI_SEGMENT_INFO_HOB  *SegInfoHob;
   UINTN                      Length;
+  UINT32                     HobDataLength;
   UINT8                      Index;
   UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGES  *UpldRootBridges;
 
@@ -1921,13 +1930,21 @@ BuildUniversalPayloadSegmentInfoHob (
     return EFI_SUCCESS;
   }
 
-  UpldRootBridges = (UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGES *) GetGuidHobData (NULL, NULL,
+  UpldRootBridges = (UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGES *) GetGuidHobData (NULL, &HobDataLength,
     &gUniversalPayloadPciRootBridgeInfoGuid);
 
   if (UpldRootBridges == NULL) {
     DEBUG ((DEBUG_INFO, "Universal Payload PCI Root Bridge HOB Not found\n"));
     ASSERT (FALSE);
     return EFI_NOT_FOUND;
+  }
+
+  if ((HobDataLength < sizeof (UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGES)) ||
+      (UpldRootBridges->Count == 0) ||
+      (UpldRootBridges->Count > ((HobDataLength - sizeof (UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGES)) / sizeof (UNIVERSAL_PAYLOAD_PCI_ROOT_BRIDGE)))) {
+    DEBUG ((DEBUG_ERROR, "Universal Payload PCI Root Bridge HOB is malformed\n"));
+    ASSERT (FALSE);
+    return EFI_INVALID_PARAMETER;
   }
 
   Length = sizeof (UPL_PCI_SEGMENT_INFO_HOB) + (sizeof (UPL_SEGMENT_INFO) * UpldRootBridges->Count);

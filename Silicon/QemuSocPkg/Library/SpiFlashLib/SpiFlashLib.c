@@ -322,6 +322,14 @@ SpiFlashWrite (
     return EFI_INVALID_PARAMETER;
   }
 
+  ///
+  /// Block FlashRegionAll write in payload stage to enforce FRAP permissions.
+  ///
+  if ((FlashRegionType == FlashRegionAll) && (GetLoaderStage() >= LOADER_STAGE_PAYLOAD)) {
+    DEBUG ((DEBUG_ERROR, "FlashRegionAll write blocked in payload stage\n"));
+    return EFI_ACCESS_DENIED;
+  }
+
   SpiInstance = GetSpiInstance();
   if (SpiInstance == NULL) {
     return EFI_DEVICE_ERROR;
@@ -387,6 +395,14 @@ SpiFlashErase (
 
   if ((FlashRegionType != FlashRegionAll) && (FlashRegionType != FlashRegionBios)) {
     return EFI_INVALID_PARAMETER;
+  }
+
+  ///
+  /// Block FlashRegionAll erase in payload stage to enforce FRAP permissions.
+  ///
+  if ((FlashRegionType == FlashRegionAll) && (GetLoaderStage() >= LOADER_STAGE_PAYLOAD)) {
+    DEBUG ((DEBUG_ERROR, "FlashRegionAll erase blocked in payload stage\n"));
+    return EFI_ACCESS_DENIED;
   }
 
   SpiInstance = GetSpiInstance();

@@ -114,14 +114,17 @@ UpdateBdatAcpiTable (
   BDAT_SCHEMA_HEADER_STRUCTURE       *BdatSchemaHeader;
   MEM_TRAINING_DATA_HOB_HEADER       *MemTrainingDataHob;
   MEM_TRAINING_DATA_STRUCTURE        *MemTrainingData;
+  MEM_TRAINING_DATA_STRUCTURE        *MemTrainingDataBdat;
   UINT32                              MemTrainDataLen;
   UINT32                              MemTrainRestDataLen;
   UINT32                              MemTrainSchemaSize;
+  UINT32                              MemTrainGuidHobDataSize;
   EFI_HOB_GUID_TYPE                  *MemTrainGuidHob;
   EWL_PRIVATE_DATA                   *EwlPrivateData;
   EFI_HOB_GUID_TYPE                  *EwlGuidHob;
   UINT32                              EwlSchemaSize;
   UINT32                              EwlDataSize;
+  UINT32                              EwlGuidHobDataSize;
   UINT32                             *SchemaOffsetArray;
   UINT32                              CrcOut;
   EFI_STATUS                          Status;
@@ -136,30 +139,45 @@ UpdateBdatAcpiTable (
 
   MemTrainingDataHob  = NULL;
   MemTrainingData     = NULL;
+  MemTrainingDataBdat = NULL;
   EwlGuidHob          = NULL;
   MemTrainGuidHob     = NULL;
   Buffer              = NULL;
   SchemaOffsetArray   = NULL;
   EwlPrivateData      = NULL;
-  BufferSize          = 0;
-  EwlSchemaSize       = 0;
-  EwlDataSize         = 0;
-  MemTrainSchemaSize  = 0;
-  SchemaCount         = 0;
-  SchemaIdx           = 0;
-  SchemaOffset        = 0;
-  MemTrainDataLen     = 0;
-  MemTrainRestDataLen = 0;
-  Status              = EFI_SUCCESS;
+  BufferSize              = 0;
+  EwlGuidHobDataSize       = 0;
+  EwlSchemaSize            = 0;
+  EwlDataSize              = 0;
+  MemTrainGuidHobDataSize  = 0;
+  MemTrainSchemaSize       = 0;
+  SchemaCount              = 0;
+  SchemaIdx                = 0;
+  SchemaOffset             = 0;
+  MemTrainDataLen          = 0;
+  MemTrainRestDataLen      = 0;
+  Status                   = EFI_SUCCESS;
 
   //
   // 1.a Get Ewl Schema Size
   //
   EwlGuidHob = GetNextGuidHob (&gEwlIdGuid, HobList);
   if (EwlGuidHob != NULL) {
+    EwlGuidHobDataSize = GET_GUID_HOB_DATA_SIZE (EwlGuidHob);
+    if (EwlGuidHobDataSize < OFFSET_OF (EWL_PRIVATE_DATA, Status) + sizeof (EWL_HEADER)) {
+      return EFI_COMPROMISED_DATA;
+    }
+
     EwlPrivateData  = GET_GUID_HOB_DATA (EwlGuidHob);
     if (EwlPrivateData != NULL) {
       EwlDataSize     = EwlPrivateData->Status.Header.Size;
+      if ((EwlDataSize < sizeof (EWL_HEADER)) ||
+          (EwlDataSize > EwlGuidHobDataSize - OFFSET_OF (EWL_PRIVATE_DATA, Status)) ||
+          (EwlDataSize > MAX_UINT32 - sizeof (BDAT_SCHEMA_HEADER_STRUCTURE)))
+      {
+        return EFI_COMPROMISED_DATA;
+      }
+
       EwlSchemaSize   = sizeof(BDAT_SCHEMA_HEADER_STRUCTURE) + EwlDataSize;
       SchemaCount    += 1;
     }
@@ -171,10 +189,31 @@ UpdateBdatAcpiTable (
   //
   MemTrainGuidHob = GetNextGuidHob (&gMemTrainingDataHobGuid, HobList);
   if (MemTrainGuidHob != NULL) {
+    MemTrainGuidHobDataSize = GET_GUID_HOB_DATA_SIZE (MemTrainGuidHob);
+    if (MemTrainGuidHobDataSize < sizeof (MEM_TRAINING_DATA_HOB_HEADER)) {
+      return EFI_COMPROMISED_DATA;
+    }
+
     MemTrainingDataHob  = GET_GUID_HOB_DATA (MemTrainGuidHob);
     if (MemTrainingDataHob != NULL) {
+      if ((MemTrainingDataHob->Size < sizeof (MEM_TRAINING_DATA_HOB_HEADER)) ||
+          (MemTrainingDataHob->Size > MemTrainGuidHobDataSize))
+      {
+        return EFI_COMPROMISED_DATA;
+      }
+
       MemTrainDataLen      = MemTrainingDataHob->Size - sizeof (MEM_TRAINING_DATA_HOB_HEADER);
+      if (MemTrainDataLen < sizeof (MEM_TRAINING_DATA_HEADER)) {
+        return EFI_COMPROMISED_DATA;
+      }
+
       MemTrainingData     = (MEM_TRAINING_DATA_STRUCTURE *) ((UINTN)MemTrainingDataHob + sizeof(MEM_TRAINING_DATA_HOB_HEADER));
+      if ((MemTrainingData->Header.Size < MemTrainDataLen) ||
+          (MemTrainingData->Header.Size > MAX_UINT32 - sizeof (BDAT_SCHEMA_HEADER_STRUCTURE)))
+      {
+        return EFI_COMPROMISED_DATA;
+      }
+
       MemTrainRestDataLen  = MemTrainingData->Header.Size - MemTrainDataLen;
       MemTrainSchemaSize  = sizeof(BDAT_SCHEMA_HEADER_STRUCTURE) + MemTrainingData->Header.Size;
       SchemaCount        += 1;
@@ -230,6 +269,7 @@ UpdateBdatAcpiTable (
 
     // Copy First Guid Hob, and deal with remaining Hobs later
     Address += sizeof (BDAT_SCHEMA_HEADER_STRUCTURE);
+    MemTrainingDataBdat = (MEM_TRAINING_DATA_STRUCTURE *) Address;
     CopyMem ((VOID *) Address, (VOID *) MemTrainingData, MemTrainDataLen);
 
     // Copy data from the remaining Hobs, these dont contain
@@ -243,6 +283,15 @@ UpdateBdatAcpiTable (
         return EFI_NOT_FOUND;
       }
       MemTrainingDataHob = GET_GUID_HOB_DATA (MemTrainGuidHob);
+      MemTrainGuidHobDataSize = GET_GUID_HOB_DATA_SIZE (MemTrainGuidHob);
+      if ((MemTrainGuidHobDataSize < sizeof (MEM_TRAINING_DATA_HOB_HEADER)) ||
+          (MemTrainingDataHob->Size < sizeof (MEM_TRAINING_DATA_HOB_HEADER)) ||
+          (MemTrainingDataHob->Size > MemTrainGuidHobDataSize))
+      {
+        FreePages (Buffer, EFI_SIZE_TO_PAGES (BufferSize));
+        return EFI_COMPROMISED_DATA;
+      }
+
       MemTrainDataLen     = MemTrainingDataHob->Size - sizeof (MEM_TRAINING_DATA_HOB_HEADER);
 
       // Check if the next HOB data fits in the remaining BDAT buffer
@@ -260,9 +309,9 @@ UpdateBdatAcpiTable (
     SchemaIdx++;
 
     // Calculate CRC for Mem Train Data Header
-    MemTrainingData->Header.Crc = 0;
-    Status = CalculateCrc32WithType ((UINT8 *) &(MemTrainingData->Header), MemTrainingData->Header.Size, Crc32TypeDefault, &CrcOut);
-    MemTrainingData->Header.Crc = CrcOut;
+    MemTrainingDataBdat->Header.Crc = 0;
+    Status = CalculateCrc32WithType ((UINT8 *) &(MemTrainingDataBdat->Header), MemTrainingDataBdat->Header.Size, Crc32TypeDefault, &CrcOut);
+    MemTrainingDataBdat->Header.Crc = CrcOut;
   }
 
   //

@@ -8,6 +8,7 @@
 #ifndef _PLATFORM_BASE_H_
 
 #include <IndustryStandard/Pci.h>
+#include <Library/BootloaderCommonLib.h>
 
 #define TCO_BASE_ADDRESS             0x400
 #define ACPI_BASE_ADDRESS            0x1800
@@ -21,10 +22,7 @@
 #define LPSS_UART_TEMP_BASE_ADDRESS(x)      (PCH_SERIAL_IO_BASE_ADDRESS + 0x1E000 + (x << 13))
 
 #define MmPciBase(Bus, Device, Function) \
-  ( (UINTN)PcdGet64(PcdPciExpressBaseAddress) + \
-    (UINTN)(Bus << 20) +    \
-    (UINTN)(Device << 15) + \
-    (UINTN)(Function << 12) \
-  )
+  MmPciAddressFromBase (PcdGet64 (PcdPciExpressBaseAddress), \
+    ((UINTN)(Bus) << 20) + ((UINTN)(Device) << 15) + ((UINTN)(Function) << 12))
 
 #endif

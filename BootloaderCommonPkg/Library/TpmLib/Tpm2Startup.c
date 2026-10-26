@@ -58,6 +58,11 @@ Tpm2Startup (
     return Status;
   }
 
+  if (ResultBufSize < sizeof (TPM2_RESPONSE_HEADER)) {
+    DEBUG ((DEBUG_ERROR, "Tpm2Startup: ResultBufSize error - %x\r\n", ResultBufSize));
+    return EFI_DEVICE_ERROR;
+  }
+
   ResponseCode = SwapBytes32 (Res.Header.responseCode);
   switch (ResponseCode)  {
   case TPM_RC_SUCCESS:

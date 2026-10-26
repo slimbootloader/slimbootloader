@@ -148,6 +148,11 @@ GpioUnlockPadsForAGroup (
   Group      = GPIO_GET_GROUP_FROM_PAD (GpioData->GpioPad);
   GroupIndex = (UINT32) GPIO_GET_GROUP_INDEX_FROM_PAD (GpioData->GpioPad);
 
+  if (GroupIndex >= GpioGroupInfoLength) {
+    DEBUG ((DEBUG_ERROR, "GPIO ERROR: Group index (%d) exceeds group table length (%d)\n", GroupIndex, GpioGroupInfoLength));
+    return EFI_INVALID_PARAMETER;
+  }
+
   ZeroMem (PadsToUnlock, sizeof (PadsToUnlock));
   //
   // Loop through pads for one group. If pad belongs to a different group then
@@ -235,6 +240,15 @@ GpioConfigurePch (
 
     GpioData   = &GpioInitTableAddress[Index];
     GroupIndex = (UINT32) GPIO_GET_GROUP_INDEX_FROM_PAD (GpioData->GpioPad);
+
+    //
+    // Every GpioGroupInfo access below uses this index, so one check covers the group.
+    //
+    if (GroupIndex >= GpioGroupInfoLength) {
+      DEBUG ((DEBUG_ERROR, "GPIO ERROR: Group index (%d) for pad 0x%08x exceeds group table length (%d)\n", GroupIndex, GpioData->GpioPad, GpioGroupInfoLength));
+      return EFI_INVALID_PARAMETER;
+    }
+
     GpioCom    = GpioGroupInfo[GroupIndex].Community;
 
     //

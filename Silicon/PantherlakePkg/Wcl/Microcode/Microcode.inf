@@ -9,17 +9,16 @@
 [Defines]
   INF_VERSION          = 0x00010005
   BASE_NAME            = Microcode
-  FILE_GUID            = 197DB236-F856-4924-90F8-CDF12FB875F3
+  FILE_GUID            = 2D9C1D91-E869-4EB9-9D83-C6C6BE95C03B
   MODULE_TYPE          = USER_DEFINED
   VERSION_STRING       = 1.0
-  DEFINE UCODE_NAME    = m_97_a06e1_01000310
 
 [Sources]
-  $(UCODE_NAME).mcb  # B0 SKU (production signed)
+  m_c0_d0650_0000000d.mcb # uCode WCL A0/A1 (CPUID d0650) Version
 
 [UserExtensions.SBL."CloneRepo"]
   REPO   = https://github.com/slimbootloader/firmwareblob.git
-  COMMIT = cbb699ab304ade34dfc2add5b1a37aa42a1278f4
+  COMMIT = e54a72b9a92ab9320073a38375c90d371f36630c
 
 [UserExtensions.SBL."CopyList"]
-  Microcode/Kaseyville/$(UCODE_NAME).pdb  : Silicon/KaseyvillePkg/Ksv/Microcode/$(UCODE_NAME).mcb
+  Microcode/WildcatLake/m_c0_d0650_0000000d.pdb  : Silicon/PantherlakePkg/Wcl/Microcode/m_c0_d0650_0000000d.mcb

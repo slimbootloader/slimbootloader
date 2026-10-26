@@ -70,12 +70,12 @@ class Board(BaseBoard):
         self.BOARD_NAME           = 'ksv'
         self.BOARD_PKG_NAME       = 'KaseyvilleBoardPkg'
         self.SILICON_PKG_NAME     = 'KaseyvillePkg'
-        self._EXTRA_INC_PATH      = ['Silicon/KaseyvillePkg/Ksv/Include', 'Build/AcpiOffsets']
-        self._FSP_PATH_NAME       = 'Silicon/KaseyvillePkg/Ksv/FspBin'
-        self.FSP_INF_FILE         = 'Silicon/KaseyvillePkg/Ksv/FspBin/FspBin.inf'
+        self._EXTRA_INC_PATH      = ['Build/AcpiOffsets']
+        self._FSP_PATH_NAME       = 'Silicon/KaseyvillePkg/FspBin'
+        self.FSP_INF_FILE         = 'Silicon/KaseyvillePkg/FspBin/FspBin.inf'
         self._SMBIOS_YAML_FILE    = os.path.join('Platform', self.BOARD_PKG_NAME, 'SmbiosStrings.yaml')
-        self.MICROCODE_INF_FILE   = 'Silicon/KaseyvillePkg/Ksv/Microcode/Microcode.inf'
-        self.ACTM_INF_FILE        = 'Silicon/KaseyvillePkg/Ksv/Actm/Actm.inf'
+        self.MICROCODE_INF_FILE   = 'Silicon/KaseyvillePkg/Microcode/Microcode.inf'
+        self.ACTM_INF_FILE        = 'Silicon/KaseyvillePkg/Actm/Actm.inf'
         self.ACPI_TABLE_INF_FILE  = 'Platform/KaseyvilleBoardPkg/AcpiTables/AcpiTables.inf'
 
         self._PCI_ENUM_DOWNGRADE_MEM64  = 0

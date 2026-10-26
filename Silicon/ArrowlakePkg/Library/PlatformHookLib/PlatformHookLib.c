@@ -26,9 +26,9 @@
 #define LPSS_UART_TEMP_BASE_ADDRESS(x)   (UINT32)(PCH_SERIAL_IO_BASE_ADDRESS + 0xC000 + (x << 13))
 
 #define MM_PCI_OFFSET(Bus, Device, Function) \
-    ( (UINTN)(Bus << 20) +    \
-      (UINTN)(Device << 15) + \
-      (UINTN)(Function << 12) )
+    ( ((UINTN)(Bus) << 20) +    \
+      ((UINTN)(Device) << 15) + \
+      ((UINTN)(Function) << 12) )
 
 CONST UINT32
 mUartMmPciOffset[] = {

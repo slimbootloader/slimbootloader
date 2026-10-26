@@ -56,6 +56,12 @@ GetGspiBaseAddress (
 )
 {
   UINT64 Bar0;
+
+  if (Controller >= ARRAY_SIZE (mPchGspiCtrls)) {
+    ASSERT (FALSE);
+    return 0;
+  }
+
   Bar0 = PciRead32(mPchGspiCtrls[Controller] + PCI_BASE_ADDRESSREG_OFFSET);
   // check for 64bit register
   if ((Bar0 & (BIT3 | BIT2)) == BIT3) {

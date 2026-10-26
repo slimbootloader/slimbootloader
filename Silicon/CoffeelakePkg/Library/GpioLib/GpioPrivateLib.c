@@ -226,6 +226,7 @@ GpioIsPadValid (
   CONST GPIO_GROUP_INFO  *GpioGroupInfo;
   UINT32                 GpioGroupInfoLength;
   UINT32                 PadNumber;
+  UINT32                 GroupIndex;
 
   if (!GpioIsCorrectPadForThisChipset (GpioPad)) {
     DEBUG ((DEBUG_ERROR, "GPIO ERROR: Incorrect GpioPad (0x%08x) used on this chipset!\n", GpioPad));
@@ -237,8 +238,14 @@ GpioIsPadValid (
   //
   // Check if legal pin number
   //
+  GroupIndex = GpioGetGroupIndexFromGpioPad (GpioPad);
   PadNumber = GpioGetPadNumberFromGpioPad (GpioPad);
-  if (PadNumber >= GpioGroupInfo[GpioGetGroupIndexFromGpioPad (GpioPad)].PadPerGroup) {
+  if (GroupIndex >= GpioGroupInfoLength) {
+    DEBUG ((DEBUG_ERROR, "GPIO ERROR: Group index (%d) exceeds group table length (%d)\n", GroupIndex, GpioGroupInfoLength));
+    goto Error;
+  }
+
+  if (PadNumber >= GpioGroupInfo[GroupIndex].PadPerGroup) {
     DEBUG ((DEBUG_ERROR, "GPIO ERROR: Pin number (%d) exceeds possible range for this group\n", PadNumber));
     goto Error;
   }

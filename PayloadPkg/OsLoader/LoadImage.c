@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2017 - 2026, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -487,6 +487,10 @@ GetTraditionalLinux (
   EFI_HANDLE                 FileHandle;
   BOOLEAN                    DefBootOption;
   UINT32                     Size;
+  BOOT_PARAMS                *Bp;
+  UINT32                     BootParamSize;
+  UINT64                     KernelSize;
+  UINT64                     KernelLimit;
 
   ConfigFile     = NULL;
   FileHandle     = NULL;
@@ -572,6 +576,41 @@ GetTraditionalLinux (
   Status = LoadLinuxFile (FsHandle, ConfigFile, &LinuxBootCfg.MenuEntry[EntryIdx].Kernel, &LinuxImage->BootFile);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Load kernel failed!\n"));
+    Status = RETURN_LOAD_ERROR;
+    goto Done;
+  }
+
+  //
+  // This traditional Linux boot flow is only reached when debug code is
+  // enabled or verified boot is disabled, so the kernel image loaded above
+  // has NOT been authenticated. The SysSize (kernel size) and Code32Start
+  // (kernel entry address) fields inside the bzImage header are fully
+  // controlled by whatever is on the media, so they must be validated and
+  // clamped here regardless of the authentication/verified boot state to
+  // prevent an out-of-bounds copy of the kernel payload or a later jump to
+  // an unvalidated, attacker-controlled entry address.
+  //
+  if ((LinuxImage->BootFile.Size < (UINT32)(OFFSET_OF (BOOT_PARAMS, Hdr) + sizeof (SETUP_HEADER))) ||
+      !IsBzImage (LinuxImage->BootFile.Addr)) {
+    DEBUG ((DEBUG_ERROR, "Traditional Linux image is not a valid bzImage!\n"));
+    FreeImageData (&LinuxImage->BootFile);
+    Status = RETURN_LOAD_ERROR;
+    goto Done;
+  }
+
+  Bp = (BOOT_PARAMS *)LinuxImage->BootFile.Addr;
+  BootParamSize = (Bp->Hdr.SetupSectorss != 0) ? ((UINT32)Bp->Hdr.SetupSectorss + 1) * 512 : 5 * 512;
+  KernelSize    = (UINT64)Bp->Hdr.SysSize * 16;
+  KernelLimit   = (UINT64)LINUX_KERNEL_BASE + KernelSize;
+
+  if ((KernelSize == 0) ||
+      (KernelSize > (BASE_4GB - LINUX_KERNEL_BASE)) ||
+      (BootParamSize >= LinuxImage->BootFile.Size) ||
+      (KernelSize > (UINT64)(LinuxImage->BootFile.Size - BootParamSize)) ||
+      (Bp->Hdr.Code32Start < LINUX_KERNEL_BASE) ||
+      ((UINT64)Bp->Hdr.Code32Start + (((Bp->Hdr.XloadFlags & BIT0) != 0) ? 0x200 : 0) >= KernelLimit)) {
+    DEBUG ((DEBUG_ERROR, "Traditional Linux image has invalid SysSize/EntryAddress, rejecting!\n"));
+    FreeImageData (&LinuxImage->BootFile);
     Status = RETURN_LOAD_ERROR;
     goto Done;
   }

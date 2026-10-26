@@ -35,14 +35,18 @@ class SetupPage(TabPage):
             browse_title_text="Select Workspace Directory")
 
         # SBL source code directory
-        sbl_source_dir = LabelFrame(
+        sbl_source_dir = FileDirectoryEntry(
             parent=self,
             info_text="Directory for slimbootloader repo will be cloned, updated, and cleaned.\n" \
                 "Clean - All untracked and tracked files, except for ignored files/directories will be reset to last commit.\n"\
                 "Update - Pull latest changes from remote repository.\n" \
                 "Clone - Clone slimbootloader repo from remote repository to the specified directory.",
             label_text="SBL Source Code:",
-            bind_variable=self.global_variables["sbl_source_path"])
+            bind_variable=self.global_variables["sbl_source_path"],
+            browse_type="folder",
+            callback=self.on_sbl_source_path_selected,
+            browse_title_text="Select SBL Source Directory")
+        sbl_source_dir.add_button("Reset", self.reset_repo)
         self.clone_update_button = sbl_source_dir.add_button("Clone", self.clone_update_repo)
         sbl_source_dir.add_button("Clean", self.clean_repo)
 
@@ -99,6 +103,12 @@ class SetupPage(TabPage):
             self.global_variables["sbl_key_path"].set(os.path.join(workspace_path, "SblKeys"))
 
         # self.load_settings(workspace_path)
+
+    def on_sbl_source_path_selected(self, source_path):
+        """Update source-repository actions after the source path changes."""
+        self.clone_update_button.config(
+            text="Update" if self.is_slimbootloader_repo(source_path) else "Clone")
+        self.global_flags["sbl_path_update_from_setup"] = True
 
     # Skipping compiler version check due to its complexity
     def update_toolchain_info(self):
@@ -184,30 +194,30 @@ class SetupPage(TabPage):
         self.toolchain_info.set(f"{toolchain_info_str.strip()}")
 
     def check_for_sbl_repo(self, workspace_path):
-        def is_slimbootloader_repo(folder):
-            repo_url = "https://github.com/slimbootloader/slimbootloader.git"
-            try:
-                folder = os.path.dirname(folder)
-                command = ["git", "config", "--get", "remote.origin.url"]
-                process = subprocess.run(command, cwd=folder, capture_output=True, text=True)
-                parsed_url = process.stdout.strip()
-                if parsed_url == repo_url:
-                    print(f"Detected slimbootloader repo in {folder}")
-                    return True
-            except Exception as e:
-                print(f"Error checking git repo in {folder}: {e}")
-            return False
-
         sbl_source_path = self.global_variables["sbl_source_path"].get()
         if sbl_source_path and sbl_source_path != "<Empty>":
-            if os.path.isdir(sbl_source_path) and is_slimbootloader_repo(sbl_source_path):
+            if os.path.isdir(sbl_source_path) and self.is_slimbootloader_repo(sbl_source_path):
                 return True
-        """Check for existing slimbootloader repo in the selected workspace."""
-        for folder in glob.glob(os.path.join(workspace_path, "**", ".git")):
-            if is_slimbootloader_repo(folder):
+
+        for folder in glob.glob(os.path.join(workspace_path, "**", ".git"), recursive=True):
+            if self.is_slimbootloader_repo(folder):
                 self.global_variables["sbl_source_path"].set(os.path.dirname(folder))
                 return True
 
+        return False
+
+    def is_slimbootloader_repo(self, folder):
+        """Return whether folder is an SBL checkout with the expected origin."""
+        repo_path = os.path.dirname(folder) if os.path.basename(os.path.normpath(folder)) == ".git" else folder
+        try:
+            command = ["git", "config", "--get", "remote.origin.url"]
+            process = subprocess.run(command, cwd=repo_path, capture_output=True, text=True)
+            parsed_url = process.stdout.strip().rstrip("/")
+            if parsed_url == SBL_REPO_URL.rstrip("/"):
+                print(f"Detected slimbootloader repo in {repo_path}")
+                return True
+        except Exception as e:
+            print(f"Error checking git repo in {repo_path}: {e}")
         return False
 
     def on_closing(self):
@@ -273,11 +283,16 @@ class SetupPage(TabPage):
         workspace = self.global_variables["workspace_path"].get()
         source_path = self.global_variables["sbl_source_path"].get()
 
+        if not workspace or workspace == "<Empty>" or not source_path or source_path == "<Empty>":
+            messagebox.showwarning("Warning", "Please select valid workspace and SBL source directories first.")
+            return
+
         # Run git clone or update command
         if self.clone_update_button.cget("text") == "Clone":
             self.execution_manager.status_bar.set("Cloning SBL source code repository... ", color="black")
-            command = f"git clone {SBL_REPO_URL} {folder_name}"
-            self.execution_manager.execute_command(command, cwd=workspace)
+            os.makedirs(source_path, exist_ok=True)
+            command = f"git clone {SBL_REPO_URL} ."
+            self.execution_manager.execute_command(command, cwd=source_path)
             # Run git submodule update command
             command = f"git submodule update --init --recursive"
             self.execution_manager.execute_command(command, cwd=source_path, queue=True)
@@ -303,6 +318,20 @@ class SetupPage(TabPage):
         self.execution_manager.execute_command(command, cwd=source_path, shell=True)
         # Notify build page to reset certain build configuration options to default
         self.global_flags["git_clean_from_setup"] = True
+
+    def reset_repo(self):
+        print("Resetting SBL source code path...")
+        workspace = self.global_variables["workspace_path"].get()
+        if not workspace or workspace == "<Empty>":
+            self.global_variables["sbl_source_path"].set("<Empty>")
+            return
+        source_path = os.path.join(workspace, "Slimbootloader")
+        self.global_variables["sbl_source_path"].set(source_path)
+        self.global_flags["sbl_path_update_from_setup"] = True
+        if not os.path.exists(source_path):
+            self.clone_update_button.config(text="Clone")
+        else:
+            self.clone_update_button.config(text="Update")
 
     def show_log(self):
         self.terminal_log.show()

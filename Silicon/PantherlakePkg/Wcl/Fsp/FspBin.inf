@@ -1,0 +1,26 @@
+## @file
+#  File to describe FSP repo information
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+
+[UserExtensions.SBL."CloneRepo"]
+  REPO    = https://github.com/intel/FSP.git
+  COMMIT  = 98426bfd958eb7397c474ff5d440dc9a1d146215
+
+[UserExtensions.SBL."CopyList"]
+  WildcatLakeFspBinPkg/IoT/WildcatLake/Fsp.fd                 : Silicon/PantherlakePkg/Wcl/Fsp/FspRel.bin
+  WildcatLakeFspBinPkg/IoT/WildcatLake/Fsp.fd                 : Silicon/PantherlakePkg/Wcl/Fsp/FspDbg.bin
+  WildcatLakeFspBinPkg/IoT/WildcatLake/Fsp.bsf                : Silicon/PantherlakePkg/Wcl/Fsp/Fsp.bsf
+  WildcatLakeFspBinPkg/IoT/WildcatLake/Include/FspUpd.h       : Silicon/PantherlakePkg/Wcl/Fsp/FspUpd.h
+  WildcatLakeFspBinPkg/IoT/WildcatLake/Include/FsptUpd.h      : Silicon/PantherlakePkg/Wcl/Fsp/FsptUpd.h
+  WildcatLakeFspBinPkg/IoT/WildcatLake/Include/FspmUpd.h      : Silicon/PantherlakePkg/Wcl/Fsp/FspmUpd.h
+  WildcatLakeFspBinPkg/IoT/WildcatLake/Include/FspsUpd.h      : Silicon/PantherlakePkg/Wcl/Fsp/FspsUpd.h
+  WildcatLakeFspBinPkg/IoT/WildcatLake/Include/MemInfoHob.h   : Silicon/PantherlakePkg/Wcl/Fsp/MemInfoHob.h
+  FSP_License.pdf                                             : Silicon/PantherlakePkg/Wcl/Fsp/FSP_License.pdf
+  WildcatLakeFspBinPkg/IoT/WildcatLake/VbtBin/Vbt_WCL.json    : Platform/PantherlakeBoardPkg/VbtBin/VbtWcl.json

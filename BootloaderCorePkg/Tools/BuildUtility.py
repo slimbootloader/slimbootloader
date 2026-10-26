@@ -321,7 +321,7 @@ def get_visual_studio_info (preference = ''):
     # check new Visual Studio Community version first
     vswhere_path = "%s/Microsoft Visual Studio/Installer/vswhere.exe" % os.environ['ProgramFiles(x86)']
     if os.path.exists (vswhere_path):
-        cmd = [vswhere_path, '-all', '-property', 'installationPath']
+        cmd = [vswhere_path, '-all', '-products', '*', '-property', 'installationPath']
         lines = run_process (cmd, capture_out = True)
         vscommon_paths = []
         for each in lines.splitlines ():

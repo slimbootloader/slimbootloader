@@ -176,7 +176,7 @@
 
       help         : >
 
-                     Enable- Generate BDAT for MRC RMT or SA PCIe data. Disable (Default)- Do not generate it
+                     Enable (Default)- Generate BDAT for MRC RMT or SA PCIe data. Disable- Do not generate it
 
       length       : 0x01
 

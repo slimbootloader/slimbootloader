@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2014 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2014 - 2026, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -1232,6 +1232,7 @@ UfsExecScsiCmds (
   UINTN                                Address;
   UINT8                                *CmdDescBase;
   UINT32                               CmdDescSize;
+  UINT16                               RuO;
   UTP_RESPONSE_UPIU                    *Response;
   UINT16                               SenseDataLen;
   UINT32                               ResTranCount;
@@ -1256,6 +1257,12 @@ UfsExecScsiCmds (
     return Status;
   }
 
+  //
+  // Snapshot Trd->RuO/PrdtO/PrdtL now, before the command is started, and use
+  // only this cached RuO (not a re-read of Trd->RuO) to compute the Response
+  // UPIU pointer below.
+  //
+  RuO         = Trd->RuO;
   CmdDescBase = (UINT8 *) (UINTN) (LShiftU64 ((UINT64)Trd->UcdBaU, 32) | LShiftU64 ((UINT64)Trd->UcdBa, 7));
   CmdDescSize = Trd->PrdtO * sizeof (UINT32) + Trd->PrdtL * sizeof (UTP_TR_PRD);
 
@@ -1274,9 +1281,10 @@ UfsExecScsiCmds (
   }
 
   //
-  // Get sense data if exists
+  // Get sense data if exists. Use the pre-doorbell RuO snapshot, not Trd->RuO,
+  // to derive Response -- see comment above.
   //
-  Response     = (UTP_RESPONSE_UPIU *) (CmdDescBase + Trd->RuO * sizeof (UINT32));
+  Response     = (UTP_RESPONSE_UPIU *) (CmdDescBase + RuO * sizeof (UINT32));
   SenseDataLen = Response->SenseDataLen;
   SwapLittleEndianToBigEndian ((UINT8 *)&SenseDataLen, sizeof (UINT16));
 
@@ -1306,12 +1314,28 @@ UfsExecScsiCmds (
       if ((Response->Flags & BIT5) == BIT5) {
         ResTranCount = Response->ResTranCount;
         SwapLittleEndianToBigEndian ((UINT8 *)&ResTranCount, sizeof (UINT32));
+        //
+        // ResTranCount is device-supplied; reject a value that would
+        // underflow InTransferLength (UINT32) rather than blindly
+        // subtracting it, which could otherwise produce a huge/wrapped
+        // transfer length consumed by a later stage.
+        //
+        if (ResTranCount > Packet->InTransferLength) {
+          DEBUG ((DEBUG_ERROR, "UfsExecScsiCmds() invalid ResTranCount %x exceeds InTransferLength %x\n", ResTranCount, Packet->InTransferLength));
+          Status = EFI_DEVICE_ERROR;
+          goto Exit;
+        }
         Packet->InTransferLength -= ResTranCount;
       }
     } else if (Packet->DataDirection == UfsDataOut) {
       if ((Response->Flags & BIT5) == BIT5) {
         ResTranCount = Response->ResTranCount;
         SwapLittleEndianToBigEndian ((UINT8 *)&ResTranCount, sizeof (UINT32));
+        if (ResTranCount > Packet->OutTransferLength) {
+          DEBUG ((DEBUG_ERROR, "UfsExecScsiCmds() invalid ResTranCount %x exceeds OutTransferLength %x\n", ResTranCount, Packet->OutTransferLength));
+          Status = EFI_DEVICE_ERROR;
+          goto Exit;
+        }
         Packet->OutTransferLength -= ResTranCount;
       }
     }

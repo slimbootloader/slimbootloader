@@ -161,7 +161,7 @@
         type         : Combo
         option       : 0:POR, 1:Enforce Stretch Goals, 2:Disabled
         help         : >
-                        Enforce POR (0x0) - Enforces Plan Of Record restrictions for DDR5 frequency and voltage programming. Enforce Stretch Goals (0x1) - Enforce DDR memory frequency stretch goal. <b>Disable (0x2 - Default)</b> - Disables this feature and user is able to run at higher frequencies, specified in the DDR Frequency Limit field (limited by processor support).
+                        <b>Enforce POR (0x0 - Default)</b> - Enforces Plan Of Record restrictions for DDR5 frequency and voltage programming. Enforce Stretch Goals (0x1) - Enforce DDR memory frequency stretch goal. Disable (0x2) - Disables this feature and user is able to run at higher frequencies, specified in the DDR Frequency Limit field (limited by processor support).
         length       : 0x01
         value        : 0x00
     - DirectoryModeEn :

@@ -238,7 +238,7 @@ configs:
         type         : Combo
         option       : $EN_DIS
         help         : >
-                       Enable- Enable I2c5, Disable(Default)- Disable I2c5
+                       Enable(Default)- Enable I2C5, Disable- Disable I2C5
         length       : 0x01
         value        : 0x1
     - PepI2c6      :
@@ -246,7 +246,7 @@ configs:
         type         : Combo
         option       : $EN_DIS
         help         : >
-                       Enable- Enable I2c6, Disable(Default)- Disable I2c6
+                       Enable(Default)- Enable I2C6, Disable- Disable I2C6
         length       : 0x01
         value        : 0x1
     - PepSpi       :

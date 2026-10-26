@@ -84,8 +84,6 @@ GetSubsysInfo (
 
   SysInfo = GET_GUID_HOB_DATA (GuidHob);
 
-  SysInfo = (SYS_INFO *)GET_GUID_HOB_DATA (GuidHob);
-
   switch (SubsysType) {
   case SUBSYS_TYPE_IOAT:
     SubsysInfoEntry->Data32[0] = SysInfo->Socket[Socket].IoatInfoEntrys[Inst].Data32[0];

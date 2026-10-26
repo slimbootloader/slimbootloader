@@ -49,7 +49,7 @@ Signed-off-by: Bejean Mosher <bejean.mosher@intel.com>
  QemuFspPkg/QemuVideo/QemuVideo.c              | 780 +++++++++++++++++
  QemuFspPkg/QemuVideo/QemuVideo.h              | 116 +++
  QemuFspPkg/QemuVideo/QemuVideo.inf            |  56 ++
- 42 files changed, 6350 insertions(+), 4 deletions(-)
+ 43 files changed, 6351 insertions(+), 5 deletions(-)
  create mode 100644 BuildFsp.py
  create mode 100644 QemuFspPkg/BuildFv.cmd
  create mode 100644 QemuFspPkg/FspDescription/FspDescription.inf
@@ -278,7 +278,7 @@ index 0000000000..0eba72e980
 +                    os.environ['WINSDK%s_PREFIX' % sdk] = os.path.join(os.environ['ProgramFiles(x86)'], 'Windows Kits', sdk, 'bin')
 +                    vs_supported_sdks = None
 +                    if vs_ver == '2022':
-+                        vs_supported_sdks = ['10.0.22621.0', '10.0.22000.0', '10.0.19041.0']
++                        vs_supported_sdks = ['10.0.22621.0', '10.0.22000.0', '10.0.19041.0', '10.0.26100.0' ]
 +                    elif vs_ver == '2019':
 +                        vs_supported_sdks = ['10.0.19041.0', '10.0.18362.0']
 +                    elif vs_ver == '2017':
@@ -6708,6 +6708,16 @@ index 0000000000..16023b57c1
 +[Depex]
 +  TRUE
 +
+diff --git a/MdeModulePkg/Core/Pei/Image/Image.c b/MdeModulePkg/Core/Pei/Image/Image.c
+--- a/MdeModulePkg/Core/Pei/Image/Image.c
++++ b/MdeModulePkg/Core/Pei/Image/Image.c
+@@ -402,5 +402,5 @@ LoadAndRelocatePeCoffImage (
+       if (ImageContext.SectionAlignment > EFI_PAGE_SIZE) {
+         ImageContext.ImageAddress =
+           (ImageContext.ImageAddress + ImageContext.SectionAlignment - 1) &
+-          ~((UINTN)ImageContext.SectionAlignment - 1);
++          ~((PHYSICAL_ADDRESS)ImageContext.SectionAlignment - 1);
+       }
 -- 
 2.50.0.windows.2
 

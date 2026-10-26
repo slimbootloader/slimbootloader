@@ -412,7 +412,8 @@ GetAcpiPciRootResource (
     DSDTDEBUG ("Stack:%d is not present or out of MAX_IIO_STACKS_PER_SOCKET\n", Stack);
     return EFI_UNSUPPORTED;
   }
-  if (Root >= IioUdsPtr->PlatformData.IIO_resource[Socket].StackRes[Stack].PciRootBridgeNum) {
+  if ((IioUdsPtr->PlatformData.IIO_resource[Socket].StackRes[Stack].PciRootBridgeNum > MAX_IIO_PCIROOTS_PER_STACK) ||
+      (Root >= IioUdsPtr->PlatformData.IIO_resource[Socket].StackRes[Stack].PciRootBridgeNum)) {
     DSDTDEBUG ("Root:%d is out of PciRootBridgeNum: %d\n", Root, IioUdsPtr->PlatformData.IIO_resource[Socket].StackRes[Stack].PciRootBridgeNum);
     return EFI_UNSUPPORTED;
   }
@@ -476,6 +477,7 @@ PatchDsdtTableAML (
   UINT8                                   Socket;
   UINT8                                   Stack;
   UINT8                                   Root;
+  UINT8                                   RootCount;
   UINT8                                   Index;
   UINT8                                   LegacyVgaStackSoc;
   UINT8                                   LegacyVgaStackFwInst;
@@ -531,9 +533,14 @@ PatchDsdtTableAML (
     for (Stack = 0; Stack < MAX_IIO_STACKS_PER_SOCKET; Stack++) {
 
       if (IioUdsPtr->PlatformData.CpuQpiInfo[Socket].StackPresentBitmap & (1 << Stack)) {
+        RootCount = IioUdsPtr->PlatformData.IIO_resource[Socket].StackRes[Stack].PciRootBridgeNum;
+        if (RootCount > MAX_IIO_PCIROOTS_PER_STACK) {
+          DSDTERROR ("Invalid PCI root bridge count %u for socket %u stack %u\n", RootCount, Socket, Stack);
+          return EFI_INVALID_PARAMETER;
+        }
 
         if ((Index = IioStack2PeIndex (Socket, Stack)) < MAX_IIO_PCIE_PER_SOCKET) {
-          AcpiParameter->IioPcieRootBitmap[Socket][Index] = (UINT8)-1 >> (8 - IioUdsPtr->PlatformData.IIO_resource[Socket].StackRes[Stack].PciRootBridgeNum);
+          AcpiParameter->IioPcieRootBitmap[Socket][Index] = (UINT8)-1 >> (8 - RootCount);
           if (IioUdsPtr->PlatformData.CpuQpiInfo[Socket].CxlCapableBitmap & (1 << Stack)) {
             AcpiParameter->IioCxlCapableBitmap[Socket] |= 1 << Index;
           }
@@ -548,7 +555,17 @@ PatchDsdtTableAML (
       continue;
     }
 
-    AcpiParameter->IioIoatRootBitmap[Socket][IoatInst] = (UINT8)-1 >> (8 - IioUdsPtr->PlatformData.IIO_resource[Socket].StackRes[Stack].PciRootBridgeNum);
+    if (Stack >= MAX_IIO_STACKS_PER_SOCKET) {
+      DSDTERROR ("Invalid stack %u for socket %u IOAT %u\n", Stack, Socket, IoatInst);
+      return EFI_INVALID_PARAMETER;
+    }
+
+    RootCount = IioUdsPtr->PlatformData.IIO_resource[Socket].StackRes[Stack].PciRootBridgeNum;
+    if (RootCount > MAX_IIO_PCIROOTS_PER_STACK) {
+      DSDTERROR ("Invalid PCI root bridge count %u for socket %u stack %u\n", RootCount, Socket, Stack);
+      return EFI_INVALID_PARAMETER;
+    }
+    AcpiParameter->IioIoatRootBitmap[Socket][IoatInst] = (UINT8)-1 >> (8 - RootCount);
     AcpiParameter->IioIoatSegment[Socket][IoatInst] = IioUdsPtr->PlatformData.IIO_resource[Socket].StackRes[Stack].Segment;
   }
     DSDTDEBUG ("[%d] CXL capable PCIe bitmap: 0x%04X\n", Socket, AcpiParameter->IioCxlCapableBitmap[Socket]);
@@ -581,6 +598,12 @@ PatchDsdtTableAML (
     //
     // Point to offset in DSDT for current item in AmlOffsetTable.
     //
+    if (mAmlOffsetTablePointer[i].Offset >= TableHeader->Length) {
+      DSDTERROR ("Invalid AML offset 0x%X for table length 0x%X\n",
+        mAmlOffsetTablePointer[i].Offset, TableHeader->Length);
+      ASSERT (FALSE);
+      return EFI_COMPROMISED_DATA;
+    }
     DsdtPointer = (UINT8 *) (TableHeader) + mAmlOffsetTablePointer[i].Offset;
 
     DSDTDEBUG ("Patching '%a' OpCode 0x%02X Offset %X\n", mAmlOffsetTablePointer[i].Pathname, mAmlOffsetTablePointer[i].Opcode,mAmlOffsetTablePointer[i].Offset);
@@ -590,12 +613,19 @@ PatchDsdtTableAML (
       // If Opcode is 0x0C, then operator is Name() or OperationRegion().
       // (TableHeader + AmlOffsetTable.Offset) is at offset for value to change.
       //
-      // The assert below confirms that AML structure matches the offsets table.
+      // The check below confirms that AML structure matches the offsets table.
       // If not then patching the AML would just corrupt it and result in OS failure.
-      // If you encounter this assert something went wrong in *.offset.h files
+      // If this check fails something went wrong in *.offset.h files
       // generation. Remove the files and rebuild.
       //
-      ASSERT(DsdtPointer[-1] == mAmlOffsetTablePointer[i].Opcode);
+      if ((mAmlOffsetTablePointer[i].Offset == 0) ||
+          (TableHeader->Length - mAmlOffsetTablePointer[i].Offset < sizeof (UINT32)) ||
+          (DsdtPointer[-1] != mAmlOffsetTablePointer[i].Opcode))
+      {
+        DSDTERROR ("Invalid AML DWORD offset/opcode for '%a'\n", mAmlOffsetTablePointer[i].Pathname);
+        ASSERT (FALSE);
+        return EFI_COMPROMISED_DATA;
+      }
       //
       // AmlOffsetTable.Value has FIX tag, so check that to decide what to modify.
       //
@@ -620,12 +650,18 @@ PatchDsdtTableAML (
       //
       AmlResourceAddress16Pointer = (EFI_ACPI_WORD_ADDRESS_SPACE_DESCRIPTOR *) (DsdtPointer);
       //
-      // The assert below confirms that AML structure matches the offsets table.
+      // The check below confirms that AML structure matches the offsets table.
       // If not then patching the AML would just corrupt it and result in OS failure.
-      // If you encounter this assert something went wrong in *.offset.h files
+      // If this check fails something went wrong in *.offset.h files
       // generation. Remove the files and rebuild.
       //
-      ASSERT(AmlResourceAddress16Pointer->Header.Header.Byte == mAmlOffsetTablePointer[i].Opcode);
+      if ((sizeof (*AmlResourceAddress16Pointer) > TableHeader->Length - mAmlOffsetTablePointer[i].Offset) ||
+          (AmlResourceAddress16Pointer->Header.Header.Byte != mAmlOffsetTablePointer[i].Opcode))
+      {
+        DSDTERROR ("Invalid AML WORD descriptor for '%a'\n", mAmlOffsetTablePointer[i].Pathname);
+        ASSERT (FALSE);
+        return EFI_COMPROMISED_DATA;
+      }
 
       //
       // Last 4 chars of AmlOffsetTable.Pathname has FIX tag.
@@ -778,12 +814,18 @@ PatchDsdtTableAML (
       //
       AmlResourceAddress32Pointer = (EFI_ACPI_DWORD_ADDRESS_SPACE_DESCRIPTOR *) (DsdtPointer);
       //
-      // The assert below confirms that AML structure matches the offsets table.
+      // The check below confirms that AML structure matches the offsets table.
       // If not then patching the AML would just corrupt it and result in OS failure.
-      // If you encounter this assert something went wrong in *.offset.h files
+      // If this check fails something went wrong in *.offset.h files
       // generation. Remove the files and rebuild.
       //
-     ASSERT(AmlResourceAddress32Pointer->Header.Header.Byte == mAmlOffsetTablePointer[i].Opcode);
+      if ((sizeof (*AmlResourceAddress32Pointer) > TableHeader->Length - mAmlOffsetTablePointer[i].Offset) ||
+          (AmlResourceAddress32Pointer->Header.Header.Byte != mAmlOffsetTablePointer[i].Opcode))
+      {
+        DSDTERROR ("Invalid AML DWORD descriptor for '%a'\n", mAmlOffsetTablePointer[i].Pathname);
+        ASSERT (FALSE);
+        return EFI_COMPROMISED_DATA;
+      }
       //
       // Last 4 chars of AmlOffsetTable.Pathname has FIX tag.
       //
@@ -851,12 +893,18 @@ PatchDsdtTableAML (
       //
       AmlResourceAddress64Pointer = (EFI_ACPI_QWORD_ADDRESS_SPACE_DESCRIPTOR *) (DsdtPointer);
       //
-      // The assert below confirms that AML structure matches the offsets table.
+      // The check below confirms that AML structure matches the offsets table.
       // If not then patching the AML would just corrupt it and result in OS failure.
-      // If you encounter this assert something went wrong in *.offset.h files
+      // If this check fails something went wrong in *.offset.h files
       // generation. Remove the files and rebuild.
       //
-      ASSERT(AmlResourceAddress64Pointer->Header.Header.Byte == mAmlOffsetTablePointer[i].Opcode);
+      if ((sizeof (*AmlResourceAddress64Pointer) > TableHeader->Length - mAmlOffsetTablePointer[i].Offset) ||
+          (AmlResourceAddress64Pointer->Header.Header.Byte != mAmlOffsetTablePointer[i].Opcode))
+      {
+        DSDTERROR ("Invalid AML QWORD descriptor for '%a'\n", mAmlOffsetTablePointer[i].Pathname);
+        ASSERT (FALSE);
+        return EFI_COMPROMISED_DATA;
+      }
       //
       // Last 4 chars of AmlOffsetTable.Pathname has FIX tag.
       //
@@ -911,6 +959,7 @@ PatchDsdtTableAML (
 
   for (DsdtPointer = CurrPtr; DsdtPointer <= EndPtr; DsdtPointer++) {
 
+    // APT/SPD AML layout: Name(4) BufferOp(1) PkgLength(2) WordPrefix(1) BufferSize(2), so data starts at +10
     for (Socket = 0; Socket < MAX_SOCKET; Socket++) {
       //
       // Find APT##socket name
@@ -921,8 +970,20 @@ PatchDsdtTableAML (
           continue;
         }
 
+        if ((TableHeader->Length < 10 + MAX_THREAD * MAX_CORE * sizeof (UINT32)) ||
+            ((UINTN)(DsdtPointer - (UINT8 *)TableHeader) >
+             TableHeader->Length - (10 + MAX_THREAD * MAX_CORE * sizeof (UINT32))))
+        {
+          DSDTERROR ("APT%x package exceeds table bounds\n", Socket);
+          ASSERT (FALSE);
+          return EFI_COMPROMISED_DATA;
+        }
         Counter16 = *(UINT16 *) &DsdtPointer[8];
-        ASSERT ((Counter16 / sizeof (UINT32)) >= (UINT32) (MAX_THREAD * MAX_CORE));
+        if (Counter16 < MAX_THREAD * MAX_CORE * sizeof (UINT32)) {
+          DSDTERROR ("APT%x package is too small: 0x%X\n", Socket, Counter16);
+          ASSERT (FALSE);
+          return EFI_COMPROMISED_DATA;
+        }
         DSDTDEBUG ("Found 'APT%x'...Counter16 = 0x%x\n", Socket, Counter16);
         for (i = 0; i < (MAX_THREAD * MAX_CORE); i++) {
           *(UINT32 *)&DsdtPointer[i*4+10] = mApicIdMap[Socket][i];
@@ -937,9 +998,21 @@ PatchDsdtTableAML (
           continue;
         }
 
+        if ((TableHeader->Length < 10 + MAX_THREAD * MAX_CORE) ||
+            ((UINTN)(DsdtPointer - (UINT8 *)TableHeader) >
+             TableHeader->Length - (10 + MAX_THREAD * MAX_CORE)))
+        {
+          DSDTERROR ("SPD%x package exceeds table bounds\n", Socket);
+          ASSERT (FALSE);
+          return EFI_COMPROMISED_DATA;
+        }
         Counter16 = *(UINT16 *) &DsdtPointer[8];
         DSDTDEBUG ("Found 'SPD%x'...Counter16 = 0x%x\n", Socket, Counter16);
-        ASSERT (Counter16 >= (UINT32) (MAX_THREAD * MAX_CORE));
+        if (Counter16 < MAX_THREAD * MAX_CORE) {
+          DSDTERROR ("SPD%x package is too small: 0x%X\n", Socket, Counter16);
+          ASSERT (FALSE);
+          return EFI_COMPROMISED_DATA;
+        }
         for (i = 0; i < (MAX_THREAD * MAX_CORE); i++) {
           DsdtPointer[i+10] = (UINT8) mSNCProximityDomainMap[Socket][i];
         }

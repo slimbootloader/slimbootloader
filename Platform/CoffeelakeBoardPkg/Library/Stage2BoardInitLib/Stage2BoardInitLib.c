@@ -744,6 +744,7 @@ GpioInit (
   UINT32              GpioEntries;
   UINT32              Index;
   UINT32              Offset;
+  UINT32              MaxEntries;
   UINT8              *GpioCfgDataBuffer;
   UINT8              *GpioTable;
   UINT8              ChipsetId;
@@ -774,7 +775,29 @@ GpioInit (
   }
 
   Offset     = 0;
-  GpioTable  = (UINT8 *)AllocateTemporaryMemory (0);  //allocate new buffer
+
+  //
+  // ItemCount walks a fixed-size bit mask and sizes the output buffer; the config data
+  // does not bound it.
+  //
+  if ((GpioCfgHdr->GpioItemCount > sizeof (GpioCfgCurrHdr->GpioBaseTableBitMask) * 8) ||
+      (GpioCfgCurrHdr->GpioItemCount > sizeof (GpioCfgCurrHdr->GpioBaseTableBitMask) * 8) ||
+      (GpioCfgHdr->GpioItemSize != sizeof (GPIO_INIT_CONFIG) - sizeof (GPIO_PAD))) {
+    DEBUG ((DEBUG_ERROR, "GPIO CFGDATA item count (%d) or size (%d) out of range\n",
+            GpioCfgHdr->GpioItemCount, GpioCfgHdr->GpioItemSize));
+    return EFI_LOAD_ERROR;
+  }
+
+  MaxEntries = GpioCfgHdr->GpioItemCount;
+  if (GpioCfgBaseHdr != NULL) {
+    MaxEntries += GpioCfgCurrHdr->GpioItemCount;
+  }
+
+  GpioTable  = (UINT8 *)AllocateTemporaryMemory (MaxEntries * (sizeof (GPIO_PAD) + GpioCfgHdr->GpioItemSize));
+  if (GpioTable == NULL) {
+    DEBUG ((DEBUG_ERROR, "Cannot allocate buffer for GpioTable\n"));
+    return EFI_OUT_OF_RESOURCES;
+  }
   GpioCfgDataBuffer = GpioTable;
 
   ChipsetId = CNL_UNKNOWN_CHIPSET_ID;
