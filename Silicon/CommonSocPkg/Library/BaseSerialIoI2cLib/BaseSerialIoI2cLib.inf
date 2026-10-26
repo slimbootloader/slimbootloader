@@ -24,6 +24,7 @@
   DebugLib
   TimerLib
   PciSegmentLib
+  PcdLib
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -33,3 +34,6 @@
 [Sources]
   SerialIoI2cLib.c
   SerialIoI2cPrivateLib.c
+
+[Pcd]
+  gCommonSocTokenSpaceGuid.PcdSerialIoI2cReceiveTimeout

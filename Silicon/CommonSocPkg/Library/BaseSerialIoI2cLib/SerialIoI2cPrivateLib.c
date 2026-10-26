@@ -10,6 +10,7 @@
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/IoLib.h>
+#include <Library/PcdLib.h>
 #include <Library/PciSegmentLib.h>
 #include <Library/SerialIoI2cLib.h>
 #include <Library/TimerLib.h>
@@ -570,6 +571,12 @@ SerialIoI2cPrivateRead (
   SERIAL_IO_I2C_MEM_RECEIVE_FIFO  I2cReceiveFifo;
   SERIAL_IO_I2C_MEM_STATUS        MemStatus;
   UINT32                          Timeout;
+  UINT32                          ReceiveTimeout;
+
+  ReceiveTimeout = PcdGet32 (PcdSerialIoI2cReceiveTimeout);
+  if (ReceiveTimeout == 0) {
+    ReceiveTimeout = I2cReceiveTimeout;
+  }
 
   MemStatus.Data32      = MmioRead32 (MmioBase + R_I2C_MEM_STATUS);
   I2cReceiveFifo.Data32 = MmioRead32 (MmioBase + R_I2C_MEM_RXFLR);
@@ -601,7 +608,7 @@ SerialIoI2cPrivateRead (
   }
   MmioWrite32 (MmioBase + R_I2C_MEM_DATA_CMD, I2cDataCmd.Data32);
 
-  Timeout = I2cReceiveTimeout;
+  Timeout = ReceiveTimeout;
 
   while (Timeout > 0) {
     MemStatus.Data32 = MmioRead32 (MmioBase + R_I2C_MEM_STATUS);
@@ -610,7 +617,7 @@ SerialIoI2cPrivateRead (
       (**ReadBuffer) = (UINT8) I2cDataCmd.Fields.Data;
       (*ReadBuffer)++;
       (*ReadLength)--;
-      Timeout = I2cReceiveTimeout; // Reset Timer
+      Timeout = ReceiveTimeout; // Reset Timer
       if (*ReadLength == 0) {
         return EFI_SUCCESS;
       }
