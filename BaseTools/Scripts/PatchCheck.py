@@ -195,7 +195,8 @@ class CommitMessageCheck:
             if s[2] != ' ':
                 self.error("There should be a space after '" + sig + ":'")
 
-            EmailAddressCheck(s[3], sig)
+            if not EmailAddressCheck(s[3], sig).ok:
+                self.ok = False
 
         return sigs
 
