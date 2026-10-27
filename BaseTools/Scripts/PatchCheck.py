@@ -230,6 +230,8 @@ class CommitMessageCheck:
         'Tested',
         'Suggested',
         'Acked',
+        'Co-authored',
+        'Co-developed',
         'Cc'
         )
 
@@ -299,6 +301,7 @@ class CommitMessageCheck:
                 not lines[i].startswith('Suggested-by:') and
                 not lines[i].startswith('Signed-off-by:') and
                 not lines[i].startswith('Co-authored-by:') and
+                not lines[i].startswith('Co-developed-by:') and
                 not lines[i].startswith('Cc:')):
                 #
                 # Print a warning if body line is longer than 75 characters
