@@ -1468,6 +1468,7 @@ PayloadMain (
   mEntryStack = Param;
 
   DEBUG ((DEBUG_INFO, "\n\n====================Os Loader====================\n\n"));
+  SetShellPerfIdToStr (LinuxPerfIdToStr);
   AddMeasurePoint (0x4010);
 
   //

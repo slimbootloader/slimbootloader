@@ -41,8 +41,24 @@ CONST SHELL_COMMAND ShellCommandPerf = {
   &ShellCommandPerfFunc
 };
 
+STATIC PERF_ID_TO_STR  mShellPerfIdToStr = NULL;
+
 /**
-  Print loader PERFORMANCE_INFO data.
+  Set optional payload performance Id to string conversion callback.
+
+  @param[in]  PerfIdToStrTbl   A pointer to description table function.
+**/
+VOID
+EFIAPI
+SetShellPerfIdToStr (
+  IN PERF_ID_TO_STR  PerfIdToStrTbl
+  )
+{
+  mShellPerfIdToStr = PerfIdToStrTbl;
+}
+
+/**
+  Print live loader performance data.
 
   @param[in]  PerfData         pointer to performance data
   @param[in]  InMicroSecond    Show host performance time in MicroSecond when it is TRUE
@@ -51,7 +67,7 @@ CONST SHELL_COMMAND ShellCommandPerf = {
 VOID
 EFIAPI
 PrintPerformanceInfo (
-  IN PERFORMANCE_INFO *PerfData,
+  IN BL_PERF_DATA     *PerfData,
   IN BOOLEAN          InMicroSecond
   )
 {
@@ -63,18 +79,26 @@ PrintPerformanceInfo (
 
   PrevTime = 0;
 
-  ShellPrint (L" Id   |   Time (ms)   | Delta (ms)  | Description\n");
-  ShellPrint (L"------+---------------+-------------+---------------------------\n");
-  for (Idx = 0; Idx < PerfData->Count; Idx++) {
-    Tsc  = PerfData->TimeStamp[Idx] & 0x0000FFFFFFFFFFFFULL;
-    Id   = (RShiftU64 (PerfData->TimeStamp[Idx], 48)) & 0xFFFF;
-    if (InMicroSecond) {
+  if (InMicroSecond) {
+    ShellPrint (L" Id   |   Time (us)   | Delta (us)  | Description\n");
+    ShellPrint (L"------+---------------+-------------+---------------------------\n");
+    for (Idx = 0; Idx < PerfData->PerfIndex; Idx++) {
+      Tsc  = PerfData->TimeStamp[Idx] & 0x0000FFFFFFFFFFFFULL;
+      Id   = (RShiftU64 (PerfData->TimeStamp[Idx], 48)) & 0xFFFF;
       Time = TimeStampTickToMicroSecond (Tsc);
-    } else {
-      Time = DivU64x32 (Tsc, PerfData->Frequency);
+      ShellPrint (L" %4x | %10ld us | %8ld us | %a\n", Id, Time, Time - PrevTime, PerfIdToStr (Id, mShellPerfIdToStr));
+      PrevTime = Time;
     }
-    ShellPrint (L" %4x | %10d ms | %8d ms | %a\n", Id, (UINT32)(UINTN)Time, (UINT32)(UINTN)(Time - PrevTime), PerfIdToStr (Id, NULL));
-    PrevTime = Time;
+  } else {
+    ShellPrint (L" Id   |   Time (ms)   | Delta (ms)  | Description\n");
+    ShellPrint (L"------+---------------+-------------+---------------------------\n");
+    for (Idx = 0; Idx < PerfData->PerfIndex; Idx++) {
+      Tsc  = PerfData->TimeStamp[Idx] & 0x0000FFFFFFFFFFFFULL;
+      Id   = (RShiftU64 (PerfData->TimeStamp[Idx], 48)) & 0xFFFF;
+      Time = DivU64x32 (Tsc, PerfData->FreqKhz);
+      ShellPrint (L" %4x | %10d ms | %8d ms | %a\n", Id, (UINT32)(UINTN)Time, (UINT32)(UINTN)(Time - PrevTime), PerfIdToStr (Id, mShellPerfIdToStr));
+      PrevTime = Time;
+    }
   }
   ShellPrint (L"------+---------------+-------------+---------------------------\n");
 }
@@ -148,8 +172,7 @@ ShellCommandPerfFunc (
   IN CHAR16 *Argv[]
   )
 {
-  VOID             *GuidHob;
-  PERFORMANCE_INFO *PerfData;
+  BL_PERF_DATA     *PerfData;
   BOOLEAN          InMicroSecond;
 
   InMicroSecond = FALSE;
@@ -170,13 +193,11 @@ ShellCommandPerfFunc (
     goto usage;
   }
 
-  GuidHob = GetNextGuidHob (&gLoaderPerformanceInfoGuid, GetHobList());
-  if (GuidHob == NULL) {
+  PerfData = GetPerfDataPtr ();
+  if (PerfData == NULL) {
     ASSERT (FALSE);
     return RETURN_NOT_FOUND;
   }
-
-  PerfData = (PERFORMANCE_INFO *)GET_GUID_HOB_DATA (GuidHob);
 
   ShellPrint (L"Loader Performance Info\n");
   ShellPrint (L"=======================\n\n");
