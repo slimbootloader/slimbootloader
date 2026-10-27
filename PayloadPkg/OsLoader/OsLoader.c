@@ -79,7 +79,8 @@ UpdateLoadedImage (
     // Assuming that the first image in the container is used for booting
     CommonImage                = &LoadedImage->Image.Common;
     CopyMem (&CommonImage->BootFile, &File[0], sizeof (IMAGE_DATA));
-    if (IsTePe32Image (File[0].Addr, NULL) && \
+    if ((File[0].Size >= sizeof (UINT32)) && \
+      IsTePe32ImageWithSize (File[0].Addr, File[0].Size, NULL) && \
                (* (UINT32 *)File[0].Addr == EFI_IMAGE_DOS_SIGNATURE)) {
       // Add extra check to ensure it is a PE32 image generated from payload build.
       // Please note vmlinuxz is also following PE32 format, but it should
@@ -518,9 +519,12 @@ SetupBootImage (
     Status = SetupMultiboot2Image (MultiBoot);
   } else if ((LoadedImage->Flags & LOADED_IMAGE_PE) != 0) {
     DEBUG ((DEBUG_INFO, "Boot image is PE32 format\n"));
-    Status = PeCoffRelocateImage ((UINT32)(UINTN)BootFile->Addr);
+    Status = PeCoffLoaderGetEntryPoint (BootFile->Addr, BootFile->Size, (VOID **)&EntryPoint);
     if (!EFI_ERROR (Status)) {
-      Status = PeCoffLoaderGetEntryPoint (BootFile->Addr, (VOID **)&EntryPoint);
+      Status = PeCoffRelocateImage ((UINT32)(UINTN)BootFile->Addr);
+    }
+    if (!EFI_ERROR (Status)) {
+      Status = PeCoffLoaderGetEntryPoint (BootFile->Addr, BootFile->Size, (VOID **)&EntryPoint);
     }
     if (!EFI_ERROR (Status)) {
       // Reuse MultiBoot structure to store the PE32 entry point information

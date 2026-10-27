@@ -190,6 +190,7 @@ NormalBootPath (
 {
   UINT32                         *Dst;
   PAYLOAD_ENTRY                   PldEntry;
+  VOID                           *PeEntry;
   VOID                           *PldHobList;
   UINTN                          PldBase;
   LOADER_GLOBAL_DATA             *LdrGlobal;
@@ -236,11 +237,17 @@ NormalBootPath (
     } else {
       // It is a PE format
       DEBUG ((DEBUG_INFO, "PE32 Format Payload\n"));
-      Status = PeCoffRelocateImage ((UINT32)(UINTN)Dst);
+      Status = PeCoffLoaderGetEntryPoint (Dst, Stage2Param->PayloadActualLength, &PeEntry);
+      if (!EFI_ERROR(Status)) {
+        Status = PeCoffRelocateImage ((UINT32)(UINTN)Dst);
+      }
       if (!EFI_ERROR(Status)) {
         Status = PeCoffLoaderGetMachine (Dst, &PldMachine);
         if (!EFI_ERROR(Status)) {
-          Status = PeCoffLoaderGetEntryPoint (Dst, (VOID *)&PldEntry);
+          Status = PeCoffLoaderGetEntryPoint (Dst, Stage2Param->PayloadActualLength, &PeEntry);
+          if (!EFI_ERROR(Status)) {
+            PldEntry = (PAYLOAD_ENTRY)PeEntry;
+          }
         }
       }
     }
@@ -330,6 +337,9 @@ NormalBootPath (
   }
   AddMeasurePoint (0x31B0);
   ASSERT_EFI_ERROR (Status);
+  if (EFI_ERROR (Status)) {
+    CpuHalt ("Failed to prepare payload !");
+  }
 
   BoardInit (EndOfStages);
 

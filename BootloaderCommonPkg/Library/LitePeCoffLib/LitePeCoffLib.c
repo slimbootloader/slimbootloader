@@ -36,23 +36,26 @@ IsTePe32Image (
 {
   EFI_IMAGE_DOS_HEADER                  *DosHdr;
   EFI_IMAGE_OPTIONAL_HEADER_PTR_UNION    Hdr;
+  UINTN                                 HeaderOffset;
 
-  if (ImageBase == NULL) {
+  if ((ImageBase == NULL) ||
+      (sizeof (EFI_IMAGE_DOS_HEADER) - 1 > MAX_UINTN - (UINTN)ImageBase)) {
     return FALSE;
   }
 
+  HeaderOffset = 0;
   DosHdr = (EFI_IMAGE_DOS_HEADER *)ImageBase;
   if (DosHdr->e_magic == EFI_IMAGE_DOS_SIGNATURE) {
     //
     // DOS image header is present, so read the PE header after the DOS image header.
     //
-    Hdr.Pe32 = (EFI_IMAGE_NT_HEADERS32 *) ((UINTN) ImageBase + (UINTN) ((DosHdr->e_lfanew) & 0x0ffff));
-  } else {
-    //
-    // DOS image header is not present, so PE header is at the image base.
-    //
-    Hdr.Pe32 = (EFI_IMAGE_NT_HEADERS32 *)ImageBase;
+    HeaderOffset = (UINTN)DosHdr->e_lfanew;
   }
+  if ((HeaderOffset > MAX_UINTN - (UINTN)ImageBase) ||
+      (sizeof (UINT32) - 1 > MAX_UINTN - ((UINTN)ImageBase + HeaderOffset))) {
+    return FALSE;
+  }
+  Hdr.Pe32 = (EFI_IMAGE_NT_HEADERS32 *)((UINTN)ImageBase + HeaderOffset);
 
   if ( (Hdr.Te->Signature == EFI_TE_IMAGE_HEADER_SIGNATURE) ||
        (Hdr.Pe32->Signature == EFI_IMAGE_NT_SIGNATURE) ) {
@@ -67,51 +70,154 @@ IsTePe32Image (
 
 
 /**
+  Probe for a TE header or PE signature and file header; exclude PE optional headers.
+**/
+BOOLEAN
+EFIAPI
+IsTePe32ImageWithSize (
+  IN  VOID                                  *ImageBase,
+  IN  UINTN                                  ImageSize,
+  OUT EFI_IMAGE_OPTIONAL_HEADER_PTR_UNION    *Header OPTIONAL
+  )
+{
+  EFI_IMAGE_DOS_HEADER                 *DosHdr;
+  EFI_IMAGE_OPTIONAL_HEADER_PTR_UNION   Hdr;
+  UINTN                                Offset;
+
+  if ((ImageBase == NULL) || (ImageSize < sizeof (UINT16)) ||
+      (ImageSize - 1 > MAX_UINTN - (UINTN)ImageBase)) {
+    return FALSE;
+  }
+  Offset = 0;
+  DosHdr = (EFI_IMAGE_DOS_HEADER *)ImageBase;
+  if (DosHdr->e_magic == EFI_IMAGE_DOS_SIGNATURE) {
+    if (ImageSize < sizeof (*DosHdr)) {
+      return FALSE;
+    }
+    Offset = (UINTN)DosHdr->e_lfanew;
+  }
+  if ((Offset > ImageSize) || (ImageSize - Offset < sizeof (UINT16))) {
+    return FALSE;
+  }
+  Hdr.Pe32 = (EFI_IMAGE_NT_HEADERS32 *)((UINT8 *)ImageBase + Offset);
+  if (Hdr.Te->Signature == EFI_TE_IMAGE_HEADER_SIGNATURE) {
+    if (ImageSize - Offset < sizeof (EFI_TE_IMAGE_HEADER)) {
+      return FALSE;
+    }
+  } else if ((ImageSize - Offset < OFFSET_OF (EFI_IMAGE_NT_HEADERS32, OptionalHeader)) ||
+             (Hdr.Pe32->Signature != EFI_IMAGE_NT_SIGNATURE)) {
+    return FALSE;
+  }
+  if (Header != NULL) {
+    *Header = Hdr;
+  }
+  return TRUE;
+}
+
+/**
   Retrieves and returns a pointer to the entry point to a PE/COFF image that has been loaded
   into system memory with the PE/COFF Loader Library functions.
 
   Retrieves the entry point to the PE/COFF image specified by Pe32Data and returns this entry
-  point in EntryPoint.  If the entry point could not be retrieved from the PE/COFF image, then
-  return RETURN_INVALID_PARAMETER.  Otherwise return RETURN_SUCCESS.
+  point in EntryPoint. The image headers and entry offset must fit within ImageSize.
+  EntryPoint is cleared on failure.
 
   @param  Pe32Data                  The pointer to the PE/COFF image that is loaded in system memory.
+  @param  ImageSize                 The accessible loaded image size in bytes, not a raw PE file size.
   @param  EntryPoint                The pointer to entry point to the PE/COFF image to return.
 
   @retval RETURN_SUCCESS            EntryPoint was returned.
-  @retval RETURN_INVALID_PARAMETER  The entry point could not be found in the PE/COFF image.
+  @retval RETURN_INVALID_PARAMETER  An argument or the accessible image span is invalid.
+  @retval RETURN_UNSUPPORTED        The image headers or entry offset are invalid.
 
 **/
 RETURN_STATUS
 EFIAPI
 PeCoffLoaderGetEntryPoint (
   IN  VOID  *Pe32Data,
+  IN  UINTN ImageSize,
   OUT VOID  **EntryPoint
   )
 {
   EFI_IMAGE_OPTIONAL_HEADER_PTR_UNION   Hdr;
+  EFI_IMAGE_DOS_HEADER                 *DosHdr;
+  UINTN                                HeaderOffset;
+  UINTN                                HeaderSize;
+  UINTN                                EntryOffset;
+  UINTN                                Adjust;
+  UINT32                               SizeOfImage;
+  UINT32                               DirectoryCount;
 
-  if (EntryPoint == NULL || Pe32Data == NULL) {
+  if (EntryPoint == NULL) {
+    return RETURN_INVALID_PARAMETER;
+  }
+  *EntryPoint = NULL;
+
+  if ((Pe32Data == NULL) || (ImageSize < sizeof (UINT16)) ||
+      (ImageSize - 1 > MAX_UINTN - (UINTN)Pe32Data)) {
     return RETURN_INVALID_PARAMETER;
   }
 
-  if (!IsTePe32Image (Pe32Data, &Hdr)) {
+  HeaderOffset = 0;
+  DosHdr = (EFI_IMAGE_DOS_HEADER *)Pe32Data;
+  if (DosHdr->e_magic == EFI_IMAGE_DOS_SIGNATURE) {
+    if (ImageSize < sizeof (EFI_IMAGE_DOS_HEADER)) {
+      return RETURN_UNSUPPORTED;
+    }
+    HeaderOffset = (UINTN)DosHdr->e_lfanew;
+  }
+  if ((HeaderOffset > ImageSize) || (ImageSize - HeaderOffset < sizeof (UINT16))) {
     return RETURN_UNSUPPORTED;
   }
+  Hdr.Pe32 = (EFI_IMAGE_NT_HEADERS32 *)((UINT8 *)Pe32Data + HeaderOffset);
 
-  //
-  // Calculate the entry point relative to the start of the image.
-  // AddressOfEntryPoint is common for PE32 & PE32+
-  //
   if (Hdr.Te->Signature == EFI_TE_IMAGE_HEADER_SIGNATURE) {
-    *EntryPoint = (VOID *) ((UINTN)Pe32Data + (UINTN) (Hdr.Te->AddressOfEntryPoint & 0x0ffffffff) + sizeof (
-                              EFI_TE_IMAGE_HEADER) - Hdr.Te->StrippedSize);
-    return RETURN_SUCCESS;
-  } else if (Hdr.Pe32->Signature == EFI_IMAGE_NT_SIGNATURE) {
-    *EntryPoint = (VOID *) ((UINTN)Pe32Data + (UINTN) (Hdr.Pe32->OptionalHeader.AddressOfEntryPoint & 0x0ffffffff));
-    return RETURN_SUCCESS;
+    if ((ImageSize - HeaderOffset < sizeof (EFI_TE_IMAGE_HEADER)) ||
+        (Hdr.Te->StrippedSize < sizeof (EFI_TE_IMAGE_HEADER))) {
+      return RETURN_UNSUPPORTED;
+    }
+    Adjust = Hdr.Te->StrippedSize - sizeof (EFI_TE_IMAGE_HEADER);
+    if (Hdr.Te->AddressOfEntryPoint < Adjust) {
+      return RETURN_UNSUPPORTED;
+    }
+    EntryOffset = Hdr.Te->AddressOfEntryPoint - Adjust;
+  } else {
+    HeaderSize = OFFSET_OF (EFI_IMAGE_NT_HEADERS32, OptionalHeader);
+    if ((ImageSize - HeaderOffset < HeaderSize + sizeof (UINT16)) ||
+        (Hdr.Pe32->Signature != EFI_IMAGE_NT_SIGNATURE) ||
+        (Hdr.Pe32->FileHeader.SizeOfOptionalHeader > ImageSize - HeaderOffset - HeaderSize)) {
+      return RETURN_UNSUPPORTED;
+    }
+    if (Hdr.Pe32->OptionalHeader.Magic == EFI_IMAGE_NT_OPTIONAL_HDR32_MAGIC) {
+      HeaderSize = OFFSET_OF (EFI_IMAGE_OPTIONAL_HEADER32, DataDirectory);
+    } else if (Hdr.Pe32->OptionalHeader.Magic == EFI_IMAGE_NT_OPTIONAL_HDR64_MAGIC) {
+      HeaderSize = OFFSET_OF (EFI_IMAGE_OPTIONAL_HEADER64, DataDirectory);
+    } else {
+      return RETURN_UNSUPPORTED;
+    }
+    if (Hdr.Pe32->FileHeader.SizeOfOptionalHeader < HeaderSize) {
+      return RETURN_UNSUPPORTED;
+    }
+    DirectoryCount = (Hdr.Pe32->OptionalHeader.Magic == EFI_IMAGE_NT_OPTIONAL_HDR32_MAGIC) ?
+                     Hdr.Pe32->OptionalHeader.NumberOfRvaAndSizes :
+                     Hdr.Pe32Plus->OptionalHeader.NumberOfRvaAndSizes;
+    if (DirectoryCount >
+        (Hdr.Pe32->FileHeader.SizeOfOptionalHeader - HeaderSize) / sizeof (EFI_IMAGE_DATA_DIRECTORY)) {
+      return RETURN_UNSUPPORTED;
+    }
+    // These fields have identical offsets in PE32 and PE32+.
+    EntryOffset = Hdr.Pe32->OptionalHeader.AddressOfEntryPoint;
+    SizeOfImage = Hdr.Pe32->OptionalHeader.SizeOfImage;
+    if (EntryOffset >= SizeOfImage) {
+      return RETURN_UNSUPPORTED;
+    }
   }
 
-  return RETURN_UNSUPPORTED;
+  if (EntryOffset >= ImageSize) {
+    return RETURN_UNSUPPORTED;
+  }
+  *EntryPoint = (VOID *)((UINTN)Pe32Data + EntryOffset);
+  return RETURN_SUCCESS;
 }
 
 
