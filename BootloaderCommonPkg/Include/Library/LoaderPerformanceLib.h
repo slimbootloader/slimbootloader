@@ -8,6 +8,8 @@
 #ifndef _LOADER_PERF_LIB_H_
 #define _LOADER_PERF_LIB_H_
 
+#include <Library/BootloaderCommonLib.h>
+
 typedef CHAR8 * (EFIAPI *PERF_ID_TO_STR) (UINT32 Id);
 
 /**

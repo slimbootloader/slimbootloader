@@ -14,7 +14,6 @@
 
   @retval   String correspoding to the Id.
 **/
-STATIC
 CHAR8 *
 EFIAPI
 LinuxPerfIdToStr (

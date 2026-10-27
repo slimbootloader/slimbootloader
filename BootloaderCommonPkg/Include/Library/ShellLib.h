@@ -11,6 +11,7 @@
 #include <PiPei.h>
 #include <Library/BaseLib.h>
 #include <Library/ConsoleOutLib.h>
+#include <Library/LoaderPerformanceLib.h>
 
 #define ShellPrint      ConsolePrintUnicode
 
@@ -58,6 +59,17 @@ EFIAPI
 ShellCommandRegister (
   IN  SHELL                 *Shell,
   IN  CONST SHELL_COMMAND   *ShellCommand
+  );
+
+/**
+  Set optional payload performance Id to string conversion callback.
+
+  @param[in]  PerfIdToStrTbl   A pointer to description table function.
+**/
+VOID
+EFIAPI
+SetShellPerfIdToStr (
+  IN PERF_ID_TO_STR  PerfIdToStrTbl
   );
 
 #endif
