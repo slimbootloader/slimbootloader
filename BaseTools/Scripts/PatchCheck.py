@@ -218,6 +218,8 @@ class CommitMessageCheck:
         'Tested',
         'Suggested',
         'Acked',
+        'Co-authored',
+        'Co-developed',
         'Cc'
         )
 
