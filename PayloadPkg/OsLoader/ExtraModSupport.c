@@ -34,6 +34,7 @@ CallExtraModule (
   EFI_STATUS           Status;
   UINT16               PldMachine;
   PLD_MODULE_ENTRY     PldEntry;
+  VOID                *EntryPoint;
   VOID                *HobList;
   PLD_EXTRA_MOD_ARGS   ModArgs;
   VOID                *ExtraImageBase;
@@ -56,12 +57,13 @@ CallExtraModule (
   ASSERT (ModArgs.RsvdBase != 0);
 
   // Get entrypoint and call into module with thunk support
-  Status = PeCoffLoaderGetMachine (ExtraImageBase, &PldMachine);
+  Status = PeCoffLoaderGetEntryPoint (ExtraImageBase, LoadedImage->Image.Common.BootFile.Size, &EntryPoint);
   if (!EFI_ERROR(Status)) {
-    Status = PeCoffLoaderGetEntryPoint (ExtraImageBase, (VOID *)&PldEntry);
+    Status = PeCoffLoaderGetMachine (ExtraImageBase, &PldMachine);
   }
 
   if (!EFI_ERROR(Status)) {
+    PldEntry = (PLD_MODULE_ENTRY)EntryPoint;
     if (IS_X64) {
       if (PldMachine == IMAGE_FILE_MACHINE_I386) {
         DEBUG ((DEBUG_INFO, "Switch to x86 Mode\n"));

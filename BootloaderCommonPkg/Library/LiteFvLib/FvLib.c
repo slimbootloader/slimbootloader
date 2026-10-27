@@ -311,13 +311,39 @@ LoadFvImage (
   UINT32                                PreferredBase;
   UINT32                                SecCoreImageBase;
   INT32                                 Gap;
+  UINTN                                 SectionOffset;
+  UINT32                                SectionSize;
+  VOID                                 *ValidatedEntry;
+  UINTN                                 EntryOffset;
+  UINTN                                 FileOffset;
+  UINT32                                FileSize;
 
+  if (EntryPoint == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+  *EntryPoint = NULL;
   FvHeader = (EFI_FIRMWARE_VOLUME_HEADER *)FvBase;
+  if ((FvBase == NULL) || (FvLength < sizeof (*FvHeader)) ||
+      (FvLength - 1 > MAX_UINTN - (UINTN)FvBase) ||
+      (FvHeader->FvLength > FvLength)) {
+    return EFI_UNSUPPORTED;
+  }
 
   // Find SecCore file first
   Status = GetFfsFileByType (FvHeader, EFI_FV_FILETYPE_SECURITY_CORE, 0, &SecCoreFile);
   if (EFI_ERROR (Status)) {
     return EFI_NOT_FOUND;
+  }
+  if ((UINTN)SecCoreFile < (UINTN)FvBase) {
+    return EFI_UNSUPPORTED;
+  }
+  FileOffset = (UINTN)SecCoreFile - (UINTN)FvBase;
+  if ((FileOffset > FvLength) || (FvLength - FileOffset < sizeof (*SecCoreFile))) {
+    return EFI_UNSUPPORTED;
+  }
+  FileSize = GET_FFS_LENGTH (SecCoreFile);
+  if ((FileSize < sizeof (*SecCoreFile)) || (FileSize > FvLength - FileOffset)) {
+    return EFI_UNSUPPORTED;
   }
 
   // Find PE32 or TE section in SecCore file
@@ -331,9 +357,34 @@ LoadFvImage (
 
   // Check preferred image base
   SecCoreImageBase = (UINT32)(UINTN)Section;
+  if ((UINTN)Section < (UINTN)FvBase) {
+    return EFI_UNSUPPORTED;
+  }
+  SectionOffset = (UINTN)Section - (UINTN)FvBase;
+  if ((SectionOffset < sizeof (EFI_COMMON_SECTION_HEADER)) || (SectionOffset > FvLength)) {
+    return EFI_UNSUPPORTED;
+  }
+  SectionSize = GET_SEC_LENGTH ((EFI_COMMON_SECTION_HEADER *)Section - 1);
+  if ((SectionSize < sizeof (EFI_COMMON_SECTION_HEADER)) ||
+      (SectionSize - sizeof (EFI_COMMON_SECTION_HEADER) > FvLength - SectionOffset) ||
+      ((UINTN)Section < (UINTN)SecCoreFile) ||
+      ((UINTN)Section - (UINTN)SecCoreFile > FileSize) ||
+      (SectionSize - sizeof (EFI_COMMON_SECTION_HEADER) >
+       FileSize - ((UINTN)Section - (UINTN)SecCoreFile))) {
+    return EFI_UNSUPPORTED;
+  }
+  SectionSize -= sizeof (EFI_COMMON_SECTION_HEADER);
+  Status = PeCoffLoaderGetEntryPoint ((VOID *)(UINTN)SecCoreImageBase, SectionSize, &ValidatedEntry);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+  EntryOffset = (UINTN)ValidatedEntry - SecCoreImageBase;
   Status = PeCoffGetPreferredBase ((VOID *)(UINTN)SecCoreImageBase, &PreferredBase);
   if (EFI_ERROR (Status)) {
     return Status;
+  }
+  if (EntryOffset > MAX_UINTN - (UINTN)PreferredBase) {
+    return EFI_UNSUPPORTED;
   }
 
   // Move FV to preferred base if required
@@ -348,6 +399,6 @@ LoadFvImage (
     return Status;
   }
 
-  Status = PeCoffLoaderGetEntryPoint ((VOID *)(UINTN)SecCoreImageBase, EntryPoint);
-  return Status;
+  *EntryPoint = (VOID *)((UINTN)SecCoreImageBase + EntryOffset);
+  return EFI_SUCCESS;
 }

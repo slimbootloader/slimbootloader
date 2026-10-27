@@ -408,11 +408,13 @@ UpdateCsme (
   EFI_STATUS                    Status;
   UINT32                        *DriverPtr;
   DRIVER_ENTRY                  DriverEntry;
+  VOID                          *EntryPoint;
   CSME_UPDATE_DRIVER_OUTPUT     *CsmeUpdateApi;
   CSME_UPDATE_DRIVER_PARAMS     DriverParams;
   EFI_FW_MGMT_CAP_IMAGE_HEADER  *CsmeDriverImageHdr;
   UINT32                        Signature;
   UINT64                        UpdateStatus;
+  UINTN                         DriverOffset;
 
   DriverPtr           = NULL;
   CsmeUpdateApi       = NULL;
@@ -430,15 +432,31 @@ UpdateCsme (
     return Status;
   }
 
+  if ((UINTN)CsmeDriverImageHdr < (UINTN)CapImage) {
+    return EFI_UNSUPPORTED;
+  }
+  DriverOffset = (UINTN)CsmeDriverImageHdr - (UINTN)CapImage;
+  if ((DriverOffset > CapImageSize) ||
+      (CapImageSize - DriverOffset < sizeof (*CsmeDriverImageHdr))) {
+    return EFI_UNSUPPORTED;
+  }
+  DriverOffset += sizeof (*CsmeDriverImageHdr);
+  if (CsmeDriverImageHdr->UpdateImageSize > CapImageSize - DriverOffset) {
+    return EFI_UNSUPPORTED;
+  }
   DriverPtr = (UINT32 *)((UINTN)CsmeDriverImageHdr + sizeof(EFI_FW_MGMT_CAP_IMAGE_HEADER));
 
+  Status = PeCoffLoaderGetEntryPoint (DriverPtr, CsmeDriverImageHdr->UpdateImageSize, &EntryPoint);
+  if (EFI_ERROR(Status)) {
+    return Status;
+  }
   Status = PeCoffRelocateImage ((UINT32)(UINTN)DriverPtr);
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, "Relocate CSME Update driver failed with status = %r\n", Status));
     return Status;
   }
 
-  Status = PeCoffLoaderGetEntryPoint (DriverPtr, (VOID *)&DriverEntry);
+  Status = PeCoffLoaderGetEntryPoint (DriverPtr, CsmeDriverImageHdr->UpdateImageSize, &EntryPoint);
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, "Getting entry point for CSME Update driver failed with status = %r\n", Status));
     return Status;
@@ -447,6 +465,7 @@ UpdateCsme (
   DriverParams.CsmeUpdDriverInFunc = CsmeUpdInputData;
   *(DriverParams.OutputFunc) = NULL;
 
+  DriverEntry = (DRIVER_ENTRY)EntryPoint;
   DriverEntry ((VOID *)&DriverParams);
 
   CsmeUpdateApi = *(DriverParams.OutputFunc);
