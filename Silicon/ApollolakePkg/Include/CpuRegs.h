@@ -462,15 +462,17 @@
 #endif
 #endif // SLE_FLAG
 
-#define BITS(x) (1 << (x))
+// Bit positions must be in the range 0..31.
+#define BITS(x) (1U << (x))
 
 /**
 Notes :
   1.  Bit position always starts at 0.
-  2.  Following macros are applicable only for Word aligned integers.
+  2.  Use unsigned values and side-effect-free arguments.
+  3.  Pos/From: 0..31; Width: 0..32; From + Width <= 32.
 **/
-#define BIT(Pos, Value)               (1 << (Pos) & (Value))
-#define BITRANGE(From, Width, Value)  (((Value) >> (From)) & ((1 << (Width)) - 1))
+#define BIT(Pos, Value)              ((1U << (Pos)) & (Value))
+#define BITRANGE(From, Width, Value) (((Value) >> (From)) & (unsigned int)((1ULL << (Width)) - 1ULL))
 
 typedef enum {
   EnumCpuBroxton    = CPUID_FULL_FAMILY_MODEL_BROXTON,
