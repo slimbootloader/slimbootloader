@@ -12,7 +12,8 @@
 
 #define KB_(n)      ((unsigned) (n) * 1024)
 #define MB_(n)      ((unsigned) (n) * 1024 * 1024)
-#define GB_(n)      ((unsigned) (n) * 1024 * 1024 * 1024)
+// Nonnegative GiB counts must fit in a 64-bit byte count.
+#define GB_(n)      ((unsigned long long) (n) * 0x40000000ULL)
 
 #define BIT_( n)     (1U << (n))
 #define BITS_(n, m)  (((~0U << (n)) ^ (~0U << (m))) | BIT_(n) | BIT_(m))
