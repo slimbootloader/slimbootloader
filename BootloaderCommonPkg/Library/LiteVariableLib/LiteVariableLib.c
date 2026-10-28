@@ -209,6 +209,9 @@ GetActiveVaraibelStoreBase (
   }
 
   ASSERT ((VarStoreHdrPtr != NULL) && (VarStoreHdrPtr->Signature == VARIABLE_STORE_SIGNATURE));
+  if ((VarStoreHdrPtr == NULL) || (VarStoreHdrPtr->Signature != VARIABLE_STORE_SIGNATURE)) {
+    return NULL;
+  }
 
   if (Size) {
     *Size = VarStoreHdrPtr->Size;
