@@ -267,7 +267,7 @@ BuildBaseInfoHob (
   EFI_PEI_GRAPHICS_DEVICE_INFO_HOB     *BlGfxDeviceInfo;
   EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *GfxMode;
   EFI_STATUS                           Status;
-  UINT8*                               *HashHob;
+  VOID                                *HashHob;
   UINT32                               HobDataSize;
   EXT_BOOT_LOADER_VERSION              *VersionHob;
   SEED_LIST_INFO_HOB                   *SeedListInfoHob;
@@ -335,10 +335,18 @@ BuildBaseInfoHob (
   if (FeaturePcdGet(PcdVerifiedBootEnabled) && LdrGlobal->HashStorePtr != NULL) {
 
     HashStorePtr = (HASH_STORE_TABLE *)LdrGlobal->HashStorePtr;
-    HashHob      = BuildGuidHob (&gPayloadKeyHashGuid, HashStorePtr->UsedLength);
-
-    //Copy the hash store to key hash Hob
-    CopyMem (HashHob, (UINT8 *) HashStorePtr, HashStorePtr->UsedLength);
+    HobDataSize  = HashStorePtr->UsedLength;
+    if ((HobDataSize < sizeof (HASH_STORE_TABLE)) ||
+        (HobDataSize > HashStorePtr->TotalLength) ||
+        (HobDataSize > (0xFFF8 - sizeof (EFI_HOB_GUID_TYPE)))) {
+      DEBUG ((DEBUG_ERROR, "Invalid payload hash store length: 0x%x\n", HobDataSize));
+    } else {
+      HashHob = BuildGuidHob (&gPayloadKeyHashGuid, HobDataSize);
+      if (HashHob != NULL) {
+        // Copy only after the hash HOB has been allocated.
+        CopyMem (HashHob, (UINT8 *)HashStorePtr, HobDataSize);
+      }
+    }
 
   }
 
