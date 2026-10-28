@@ -347,6 +347,10 @@ BlockMap (
         // Throw an ASSERT if upper 16-bits are non-zero.
         //
         ASSERT (ExtIndex->EiLeafHi == 0);
+        if (ExtIndex->EiLeafHi != 0) {
+          DEBUG ((DEBUG_ERROR, "EXT4 48-bit block addressing not supported\n"));
+          return EFI_UNSUPPORTED;
+        }
         NextLevelNode = ExtIndex->EiLeafLo; //LShiftU64((UINT64)ExtIndex->EiLeafHi, 32) | ExtIndex->EiLeafLo;
 
         //
@@ -410,6 +414,10 @@ BlockMap (
       // Throw an ASSERT if upper 16-bits are non-zero.
       //
       ASSERT (Extent->EstartHi == 0);
+      if (Extent->EstartHi != 0) {
+        DEBUG ((DEBUG_ERROR, "EXT4 48-bit block addressing not supported\n"));
+        return EFI_UNSUPPORTED;
+      }
       *DiskBlockPtr = Extent->EstartLo + (FileBlock - Extent->Eblk); // (LShiftU64((UINT64)Extent->EiLeafHi, 32) | Extent->EstartLo) + (FileBlock - Extent->Eblk);
     } else {
       *DiskBlockPtr = 0;
