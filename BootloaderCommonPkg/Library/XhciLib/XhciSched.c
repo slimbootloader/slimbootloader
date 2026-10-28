@@ -1124,6 +1124,9 @@ XhcPeiInitializeDeviceSlot (
   DEBUG ((DEBUG_INFO, "XhcPeiInitializeDeviceSlot: Enable Slot Successfully, The Slot ID = 0x%x\n", EvtTrb->SlotId));
   SlotId = (UINT8) EvtTrb->SlotId;
   ASSERT (SlotId != 0);
+  if ((SlotId == 0) || (EvtTrb->SlotId > Xhc->MaxSlotsEn)) {
+    return EFI_DEVICE_ERROR;
+  }
 
   ZeroMem (&Xhc->UsbDevContext[SlotId], sizeof (USB_DEV_CONTEXT));
   Xhc->UsbDevContext[SlotId].Enabled                 = TRUE;
@@ -1138,6 +1141,10 @@ XhcPeiInitializeDeviceSlot (
   InputContext = UsbHcAllocateMem (Xhc->MemPool, sizeof (INPUT_CONTEXT));
   ASSERT (InputContext != NULL);
   ASSERT (((UINTN) InputContext & 0x3F) == 0);
+  if (InputContext == NULL) {
+    XhcPeiDisableSlotCmd (Xhc, SlotId);
+    return EFI_OUT_OF_RESOURCES;
+  }
   ZeroMem (InputContext, sizeof (INPUT_CONTEXT));
 
   Xhc->UsbDevContext[SlotId].InputContext = (VOID *) InputContext;
@@ -1163,6 +1170,10 @@ XhcPeiInitializeDeviceSlot (
     //
     ParentSlotId = XhcPeiRouteStringToSlotId (Xhc, ParentRouteChart);
     ASSERT (ParentSlotId != 0);
+    if (ParentSlotId == 0) {
+      XhcPeiDisableSlotCmd (Xhc, SlotId);
+      return EFI_DEVICE_ERROR;
+    }
     //
     // If the Full/Low device attached to a High Speed Hub, init the TTPortNum and TTHubSlotId field of slot context
     //
@@ -1238,6 +1249,10 @@ XhcPeiInitializeDeviceSlot (
   OutputContext = UsbHcAllocateMem (Xhc->MemPool, sizeof (DEVICE_CONTEXT));
   ASSERT (OutputContext != NULL);
   ASSERT (((UINTN) OutputContext & 0x3F) == 0);
+  if (OutputContext == NULL) {
+    XhcPeiDisableSlotCmd (Xhc, SlotId);
+    return EFI_OUT_OF_RESOURCES;
+  }
   ZeroMem (OutputContext, sizeof (DEVICE_CONTEXT));
 
   Xhc->UsbDevContext[SlotId].OutputContext = OutputContext;
@@ -1345,6 +1360,9 @@ XhcPeiInitializeDeviceSlot64 (
   DEBUG ((DEBUG_INFO, "XhcPeiInitializeDeviceSlot64: Enable Slot Successfully, The Slot ID = 0x%x\n", EvtTrb->SlotId));
   SlotId = (UINT8)EvtTrb->SlotId;
   ASSERT (SlotId != 0);
+  if ((SlotId == 0) || (EvtTrb->SlotId > Xhc->MaxSlotsEn)) {
+    return EFI_DEVICE_ERROR;
+  }
 
   ZeroMem (&Xhc->UsbDevContext[SlotId], sizeof (USB_DEV_CONTEXT));
   Xhc->UsbDevContext[SlotId].Enabled                 = TRUE;
@@ -1359,6 +1377,10 @@ XhcPeiInitializeDeviceSlot64 (
   InputContext = UsbHcAllocateMem (Xhc->MemPool, sizeof (INPUT_CONTEXT_64));
   ASSERT (InputContext != NULL);
   ASSERT (((UINTN) InputContext & 0x3F) == 0);
+  if (InputContext == NULL) {
+    XhcPeiDisableSlotCmd64 (Xhc, SlotId);
+    return EFI_OUT_OF_RESOURCES;
+  }
   ZeroMem (InputContext, sizeof (INPUT_CONTEXT_64));
 
   Xhc->UsbDevContext[SlotId].InputContext = (VOID *) InputContext;
@@ -1384,6 +1406,10 @@ XhcPeiInitializeDeviceSlot64 (
     //
     ParentSlotId = XhcPeiRouteStringToSlotId (Xhc, ParentRouteChart);
     ASSERT (ParentSlotId != 0);
+    if (ParentSlotId == 0) {
+      XhcPeiDisableSlotCmd64 (Xhc, SlotId);
+      return EFI_DEVICE_ERROR;
+    }
     //
     //if the Full/Low device attached to a High Speed Hub, Init the TTPortNum and TTHubSlotId field of slot context
     //
@@ -1459,6 +1485,10 @@ XhcPeiInitializeDeviceSlot64 (
   OutputContext = UsbHcAllocateMem (Xhc->MemPool, sizeof (DEVICE_CONTEXT_64));
   ASSERT (OutputContext != NULL);
   ASSERT (((UINTN) OutputContext & 0x3F) == 0);
+  if (OutputContext == NULL) {
+    XhcPeiDisableSlotCmd64 (Xhc, SlotId);
+    return EFI_OUT_OF_RESOURCES;
+  }
   ZeroMem (OutputContext, sizeof (DEVICE_CONTEXT_64));
 
   Xhc->UsbDevContext[SlotId].OutputContext = OutputContext;
@@ -1767,6 +1797,9 @@ XhcPeiSetConfigCmd (
   CopyMem (&InputContext->Slot, &OutputContext->Slot, sizeof (SLOT_CONTEXT));
 
   ASSERT (ConfigDesc != NULL);
+  if (ConfigDesc == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
   MaxDci = 0;
 
@@ -1986,6 +2019,9 @@ XhcPeiSetConfigCmd64 (
   CopyMem (&InputContext->Slot, &OutputContext->Slot, sizeof (SLOT_CONTEXT_64));
 
   ASSERT (ConfigDesc != NULL);
+  if (ConfigDesc == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
   MaxDci = 0;
 
