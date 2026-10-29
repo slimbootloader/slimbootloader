@@ -10,8 +10,7 @@
 
 **/
 
-#ifndef __USB_IO_H__
-#define __USB_IO_H__
+#pragma once
 
 #include <IndustryStandard/Usb.h>
 
@@ -30,11 +29,13 @@ typedef struct _EFI_USB_IO_PROTOCOL EFI_USB_IO_PROTOCOL;
 //
 
 //
-// USB standard descriptors and reqeust
+// USB standard descriptors and request
 //
 typedef USB_DEVICE_REQUEST       EFI_USB_DEVICE_REQUEST;
 typedef USB_DEVICE_DESCRIPTOR    EFI_USB_DEVICE_DESCRIPTOR;
 typedef USB_CONFIG_DESCRIPTOR    EFI_USB_CONFIG_DESCRIPTOR;
+typedef USB_BOS_DESCRIPTOR       EFI_USB_BOS_DESCRIPTOR;
+typedef USB_DEV_CAP_DESCRIPTOR   EFI_USB_DEV_CAP_DESCRIPTOR;
 typedef USB_INTERFACE_DESCRIPTOR EFI_USB_INTERFACE_DESCRIPTOR;
 typedef USB_ENDPOINT_DESCRIPTOR  EFI_USB_ENDPOINT_DESCRIPTOR;
 
@@ -501,5 +502,3 @@ struct _EFI_USB_IO_PROTOCOL {
 };
 
 extern EFI_GUID  gEfiUsbIoProtocolGuid;
-
-#endif

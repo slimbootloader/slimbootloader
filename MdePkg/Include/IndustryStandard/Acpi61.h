@@ -4,13 +4,33 @@
   Copyright (c) 2016 - 2022, Intel Corporation. All rights reserved.<BR>
  (C) Copyright 2016 Hewlett Packard Enterprise Development LP<BR>
   Copyright (c) 2020, ARM Ltd. All rights reserved.<BR>
+  Copyright (C) 2025, Advanced Micro Devices, Inc. All rights reserved.
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
-#ifndef _ACPI_6_1_H_
-#define _ACPI_6_1_H_
+#pragma once
 
 #include <IndustryStandard/Acpi60.h>
+
+///
+/// _CSD Revision for ACPI 6.1
+///
+#define EFI_ACPI_6_1_AML_CSD_REVISION  0
+
+///
+/// _CSD NumEntries for ACPI 6.1
+///
+#define EFI_ACPI_6_1_AML_CSD_NUM_ENTRIES  6
+
+///
+/// _PSD Revision for ACPI 6.1
+///
+#define EFI_ACPI_6_1_AML_PSD_REVISION  0
+
+///
+/// _CPC Revision for ACPI 6.1
+///
+#define EFI_ACPI_6_1_AML_CPC_REVISION  2
 
 //
 // Ensure proper structure formats
@@ -820,8 +840,8 @@ typedef struct {
 ///
 /// ACPI RASF Platform RAS Capabilities
 ///
-#define EFI_ACPI_6_1_RASF_PLATFORM_RAS_CAPABILITY_HARDWARE_BASED_PATROL_SCRUB_SUPPOTED                          0x01
-#define EFI_ACPI_6_1_RASF_PLATFORM_RAS_CAPABILITY_HARDWARE_BASED_PATROL_SCRUB_SUPPOTED_AND_EXPOSED_TO_SOFTWARE  0x02
+#define EFI_ACPI_6_1_RASF_PLATFORM_RAS_CAPABILITY_HARDWARE_BASED_PATROL_SCRUB_SUPPORTED                          BIT0
+#define EFI_ACPI_6_1_RASF_PLATFORM_RAS_CAPABILITY_HARDWARE_BASED_PATROL_SCRUB_SUPPORTED_AND_EXPOSED_TO_SOFTWARE  BIT1
 
 ///
 /// ACPI RASF Parameter Block structure for PATROL_SCRUB
@@ -1969,6 +1989,8 @@ typedef struct {
 #define EFI_ACPI_6_1_EINJ_EXECUTE_OPERATION               0x05
 #define EFI_ACPI_6_1_EINJ_CHECK_BUSY_STATUS               0x06
 #define EFI_ACPI_6_1_EINJ_GET_COMMAND_STATUS              0x07
+#define EFI_ACPI_6_1_EINJ_SET_ERROR_TYPE_WITH_ADDRESS     0x08
+#define EFI_ACPI_6_1_EINJ_GET_EXECUTE_OPERATION_TIMINGS   0x09
 #define EFI_ACPI_6_1_EINJ_TRIGGER_ERROR                   0xFF
 
 ///
@@ -2426,5 +2448,3 @@ typedef struct {
 #define EFI_ACPI_6_1_XEN_PROJECT_TABLE_SIGNATURE  SIGNATURE_32('X', 'E', 'N', 'V')
 
 #pragma pack()
-
-#endif

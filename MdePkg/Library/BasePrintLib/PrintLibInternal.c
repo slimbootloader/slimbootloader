@@ -799,10 +799,7 @@ BasePrintLibSPrintMarker (
             if (sizeof (VOID *) > 4) {
               Flags |= LONG_TYPE;
             }
-#ifdef LITE_PRINT
-          case 'r':
-            Status = 0;
-#endif
+
           //
           // break skipped on purpose
           //
@@ -1034,7 +1031,7 @@ BasePrintLibSPrintMarker (
             }
 
             break;
-#ifndef LITE_PRINT
+
           case 'r':
             if (BaseListMarker == NULL) {
               Status = VA_ARG (VaListMarker, RETURN_STATUS);
@@ -1063,7 +1060,7 @@ BasePrintLibSPrintMarker (
             }
 
             break;
-#endif
+
           case '\r':
             Format         += BytesPerFormatCharacter;
             FormatCharacter = ((*Format & 0xff) | ((BytesPerFormatCharacter == 1) ? 0 : (*(Format + 1) << 8))) & FormatMask;
@@ -1145,7 +1142,7 @@ BasePrintLibSPrintMarker (
     }
 
     //
-    // Retrieve the ArgumentString attriubutes
+    // Retrieve the ArgumentString attributes
     //
     if ((Flags & ARGUMENT_UNICODE) != 0) {
       ArgumentMask              = 0xffff;
