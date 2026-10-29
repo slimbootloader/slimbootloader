@@ -30,9 +30,9 @@ from .DataType import TAB_TOD_DEFINES_TARGET, TAB_TOD_DEFINES_TOOL_CHAIN_TAG,\
 ##
 # Static variables used for pattern
 #
-gMacroRefPattern = re.compile('(DEF\([^\(\)]+\))')
-gEnvRefPattern = re.compile('(ENV\([^\(\)]+\))')
-gMacroDefPattern = re.compile("DEFINE\s+([^\s]+)")
+gMacroRefPattern = re.compile(r'(DEF\([^\(\)]+\))')
+gEnvRefPattern = re.compile(r'(ENV\([^\(\)]+\))')
+gMacroDefPattern = re.compile(r"DEFINE\s+([^\s]+)")
 gDefaultToolsDefFile = "tools_def.txt"
 
 ## ToolDefClassObject
@@ -107,6 +107,10 @@ class ToolDefClassObject(object):
             Line = FileContent[Index].strip()
             if Line == "" or Line[0] == '#':
                 continue
+
+            if '#' in Line:
+                EdkLogger.error("tools_def.txt parser", FILE_PARSE_FAILURE,
+                                "tools_def.txt: Inline comments are not allowed. Line: " + str(Index + 1))
 
             if Line.startswith("!include"):
                 IncFile = Line[8:].strip()

@@ -13,9 +13,10 @@
 
 **/
 
+#pragma once
+
 #ifndef __UEFI_INTERNAL_FORMREPRESENTATION_H__
 #define __UEFI_INTERNAL_FORMREPRESENTATION_H__
-
 
 #define EFI_HII_PLATFORM_SETUP_FORMSET_GUID \
   { 0x93039971, 0x8545, 0x4b04, { 0xb4, 0x5e, 0x32, 0xeb, 0x83, 0x26, 0x4, 0xe } }
@@ -1556,7 +1557,17 @@ typedef enum {
   EfiKeyF12,
   EfiKeyPrint,
   EfiKeySLck,
-  EfiKeyPause
+  EfiKeyPause,
+  EfiKeyIntl0,
+  EfiKeyIntl1,
+  EfiKeyIntl2,
+  EfiKeyIntl3,
+  EfiKeyIntl4,
+  EfiKeyIntl5,
+  EfiKeyIntl6,
+  EfiKeyIntl7,
+  EfiKeyIntl8,
+  EfiKeyIntl9
 } EFI_KEY;
 
 typedef struct {

@@ -3,7 +3,7 @@
 #
 #  Copyright (c) 2015 - 2021, Intel Corporation. All rights reserved.<BR>
 #  Copyright (C) 2020, Red Hat, Inc.<BR>
-#  Copyright (c) 2020, ARM Ltd. All rights reserved.<BR>
+#  Copyright (c) 2020 - 2023, Arm Limited. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -25,6 +25,10 @@ import email.header
 class Verbose:
     SILENT, ONELINE, NORMAL = range(3)
     level = NORMAL
+
+class PatchCheckConf:
+    ignore_change_id = False
+    ignore_multi_package = False
 
 class EmailAddressCheck:
     """Checks an email address."""
@@ -82,15 +86,20 @@ class EmailAddressCheck:
             self.error("The email address cannot contain a space: " +
                        mo.group(3))
 
-        if ' via Groups.Io' in name and mo.group(3).endswith('@groups.io'):
+        if mo.group(3) == 'devel@edk2.groups.io':
+            self.error("Email rewritten by lists DMARC / DKIM / SPF: " +
+                       email)
+
+        if ' via groups.io' in name.lower() and mo.group(3).endswith('@groups.io'):
             self.error("Email rewritten by lists DMARC / DKIM / SPF: " +
                        email)
 
 class CommitMessageCheck:
     """Checks the contents of a git commit message."""
 
-    def __init__(self, subject, message, author_email):
+    def __init__(self, subject, message, author_email, updated_packages):
         self.ok = True
+        self.ignore_multi_package = False
 
         if subject is None and  message is None:
             self.error('Commit message is missing!')
@@ -108,12 +117,16 @@ class CommitMessageCheck:
 
         self.check_contributed_under()
         if not MergifyMerge:
+            self.check_ci_options_format()
+            self.check_subject(updated_packages)
             self.check_signed_off_by()
             self.check_misc_signatures()
             self.check_overall_format()
+            if not PatchCheckConf.ignore_change_id:
+                self.check_change_id_format()
         self.report_message_result()
 
-    url = 'https://github.com/tianocore/tianocore.github.io/wiki/Commit-Message-Format'
+    url = 'https://www.tianocore.org/tianocore-wiki.github.io/development/contribution-guides/commit_message_format.html'
 
     def report_message_result(self):
         if Verbose.level < Verbose.NORMAL:
@@ -193,9 +206,26 @@ class CommitMessageCheck:
             if s[2] != ' ':
                 self.error("There should be a space after '" + sig + ":'")
 
-            EmailAddressCheck(s[3], sig)
+            self.ok &= EmailAddressCheck(s[3], sig).ok
 
         return sigs
+
+    def check_subject(self, updated_packages):
+        if updated_packages:
+            num_found = 0
+            for package in updated_packages:
+                current_package_re = r"(Revert \"|^|, ?)" + re.escape(package) + r"([ ,:\/])"
+                if re.search(current_package_re, self.subject):
+                    num_found += 1
+
+            if self.ignore_multi_package and len(updated_packages) > 3:
+                if not re.search(r'^Global:', self.subject):
+                    self.error("Subject line does not start with 'Global:' for > 3 package multi-package commit!")
+            elif num_found != len(updated_packages):
+                self.error("Subject line not in \"package,package: description\" format!")
+
+        if self.subject.endswith('.'):
+            self.error("Subject line should not end with a period")
 
     def check_signed_off_by(self):
         sob='Signed-off-by'
@@ -220,8 +250,8 @@ class CommitMessageCheck:
         )
 
     def check_misc_signatures(self):
-        for sig in self.sig_types:
-            self.find_signatures(sig)
+        for sigtype in self.sig_types:
+            sigs = self.find_signatures(sigtype)
 
     cve_re = re.compile('CVE-[0-9]{4}-[0-9]{5}[^0-9]')
 
@@ -242,26 +272,29 @@ class CommitMessageCheck:
             self.error('Empty commit message!')
             return
 
-        if count >= 1 and re.search(self.cve_re, lines[0]):
+        if re.search(self.cve_re, lines[0]):
             #
             # If CVE-xxxx-xxxxx is present in subject line, then limit length of
             # subject line to 92 characters
             #
-            if len(lines[0].rstrip()) >= 93:
-                self.error(
-                    'First line of commit message (subject line) is too long (%d >= 93).' %
-                    (len(lines[0].rstrip()))
-                    )
+            maxlength = 92
+        elif lines[0].find(':') > 55:
+            #
+            # If we need to enumerate lots of packages, ensure to leave room for
+            # a very short description at the end (after the ':').
+            #
+            maxlength = lines[0].find(':') + 20
         else:
             #
-            # If CVE-xxxx-xxxxx is not present in subject line, then limit
-            # length of subject line to 75 characters
+            # Otherwise, limit the length of subject line to 75 characters
             #
-            if len(lines[0].rstrip()) >= 76:
-                self.error(
-                    'First line of commit message (subject line) is too long (%d >= 76).' %
-                    (len(lines[0].rstrip()))
-                    )
+            maxlength = 75
+
+        if len(lines[0].rstrip()) > maxlength:
+            self.error(
+                'First line of commit message (subject line) is too long (%d > %d).' %
+                (len(lines[0].rstrip()), maxlength)
+            )
 
         if count >= 1 and len(lines[0].strip()) == 0:
             self.error('First line of commit message (subject line) ' +
@@ -281,6 +314,7 @@ class CommitMessageCheck:
                 not lines[i].startswith('Reported-by:') and
                 not lines[i].startswith('Suggested-by:') and
                 not lines[i].startswith('Signed-off-by:') and
+                not lines[i].startswith('Co-authored-by:') and
                 not lines[i].startswith('Cc:')):
                 #
                 # Print a warning if body line is longer than 75 characters
@@ -306,6 +340,21 @@ class CommitMessageCheck:
                     self.error('The signature block was not found')
                 break
             last_sig_line = line.strip()
+
+    def check_change_id_format(self):
+        cid='Change-Id:'
+        if self.msg.find(cid) != -1:
+            self.error('\"%s\" found in commit message:' % cid)
+            return
+
+    def check_ci_options_format(self):
+        cio='Continuous-integration-options:'
+        for line in self.msg.splitlines():
+            if not line.startswith(cio):
+                continue
+            options = line.split(':', 1)[1].split()
+            if 'PatchCheck.ignore-multi-package' in options:
+                self.ignore_multi_package = True
 
 (START, PRE_PATCH, PATCH) = range(3)
 
@@ -361,8 +410,20 @@ class GitDiffCheck:
                 self.state = PRE_PATCH
                 self.filename = line[13:].split(' ', 1)[0]
                 self.is_newfile = False
-                self.force_lf = True
+                self.force_crlf = True
                 self.force_notabs = True
+                if self.filename.endswith('.rtf'):
+                    self.force_crlf = False
+                    self.force_notabs = False
+                if self.filename.endswith('.sh') or \
+                    self.filename.startswith('BaseTools/BinWrappers/PosixLike/') or \
+                    self.filename == 'BaseTools/BuildEnv':
+                    #
+                    # Do not enforce CR/LF line endings for linux shell scripts.
+                    # Some linux shell scripts don't end with the ".sh" extension,
+                    # they are identified by their path.
+                    #
+                    self.force_crlf = False
                 if self.filename == '.gitmodules' or \
                    self.filename == 'BaseTools/Conf/diff.order':
                     #
@@ -370,6 +431,7 @@ class GitDiffCheck:
                     # use tabs and LF line endings.  Do not enforce no tabs and
                     # do not enforce CR/LF line endings.
                     #
+                    self.force_crlf = False
                     self.force_notabs = False
                 if os.path.basename(self.filename) == 'GNUmakefile' or \
                    os.path.basename(self.filename).lower() == 'makefile' or \
@@ -394,7 +456,7 @@ class GitDiffCheck:
                 #
                 # New submodule.  Do not enforce CR/LF line endings
                 #
-                self.force_lf = False
+                self.force_crlf = False
             else:
                 ok = False
                 self.is_newfile = self.newfile_prefix_re.match(line)
@@ -414,9 +476,7 @@ class GitDiffCheck:
             elif line.startswith('\r\n'):
                 pass
             elif line.startswith(r'\ No newline '):
-                # report error when matches to last line
-                if self.line_num == len(self.lines)-1:
-                    self.error('No newline at end of file %s' % (self.filename))
+                pass
             elif not line.startswith(' '):
                 self.format_error("unexpected patch line")
             self.line_num += 1
@@ -447,7 +507,7 @@ class GitDiffCheck:
         lines = [ msg ]
         if self.filename is not None:
             lines.append('File: ' + self.filename)
-        lines.append('Line: ' + line)
+        lines.append('Line ' + str(self.line_num) + ': ' + line)
 
         self.error(*lines)
 
@@ -459,29 +519,7 @@ class GitDiffCheck:
                    ''',
                    re.VERBOSE)
 
-    skip_check_file_types = (
-        '.patch',
-        '.pem',
-        '.makefile',
-        '.lib',
-        '.txt',
-        '.ini',
-        '.app',
-        '.common',
-        '.template',
-        '.rule',
-        'Makefile',
-        'GNUmakefile',
-        )
-
-
     def check_added_line(self, line):
-        f_name, f_ext = os.path.splitext(self.filename)
-        if f_ext in self.skip_check_file_types:
-            return
-        if f_ext == '' and (os.path.basename(f_name) in self.skip_check_file_types):
-            return
-
         eol = ''
         for an_eol in self.line_endings:
             if line.endswith(an_eol):
@@ -490,8 +528,8 @@ class GitDiffCheck:
 
         stripped = line.rstrip()
 
-        if self.force_lf and eol != '\n' and (line.find('Subproject commit') == -1):
-            self.added_line_error('Line ending (%s) is not LF' % repr(eol),
+        if self.force_crlf and eol != '\r\n' and (line.find('Subproject commit') == -1):
+            self.added_line_error('Line ending (%s) is not CRLF' % repr(eol),
                                   line)
         if self.force_notabs and '\t' in line:
             self.added_line_error('Tab character used', line)
@@ -504,11 +542,11 @@ class GitDiffCheck:
                                   'but DEBUG_' + mo.group(1) +
                                   ' is now recommended', line)
 
-        #rp_file = os.path.realpath(self.filename)
-        #rp_script = os.path.realpath(__file__)
-        #if line.find('__FUNCTION__') != -1 and rp_file != rp_script:
-        #    self.added_line_error('__FUNCTION__ was used, but __func__ '
-        #                          'is now recommended', line)
+        rp_file = os.path.realpath(self.filename)
+        rp_script = os.path.realpath(__file__)
+        if line.find('__FUNCTION__') != -1 and rp_file != rp_script:
+            self.added_line_error('__FUNCTION__ was used, but __func__ '
+                                  'is now recommended', line)
 
     split_diff_re = re.compile(r'''
                                    (?P<cmd>
@@ -523,7 +561,7 @@ class GitDiffCheck:
     def format_error(self, err):
         self.format_ok = False
         err = 'Patch format error: ' + err
-        err2 = 'Line: ' + self.lines[self.line_num].rstrip()
+        err2 = 'Line ' + str(self.line_num) + ': ' + self.lines[self.line_num].rstrip()
         self.error(err, err2)
 
     def error(self, *err):
@@ -545,15 +583,16 @@ class CheckOnePatch:
     patch content.
     """
 
-    def __init__(self, name, patch):
+    def __init__(self, name, patch, updated_packages=None):
         self.patch = patch
         self.find_patch_pieces()
 
         email_check = EmailAddressCheck(self.author_email, 'Author')
         email_ok = email_check.ok
 
-        msg_check = CommitMessageCheck(self.commit_subject, self.commit_msg, self.author_email)
+        msg_check = CommitMessageCheck(self.commit_subject, self.commit_msg, self.author_email, updated_packages)
         msg_ok = msg_check.ok
+        self.ignore_multi_package = msg_check.ignore_multi_package
 
         diff_ok = True
         if self.diff is not None:
@@ -664,9 +703,8 @@ class CheckGitCommits:
     """
 
     def __init__(self, rev_spec, max_count):
+        dec_files = self.read_dec_files_from_git()
         commits = self.read_commit_list_from_git(rev_spec, max_count)
-        if len(commits) == 1 and Verbose.level > Verbose.ONELINE:
-            commits = [ rev_spec ]
         self.ok = True
         blank_line = False
         for commit in commits:
@@ -679,9 +717,66 @@ class CheckGitCommits:
             email = self.read_committer_email_address_from_git(commit)
             self.ok &= EmailAddressCheck(email, 'Committer').ok
             patch = self.read_patch_from_git(commit)
-            self.ok &= CheckOnePatch(commit, patch).ok
+            updated_packages = self.get_parent_packages (dec_files, commit, 'ADM')
+            check_patch = CheckOnePatch(commit, patch, updated_packages)
+            self.ok &= check_patch.ok
+            ignore_multi_package = check_patch.ignore_multi_package
+            if PatchCheckConf.ignore_multi_package:
+                ignore_multi_package = True
+            prefix = 'WARNING: ' if ignore_multi_package else ''
+            check_parent = self.check_parent_packages (dec_files, commit, prefix)
+            if not ignore_multi_package:
+                self.ok &= check_parent
+
         if not commits:
             print("Couldn't find commit matching: '{}'".format(rev_spec))
+
+    def check_parent_packages(self, dec_files, commit, prefix):
+        ok = True
+        modified = self.get_parent_packages (dec_files, commit, 'AM')
+        if len (modified) > 1:
+            print("{}The commit adds/modifies files in multiple packages:".format(prefix))
+            print(" *", '\n * '.join(modified))
+            ok = False
+        deleted = self.get_parent_packages (dec_files, commit, 'D')
+        if len (deleted) > 1:
+            print("{}The commit deletes files from multiple packages:".format(prefix))
+            print(" *", '\n * '.join(deleted))
+            ok = False
+        return ok
+
+    def get_parent_packages(self, dec_files, commit, filter):
+        filelist = self.read_files_modified_from_git (commit, filter)
+        parents = set()
+        for file in filelist:
+            dec_found = False
+            for dec_file in dec_files:
+                if os.path.commonpath([dec_file, file]):
+                    dec_found = True
+                    parents.add(dec_file.split('/')[0])
+            if not dec_found and os.path.dirname (file):
+                # No DEC file found and file is in a subdir
+                # Covers BaseTools, .github, .azurepipelines, .pytool
+                parents.add(file.split('/')[0])
+        return list(parents)
+
+    def read_dec_files_from_git(self):
+        # run git ls-files *.dec
+        out = self.run_git('ls-files', '*.dec')
+        # return list of .dec files
+        try:
+            return out.split()
+        except:
+            return []
+
+    def read_files_modified_from_git(self, commit, filter):
+        # run git diff-tree --no-commit-id --name-only -r <commit>
+        out = self.run_git('diff-tree', '--no-commit-id', '--name-only',
+                           '--diff-filter=' + filter, '-r', commit)
+        try:
+            return out.split()
+        except:
+            return []
 
     def read_commit_list_from_git(self, rev_spec, max_count):
         # Run git to get the commit patch
@@ -790,11 +885,21 @@ class PatchCheckApp:
         group.add_argument("--silent",
                            action="store_true",
                            help="Print nothing")
+        group.add_argument("--ignore-change-id",
+                           action="store_true",
+                           help="Ignore the presence of 'Change-Id:' tags in commit message")
+        group.add_argument("--ignore-multi-package",
+                           action="store_true",
+                           help="Ignore if commit modifies files in multiple packages")
         self.args = parser.parse_args()
         if self.args.oneline:
             Verbose.level = Verbose.ONELINE
         if self.args.silent:
             Verbose.level = Verbose.SILENT
+        if self.args.ignore_change_id:
+            PatchCheckConf.ignore_change_id = True
+        if self.args.ignore_multi_package:
+            PatchCheckConf.ignore_multi_package = True
 
 if __name__ == "__main__":
     sys.exit(PatchCheckApp().retval)
