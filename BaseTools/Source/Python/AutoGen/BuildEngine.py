@@ -306,7 +306,7 @@ class BuildRule:
     _SubSectionList = [_InputFile, _OutputFile, _Command]
 
     _PATH_SEP = "(+)"
-    _FileTypePattern = re.compile("^[_a-zA-Z][_\-0-9a-zA-Z]*$")
+    _FileTypePattern = re.compile(r"^[_a-zA-Z][_\-0-9a-zA-Z]*$")
     _BinaryFileRule = FileBuildRule(TAB_DEFAULT_BINARY_FILE, [], [os.path.join("$(OUTPUT_DIR)", "${s_name}")],
                                     ["$(CP) ${src} ${dst}"], [])
 
@@ -330,7 +330,6 @@ class BuildRule:
         else:
             EdkLogger.error("build", PARAMETER_MISSING, ExtraData="No rule file or string given")
 
-        self.SupportedToolChainFamilyList = SupportedFamily
         self.RuleDatabase = tdict(True, 4)  # {FileExt, ModuleType, Arch, Family : FileBuildRule object}
         self.Ext2FileType = {}  # {ext : file-type}
         self.FileTypeList = set()
@@ -343,7 +342,6 @@ class BuildRule:
         self._ArchList = set()
         self._FamilyList = []
         self._TotalToolChainFamilySet = set()
-        self._RuleObjectList = [] # FileBuildRule object list
         self._FileVersion = ""
 
         self.Parse()

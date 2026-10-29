@@ -13,7 +13,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from re import compile, DOTALL
-from string import hexdigits
 from uuid import UUID
 
 from Common.BuildToolError import *
@@ -65,11 +64,11 @@ ALIGNMENTS = {"Auto", "8", "16", "32", "64", "128", "512", "1K", "4K", "32K", "6
 ALIGNMENT_NOAUTO = ALIGNMENTS - {"Auto"}
 CR_LB_SET = {T_CHAR_CR, TAB_LINE_BREAK}
 
-RegionSizePattern = compile("\s*(?P<base>(?:0x|0X)?[a-fA-F0-9]+)\s*\|\s*(?P<size>(?:0x|0X)?[a-fA-F0-9]+)\s*")
-RegionSizeGuidPattern = compile("\s*(?P<base>\w+\.\w+[\.\w\[\]]*)\s*\|\s*(?P<size>\w+\.\w+[\.\w\[\]]*)\s*")
-RegionOffsetPcdPattern = compile("\s*(?P<base>\w+\.\w+[\.\w\[\]]*)\s*$")
-ShortcutPcdPattern = compile("\s*\w+\s*=\s*(?P<value>(?:0x|0X)?[a-fA-F0-9]+)\s*\|\s*(?P<name>\w+\.\w+)\s*")
-BaseAddrValuePattern = compile('^0[xX][0-9a-fA-F]+')
+RegionSizePattern = compile(r"\s*(?P<base>(?:0x|0X)?[a-fA-F0-9]+)\s*\|\s*(?P<size>(?:0x|0X)?[a-fA-F0-9]+)\s*")
+RegionSizeGuidPattern = compile(r"\s*(?P<base>\w+\.\w+[\.\w\[\]]*)\s*\|\s*(?P<size>\w+\.\w+[\.\w\[\]]*)\s*")
+RegionOffsetPcdPattern = compile(r"\s*(?P<base>\w+\.\w+[\.\w\[\]]*)\s*$")
+ShortcutPcdPattern = compile(r"\s*\w+\s*=\s*(?P<value>(?:0x|0X)?[a-fA-F0-9]+)\s*\|\s*(?P<name>\w+\.\w+)\s*")
+BaseAddrValuePattern = compile(r'^0[xX][0-9a-fA-F]+')
 FileExtensionPattern = compile(r'([a-zA-Z][a-zA-Z0-9]*)')
 TokenFindPattern = compile(r'([a-zA-Z0-9\-]+|\$\(TARGET\)|\*)_([a-zA-Z0-9\-]+|\$\(TOOL_CHAIN_TAG\)|\*)_([a-zA-Z0-9\-]+|\$\(ARCH\)|\*)')
 AllIncludeFileList = []
@@ -1537,7 +1536,6 @@ class FdfParser:
 
             if self._IsToken(TAB_VALUE_SPLIT):
                 pcdPair = self._GetNextPcdSettings()
-                Obj.BaseAddressPcd = pcdPair
                 self.Profile.PcdDict[pcdPair] = Obj.BaseAddress
                 self.SetPcdLocalation(pcdPair)
                 FileLineTuple = GetRealFileLine(self.FileName, self.CurrentLineNumber)
@@ -1554,7 +1552,6 @@ class FdfParser:
             Size = self._Token
             if self._IsToken(TAB_VALUE_SPLIT):
                 pcdPair = self._GetNextPcdSettings()
-                Obj.SizePcd = pcdPair
                 self.Profile.PcdDict[pcdPair] = Size
                 self.SetPcdLocalation(pcdPair)
                 FileLineTuple = GetRealFileLine(self.FileName, self.CurrentLineNumber)
@@ -2213,7 +2210,6 @@ class FdfParser:
     def _GetFvAttributes(self, FvObj):
         IsWordToken = False
         while self._GetNextWord():
-            IsWordToken = True
             name = self._Token
             if name not in {"ERASE_POLARITY", "MEMORY_MAPPED", \
                            "STICKY_WRITE", "LOCK_CAP", "LOCK_STATUS", "WRITE_ENABLED_CAP", \
@@ -2222,7 +2218,7 @@ class FdfParser:
                            "READ_LOCK_STATUS", "WRITE_LOCK_CAP", "WRITE_LOCK_STATUS", \
                            "WRITE_POLICY_RELIABLE", "WEAK_ALIGNMENT", "FvUsedSizeEnable"}:
                 self._UndoToken()
-                return False
+                return IsWordToken
 
             if not self._IsToken(TAB_EQUAL_SPLIT):
                 raise Warning.ExpectedEquals(self.FileName, self.CurrentLineNumber)
@@ -2231,6 +2227,7 @@ class FdfParser:
                 raise Warning.Expected("TRUE/FALSE (1/0)", self.FileName, self.CurrentLineNumber)
 
             FvObj.FvAttributeDict[name] = self._Token
+            IsWordToken = True
 
         return IsWordToken
 
@@ -2391,9 +2388,6 @@ class FdfParser:
         ffsInf.InfFileName = self._Token
         if not ffsInf.InfFileName.endswith('.inf'):
             raise Warning.Expected(".inf file path", self.FileName, self.CurrentLineNumber)
-
-        ffsInf.CurrentLineNum = self.CurrentLineNumber
-        ffsInf.CurrentLineContent = self._CurrentLine()
 
         #Replace $(SAPCE) with real space
         ffsInf.InfFileName = ffsInf.InfFileName.replace('$(SPACE)', ' ')
@@ -2651,8 +2645,6 @@ class FdfParser:
             self._GetRAWData(FfsFileObj)
 
         else:
-            FfsFileObj.CurrentLineNum = self.CurrentLineNumber
-            FfsFileObj.CurrentLineContent = self._CurrentLine()
             FfsFileObj.FileName = self._Token.replace('$(SPACE)', ' ')
             self._VerifyFile(FfsFileObj.FileName)
 
@@ -3227,8 +3219,6 @@ class FdfParser:
             if not self._GetNextToken():
                 raise Warning.Expected("file name", self.FileName, self.CurrentLineNumber)
 
-            CapsuleObj.CreateFile = self._Token
-
         self._GetCapsuleStatements(CapsuleObj)
         self.Profile.CapsuleDict[CapsuleObj.UiCapsuleName] = CapsuleObj
         return True
@@ -3571,7 +3561,7 @@ class FdfParser:
         if self._Token.upper() not in {
                 SUP_MODULE_SEC, SUP_MODULE_PEI_CORE, SUP_MODULE_PEIM,
                 SUP_MODULE_DXE_CORE, SUP_MODULE_DXE_DRIVER,
-                SUP_MODULE_DXE_SAL_DRIVER, SUP_MODULE_DXE_SMM_DRIVER,
+                SUP_MODULE_DXE_SMM_DRIVER,
                 SUP_MODULE_DXE_RUNTIME_DRIVER, SUP_MODULE_UEFI_DRIVER,
                 SUP_MODULE_UEFI_APPLICATION, SUP_MODULE_USER_DEFINED, SUP_MODULE_HOST_APPLICATION,
                 TAB_DEFAULT, SUP_MODULE_BASE,
@@ -3580,7 +3570,6 @@ class FdfParser:
                 EDK_COMPONENT_TYPE_PIC_PEIM,
                 EDK_COMPONENT_TYPE_RELOCATABLE_PEIM, "PE32_PEIM",
                 EDK_COMPONENT_TYPE_BS_DRIVER, EDK_COMPONENT_TYPE_RT_DRIVER,
-                EDK_COMPONENT_TYPE_SAL_RT_DRIVER,
                 EDK_COMPONENT_TYPE_APPLICATION, "ACPITABLE",
                 SUP_MODULE_SMM_CORE, SUP_MODULE_MM_STANDALONE,
                 SUP_MODULE_MM_CORE_STANDALONE}:
@@ -3904,23 +3893,34 @@ class FdfParser:
                     raise Warning.Expected("Build number", self.FileName, self.CurrentLineNumber)
                 EfiSectionObj.BuildNum = self._Token
 
-        if self._GetAlignment():
-            if self._Token not in ALIGNMENTS:
-                raise Warning("Incorrect alignment '%s'" % self._Token, self.FileName, self.CurrentLineNumber)
-            if self._Token == 'Auto' and (not SectionName == BINARY_FILE_TYPE_PE32) and (not SectionName == BINARY_FILE_TYPE_TE):
-                raise Warning("Auto alignment can only be used in PE32 or TE section ", self.FileName, self.CurrentLineNumber)
-            EfiSectionObj.Alignment = self._Token
-
-        if self._IsKeyword('RELOCS_STRIPPED') or self._IsKeyword('RELOCS_RETAINED'):
-            if self._SectionCouldHaveRelocFlag(EfiSectionObj.SectionType):
-                if self._Token == 'RELOCS_STRIPPED':
-                    EfiSectionObj.KeepReloc = False
+        while True:
+            if self._GetAlignment():
+                if self._Token not in ALIGNMENTS:
+                    raise Warning("Incorrect alignment '%s'" % self._Token, self.FileName, self.CurrentLineNumber)
+                if self._Token == 'Auto' and (not SectionName == BINARY_FILE_TYPE_PE32) and (not SectionName == BINARY_FILE_TYPE_TE):
+                    raise Warning("Auto alignment can only be used in PE32 or TE section ", self.FileName, self.CurrentLineNumber)
+                EfiSectionObj.Alignment = self._Token
+            elif self._IsKeyword("Xip"):
+                if not self._IsToken(TAB_EQUAL_SPLIT):
+                    raise Warning.ExpectedEquals(self.FileName, self.CurrentLineNumber)
+                if not self._GetNextWord():
+                    raise Warning.Expected("Xip value (TRUE/FALSE)", self.FileName, self.CurrentLineNumber)
+                XipValue = self._Token.strip().upper()
+                if XipValue not in {"TRUE", "FALSE"}:
+                    raise Warning("Invalid Xip value '%s'" % XipValue, self.FileName, self.CurrentLineNumber)
+                EfiSectionObj.Xip = XipValue
+            elif self._IsKeyword('RELOCS_STRIPPED') or self._IsKeyword('RELOCS_RETAINED'):
+                if self._SectionCouldHaveRelocFlag(EfiSectionObj.SectionType):
+                    if self._Token == 'RELOCS_STRIPPED':
+                        EfiSectionObj.KeepReloc = False
+                    else:
+                        EfiSectionObj.KeepReloc = True
+                    if Obj.KeepReloc is not None and Obj.KeepReloc != EfiSectionObj.KeepReloc:
+                        raise Warning("Section type %s has reloc strip flag conflict with Rule" % EfiSectionObj.SectionType, self.FileName, self.CurrentLineNumber)
                 else:
-                    EfiSectionObj.KeepReloc = True
-                if Obj.KeepReloc is not None and Obj.KeepReloc != EfiSectionObj.KeepReloc:
-                    raise Warning("Section type %s has reloc strip flag conflict with Rule" % EfiSectionObj.SectionType, self.FileName, self.CurrentLineNumber)
+                    raise Warning("Section type %s could not have reloc strip flag" % EfiSectionObj.SectionType, self.FileName, self.CurrentLineNumber)
             else:
-                raise Warning("Section type %s could not have reloc strip flag" % EfiSectionObj.SectionType, self.FileName, self.CurrentLineNumber)
+                break
 
 
         if self._IsToken(TAB_VALUE_SPLIT):
