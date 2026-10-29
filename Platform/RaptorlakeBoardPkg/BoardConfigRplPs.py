@@ -196,4 +196,5 @@ class Board(AlderlakeBoardConfig.Board):
                 for lib in lib_classes
             ]
         # else: keep TxtLibNull inherited from AlderlakeBoardConfig
+        self.AddPlatformDscAsanLibraries(dsc)
         return dsc

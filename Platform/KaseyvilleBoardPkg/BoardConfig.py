@@ -190,6 +190,9 @@ class Board(BaseBoard):
         self.STAGE1B_SIZE         = 0x0037D000
         self.STAGE2_SIZE          = 0x000AE000
         self.STAGE2_FD_BASE       = 0x01000000
+        if self.ENABLE_ASAN:
+            # Upper bound for the first GenFds pass only, _AUTO_FD_SIZE then shrinks STAGE2_FD_SIZE to the taken size
+            self.STAGE2_FD_SIZE   = 0x00410000
 
         self.PAYLOAD_SIZE         = 0x00040000
         self.EPAYLOAD_SIZE        = 0x00200000
@@ -204,6 +207,11 @@ class Board(BaseBoard):
         self.VARIABLE_SIZE        = 0x00002000
         self.SBLRSVD_SIZE         = 0x00001000
         self.FWUPDATE_SIZE        = 0x00020000 if self.ENABLE_FWU else 0
+        if self.ENABLE_ASAN:
+            # ASAN instrumentation, including shared Stage1 libraries, grows the compressed payloads
+            self.PAYLOAD_SIZE    += 0x21000
+            if self.ENABLE_FWU:
+                self.FWUPDATE_SIZE += 0x0C000
 
         self.NON_REDUNDANT_SIZE   = 0x01000000
 
@@ -318,6 +326,7 @@ class Board(BaseBoard):
         else:
             dsc['PcdsFixedAtBuild'] = ['gPlatformKaseyvilleTokenSpaceGuid.PcdSimicsEnv | FALSE']
 
+        self.AddPlatformDscAsanLibraries(dsc)
         return dsc
 
     def GetOutputImages (self):

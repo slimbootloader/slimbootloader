@@ -143,6 +143,13 @@ class Board(BaseBoard):
         self.VARIABLE_SIZE        = 0x00002000
         self.SBLRSVD_SIZE         = 0x00001000
         self.FWUPDATE_SIZE        = 0x00020000 if self.ENABLE_FWU else 0
+        if self.ENABLE_ASAN:
+            # ASAN instrumentation, including shared Stage1 libraries, grows the compressed payloads
+            self.PAYLOAD_SIZE    += 0x30000
+            if self.ENABLE_FWU:
+                self.FWUPDATE_SIZE += 0x0C000
+            # These libraries are shared with Stage1B; instrumentation still raises its size requirement.
+            self.STAGE1B_SIZE += 0x14000
 
         self.SIIPFW_SIZE          = 0x1000
 
@@ -177,6 +184,9 @@ class Board(BaseBoard):
             self.SIIPFW_SIZE += self.TMAC_SIZE
 
         self.NON_REDUNDANT_SIZE   = 0x3BD000 + self.SIIPFW_SIZE
+        if self.ENABLE_ASAN:
+            # Keep SLIMBOOTLOADER_SIZE unchanged, NON_REDUNDANT gives up the ASAN growth of both REDUNDANT copies
+            self.NON_REDUNDANT_SIZE -= 2 * 0x20000
         self.NON_VOLATILE_SIZE    = 0x001000
         self.SLIMBOOTLOADER_SIZE  = (self.TOP_SWAP_SIZE + self.REDUNDANT_SIZE) * 2 + \
                                     self.NON_REDUNDANT_SIZE + self.NON_VOLATILE_SIZE
@@ -308,6 +318,7 @@ class Board(BaseBoard):
         if self._N_SUPPORT:
             dsc['PcdsFixedAtBuild'].append ('gPlatformAlderLakeTokenSpaceGuid.PcdAdlNSupport | TRUE')
 
+        self.AddPlatformDscAsanLibraries(dsc)
         return dsc
 
 
