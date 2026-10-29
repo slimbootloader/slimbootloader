@@ -159,7 +159,7 @@ jobs:
   - bash: |
       git config --global user.email "you@example.com"
       git config --global user.name  "Your Name"
-      sudo apt-get update
+      sudo apt-get  update
       sudo apt-get install -y nasm uuid-dev
 
       wget --no-check-certificate http://archive.ubuntu.com/ubuntu/pool/universe/a/acpica-unix/acpica-tools_20190509-1_amd64.deb -P ~/asl/
