@@ -38,3 +38,6 @@
   BaseMemoryLib
   MemoryAllocationLib
   MediaAccessLib
+
+[Pcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdExtFsMaxBlockGroups
