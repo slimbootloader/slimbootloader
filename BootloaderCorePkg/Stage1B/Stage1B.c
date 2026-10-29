@@ -459,6 +459,9 @@ SecStartup2 (
 
   FspResetHandler (Status);
   ASSERT_EFI_ERROR (Status);
+  if (EFI_ERROR (Status)) {
+    CpuHalt ("FSP MemoryInit failed!");
+  }
 
   Status = FspVariableHandler(Status, CallFspMultiPhaseMemoryInit);
   ASSERT_EFI_ERROR(Status);
@@ -485,6 +488,9 @@ SecStartup2 (
                          &gFspReservedMemoryResourceHobGuid
                          );
   ASSERT (FspReservedMemBase > 0);
+  if (FspReservedMemBase == 0) {
+    CpuHalt ("FSP reserved memory not found!");
+  }
 
   // Prepare Global Data structure
   OldLdrGlobal   = LdrGlobal;
