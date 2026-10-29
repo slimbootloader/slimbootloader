@@ -3,14 +3,34 @@
 
   Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
   Copyright (c) 2019 - 2020, ARM Ltd. All rights reserved.<BR>
+  Copyright (C) 2025, Advanced Micro Devices, Inc. All rights reserved.
 
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
-#ifndef _ACPI_6_3_H_
-#define _ACPI_6_3_H_
+#pragma once
 
 #include <IndustryStandard/Acpi62.h>
+
+///
+/// _CSD Revision for ACPI 6.3
+///
+#define EFI_ACPI_6_3_AML_CSD_REVISION  0
+
+///
+/// _CSD NumEntries for ACPI 6.3
+///
+#define EFI_ACPI_6_3_AML_CSD_NUM_ENTRIES  6
+
+///
+/// _PSD Revision for ACPI 6.3
+///
+#define EFI_ACPI_6_3_AML_PSD_REVISION  0
+
+///
+/// _CPC Revision for ACPI 6.3
+///
+#define EFI_ACPI_6_3_AML_CPC_REVISION  3
 
 //
 // Ensure proper structure formats
@@ -1632,13 +1652,13 @@ typedef struct {
 #define EFI_ACPI_6_3_SECURE_DEVICES_TABLE_REVISION  0x01
 
 ///
-/// Secure Devcice types
+/// Secure Device types
 ///
 #define EFI_ACPI_6_3_SDEV_TYPE_PCIE_ENDPOINT_DEVICE   0x01
 #define EFI_ACPI_6_3_SDEV_TYPE_ACPI_NAMESPACE_DEVICE  0x00
 
 ///
-/// Secure Devcice flags
+/// Secure Device flags
 ///
 #define EFI_ACPI_6_3_SDEV_FLAG_ALLOW_HANDOFF  BIT0
 
@@ -2242,6 +2262,8 @@ typedef struct {
 #define EFI_ACPI_6_3_EINJ_EXECUTE_OPERATION               0x05
 #define EFI_ACPI_6_3_EINJ_CHECK_BUSY_STATUS               0x06
 #define EFI_ACPI_6_3_EINJ_GET_COMMAND_STATUS              0x07
+#define EFI_ACPI_6_3_EINJ_SET_ERROR_TYPE_WITH_ADDRESS     0x08
+#define EFI_ACPI_6_3_EINJ_GET_EXECUTE_OPERATION_TIMINGS   0x09
 #define EFI_ACPI_6_3_EINJ_TRIGGER_ERROR                   0xFF
 
 ///
@@ -2979,5 +3001,3 @@ typedef struct {
 #define EFI_ACPI_6_3_XEN_PROJECT_TABLE_SIGNATURE  SIGNATURE_32('X', 'E', 'N', 'V')
 
 #pragma pack()
-
-#endif
