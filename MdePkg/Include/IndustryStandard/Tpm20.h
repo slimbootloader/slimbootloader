@@ -10,8 +10,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-#ifndef _TPM20_H_
-#define _TPM20_H_
+#pragma once
 
 #include <IndustryStandard/Tpm12.h>
 
@@ -203,15 +202,16 @@ typedef UINT16 TPM_ALG_ID;
 
 // Table 8 - TPM_ECC_CURVE Constants
 typedef UINT16 TPM_ECC_CURVE;
-#define TPM_ECC_NONE       (TPM_ECC_CURVE)(0x0000)
-#define TPM_ECC_NIST_P192  (TPM_ECC_CURVE)(0x0001)
-#define TPM_ECC_NIST_P224  (TPM_ECC_CURVE)(0x0002)
-#define TPM_ECC_NIST_P256  (TPM_ECC_CURVE)(0x0003)
-#define TPM_ECC_NIST_P384  (TPM_ECC_CURVE)(0x0004)
-#define TPM_ECC_NIST_P521  (TPM_ECC_CURVE)(0x0005)
-#define TPM_ECC_BN_P256    (TPM_ECC_CURVE)(0x0010)
-#define TPM_ECC_BN_P638    (TPM_ECC_CURVE)(0x0011)
-#define TPM_ECC_SM2_P256   (TPM_ECC_CURVE)(0x0020)
+#define TPM_ECC_NONE        (TPM_ECC_CURVE)(0x0000)
+#define TPM_ECC_NIST_P192   (TPM_ECC_CURVE)(0x0001)
+#define TPM_ECC_NIST_P224   (TPM_ECC_CURVE)(0x0002)
+#define TPM_ECC_NIST_P256   (TPM_ECC_CURVE)(0x0003)
+#define TPM_ECC_NIST_P384   (TPM_ECC_CURVE)(0x0004)
+#define TPM_ECC_NIST_P521   (TPM_ECC_CURVE)(0x0005)
+#define TPM_ECC_BN_P256     (TPM_ECC_CURVE)(0x0010)
+#define TPM_ECC_BN_P638     (TPM_ECC_CURVE)(0x0011)
+#define TPM_ECC_SM2_P256    (TPM_ECC_CURVE)(0x0020)
+#define TPM_ECC_BP_P512_R1  (TPM_ECC_CURVE)(0x0032)
 
 // Table 11 - TPM_CC Constants (Numeric Order)
 typedef UINT32 TPM_CC;
@@ -1247,7 +1247,7 @@ typedef union {
   TPMI_AES_KEY_BITS    aes;
   TPMI_SM4_KEY_BITS    SM4;
   TPM_KEY_BITS         sym;
-  TPMI_ALG_HASH     xor;
+  TPMI_ALG_HASH        xor_;
 } TPMU_SYM_KEY_BITS;
 
 // Table 123 - TPMU_SYM_MODE Union
@@ -1320,7 +1320,7 @@ typedef struct {
 // Table 136 - TPMU_SCHEME_KEYEDHASH Union
 typedef union {
   TPMS_SCHEME_HMAC    hmac;
-  TPMS_SCHEME_XOR  xor;
+  TPMS_SCHEME_XOR     xor_;
 } TPMU_SCHEME_KEYEDHASH;
 
 // Table 137 - TPMT_KEYEDHASH_SCHEME Structure
@@ -1808,5 +1808,3 @@ typedef struct {
 #define HASH_ALG_SHA384   0x00000004
 #define HASH_ALG_SHA512   0x00000008
 #define HASH_ALG_SM3_256  0x00000010
-
-#endif

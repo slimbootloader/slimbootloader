@@ -31,7 +31,7 @@ extern ASM_PFX(PcdGet32 (PcdControlFlowEnforcementPropertyMask))
 global ASM_PFX(InternalLongJump)
 ASM_PFX(InternalLongJump):
 
-    mov     eax, [ASM_PFX(PcdGet32 (PcdControlFlowEnforcementPropertyMask))]
+    mov     eax, FixedPcdGet32 (PcdControlFlowEnforcementPropertyMask)
     test    eax, eax
     jz      CetDone
     mov     rax, cr4
@@ -41,12 +41,12 @@ ASM_PFX(InternalLongJump):
     push    rdx                          ; save rdx
 
     mov     rdx, [rcx + 0xF8]            ; rdx = target SSP
-    READSSP_RAS
+    rdsspq  rax
     sub     rdx, rax                     ; rdx = delta
     mov     rax, rdx                     ; rax = delta
 
     shr     rax, 3                       ; rax = delta/sizeof(UINT64)
-    INCSSP_RAX
+    incsspq rax
 
     pop     rdx                          ; restore rdx
 CetDone:

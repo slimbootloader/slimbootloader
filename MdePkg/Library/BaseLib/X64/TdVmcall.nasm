@@ -9,7 +9,7 @@
 DEFAULT REL
 SECTION .text
 
-%define TDVMCALL_EXPOSE_REGS_MASK       0xffec
+%define TDVMCALL_EXPOSE_REGS_MASK       0xffcc
 %define TDVMCALL                        0x0
 
 %macro tdcall 0
@@ -121,7 +121,7 @@ ASM_PFX(TdVmCall):
 
        tdcall
 
-       ; ignore return dataif TDCALL reports failure.
+       ; ignore return data if TDCALL reports failure.
        test rax, rax
        jnz .no_return_data
 

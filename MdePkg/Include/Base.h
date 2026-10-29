@@ -12,8 +12,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-#ifndef __BASE_H__
-#define __BASE_H__
+#pragma once
 
 //
 // Include processor specific binding
@@ -59,7 +58,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 /// up to the compiler to remove any code past that point.
 ///
 #define UNREACHABLE()  __builtin_unreachable ()
-  #elif defined (__has_feature)
+  #elif defined (__has_builtin) && defined (__has_feature)
     #if __has_builtin (__builtin_unreachable)
 ///
 /// Signal compilers and analyzers that this call is not reachable.  It is
@@ -578,16 +577,29 @@ struct _LIST_ENTRY {
 **/
 #define _INT_SIZE_OF(n)  ((sizeof (n) + sizeof (UINTN) - 1) &~(sizeof (UINTN) - 1))
 
-#if defined (_M_ARM) || defined (_M_ARM64)
+#if defined (_M_ARM64)
 //
-// MSFT ARM variable argument list support.
+// MSVC AARCH64 and CLANGPDB AARCH64 hit this path. By default, they use the MS ABI for VA_LIST and
+// friends. However, this is against the AAPCS64 ABI and cause interop issues with GCC and CLANGDWARF.
+// These definitions coerce MSVC/CLANGPDB to use the AAPCS64 ABI.
 //
 
-typedef char *VA_LIST;
+typedef struct {
+  char    *Stack; // next stack param
+  char    *GrTop; // end of GP arg reg save area
+  char    *VrTop; // end of FP/SIMD arg reg save area
+  int     GrOffs; // offset from  GrTop to next GP register arg
+  int     VrOffs; // offset from  VrTop to next FP/SIMD register arg
+} VA_LIST;
 
-#define VA_START(Marker, Parameter)  __va_start (&Marker, &Parameter, _INT_SIZE_OF (Parameter), __alignof(Parameter), &Parameter)
-#define VA_ARG(Marker, TYPE)         (*(TYPE *) ((Marker += _INT_SIZE_OF (TYPE) + ((-(INTN)Marker) & (sizeof(TYPE) - 1))) - _INT_SIZE_OF (TYPE)))
-#define VA_END(Marker)               (Marker = (VA_LIST) 0)
+#define VA_START(Marker, Parameter)  (Marker).GrTop = (Marker).VrTop = NULL, \
+                                     (Marker).GrOffs = (Marker).VrOffs = 0,  \
+                                     __va_start (&(Marker).Stack, &Parameter, _INT_SIZE_OF (Parameter), __alignof (Parameter), &Parameter)
+#define VA_STACK_ARG(Marker, TYPE)   (((Marker).Stack += _INT_SIZE_OF (TYPE) + ((-(INTN)(Marker).Stack) & (sizeof(TYPE) - 1))) - _INT_SIZE_OF (TYPE))
+#define VA_ARG(Marker, TYPE)         (*(TYPE *) (((Marker).GrOffs += _INT_SIZE_OF (TYPE)) <= 0 \
+                                     ? &(Marker).GrTop[(Marker).GrOffs - _INT_SIZE_OF (TYPE)] \
+                                     : VA_STACK_ARG(Marker, TYPE)))
+#define VA_END(Marker)               ((Marker).Stack = NULL)
 #define VA_COPY(Dest, Start)         ((void)((Dest) = (Start)))
 
 #elif defined (__GNUC__) || defined (__clang__)
@@ -800,12 +812,12 @@ typedef UINTN *BASE_LIST;
   @param  Message     Raised compiler diagnostic message when expression is false.
 
 **/
-#ifdef MDE_CPU_EBC
-#define STATIC_ASSERT(Expression, Message)
-#elif defined (_MSC_EXTENSIONS) || defined (__cplusplus)
+#if defined (__cplusplus)
 #define STATIC_ASSERT  static_assert
-#else
+#elif defined (__GNUC__) || defined (__clang__)
 #define STATIC_ASSERT  _Static_assert
+#elif defined (_MSC_EXTENSIONS)
+#define STATIC_ASSERT  static_assert
 #endif
 
 //
@@ -888,7 +900,7 @@ STATIC_ASSERT (ALIGNOF (__VERIFY_INT32_ENUM_SIZE) == sizeof (__VERIFY_INT32_ENUM
   @return  A pointer to the structure from one of it's elements.
 
 **/
-#define BASE_CR(Record, TYPE, Field)  ((TYPE *) ((CHAR8 *) (Record) - OFFSET_OF (TYPE, Field)))
+#define BASE_CR(Record, TYPE, Field)  ((TYPE *) (VOID *) ((CHAR8 *) (Record) - OFFSET_OF (TYPE, Field)))
 
 /**
   Checks whether a value is a power of two.
@@ -1058,7 +1070,7 @@ typedef UINTN RETURN_STATUS;
   @retval FALSE         The high bit of StatusCode is clear.
 
 **/
-#define RETURN_ERROR(StatusCode)  (((INTN)(RETURN_STATUS)(StatusCode)) < 0)
+#define RETURN_ERROR(StatusCode)  (((RETURN_STATUS)(StatusCode)) >= MAX_BIT)
 
 ///
 /// The operation completed successfully.
@@ -1391,5 +1403,3 @@ _ReturnAddress (
 
 **/
 #define ARRAY_SIZE(Array)  (sizeof (Array) / sizeof ((Array)[0]))
-
-#endif
