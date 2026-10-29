@@ -69,6 +69,9 @@ BltToFrameBuffer (
   GopBltPixels = GopBlt;
   ASSERT (GfxInfoHob != NULL);
   ASSERT (GopBlt != NULL);
+  if ((GfxInfoHob == NULL) || (GopBlt == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
 
   // Check dimensions
   if (((Height + OffY) > GfxInfoHob->GraphicsMode.VerticalResolution)
