@@ -133,6 +133,12 @@ class Board(BaseBoard):
         if self.RELEASE_MODE == 0:
             self.STAGE1B_FD_SIZE += 0x00004000
             self.PAYLOAD_SIZE    += 0x00007000
+        if self.ENABLE_ASAN:
+            # Shared Stage1 libraries are instrumented; Stage1A still ends below STAGE1B_LOAD_BASE
+            # and the Stage1B FD below the 0xFF000000 top of temporary memory.
+            self.STAGE1A_SIZE    += 0x00002000
+            self.STAGE1B_FD_SIZE += 0x0000E000
+            self.STAGE1B_SIZE    += 0x00006000
         # For Stage2, it is always compressed.
         # if STAGE2_LOAD_HIGH is 1, STAGE2_FD_BASE will be ignored
         self.STAGE2_FD_BASE       = 0x01000000
@@ -152,6 +158,12 @@ class Board(BaseBoard):
         self.PLD_HEAP_SIZE        = 0x04000000
 
         self.FWUPDATE_SIZE        = 0x00020000
+        if self.ENABLE_ASAN:
+            # ASAN instrumentation, including shared Stage1 libraries, grows Stage2 and the payloads
+            self.STAGE2_FD_SIZE  += 0x00012000
+            self.STAGE2_SIZE     += 0x00013000
+            self.PAYLOAD_SIZE    += 0x0002C000
+            self.FWUPDATE_SIZE   += 0x00009000
         self.CFGDATA_SIZE         = 0x00004000
         self.KEYHASH_SIZE         = 0x00001000
         self.CFG_DATABASE_SIZE    = self.CFGDATA_SIZE
@@ -208,6 +220,7 @@ class Board(BaseBoard):
             'WatchDogTimerLib|Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf'
         ]
         dsc['LibraryClasses.%s' % self.BUILD_ARCH] = common_libs
+        self.AddPlatformDscAsanLibraries(dsc)
         return dsc
 
     def GetFlashMapList (self):
