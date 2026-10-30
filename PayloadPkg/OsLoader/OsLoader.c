@@ -132,6 +132,11 @@ UpdateLoadedImage (
     if (NumFiles < 2) {
       DEBUG ((DEBUG_ERROR, "Containers with only one file need to packaged as a \"Normal\" container.\n"));
       ASSERT (NumFiles >= 2);
+      // Not copied into LoadedImage yet, so free here to avoid leaking them.
+      for (Index = 0; Index < NumFiles; Index++) {
+        FreeImageData (&File[Index]);
+      }
+      return EFI_UNSUPPORTED;
     }
 
     LinuxImage                = &LoadedImage->Image.Linux;
