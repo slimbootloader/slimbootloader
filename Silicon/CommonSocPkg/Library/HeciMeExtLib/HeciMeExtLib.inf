@@ -7,11 +7,11 @@
 ################################################################################
 [Defines]
   INF_VERSION                    = 0x00010005
-  BASE_NAME                      = HeciDxeMeExtLib
+  BASE_NAME                      = HeciMeExtLib
   FILE_GUID                      = 3722db23-d4c0-4593-b6f2-c92e16dd7951
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = HeciDxeMeExtLib
+  LIBRARY_CLASS                  = HeciMeExtLib
 
 
 [LibraryClasses]
