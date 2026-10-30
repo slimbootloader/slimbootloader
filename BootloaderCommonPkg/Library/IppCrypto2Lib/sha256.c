@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2018 - 2026, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -38,8 +38,14 @@ IPPFUN( const IppsHashMethod*, ippsHashMethod_SHA256Sbl, (void) )
  *
  * When IPPCP_CUSTOM_BUILD is defined (SHA-NI-capable platform only; see INF),
  * also select sha256_ni_hashUpdate for L9 so this static method table matches
- * what ippsHashMethodSet_SHA256_TT would select at runtime. */
+ * what ippsHashMethodSet_SHA256_TT would select at runtime.
+ *
+ * IA32 (_IPP tiers): the P8/G9/NI INFs build with -D_P8 so _IPP >= _IPP_P8 and
+ * pcpvariant.h turns _SHA_NI_ENABLING_ on; those variants are only selected
+ * for SHA-NI-capable platforms, so pick the NI update statically here too. */
 #if ((_IPP32E >= _IPP32E_Y8) && (_IPP32E < _IPP32E_E9)) \
+ || ((_IPP >= _IPP_P8) \
+     && (_SHA_NI_ENABLING_ == _FEATURE_TICKTOCK_ || _SHA_NI_ENABLING_ == _FEATURE_ON_)) \
  || (defined(IPPCP_CUSTOM_BUILD) && (_IPP32E >= _IPP32E_L9) \
      && (_SHA_NI_ENABLING_ == _FEATURE_TICKTOCK_ || _SHA_NI_ENABLING_ == _FEATURE_ON_))
       sha256_ni_hashUpdate,

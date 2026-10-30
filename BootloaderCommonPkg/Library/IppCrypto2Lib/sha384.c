@@ -1,6 +1,6 @@
 /** @file
 
-  Copyright (c) 2019, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) 2019 - 2026, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -14,6 +14,36 @@
 #include "pcpsha512stuff.h"
 
 #include <Library/CryptoLib.h>
+
+#if (_SHA512_ENABLING_ == _FEATURE_ON_)
+extern IPP_OWN_DECL (void, cpGetReg, ( int* buf, int valEAX, int valECX ))
+
+/**
+  Check CPUID for AVX2 and SHA512 instruction support.
+
+  @retval  1   UpdateSHA512ni can run on this CPU.
+  @retval  0   Not supported.
+**/
+static int
+IsSha512NiSupported (
+  void
+  )
+{
+   int buf[4];
+
+   cpGetReg (buf, 0, 0);
+   if ((Ipp32u)buf[0] < 7) {
+      return 0;
+   }
+   /* CPUID.07H:EBX[5] = AVX2, CPUID.(07H,01H):EAX[0] = SHA512 */
+   cpGetReg (buf, 7, 0);
+   if ((((Ipp32u)buf[1] & 0x20) == 0) || ((Ipp32u)buf[0] < 1)) {
+      return 0;
+   }
+   cpGetReg (buf, 7, 1);
+   return ((Ipp32u)buf[0] & 0x1) ? 1 : 0;
+}
+#endif
 
 /**
   Initializes user context for hash computation.
@@ -33,6 +63,23 @@ IPPFUN( const IppsHashMethod*, ippsHashMethod_SHA384Sbl, (void) )
       sha512_384_hashOctString,
       sha512_msgRep
    };
+/* Only an explicit INF opt-in (IppCrypto2LibNI.inf) builds the NI path. */
+#if (_SHA512_ENABLING_ == _FEATURE_ON_)
+   static const IppsHashMethod method_ni = {
+      ippHashAlg_SHA384,
+      IPP_SHA384_DIGEST_BITSIZE/8,
+      MBS_SHA512,
+      MLR_SHA512,
+      IPP_SHA384_STATE_BYTESIZE,
+      sha512_384_hashInit,
+      sha512_hashUpdate_ni,
+      sha512_384_hashOctString,
+      sha512_msgRep
+   };
+   if (IsSha512NiSupported ()) {
+      return &method_ni;
+   }
+#endif
    return &method;
 }
 
