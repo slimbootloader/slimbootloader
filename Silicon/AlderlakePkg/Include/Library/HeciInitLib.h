@@ -387,6 +387,7 @@ HeciRevokeOemKey (
   @retval EFI_DEVICE_ERROR        HECI Device error, command aborts abnormally
 **/
 EFI_STATUS
+EFIAPI
 HeciArbSvnCommitMsg (
   VOID
   );

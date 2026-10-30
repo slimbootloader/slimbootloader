@@ -59,7 +59,7 @@ EFI_ACPI_5_0_FIRMWARE_ACPI_CONTROL_STRUCTURE Facs = {
   }
 };
 
-#ifdef __GNUC__
+#if defined (__GNUC__) || defined (__clang__)
 VOID*
 ReferenceAcpiTable (
  VOID

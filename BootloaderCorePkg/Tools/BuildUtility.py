@@ -262,7 +262,7 @@ def is_valid_tool_version(cmd, current_version, optional=False):
     return valid | optional
 
 def get_gcc_info ():
-    toolchain = 'GCC5'
+    toolchain = 'GCC'
     cmd = 'gcc'
     try:
         prefix = os.environ.get(toolchain + '_BIN')
@@ -281,6 +281,7 @@ def get_clang_info ():
         toolchain, toolchain_prefix, toolchain_path, toolchain_ver = get_visual_studio_info ()
         os.environ['CLANG_HOST_BIN'] =  os.path.join(toolchain_path, "bin\\Hostx64\\x64\\n")
         toolchain_path   = 'C:\\Program Files\\LLVM\\bin\\'
+        os.environ['CLANGPDB_DLL'] = toolchain_path
     toolchain        = 'CLANGPDB'
     toolchain_prefix = 'CLANG_BIN'
     cmd = os.path.join(toolchain_path, 'clang')

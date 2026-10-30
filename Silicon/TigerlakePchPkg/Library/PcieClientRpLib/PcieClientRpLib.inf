@@ -13,7 +13,7 @@
   FILE_GUID = 77EB467D-674C-4C20-A13E-381600E182C4
   VERSION_STRING = 1.0
   MODULE_TYPE = BASE
-  LIBRARY_CLASS = PcieRpLib
+  LIBRARY_CLASS = PcieClientRpLib
 #
 # The following information is for reference only and not required by the build tools.
 #

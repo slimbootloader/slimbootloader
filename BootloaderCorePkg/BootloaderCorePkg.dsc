@@ -494,6 +494,9 @@
   *_GCC5_IA32_DLINK_FLAGS = -no-pie
   *_GCC5_IA32_ASLCC_FLAGS = -fno-pic
   *_GCC5_IA32_ASLDLINK_FLAGS = -no-pie
+  *_GCC_IA32_CC_FLAGS = -fno-stack-protector
+  *_GCC_X64_CC_FLAGS = -fno-stack-protector
+  *_GCC_IA32_ASLCC_FLAGS = -fno-pic -fno-pie
   # Force synchronous PDB writes for parallel builds
   *_VS2015x86_IA32_CC_FLAGS = /FS
   *_XCODE5_IA32_CC_FLAGS = -flto
@@ -513,4 +516,5 @@
 !endif
 
   MSFT:*_*_X64_DLINK_FLAGS = /ALIGN:64
-
+  MSFT:*_*_X64_DLINK_XIPFLAGS = /ALIGN:64
+  *_CLANGPDB_X64_DLINK_FLAGS = /ALIGN:32

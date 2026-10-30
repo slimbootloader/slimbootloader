@@ -119,7 +119,7 @@ static unsigned LZ4_NbCommonBytes (register reg_t val)
 {
 
     if (sizeof(val)==8) {
-#     if defined(_MSC_VER) && defined(_WIN64) && !defined(LZ4_FORCE_SW_BITCOUNT)
+#     if defined(_MSC_VER) && !defined(__clang__) && defined(_WIN64) && !defined(LZ4_FORCE_SW_BITCOUNT)
         unsigned long r = 0;
         _BitScanForward64( &r, (U64)val );
         return (int)(r>>3);
@@ -130,7 +130,7 @@ static unsigned LZ4_NbCommonBytes (register reg_t val)
         return DeBruijnBytePos[((U64)((val & -(long long)val) * 0x0218A392CDABBD3FULL)) >> 58];
 #     endif
     } else /* 32 bits */ {
-#     if defined(_MSC_VER) && !defined(LZ4_FORCE_SW_BITCOUNT)
+#     if defined(_MSC_VER) && !defined(__clang__) && !defined(LZ4_FORCE_SW_BITCOUNT)
         unsigned long r;
         _BitScanForward( &r, (U32)val );
         return (int)(r>>3);

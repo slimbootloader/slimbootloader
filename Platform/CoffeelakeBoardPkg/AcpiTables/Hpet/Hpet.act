@@ -54,7 +54,7 @@ EFI_ACPI_HIGH_PRECISION_EVENT_TIMER_TABLE_HEADER Fadt = {
   EFI_ACPI_HPET_ATTRIBUTES
 };
 
-#ifdef __GNUC__
+#if defined (__GNUC__) || defined (__clang__)
 VOID*
 ReferenceAcpiTable (
  VOID

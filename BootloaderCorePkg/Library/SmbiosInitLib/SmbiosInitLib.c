@@ -513,7 +513,6 @@ DumpSmbiosTable (
   SMBIOS_TABLE_ENTRY_POINT      *SmbiosEntry;
   CHAR8                         *StringPtr;
   UINT32                         CurLimit;
-  UINT32                         Idx;
   UINT8                          StringIdx;
 
   SmbiosEntry = (SMBIOS_TABLE_ENTRY_POINT *)(UINTN)PcdGet32 (PcdSmbiosTablesBase);
@@ -525,7 +524,6 @@ DumpSmbiosTable (
   CurLimit = (UINT32) (UINTN) (SmbiosEntry->TableAddress + SmbiosEntry->TableLength);
   DEBUG ((DEBUG_INFO, "\n Dumping SMBIOS table strings, base=0x%p, len=0x%x, CurLimit=0x%x\n", TypeHdr, SmbiosEntry->TableLength, CurLimit));
 
-  Idx = 0;
   while ((UINT32)(UINTN)TypeHdr < CurLimit) {
     DEBUG ((DEBUG_INFO, "Checking table 0x%p: Type: %d, Length: 0x%x\n", TypeHdr, TypeHdr->Type, TypeHdr->Length));
 
@@ -548,7 +546,6 @@ DumpSmbiosTable (
 
     // Advance to next SMBIOS structure
     TypeHdr = (SMBIOS_STRUCTURE *)(StringPtr + TYPE_TERMINATOR_SIZE); // Skip double null
-    Idx++;
   }
 }
 

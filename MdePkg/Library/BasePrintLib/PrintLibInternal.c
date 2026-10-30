@@ -571,7 +571,9 @@ BasePrintLibSPrintMarker (
   BOOLEAN        Comma;
   UINTN          Digits;
   UINTN          Radix;
+#ifndef LITE_PRINT
   RETURN_STATUS  Status;
+#endif
   UINT32         GuidData1;
   UINT16         GuidData2;
   UINT16         GuidData3;
@@ -801,7 +803,6 @@ BasePrintLibSPrintMarker (
             }
 #ifdef LITE_PRINT
           case 'r':
-            Status = 0;
 #endif
           //
           // break skipped on purpose
