@@ -1598,6 +1598,51 @@ DmarTableUpdate (
 }
 
 /**
+  Update the PSD (Platform Security Discovery) table.
+
+  Initializes the common PSD table fields, then fills in the Secure Boot and
+  Measured Boot status which are platform specific.
+
+  @param[in, out] AcpiTable   Pointer to the ACPI table buffer.
+
+**/
+VOID
+PsdTableUpdate (
+  IN OUT EFI_ACPI_DESCRIPTION_HEADER  *AcpiTable
+  )
+{
+  EFI_STATUS                          Status;
+  EFI_ACPI_PSD_TABLE                  *PsdTable;
+  PLATFORM_DATA                       *PlatformData;
+
+  if (AcpiTable == NULL) {
+    DEBUG ((DEBUG_WARN, "Table is not a valid pointer\n"));
+    return;
+  }
+
+  PsdTable = (EFI_ACPI_PSD_TABLE *)AcpiTable;
+  Status = UpdateAcpiPsdTable (PsdTable);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "UpdateAcpiPsdTable Failed\n"));
+    return;
+  }
+
+  PlatformData = (PLATFORM_DATA *)GetPlatformDataPtr ();
+  if (PlatformData == NULL) {
+    DEBUG ((DEBUG_ERROR, "GetPlatformDataPtr Failed\n"));
+    return;
+  }
+
+  // BIT0: UEFI secure boot is enabled, BIT1: Boot Guard verified boot is enabled, BIT2: Bootloader verified boot is enabled
+  PsdTable->SecureBoot = (UINT8)(((PlatformData->BtGuardInfo.VerifiedBoot) << 1) | (FeaturePcdGet (PcdVerifiedBootEnabled)) << 2);
+
+  // Check if measured boot is reflected in BtG profile
+  PsdTable->MeasuredBoot = (UINT8)((PlatformData->BtGuardInfo.MeasuredBoot));
+
+  DumpHex (2, 0, sizeof(EFI_ACPI_PSD_TABLE), (VOID *)PsdTable);
+}
+
+/**
   Update PCH NVS and SA NVS area address and size in ACPI table.
 
   @param[in] Current    Pointer to ACPI description header
@@ -1757,7 +1802,7 @@ PlatformUpdateAcpiTable (
       PsdCfgData = (PSD_CFG_DATA *)FindConfigDataByTag (CDATA_PSD_TAG);
       if (PsdCfgData != NULL) {
         if (PsdCfgData->EnablePsd == 1) {
-          UpdateAcpiPsdTable ( (VOID* )Current);
+          PsdTableUpdate (Table);
           DEBUG ( (DEBUG_INFO, "Updated Psd Table in AcpiTable Entries\n") );
         }
       }
