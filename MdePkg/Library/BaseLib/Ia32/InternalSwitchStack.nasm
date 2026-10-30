@@ -32,7 +32,7 @@ ASM_PFX(InternalSwitchStack):
   mov   ebp, esp
 
   mov   esp, [ebp + 20]    ; switch stack
-  sub   esp, 8
+  sub   esp, 16            ; keep the stack 16-byte aligned
   mov   eax, [ebp + 16]
   mov   [esp + 4], eax
   mov   eax, [ebp + 12]

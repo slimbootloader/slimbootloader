@@ -350,13 +350,17 @@ UnitTestDebugAssert (
   #if defined (_ASSERT)
     #undef _ASSERT
   #endif
-  #if defined (__FILE_NAME__)
+  #if defined(__KLOCWORK__) || defined(__COVERITY__)
+#define ASSERT(Expression)    do { if (!(Expression)) abort(); } while (0)
+  #elif defined (__FILE_NAME__)
 #define _ASSERT(Expression)  UnitTestDebugAssert (__FILE_NAME__, DEBUG_LINE_NUMBER, DEBUG_EXPRESSION_STRING (Expression))
   #else
 #define _ASSERT(Expression)  UnitTestDebugAssert (__FILE__, DEBUG_LINE_NUMBER, DEBUG_EXPRESSION_STRING (Expression))
   #endif
 #else
-  #if defined (__FILE_NAME__)
+  #if defined(__KLOCWORK__) || defined(__COVERITY__)
+    #define ASSERT(Expression)    do { if (!(Expression)) abort(); } while (0)
+  #elif defined (__FILE_NAME__)
 #define _ASSERT(Expression)  DebugAssert (__FILE_NAME__, DEBUG_LINE_NUMBER, DEBUG_EXPRESSION_STRING (Expression))
   #else
 #define _ASSERT(Expression)  DebugAssert (__FILE__, DEBUG_LINE_NUMBER, DEBUG_EXPRESSION_STRING (Expression))
@@ -400,6 +404,7 @@ UnitTestDebugAssert (
   @param  Expression  Boolean expression.
 
 **/
+#if !defined(__KLOCWORK__) && !defined(__COVERITY__)
 #if !defined (MDEPKG_NDEBUG)
 #define ASSERT(Expression)        \
     do {                            \
@@ -417,6 +422,7 @@ UnitTestDebugAssert (
         (VOID) (Expression);       \
       }                            \
     } while (FALSE)
+#endif
 #endif
 
 /**
@@ -656,7 +662,9 @@ UnitTestDebugAssert (
   @param  TestSignature  The 32-bit signature value to match.
 
 **/
-#if !defined (MDEPKG_NDEBUG)
+#if defined(__KLOCWORK__) || defined(__COVERITY__)
+  #define CR(Record, TYPE, Field, TestSignature)  BASE_CR(Record, TYPE, Field)
+#elif !defined (MDEPKG_NDEBUG)
 #define CR(Record, TYPE, Field, TestSignature)                                              \
     (DebugAssertEnabled () && (BASE_CR (Record, TYPE, Field)->Signature != TestSignature)) ?  \
     (TYPE *) (_ASSERT (CR has Bad Signature), Record) :                                       \
