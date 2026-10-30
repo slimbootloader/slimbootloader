@@ -206,8 +206,6 @@ class Board(BaseBoard):
             'MeChipsetLib|Silicon/ApollolakePkg/Library/MeChipsetLib/MeChipsetLib.inf',
             'PsdLib|Silicon/ApollolakePkg/Library/PsdLib/PsdLib.inf',
             'ShellExtensionLib|Platform/$(BOARD_PKG_NAME)/Library/ShellExtensionLib/ShellExtensionLib.inf',
-            'BootMediaLib|Silicon/ApollolakePkg/Library/BootMediaLib/BootMediaLib.inf',
-            'FlashDescriptorLib|Silicon/ApollolakePkg/Library/FlashDescriptorLib/FlashDescriptorLib.inf',
             'VtdLib|Silicon/$(SILICON_PKG_NAME)/Library/VtdLib/VtdLib.inf',
             'DmarLib|Silicon/CommonSocPkg/Library/DmarLib/DmarLib.inf',
             'MadtLib|Silicon/CommonSocPkg/Library/MadtLib/MadtLib.inf',
