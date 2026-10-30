@@ -384,6 +384,7 @@ TccModePostMemConfig (
 
 **/
 VOID
+EFIAPI
 UpdateFspConfig (
   VOID     *FspsUpdPtr
   )

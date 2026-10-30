@@ -14,7 +14,7 @@
 #include <Guid/GraphicsInfoHob.h>
 #include <Library/PcdLib.h>
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && !defined(__clang__)
 #pragma optimize("", off)
 #endif
 

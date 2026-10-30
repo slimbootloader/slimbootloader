@@ -28,7 +28,7 @@
   PchInfoLib
   GpioLib
   TimerLib
-  BasePchPciBdfLib
+  PchPciBdfLib
   BasePcieHelperLib
   PcieClientRpLib
 

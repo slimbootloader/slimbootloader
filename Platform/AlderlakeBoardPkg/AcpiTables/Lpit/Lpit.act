@@ -83,7 +83,7 @@ ACPI_LOW_POWER_IDLE_TABLE Lpit = {
 
 };
 
-#if defined (__GNUC__)
+#if defined (__GNUC__) || defined (__clang__)
 VOID*
 ReferenceAcpiTable (
  VOID

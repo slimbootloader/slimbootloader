@@ -231,8 +231,6 @@ ApplyCfgDeltaToFspUpd (
   UI_CFG_DELTA_ENTRY *Entry;
   UINT8               Idx;
   UINT32              Applied;
-  UINT32              Matched;
-  UINT32              SkipOutOfBounds;
 
   if (UpdPtr == NULL) {
     return;
@@ -265,8 +263,6 @@ ApplyCfgDeltaToFspUpd (
   }
 
   Applied = 0;
-  Matched = 0;
-  SkipOutOfBounds = 0;
   for (Idx = 0; Idx < DeltaHdr->EntryCount && Idx < UI_CFG_DELTA_MAX_ENTRIES; Idx++) {
     Entry = &DeltaHdr->Entries[Idx];
 
@@ -274,10 +270,7 @@ ApplyCfgDeltaToFspUpd (
       continue;
     }
 
-    Matched++;
-
     if ((((UINT32)Entry->BitOffset + Entry->BitLength) > (UpdSize * 8U)) || (Entry->BitLength == 0)) {
-      SkipOutOfBounds++;
       DEBUG ((DEBUG_WARN, "CfgDelta[FSP]: Skip idx=%u tag=0x%03X out of bounds: bitOff=%u bitLen=%u updSize=0x%X\n",
               Idx, BaseTag, Entry->BitOffset, Entry->BitLength, UpdSize));
       continue;
@@ -313,9 +306,6 @@ ApplyCfgDeltaToConfigData (
   UINT32              TagSize;
   UINT32              Applied;
   UINT8               Idx;
-  UINT32              SkipFspTag;
-  UINT32              SkipTagNotFound;
-  UINT32              SkipOutOfBounds;
 
   DataSize = sizeof (DeltaBuf);
   Status = GetVariable (UI_CFG_DELTA_VAR_NAME, &gUiSetupCfgDeltaGuid, NULL, &DataSize, DeltaBuf);
@@ -343,21 +333,16 @@ ApplyCfgDeltaToConfigData (
   }
 
   Applied = 0;
-  SkipFspTag = 0;
-  SkipTagNotFound = 0;
-  SkipOutOfBounds = 0;
   for (Idx = 0; Idx < DeltaHdr->EntryCount && Idx < UI_CFG_DELTA_MAX_ENTRIES; Idx++) {
     Entry = &DeltaHdr->Entries[Idx];
 
     // FSP UPD tags are handled in dedicated FSP init flow.
     if ((Entry->TagId == CDATA_FSPM_UPD_TAG) || (Entry->TagId == CDATA_FSPS_UPD_TAG)) {
-      SkipFspTag++;
       continue;
     }
 
     CfgHdr = FindConfigHdrByTag ((UINT32)Entry->TagId);
     if (CfgHdr == NULL) {
-      SkipTagNotFound++;
       DEBUG ((DEBUG_WARN, "CfgDelta[CFG]: Skip idx=%u tag=0x%03X (tag not found in CFGDATA)\n", Idx, Entry->TagId));
       continue;
     }
@@ -365,7 +350,6 @@ ApplyCfgDeltaToConfigData (
     TagData = (UINT8 *)CfgHdr + sizeof (CDATA_HEADER) + sizeof (CDATA_COND) * CfgHdr->ConditionNum;
     TagSize = (CfgHdr->Length << 2) - (sizeof (CDATA_HEADER) + sizeof (CDATA_COND) * CfgHdr->ConditionNum);
     if ((((UINT32)Entry->BitOffset + Entry->BitLength) > (TagSize * 8U)) || (Entry->BitLength == 0)) {
-          SkipOutOfBounds++;
           DEBUG ((DEBUG_WARN, "CfgDelta[CFG]: Skip idx=%u tag=0x%03X out of bounds: bitOff=%u bitLen=%u tagSize=0x%X\n",
             Idx, Entry->TagId, Entry->BitOffset, Entry->BitLength, TagSize));
       continue;

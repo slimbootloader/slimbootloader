@@ -59,7 +59,7 @@ EFI_ACPI_DMAR_DESCRIPTION_TABLE DmarTable = {
 //
 // Dummy function required for build tools
 //
-#if defined (__GNUC__)
+#if defined (__GNUC__) || defined (__clang__)
 VOID*
 ReferenceAcpiTable (
   VOID
