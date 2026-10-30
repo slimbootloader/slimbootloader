@@ -56,6 +56,10 @@ CallFspMemoryInit (
 
   ASSERT (FspHeader->Signature == FSP_INFO_HEADER_SIGNATURE);
   ASSERT (FspHeader->ImageBase == FspmBase);
+  if (FspHeader->Signature != FSP_INFO_HEADER_SIGNATURE) {
+    DEBUG ((DEBUG_ERROR, "Invalid FSP-M header signature at 0x%08X\n", FspmBase));
+    return EFI_DEVICE_ERROR;
+  }
 
   FspmUpdPtr = AllocatePool(FspHeader->CfgRegionSize);
   if (FspmUpdPtr == NULL) {
