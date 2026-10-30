@@ -39,12 +39,14 @@ ASM_PFX(InternalLongJump):
 
     mov     edx, [esp + 4]         ; edx = JumpBuffer
     mov     edx, [edx + 24]        ; edx = target SSP
-    rdsspd  eax
+    ; rdsspd  eax
+    db 0xF3, 0x0F, 0x1E, 0xC8
     sub     edx, eax               ; edx = delta
     mov     eax, edx               ; eax = delta
 
     shr     eax, 2                 ; eax = delta/sizeof(UINT32)
-    incsspd eax
+    ; incsspd eax
+    db 0xF3, 0x0F, 0xAE, 0xE8
 
 CetDone:
 

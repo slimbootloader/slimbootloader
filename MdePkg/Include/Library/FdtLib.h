@@ -18,7 +18,8 @@
 
 **/
 
-#pragma once
+#ifndef FDT_LIB_H_
+#define FDT_LIB_H_
 
 /* Error codes: informative error codes */
 #define FDT_ERR_NOTFOUND  1
@@ -1057,3 +1058,5 @@ CONST CHAR8 *
 FdtStrerror (
   IN INT32  ErrVal
   );
+
+#endif /* FDT_LIB_H_ */

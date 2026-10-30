@@ -11,8 +11,9 @@
 
 **/
 
-#pragma once
-
+#ifndef _UEFI_NVM_EXPRESS_PASS_THRU_H_
+#define _UEFI_NVM_EXPRESS_PASS_THRU_H_
+#include <Protocol/DevicePath.h>
 #define EFI_NVM_EXPRESS_PASS_THRU_PROTOCOL_GUID \
   { \
     0x52c78312, 0x8edc, 0x4233, { 0x98, 0xf2, 0x1a, 0x1a, 0xa5, 0xe3, 0x88, 0xa5 } \
@@ -278,3 +279,5 @@ struct _EFI_NVM_EXPRESS_PASS_THRU_PROTOCOL {
 };
 
 extern EFI_GUID  gEfiNvmExpressPassThruProtocolGuid;
+
+#endif

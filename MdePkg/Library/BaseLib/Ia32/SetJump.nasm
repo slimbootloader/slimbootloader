@@ -46,8 +46,10 @@ ASM_PFX(SetJump):
     jnc     CetDone
 
     mov     eax, 1
-    incsspd eax                    ; to read original SSP
-    rdsspd  eax
+    ; incsspd eax                    ; to read original SSP
+    db 0xF3, 0x0F, 0xAE, 0xE8
+    ; rdsspd  eax
+    db 0xF3, 0x0F, 0x1E, 0xC8
     mov     [edx + 0x24], eax      ; save SSP
 
 CetDone:

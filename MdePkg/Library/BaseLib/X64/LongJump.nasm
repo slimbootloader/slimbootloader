@@ -41,12 +41,14 @@ ASM_PFX(InternalLongJump):
     push    rdx                          ; save rdx
 
     mov     rdx, [rcx + 0xF8]            ; rdx = target SSP
-    rdsspq  rax
+    ; rdsspq  rax
+    db 0xF3, 0x48, 0x0F, 0x1E, 0xC8
     sub     rdx, rax                     ; rdx = delta
     mov     rax, rdx                     ; rax = delta
 
     shr     rax, 3                       ; rax = delta/sizeof(UINT64)
-    incsspq rax
+    ; incsspq rax
+    db 0xF3, 0x48, 0x0F, 0xAE, 0xE8
 
     pop     rdx                          ; restore rdx
 CetDone:
