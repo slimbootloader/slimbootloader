@@ -275,6 +275,19 @@ LoadBootImages (
   );
 
 /**
+  Decodes the description as per the provided Id.
+
+  @param[in]    PerfId  Id number to decode the string.
+
+  @retval   String corresponding to the Id.
+**/
+CHAR8 *
+EFIAPI
+LinuxPerfIdToStr (
+  IN UINT32  PerfId
+  );
+
+/**
   Wrapper function to print LinuxLoader Measure Point information.
 **/
 VOID

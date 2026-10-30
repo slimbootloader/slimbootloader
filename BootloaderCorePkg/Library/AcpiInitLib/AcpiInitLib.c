@@ -31,7 +31,8 @@
 
 STATIC
 CONST EFI_ACPI_COMMON_HEADER *mAcpiTblTmpl[] = {
-  (EFI_ACPI_COMMON_HEADER *)&mBootGraphicsResourceTableTemplate
+  (EFI_ACPI_COMMON_HEADER *)&mBootGraphicsResourceTableTemplate,
+  (EFI_ACPI_COMMON_HEADER *)&mFpdtTemplate,
 };
 
 CONST EFI_ACPI_5_0_ROOT_SYSTEM_DESCRIPTION_POINTER RsdpTmp = {
@@ -687,7 +688,11 @@ AcpiInit (
             );
         }
 
-        Current += ((EFI_ACPI_COMMON_HEADER *)Current)->Length;
+        if (((EFI_ACPI_COMMON_HEADER *)Current)->Signature == EFI_ACPI_5_0_FIRMWARE_PERFORMANCE_DATA_TABLE_SIGNATURE) {
+          Current += GetFpdtTablesSize ();
+        } else {
+          Current += ((EFI_ACPI_COMMON_HEADER *)Current)->Length;
+        }
       } else {
         DEBUG ((DEBUG_INFO, "Not adding ACPI table \n"));
         Current = Previous;
@@ -741,6 +746,7 @@ AcpiInit (
   PlatformService = (PLATFORM_SERVICE *) GetServiceBySignature (PLATFORM_SERVICE_SIGNATURE);
   if (PlatformService != NULL) {
     PlatformService->AcpiTableUpdate = AcpiTableUpdate;
+    PlatformService->UpdatePerformance = UpdateFpdtSblTable;
   }
 
   return EFI_SUCCESS;
