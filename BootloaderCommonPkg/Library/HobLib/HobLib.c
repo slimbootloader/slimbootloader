@@ -57,6 +57,9 @@ GetNextHob (
   EFI_PEI_HOB_POINTERS  Hob;
 
   ASSERT (HobStart != NULL);
+  if (HobStart == NULL) {
+    return NULL;
+  }
 
   Hob.Raw = (UINT8 *) HobStart;
   //
