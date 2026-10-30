@@ -12,18 +12,15 @@ HOST_ARCH = IA32
 
 LIBRARIES = Common
 APPLICATIONS = \
-  VfrCompile \
-  BrotliCompress \
-  EfiRom \
+  Lz4Compress \
   GenCrc32 \
   GenFfs \
   GenFv \
   GenFw \
   GenSec \
   LzmaCompress \
-  TianoCompress \
-  VolInfo \
-  DevicePath
+  Split \
+  VolInfo
 
 all: libs apps install
 

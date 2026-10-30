@@ -410,20 +410,8 @@ class GitDiffCheck:
                 self.state = PRE_PATCH
                 self.filename = line[13:].split(' ', 1)[0]
                 self.is_newfile = False
-                self.force_crlf = True
+                self.force_lf = True
                 self.force_notabs = True
-                if self.filename.endswith('.rtf'):
-                    self.force_crlf = False
-                    self.force_notabs = False
-                if self.filename.endswith('.sh') or \
-                    self.filename.startswith('BaseTools/BinWrappers/PosixLike/') or \
-                    self.filename == 'BaseTools/BuildEnv':
-                    #
-                    # Do not enforce CR/LF line endings for linux shell scripts.
-                    # Some linux shell scripts don't end with the ".sh" extension,
-                    # they are identified by their path.
-                    #
-                    self.force_crlf = False
                 if self.filename == '.gitmodules' or \
                    self.filename == 'BaseTools/Conf/diff.order':
                     #
@@ -431,7 +419,6 @@ class GitDiffCheck:
                     # use tabs and LF line endings.  Do not enforce no tabs and
                     # do not enforce CR/LF line endings.
                     #
-                    self.force_crlf = False
                     self.force_notabs = False
                 if os.path.basename(self.filename) == 'GNUmakefile' or \
                    os.path.basename(self.filename).lower() == 'makefile' or \
@@ -456,7 +443,7 @@ class GitDiffCheck:
                 #
                 # New submodule.  Do not enforce CR/LF line endings
                 #
-                self.force_crlf = False
+                self.force_lf = False
             else:
                 ok = False
                 self.is_newfile = self.newfile_prefix_re.match(line)
@@ -476,7 +463,9 @@ class GitDiffCheck:
             elif line.startswith('\r\n'):
                 pass
             elif line.startswith(r'\ No newline '):
-                pass
+                # report error when matches to last line
+                if self.line_num == len(self.lines)-1:
+                    self.error('No newline at end of file %s' % (self.filename))
             elif not line.startswith(' '):
                 self.format_error("unexpected patch line")
             self.line_num += 1
@@ -519,7 +508,28 @@ class GitDiffCheck:
                    ''',
                    re.VERBOSE)
 
+    skip_check_file_types = (
+        '.patch',
+        '.pem',
+        '.makefile',
+        '.lib',
+        '.txt',
+        '.ini',
+        '.app',
+        '.common',
+        '.template',
+        '.rule',
+        'Makefile',
+        'GNUmakefile',
+        )
+
     def check_added_line(self, line):
+        f_name, f_ext = os.path.splitext(self.filename)
+        if f_ext in self.skip_check_file_types:
+            return
+        if f_ext == '' and (os.path.basename(f_name) in self.skip_check_file_types):
+            return
+
         eol = ''
         for an_eol in self.line_endings:
             if line.endswith(an_eol):
@@ -528,8 +538,8 @@ class GitDiffCheck:
 
         stripped = line.rstrip()
 
-        if self.force_crlf and eol != '\r\n' and (line.find('Subproject commit') == -1):
-            self.added_line_error('Line ending (%s) is not CRLF' % repr(eol),
+        if self.force_lf and eol != '\n' and (line.find('Subproject commit') == -1):
+            self.added_line_error('Line ending (%s) is not LF' % repr(eol),
                                   line)
         if self.force_notabs and '\t' in line:
             self.added_line_error('Tab character used', line)
@@ -542,11 +552,11 @@ class GitDiffCheck:
                                   'but DEBUG_' + mo.group(1) +
                                   ' is now recommended', line)
 
-        rp_file = os.path.realpath(self.filename)
-        rp_script = os.path.realpath(__file__)
-        if line.find('__FUNCTION__') != -1 and rp_file != rp_script:
-            self.added_line_error('__FUNCTION__ was used, but __func__ '
-                                  'is now recommended', line)
+        #rp_file = os.path.realpath(self.filename)
+        #rp_script = os.path.realpath(__file__)
+        #if line.find('__FUNCTION__') != -1 and rp_file != rp_script:
+        #    self.added_line_error('__FUNCTION__ was used, but __func__ '
+        #                          'is now recommended', line)
 
     split_diff_re = re.compile(r'''
                                    (?P<cmd>

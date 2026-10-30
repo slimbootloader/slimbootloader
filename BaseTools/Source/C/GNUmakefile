@@ -23,18 +23,15 @@ all: makerootdir subdirs
 
 LIBRARIES = Common
 APPLICATIONS = \
-  BrotliCompress \
-  VfrCompile \
-  EfiRom \
+  Lz4Compress \
   GenFfs \
   GenFv \
   GenFw \
   GenSec \
   GenCrc32 \
   LzmaCompress \
-  TianoCompress \
-  VolInfo \
-  DevicePath
+  Split \
+  VolInfo
 
 SUBDIRS := $(LIBRARIES) $(APPLICATIONS)
 

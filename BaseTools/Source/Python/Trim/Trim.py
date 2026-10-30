@@ -111,7 +111,11 @@ def TrimPreprocessedFile(Source, Target, ConvertHex, TrimLong, FileFormat):
                     # #line statement replacing #line with NASM syntax %line to
                     # allow source debug to resolve to the NASM source file.
                     if FileFormat == 'NASM':
-                        NewLines.append(Line.replace('#line', '%line', 1))
+                        # NASM 2.14 treats quotes as part of the filename while
+                        # generating debug hashes. NASM accepts spaces in the
+                        # unquoted filename, so this works with 2.14 and newer.
+                        NasmFile = InjectedFile.replace('\\', '/')
+                        NewLines.append("%%line %d %s\n" % (LineNumber, NasmFile))
             LineControlDirectiveFound = True
             continue
         elif PreprocessedFile == "" or InjectedFile != PreprocessedFile:
