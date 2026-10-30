@@ -180,3 +180,84 @@ InitializeService (
   RegisterService ((VOID *)&mPlatformService);
 
 }
+
+/**
+  Allocate AddressSanitizer shadow memory for a region from the Stage2 pool.
+
+  The pool cannot fail an allocation without halting, so only use part of what is free.
+
+  @param[in] Size     Region size in bytes.
+
+  @retval    Shadow buffer, or NULL if the pool is too small.
+
+**/
+STATIC
+VOID *
+AllocateAsanShadow (
+  IN UINTN  Size
+  )
+{
+  LOADER_GLOBAL_DATA  *LdrGlobal;
+  UINTN               Pages;
+
+  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
+  Pages     = EFI_SIZE_TO_PAGES (AsanGetShadowSize (Size));
+  if (EFI_PAGES_TO_SIZE (Pages) > (LdrGlobal->MemPoolCurrTop - LdrGlobal->MemPoolCurrBottom) / 2) {
+    DEBUG ((DEBUG_WARN, "ASAN: Stage2 pool too small for 0x%x bytes of shadow, region not tracked\n", EFI_PAGES_TO_SIZE (Pages)));
+    return NULL;
+  }
+
+  return AllocatePages (Pages);
+}
+
+/**
+  Track the Stage2 heap, stack and globals with AddressSanitizer and publish the
+  runtime as a service, when AddressSanitizer is enabled.
+
+**/
+VOID
+InitializeAsan (
+  VOID
+  )
+{
+  LOADER_GLOBAL_DATA          *LdrGlobal;
+  EFI_HOB_HANDOFF_INFO_TABLE  *HandOffHob;
+  VOID                        *Shadow;
+  UINTN                       Base;
+  UINTN                       Size;
+
+  if (AsanGetShadowSize (EFI_PAGE_SIZE) == 0) {
+    return;
+  }
+
+  LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
+
+  // Earlier allocations have no redzones, so the pool starts addressable; AllocatePool adds redzones from now on.
+  // LdrGlobal is inside the pool, so read it before AsanInitialize () poisons the pool.
+  Base   = LdrGlobal->MemPoolStart;
+  Size   = LdrGlobal->MemPoolEnd - LdrGlobal->MemPoolStart;
+  Shadow = AllocateAsanShadow (Size);
+  if (Shadow != NULL) {
+    AsanInitialize (Base, Size, Shadow);
+    AsanUnpoison ((VOID *)Base, Size);
+  }
+
+  // The HOB list grows up from the bottom of the same range.
+  HandOffHob = (EFI_HOB_HANDOFF_INFO_TABLE *)LdrGlobal->LdrHobList;
+  Base       = (UINTN)HandOffHob->EfiMemoryBottom;
+  Size       = (UINTN)(HandOffHob->EfiMemoryTop - HandOffHob->EfiMemoryBottom);
+  Shadow     = AllocateAsanShadow (Size);
+  if (Shadow != NULL) {
+    AsanTrackStack (Base, Size, Shadow);
+  }
+
+  Size   = AsanGetGlobalsRange (&Base);
+  Shadow = (Size != 0) ? AllocateAsanShadow (Size) : NULL;
+  if (Shadow != NULL) {
+    AsanTrackGlobals (Base, Size, Shadow);
+  }
+
+  if (EFI_ERROR (RegisterService (AsanGetService ()))) {
+    DEBUG ((DEBUG_WARN, "ASAN: no free service slot, payloads use their own runtime\n"));
+  }
+}

@@ -40,6 +40,7 @@
   DebugLogBufferLib
   DebugPrintErrorLevelLib
   PagingLib
+  AsanLib
 
 [Guids]
   gLoaderLibraryDataGuid

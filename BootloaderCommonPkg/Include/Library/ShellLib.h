@@ -60,4 +60,18 @@ ShellCommandRegister (
   IN  CONST SHELL_COMMAND   *ShellCommand
   );
 
+/**
+  Add a command to be registered each time the shell starts.
+
+  @param[in]  ShellCommand A Shell Command to be added
+
+  @retval EFI_SUCCESS
+  @retval EFI_OUT_OF_RESOURCES
+**/
+EFI_STATUS
+EFIAPI
+ShellAddCommand (
+  IN  CONST SHELL_COMMAND   *ShellCommand
+  );
+
 #endif

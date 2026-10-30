@@ -12,9 +12,11 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
+#include <Library/AsanLib.h>
 #include <BootloaderCoreGlobal.h>
 
 #define   POOL_MIN_ALIGNMENT    0x10
+#define   POOL_ASAN_REDZONE     0x20
 
 /**
   Update the Memory pool top address.
@@ -83,12 +85,23 @@ AllocatePool (
 {
   LOADER_GLOBAL_DATA  *LdrGlobal;
   UINT32               Top;
+  UINT32               OldTop;
+  UINT32               RedZone;
+
+  // The pool grows down, so a redzone above each buffer separates it from the previous one.
+  RedZone = ((AllocationSize != 0) && (AsanGetShadowSize (POOL_MIN_ALIGNMENT) != 0)) ? POOL_ASAN_REDZONE : 0;
 
   LdrGlobal = GetLoaderGlobalDataPointer();
-  Top  = LdrGlobal->MemPoolCurrTop;
-  Top -= (UINT32)AllocationSize;
+  OldTop = LdrGlobal->MemPoolCurrTop;
+  Top  = OldTop;
+  Top -= (UINT32)AllocationSize + RedZone;
   Top  = ALIGN_DOWN (Top, POOL_MIN_ALIGNMENT);
   InternalUpdateMemPoolTop (Top);
+  if (RedZone != 0) {
+    AsanUnpoison ((VOID *)(UINTN)Top, AllocationSize);
+    AsanPoison ((UINT8 *)(UINTN)Top + AllocationSize, OldTop - Top - AllocationSize, ASAN_SHADOW_HEAP_REDZONE);
+  }
+
   return (VOID *)(UINTN)Top;
 }
 

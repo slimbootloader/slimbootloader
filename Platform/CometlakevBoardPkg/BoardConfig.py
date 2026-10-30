@@ -99,6 +99,11 @@ class Board(BaseBoard):
         self.VARIABLE_SIZE        = 0x00002000
         self.SBLRSVD_SIZE         = 0x00001000
         self.FWUPDATE_SIZE        = 0x00020000 if self.ENABLE_FWU else 0
+        if self.ENABLE_ASAN:
+            # ASAN instrumentation, including shared Stage1 libraries, grows the compressed payloads
+            self.PAYLOAD_SIZE    += 0x2C000
+            if self.ENABLE_FWU:
+                self.FWUPDATE_SIZE += 0x0C000
 
         self.MAX_MEMORY_MAP_ENTRY_NUM = 0x30
 
@@ -107,6 +112,9 @@ class Board(BaseBoard):
         self.TOP_SWAP_SIZE        = 0x040000
         self.REDUNDANT_SIZE  = self.UCODE_SIZE + self.STAGE2_SIZE + self.STAGE1B_SIZE + self.FWUPDATE_SIZE + self.CFGDATA_SIZE + self.KEYHASH_SIZE
         self.NON_REDUNDANT_SIZE   = 0x2AF000
+        if self.ENABLE_ASAN and self.ENABLE_FWU:
+            # Keep SLIMBOOTLOADER_SIZE unchanged, NON_REDUNDANT gives up the FWUPDATE growth of both REDUNDANT copies
+            self.NON_REDUNDANT_SIZE -= 2 * 0x0C000
         self.NON_VOLATILE_SIZE    = 0x001000
         self.SLIMBOOTLOADER_SIZE  = (self.TOP_SWAP_SIZE + self.REDUNDANT_SIZE) * 2 + \
             self.NON_REDUNDANT_SIZE + self.NON_VOLATILE_SIZE
@@ -164,6 +172,7 @@ class Board(BaseBoard):
         if self.BUILD_CSME_UPDATE_DRIVER:
             common_libs.append ('MeFwUpdateLib|Silicon/$(SILICON_PKG_NAME)/Library/MeFwUpdateLib/MeFwUpdateLib.inf')
         dsc['LibraryClasses.%s' % self.BUILD_ARCH] = common_libs
+        self.AddPlatformDscAsanLibraries(dsc)
         return dsc
 
     def GetKeyHashList (self):
@@ -263,4 +272,3 @@ class Board(BaseBoard):
                 ])
 
         return img_list
-

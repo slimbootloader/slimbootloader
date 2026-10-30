@@ -36,4 +36,5 @@
 [LibraryClasses]
   DebugLib
   BaseMemoryLib
+  AsanLib
 

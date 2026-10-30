@@ -540,6 +540,8 @@ SecStartup (
     (UINTN)PcdGet32 (PcdLoaderHobStackSize)
     );
 
+  InitializeAsan ();
+
   InitializeDebugAgent (DEBUG_AGENT_INIT_DXE_LOAD, NULL, NULL);
 
   // Call FspSiliconInit

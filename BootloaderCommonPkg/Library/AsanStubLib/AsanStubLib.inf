@@ -1,0 +1,30 @@
+## @file
+#  AddressSanitizer callbacks and checked CopyMem/SetMem for every ASAN module.
+#  Without a connected runtime, memory operations still execute unchecked.
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = AsanStubLib
+  FILE_GUID                      = 6F0C2D8E-3B41-4E6A-9C55-1D7A2B8E4F93
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = NULL
+
+[Sources]
+  AsanStub.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+
+[LibraryClasses]
+  BaseMemoryLib
+
+[BuildOptions]
+  # The report backtrace walks frame pointers through these callbacks.
+  GCC:*_CLANGPDB_*_CC_FLAGS = -fno-omit-frame-pointer

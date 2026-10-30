@@ -38,6 +38,7 @@
   PreOsSupport.c
   ModService.c
   ExtraModSupport.c
+  AsanTest.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -84,6 +85,7 @@
   SynchronizationLib
   MpServiceLib
   ConsoleInLib
+  AsanLib
 
 [Guids]
   gOsConfigDataGuid

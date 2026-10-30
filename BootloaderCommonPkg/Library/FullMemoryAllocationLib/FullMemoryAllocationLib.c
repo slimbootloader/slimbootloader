@@ -26,14 +26,26 @@ AddMemoryResourceRange (
   )
 {
   UINTN                   Index;
+  UINTN                   Pages;
+  UINTN                   ShadowPages;
 
   CoreInitializePool ();
   CoreInitializePages ();
 
   for (Index = 0; (Index < Count) && (MemoryRanges[Index].Type != EfiMaxMemoryType); Index++) {
-    if (MemoryRanges[Index].NumberOfPages > 0) {
+    Pages = MemoryRanges[Index].NumberOfPages;
+    if (Pages > 0) {
+      if (MemoryRanges[Index].Type == EfiBootServicesData) {
+        // AddressSanitizer shadow, if enabled, is carved from the top of the heap.
+        ShadowPages = EFI_SIZE_TO_PAGES (AsanGetShadowSize (EFI_PAGES_TO_SIZE (Pages)));
+        if ((ShadowPages > 0) && (ShadowPages < Pages)) {
+          Pages -= ShadowPages;
+          AsanInitialize ((UINTN)MemoryRanges[Index].BaseAddress, EFI_PAGES_TO_SIZE (Pages),
+                          (VOID *)(UINTN)(MemoryRanges[Index].BaseAddress + EFI_PAGES_TO_SIZE (Pages)));
+        }
+      }
       CoreAddMemoryDescriptor (MemoryRanges[Index].Type, MemoryRanges[Index].BaseAddress,
-                               MemoryRanges[Index].NumberOfPages, MEMORY_ATTRIBUTE_DEFAULT);
+                               Pages, MEMORY_ATTRIBUTE_DEFAULT);
     }
   }
 }
