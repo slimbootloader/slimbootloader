@@ -122,6 +122,7 @@
   gPlatformModuleTokenSpaceGuid.PcdAcpiTableTemplatePtr
   gPlatformModuleTokenSpaceGuid.PcdCpuMaxLogicalProcessorNumber
   gPlatformCommonLibTokenSpaceGuid.PcdCpuX2ApicEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
 
 [FixedPcd]
   gPlatformPantherLakeTokenSpaceGuid.PcdWclSupport
