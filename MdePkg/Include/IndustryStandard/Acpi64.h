@@ -2,15 +2,35 @@
   ACPI 6.4 definitions from the ACPI Specification Revision 6.4 Jan, 2021.
 
   Copyright (c) 2017 - 2022, Intel Corporation. All rights reserved.<BR>
-  Copyright (c) 2019 - 2021, ARM Ltd. All rights reserved.<BR>
+  Copyright (c) 2019 - 2026, ARM Ltd. All rights reserved.<BR>
+  Copyright (C) 2025, Advanced Micro Devices, Inc. All rights reserved.
 
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
-#ifndef ACPI_6_4_H_
-#define ACPI_6_4_H_
+#pragma once
 
 #include <IndustryStandard/Acpi63.h>
+
+///
+/// _CSD Revision for ACPI 6.4
+///
+#define EFI_ACPI_6_4_AML_CSD_REVISION  0
+
+///
+/// _CSD NumEntries for ACPI 6.4
+///
+#define EFI_ACPI_6_4_AML_CSD_NUM_ENTRIES  6
+
+///
+/// _PSD Revision for ACPI 6.4
+///
+#define EFI_ACPI_6_4_AML_PSD_REVISION  0
+
+///
+/// _CPC Revision for ACPI 6.4
+///
+#define EFI_ACPI_6_4_AML_CPC_REVISION  3
 
 //
 // Ensure proper structure formats
@@ -2130,6 +2150,40 @@ typedef struct {
 #define EFI_ACPI_6_4_HMAT_TYPE_MEMORY_SIDE_CACHE_INFO                      0x02
 
 ///
+/// HMAT Memory Proximity Domain Attributes Flags
+///
+#define EFI_ACPI_6_4_HMAT_PROXIMITY_DOMAIN_INITIATOR_VALID  1
+
+///
+/// HMAT System Locality Latency and Bandwidth Info Flags
+///
+#define EFI_ACPI_6_4_HMAT_MEMORY_HIERARCHY_MEMORY    0
+#define EFI_ACPI_6_4_HMAT_MEMORY_HIERARCHY_L1_CACHE  1
+#define EFI_ACPI_6_4_HMAT_MEMORY_HIERARCHY_L2_CACHE  2
+#define EFI_ACPI_6_4_HMAT_MEMORY_HIERARCHY_L3_CACHE  3
+
+#define EFI_ACPI_6_4_HMAT_ACCESS_ATTRIBUTES_MIN_TRANSFER_SIZE  0x10
+#define EFI_ACPI_6_4_HMAT_ACCESS_ATTRIBUTES_NON_SEQUENTIAL     0x20
+
+///
+/// HMAT System Locality Latency and Bandwidth Info Data Type
+///
+/// For Memory Hierarchy == 0
+#define EFI_ACPI_6_4_HMAT_SSLBI_DATA_TYPE_ACCESS_LATENCY    0
+#define EFI_ACPI_6_4_HMAT_SSLBI_DATA_TYPE_READ_LATENCY      1
+#define EFI_ACPI_6_4_HMAT_SSLBI_DATA_TYPE_WRITE_LATENCY     2
+#define EFI_ACPI_6_4_HMAT_SSLBI_DATA_TYPE_ACCESS_BANDWIDTH  3
+#define EFI_ACPI_6_4_HMAT_SSLBI_DATA_TYPE_READ_BANDWIDTH    4
+#define EFI_ACPI_6_4_HMAT_SSLBI_DATA_TYPE_WRITE_BANDWIDTH   5
+/// For Memory Hierarchy == 1, 2, or 3
+#define EFI_ACPI_6_4_HMAT_SSLBI_DATA_TYPE_HIT_ACCESS_LATENCY    0
+#define EFI_ACPI_6_4_HMAT_SSLBI_DATA_TYPE_HIT_READ_LATENCY      1
+#define EFI_ACPI_6_4_HMAT_SSLBI_DATA_TYPE_HIT_WRITE_LATENCY     2
+#define EFI_ACPI_6_4_HMAT_SSLBI_DATA_TYPE_HIT_ACCESS_BANDWIDTH  3
+#define EFI_ACPI_6_4_HMAT_SSLBI_DATA_TYPE_HIT_READ_BANDWIDTH    4
+#define EFI_ACPI_6_4_HMAT_SSLBI_DATA_TYPE_HIT_WRITE_BANDWIDTH   5
+
+///
 /// HMAT Structure Header
 ///
 typedef struct {
@@ -2325,6 +2379,8 @@ typedef struct {
 #define EFI_ACPI_6_4_EINJ_EXECUTE_OPERATION               0x05
 #define EFI_ACPI_6_4_EINJ_CHECK_BUSY_STATUS               0x06
 #define EFI_ACPI_6_4_EINJ_GET_COMMAND_STATUS              0x07
+#define EFI_ACPI_6_4_EINJ_SET_ERROR_TYPE_WITH_ADDRESS     0x08
+#define EFI_ACPI_6_4_EINJ_GET_EXECUTE_OPERATION_TIMINGS   0x09
 #define EFI_ACPI_6_4_EINJ_TRIGGER_ERROR                   0xFF
 
 ///
@@ -2386,6 +2442,31 @@ typedef struct {
   UINT32    TableSize;
   UINT32    EntryCount;
 } EFI_ACPI_6_4_EINJ_TRIGGER_ACTION_TABLE;
+
+///
+/// EINJ Vendor Error Type Extension
+///
+typedef struct {
+  UINT32    Length;
+  UINT32    SBDF;
+  UINT16    VendorID;
+  UINT16    DeviceID;
+  UINT8     RevID;
+  UINT8     Reserved[3];
+} EFI_ACPI_6_4_VENDOR_ERROR_TYPE_EXTENSION_STRUCTURE;
+
+///
+/// EINJ Set Error Type With Address
+///
+typedef struct {
+  UINT32    ErrorType;
+  UINT32    VendorStructureOffset;
+  UINT32    Flags;
+  UINT32    ProcessorId;
+  UINT64    MemAddr;
+  UINT64    MemAddrRange;
+  UINT32    PcieSBDF;
+} EFI_ACPI_6_4_SET_ERROR_TYPE_WITH_ADDRESS;
 
 ///
 /// Platform Communications Channel Table (PCCT)
@@ -2804,7 +2885,7 @@ typedef struct {
   UINT8     Reserved[3];
   UINT32    RecordCount;
   // UINT8   PhatVersionElement[];
-} EFI_ACPI_6_4_PHAT_FIRMWARE_VERISON_DATA_RECORD;
+} EFI_ACPI_6_4_PHAT_FIRMWARE_VERSION_DATA_RECORD;
 
 #define EFI_ACPI_6_4_PHAT_FIRMWARE_VERSION_DATA_RECORD_REVISION  0x01
 
@@ -2832,6 +2913,144 @@ typedef struct {
 #define EFI_ACPI_6_4_PHAT_FIRMWARE_HEALTH_DATA_RECORD_NO_ERRORS_FOUND  0x01
 #define EFI_ACPI_6_4_PHAT_FIRMWARE_HEALTH_DATA_RECORD_UNKNOWN          0x02
 #define EFI_ACPI_6_4_PHAT_FIRMWARE_HEALTH_DATA_RECORD_ADVISORY         0x03
+
+///
+/// CEDT Table Revision
+///
+#define EFI_ACPI_6_4_CEDT_CXL_EARLY_DISCOVERY_TABLE_REVISION_01  0x01
+
+///
+/// CEDT Structure Type
+///
+#define EFI_ACPI_6_4_CEDT_STRUCTURE_TYPE_CXL_HOST_BRIDGE_STRUCTURE                   0x00
+#define EFI_ACPI_6_4_CEDT_STRUCTURE_TYPE_CXL_FIXED_MEMORY_WINDOW_STRUCTURE           0x01
+#define EFI_ACPI_6_4_CEDT_STRUCTURE_TYPE_CXL_XOR_INTERLEAVE_MATH_STRUCTURE           0x02
+#define EFI_ACPI_6_4_CEDT_STRUCTURE_TYPE_RCEC_DOWNSTREAM_PORT_ASSOCIATION_STRUCTURE  0x03
+
+///
+/// CEDT CXL Host Bridge Structure
+///
+typedef struct {
+  UINT8     Type;  // Set to EFI_ACPI_6_4_CEDT_STRUCTURE_TYPE_CXL_HOST_BRIDGE_STRUCTURE
+  UINT8     Reserved0;
+  UINT16    RecordLength;
+  UINT32    Uid;
+  UINT32    CxlVersion;
+  UINT32    Reserved1;
+  UINT64    Base;
+  UINT64    Length;
+} EFI_ACPI_6_4_CEDT_CXL_HOST_BRIDGE_STRUCTURE;
+
+///
+/// CEDT CXL Version
+///
+#define EFI_ACPI_6_4_CEDT_CXL_HOST_BRIDGE_STRUCTURE_CXL_VERSION_RCH  0x00
+#define EFI_ACPI_6_4_CEDT_CXL_HOST_BRIDGE_STRUCTURE_CXL_VERSION_HB   0x01
+
+///
+/// CEDT CXL Fixed Memory Window Structure
+///
+typedef struct {
+  UINT8     Type;  // Set to EFI_ACPI_6_4_CEDT_STRUCTURE_TYPE_CXL_FIXED_MEMORY_WINDOW_STRUCTURE
+  UINT8     Reserved0;
+  UINT16    RecordLength;
+  UINT32    Reserved1;
+  UINT64    BaseHpa;
+  UINT64    WindowSize;
+  UINT8     EncodedNumberOfInterleaveWays;
+  UINT8     InterleaveArithmetic;
+  UINT16    Reserved2;
+  UINT32    HostBridgeInterleaveGranularity;
+  UINT16    WindowRestrictions;
+  UINT16    QtgId;
+  UINT32    InterleaveTargetList[];
+} EFI_ACPI_6_4_CEDT_CXL_FIXED_MEMORY_WINDOW_STRUCTURE;
+
+///
+/// CEDT Fixed Memory Window Structure Host Bridge Interleave Ways
+///
+#define EFI_ACPI_6_4_CEDT_CXL_FIXED_MEMORY_WINDOW_STRUCTURE_INTERLEAVE_WAYS_NONE    0x0
+#define EFI_ACPI_6_4_CEDT_CXL_FIXED_MEMORY_WINDOW_STRUCTURE_INTERLEAVE_WAYS_2_WAY   0x1
+#define EFI_ACPI_6_4_CEDT_CXL_FIXED_MEMORY_WINDOW_STRUCTURE_INTERLEAVE_WAYS_4_WAY   0x2
+#define EFI_ACPI_6_4_CEDT_CXL_FIXED_MEMORY_WINDOW_STRUCTURE_INTERLEAVE_WAYS_8_WAY   0x3
+#define EFI_ACPI_6_4_CEDT_CXL_FIXED_MEMORY_WINDOW_STRUCTURE_INTERLEAVE_WAYS_16_WAY  0x4
+#define EFI_ACPI_6_4_CEDT_CXL_FIXED_MEMORY_WINDOW_STRUCTURE_INTERLEAVE_WAYS_3_WAY   0x8
+#define EFI_ACPI_6_4_CEDT_CXL_FIXED_MEMORY_WINDOW_STRUCTURE_INTERLEAVE_WAYS_6_WAY   0x9
+#define EFI_ACPI_6_4_CEDT_CXL_FIXED_MEMORY_WINDOW_STRUCTURE_INTERLEAVE_WAYS_12_WAY  0xA
+
+///
+/// CEDT Fixed Memory Window Structure Interleave Arithmetic Type
+///
+#define EFI_ACPI_6_4_CEDT_CXL_FIXED_MEMORY_WINDOW_STRUCTURE_INTERLEAVE_ARITHMETIC_STANDARD_MODULO  0x00
+#define EFI_ACPI_6_4_CEDT_CXL_FIXED_MEMORY_WINDOW_STRUCTURE_INTERLEAVE_ARITHMETIC_MODULO_XOR       0x01
+
+///
+/// CEDT Host Bridge Interleave Granularity
+///
+#define EFI_ACPI_6_4_CEDT_CXL_HOST_BRIDGE_INTERLEAVE_GRANULARITY_256B    0x0
+#define EFI_ACPI_6_4_CEDT_CXL_HOST_BRIDGE_INTERLEAVE_GRANULARITY_512B    0x1
+#define EFI_ACPI_6_4_CEDT_CXL_HOST_BRIDGE_INTERLEAVE_GRANULARITY_1024B   0x2
+#define EFI_ACPI_6_4_CEDT_CXL_HOST_BRIDGE_INTERLEAVE_GRANULARITY_2048B   0x3
+#define EFI_ACPI_6_4_CEDT_CXL_HOST_BRIDGE_INTERLEAVE_GRANULARITY_4096B   0x4
+#define EFI_ACPI_6_4_CEDT_CXL_HOST_BRIDGE_INTERLEAVE_GRANULARITY_8192B   0x5
+#define EFI_ACPI_6_4_CEDT_CXL_HOST_BRIDGE_INTERLEAVE_GRANULARITY_16384B  0x6
+
+///
+/// CEDT Fixed Memory Window Structure Window Restriction
+///
+#define EFI_ACPI_6_4_CEDT_CXL_FIXED_MEMORY_WINDOW_STRUCTURE_WINDOW_RESTRICTIONS_DEVICE_COHERENT             BIT0
+#define EFI_ACPI_6_4_CEDT_CXL_FIXED_MEMORY_WINDOW_STRUCTURE_WINDOW_RESTRICTIONS_HOST_ONLY_COHERENT          BIT1
+#define EFI_ACPI_6_4_CEDT_CXL_FIXED_MEMORY_WINDOW_STRUCTURE_WINDOW_RESTRICTIONS_VOLATILE                    BIT2
+#define EFI_ACPI_6_4_CEDT_CXL_FIXED_MEMORY_WINDOW_STRUCTURE_WINDOW_RESTRICTIONS_PERSISTENT                  BIT3
+#define EFI_ACPI_6_4_CEDT_CXL_FIXED_MEMORY_WINDOW_STRUCTURE_WINDOW_RESTRICTIONS_FIXED_DEVICE_CONFIGURATION  BIT4
+
+///
+/// CEDT CXL XOR Interleave Math Structure
+///
+typedef struct {
+  UINT8     Type;  // Set to EFI_ACPI_6_4_CEDT_STRUCTURE_TYPE_CXL_XOR_INTERLEAVE_MATH_STRUCTURE
+  UINT8     Reserved0;
+  UINT16    RecordLength;
+  UINT16    Reserved1;
+  UINT8     HostBridgeInterleaveGranularity;
+  UINT8     NumberOfBitmapEntries;
+  UINT64    XormapList[];
+} EFI_ACPI_6_4_CEDT_CXL_XOR_INTERLEAVE_MATH_STRUCTURE;
+
+///
+/// CEDT RCEC Downstream Port Association Structure
+///
+typedef struct {
+  UINT8     Type;  // Set to EFI_ACPI_6_4_CEDT_STRUCTURE_TYPE_RCEC_DOWNSTREAM_PORT_ASSOCIATION_STRUCTURE
+  UINT8     Reserved0;
+  UINT16    RecordLength;
+  UINT16    RcecSegmentNumber;
+  UINT16    RcecBusDeviceFunction;
+  UINT8     ProtocolType;
+  UINT64    BaseAddress;
+} EFI_ACPI_6_4_CEDT_RCEC_DOWNSTREAM_PORT_ASSOCIATION_STRUCTURE;
+
+///
+/// CEDT RCEC Protocol Type
+///
+#define EFI_ACPI_6_4_CEDT_RCEC_PROTOCOL_TYPE_CXL_IO        0x00
+#define EFI_ACPI_6_4_CEDT_RCEC_PROTOCOL_TYPE_CXL_CACHEMEM  0x01
+
+///
+/// CXL Early Discovery Table ("CEDT") Format
+///
+typedef struct {
+  EFI_ACPI_DESCRIPTION_HEADER    Header;
+
+  // CedtStructure is a heterogeneous, packed list of any of the following:
+  //   - CXL Host Bridge Structure
+  //   - CXL Fixed Memory Window Structure
+  //   - CXL XOR Interleave Math Structure
+  //   - RCEC Downstream Port Association Structure
+  // The structures share common Type and RecordLength fields that are used to
+  // identify the type of structure and traverse the list.
+  UINT8    CedtStructure[];
+} EFI_ACPI_6_4_CXL_EARLY_DISCOVERY_TABLE;
 
 //
 // Known table signatures
@@ -2866,6 +3085,11 @@ typedef struct {
 /// "CDIT" Component Distance Information Table
 ///
 #define EFI_ACPI_6_4_COMPONENT_DISTANCE_INFORMATION_TABLE_SIGNATURE  SIGNATURE_32('C', 'D', 'I', 'T')
+
+///
+/// "CEDT" CXL Early Discovery Table
+///
+#define EFI_ACPI_6_4_CXL_EARLY_DISCOVERY_TABLE_SIGNATURE  SIGNATURE_32('C', 'E', 'D', 'T')
 
 ///
 /// "CPEP" Corrected Platform Error Polling Table
@@ -3158,5 +3382,3 @@ typedef struct {
 #define EFI_ACPI_6_4_XEN_PROJECT_TABLE_SIGNATURE  SIGNATURE_32('X', 'E', 'N', 'V')
 
 #pragma pack()
-
-#endif

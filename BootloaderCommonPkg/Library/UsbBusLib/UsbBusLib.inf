@@ -13,7 +13,7 @@
   FILE_GUID                      = 8401A045-6F70-4505-8471-7015B40355E3
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = XhciLib
+  LIBRARY_CLASS                  = UsbBusLib
 
 
 #

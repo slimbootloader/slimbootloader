@@ -23,7 +23,7 @@
   LIBRARY_CLASS                  = UnitTestHostBaseLib|HOST_APPLICATION
 
 #
-#  VALID_ARCHITECTURES           = IA32 X64
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
 #
 
 [Sources]
@@ -63,6 +63,7 @@
   SafeString.c
   String.c
   FilePaths.c
+  Unaligned.c
   BaseLibInternals.h
   UnitTestHost.c
   UnitTestHost.h
@@ -121,7 +122,6 @@
   Ia32/InternalSwitchStack.c | MSFT
   Ia32/InternalSwitchStack.nasm | GCC
   Ia32/Non-existing.c
-  Unaligned.c
   X86MemoryFence.c | MSFT
   X86FxSave.c
   X86FxRestore.c
@@ -130,6 +130,7 @@
   X86SpeculationBarrier.c
   X86UnitTestHost.c
   IntelTdxNull.c
+  AmdSevNull.c
 
 [Sources.X64]
   X64/LongJump.nasm
@@ -159,7 +160,6 @@
   X64/ReadEflags.nasm| MSFT
   X64/Non-existing.c
   Math64.c
-  Unaligned.c
   X86MemoryFence.c | MSFT
   X86FxSave.c
   X86FxRestore.c
@@ -168,40 +168,12 @@
   X86SpeculationBarrier.c
   X64/GccInline.c | GCC
   X64/RdRand.nasm
-  ChkStkGcc.c  | GCC
   X86UnitTestHost.c
   IntelTdxNull.c
-
-[Sources.EBC]
-  Ebc/CpuBreakpoint.c
-  Ebc/SetJumpLongJump.c
-  Ebc/SwitchStack.c
-  Ebc/SpeculationBarrier.c
-  Unaligned.c
-  Math64.c
-
-[Sources.ARM]
-  Arm/InternalSwitchStack.c
-  Arm/Unaligned.c
-  Math64.c                   | MSFT
-
-  Arm/SwitchStack.asm        | MSFT
-  Arm/SetJumpLongJump.asm    | MSFT
-  Arm/CpuPause.asm           | MSFT
-  Arm/CpuBreakpoint.asm      | MSFT
-  Arm/MemoryFence.asm        | MSFT
-  Arm/SpeculationBarrier.asm | MSFT
-
-  Arm/Math64.S                  | GCC
-  Arm/SwitchStack.S             | GCC
-  Arm/SetJumpLongJump.S         | GCC
-  Arm/CpuBreakpoint.S           | GCC
-  Arm/MemoryFence.S             | GCC
-  Arm/SpeculationBarrier.S      | GCC
+  AmdSevNull.c
 
 [Sources.AARCH64]
-  Arm/InternalSwitchStack.c
-  Arm/Unaligned.c
+  AArch64/InternalSwitchStack.c
   Math64.c
 
   AArch64/MemoryFence.S             | GCC
@@ -215,6 +187,7 @@
   AArch64/SetJumpLongJump.asm       | MSFT
   AArch64/CpuBreakpoint.asm         | MSFT
   AArch64/SpeculationBarrier.asm    | MSFT
+  AArch64UnitTestHost.c
 
 [Sources.RISCV64]
   Math64.c
@@ -240,8 +213,10 @@
   gEfiMdePkgTokenSpaceGuid.PcdMaximumLinkedListLength      ## SOMETIMES_CONSUMES
   gEfiMdePkgTokenSpaceGuid.PcdMaximumAsciiStringLength     ## SOMETIMES_CONSUMES
   gEfiMdePkgTokenSpaceGuid.PcdMaximumUnicodeStringLength   ## SOMETIMES_CONSUMES
-  gEfiMdePkgTokenSpaceGuid.PcdControlFlowEnforcementPropertyMask   ## SOMETIMES_CONSUMES
   gEfiMdePkgTokenSpaceGuid.PcdSpeculationBarrierType       ## SOMETIMES_CONSUMES
+
+[FixedPcd]
+  gEfiMdePkgTokenSpaceGuid.PcdControlFlowEnforcementPropertyMask   ## SOMETIMES_CONSUMES
 
 [FeaturePcd]
   gEfiMdePkgTokenSpaceGuid.PcdVerifyNodeInList  ## CONSUMES

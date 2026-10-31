@@ -110,7 +110,6 @@ gDriverTypeMap = {
   SUP_MODULE_PEIM              : '0x6 (PEIM)',
   SUP_MODULE_DXE_CORE          : '0x5 (DXE_CORE)',
   SUP_MODULE_DXE_DRIVER        : '0x7 (DRIVER)',
-  SUP_MODULE_DXE_SAL_DRIVER    : '0x7 (DRIVER)',
   SUP_MODULE_DXE_SMM_DRIVER    : '0x7 (DRIVER)',
   SUP_MODULE_DXE_RUNTIME_DRIVER: '0x7 (DRIVER)',
   SUP_MODULE_UEFI_DRIVER       : '0x7 (DRIVER)',
@@ -1494,36 +1493,6 @@ class PcdReport(object):
             else:
                 FileWrite(File, '        %-*s = %s' % (self.MaxLen + 4, '.' + Key, Value[0]))
 
-    def StrtoHex(self, value):
-        try:
-            value = hex(int(value))
-            return value
-        except:
-            if value.startswith("L\"") and value.endswith("\""):
-                valuelist = []
-                for ch in value[2:-1]:
-                    valuelist.append(hex(ord(ch)))
-                    valuelist.append('0x00')
-                return valuelist
-            elif value.startswith("\"") and value.endswith("\""):
-                return hex(ord(value[1:-1]))
-            elif value.startswith("{") and value.endswith("}"):
-                valuelist = []
-                if ',' not in value:
-                    return value[1:-1]
-                for ch in value[1:-1].split(','):
-                    ch = ch.strip()
-                    if ch.startswith('0x') or ch.startswith('0X'):
-                        valuelist.append(ch)
-                        continue
-                    try:
-                        valuelist.append(hex(int(ch.strip())))
-                    except:
-                        pass
-                return valuelist
-            else:
-                return value
-
     def IsStructurePcd(self, PcdToken, PcdTokenSpaceGuid):
         if GlobalData.gStructurePcd and (self.Arch in GlobalData.gStructurePcd) and ((PcdToken, PcdTokenSpaceGuid) in GlobalData.gStructurePcd[self.Arch]):
             return True
@@ -1844,13 +1813,21 @@ class FdRegionReport(object):
             for Ffs in Wa.FdfProfile.FvDict[FvName.upper()].FfsList:
                 for Section in Ffs.SectionList:
                     try:
-                        for FvSection in Section.SectionList:
-                            if FvSection.FvName in self.FvList:
-                                continue
-                            self._GuidsDb[Ffs.NameGuid.upper()] = FvSection.FvName
-                            self.FvList.append(FvSection.FvName)
-                            self.FvInfo[FvSection.FvName] = ("Nested FV", 0, 0)
-                            self._DiscoverNestedFvList(FvSection.FvName, Wa)
+                        # Handle the case where an entire FFS is a FV, and not
+                        # a sub-section of the FFS.
+                        if getattr(Section, 'FvFileName', None) is None:
+                            for FvSection in Section.SectionList:
+                                if FvSection.FvName in self.FvList:
+                                    continue
+                                self._GuidsDb[Ffs.NameGuid.upper()] = FvSection.FvName
+                                self.FvList.append(FvSection.FvName)
+                                self.FvInfo[FvSection.FvName] = ("Nested FV", 0, 0)
+                                self._DiscoverNestedFvList(FvSection.FvName, Wa)
+                        else:
+                            self._GuidsDb[Ffs.NameGuid.upper()] = Section.FvFileName
+                            self.FvList.append(Section.FvName)
+                            self.FvInfo[Section.FvName] = ("Nested FV", 0, 0)
+                            self._DiscoverNestedFvList(Section.FvName, Wa)
                     except AttributeError:
                         pass
 
@@ -2379,16 +2356,21 @@ class BuildReport(object):
                         # PPI's in module
                         module_report_data["PPI"] = []
                         for data_ppi in module.PpiList.keys():
-                            module_report_data["PPI"].append({"Name": data_ppi, "Guid": module.PpiList[data_ppi]})
+                            module_report_data["PPI"].append({"Name": data_ppi, "Guid": GuidStructureStringToGuidString(module.PpiList[data_ppi])})
+
+                        # GUID's in module
+                        module_report_data["GUID"] = []
+                        for data_ppi in module.GuidList.keys():
+                            module_report_data["GUID"].append({"Name": data_ppi, "Guid": GuidStructureStringToGuidString(module.GuidList[data_ppi])})
 
                         # Protocol's in module
                         module_report_data["Protocol"] = []
                         for data_protocol in module.ProtocolList.keys():
-                            module_report_data["Protocol"].append({"Name": data_protocol, "Guid": module.ProtocolList[data_protocol]})
+                            module_report_data["Protocol"].append({"Name": data_protocol, "Guid": GuidStructureStringToGuidString(module.ProtocolList[data_protocol])})
 
                         # PCD's in module
                         module_report_data["Pcd"] = []
-                        for data_pcd in module.LibraryPcdList:
+                        for data_pcd in module.ModulePcdList + module.LibraryPcdList:
                             module_report_data["Pcd"].append({"Space": data_pcd.TokenSpaceGuidCName,
                                                               "Name": data_pcd.TokenCName,
                                                               "Value": data_pcd.TokenValue,
@@ -2416,20 +2398,27 @@ class BuildReport(object):
                                 # Generate compile command for each c file
                                 #
                                 compile_command["file"] = source.Path
-                                compile_command["directory"] = source.Dir
+                                compile_command["directory"] = module.BuildDir
                                 build_command = module.BuildRules[source.Ext].CommandList[0]
+                                destination = os.path.join (module.OutputDir, os.path.join (source.SubDir, source.BaseName + ".obj"))
                                 build_command_variables = re.findall(r"\$\((.*?)\)", build_command)
-                                for var in build_command_variables:
+                                while build_command_variables:
+                                    var = build_command_variables.pop()
                                     var_tokens = var.split("_")
                                     var_main = var_tokens[0]
-                                    if len(var_tokens) == 1:
+                                    if var == "INC":
+                                        var_value = inc_flag + f" {inc_flag}".join(module.IncludePathList)
+                                    elif var in module.Macros:
+                                        var_value = module.Macros[var]
+                                    elif len(var_tokens) == 1:
                                         var_value = module.BuildOption[var_main]["PATH"]
                                     else:
                                         var_value = module.BuildOption[var_main][var_tokens[1]]
                                     build_command = build_command.replace(f"$({var})", var_value)
-                                    include_files = f" {inc_flag}".join(module.IncludePathList)
-                                    build_command = build_command.replace("${src}", include_files)
-                                    build_command = build_command.replace("${dst}", module.OutputDir)
+                                    build_command = build_command.replace("${src}", source.Path)
+                                    build_command = build_command.replace("${dst}", destination)
+                                    build_command = build_command.replace("$@", destination)
+                                    build_command_variables.extend (re.findall(r"\$\((.*?)\)", var_value))
 
                                 # Remove un defined macros
                                 compile_command["command"] = re.sub(r"\$\(.*?\)", "", build_command)

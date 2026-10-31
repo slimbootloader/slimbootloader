@@ -44,16 +44,18 @@ gTypedef_MulPattern = re.compile(r"^\s*(typedef)?\s+(struct|union)(\s+\w+)?\s*[{
 # as the pattern is greedily match, so it is ok for the gDecNumberPattern or gHexNumberPattern to grab the maximum match
 #
 ## Regular expression for matching HEX number
-gHexNumberPattern = re.compile("(?<=[^a-zA-Z0-9_])(0[xX])([0-9a-fA-F]+)(U(?=$|[^a-zA-Z0-9_]))?")
+gHexNumberPattern = re.compile(r"(?<=[^a-zA-Z0-9_])(0[xX])([0-9a-fA-F]+)(U(?=$|[^a-zA-Z0-9_]))?")
 ## Regular expression for matching decimal number with 'U' postfix
-gDecNumberPattern = re.compile("(?<=[^a-zA-Z0-9_])([0-9]+)U(?=$|[^a-zA-Z0-9_])")
+gDecNumberPattern = re.compile(r"(?<=[^a-zA-Z0-9_])([0-9]+)U(?=$|[^a-zA-Z0-9_])")
 ## Regular expression for matching constant with 'ULL' 'LL' postfix
-gLongNumberPattern = re.compile("(?<=[^a-zA-Z0-9_])(0[xX][0-9a-fA-F]+|[0-9]+)U?LL(?=$|[^a-zA-Z0-9_])")
+gLongNumberPattern = re.compile(r"(?<=[^a-zA-Z0-9_])(0[xX][0-9a-fA-F]+|[0-9]+)U?LL(?=$|[^a-zA-Z0-9_])")
 
 ## Regular expression for matching "Include ()" in asl file
 gAslIncludePattern = re.compile(r"^(\s*)[iI]nclude\s*\(\"?([^\"\(\)]+)\"\)", re.MULTILINE)
 ## Regular expression for matching C style #include "XXX.asl" in asl file
 gAslCIncludePattern = re.compile(r'^(\s*)#include\s*[<"]\s*([-\\/\w.]+)\s*([>"])', re.MULTILINE)
+## Regular expression for matching "#pragma once"
+gPragmaOncePattern = re.compile(r"^\s*#\s*pragma\s+once\b", re.IGNORECASE)
 ## Patterns used to convert EDK conventions to EDK2 ECP conventions
 
 ## Regular expression for finding header file inclusions
@@ -72,7 +74,7 @@ gIncludedAslFile = []
 # @param  Target    File to store the trimmed content
 # @param  Convert   If True, convert standard HEX format to MASM format
 #
-def TrimPreprocessedFile(Source, Target, ConvertHex, TrimLong):
+def TrimPreprocessedFile(Source, Target, ConvertHex, TrimLong, FileFormat):
     CreateDirectory(os.path.dirname(Target))
     try:
         with open(Source, "r") as File:
@@ -104,6 +106,16 @@ def TrimPreprocessedFile(Source, Target, ConvertHex, TrimLong):
                 # The first injected file must be the preprocessed file itself
                 if PreprocessedFile == "":
                     PreprocessedFile = InjectedFile
+                if PreprocessedFile == InjectedFile:
+                    # If this is a NASM source file, then keep the current
+                    # #line statement replacing #line with NASM syntax %line to
+                    # allow source debug to resolve to the NASM source file.
+                    if FileFormat == 'NASM':
+                        # NASM 2.14 treats quotes as part of the filename while
+                        # generating debug hashes. NASM accepts spaces in the
+                        # unquoted filename, so this works with 2.14 and newer.
+                        NasmFile = InjectedFile.replace('\\', '/')
+                        NewLines.append("%%line %d %s\n" % (LineNumber, NasmFile))
             LineControlDirectiveFound = True
             continue
         elif PreprocessedFile == "" or InjectedFile != PreprocessedFile:
@@ -248,6 +260,23 @@ def TrimPreprocessedVfr(Source, Target):
     except:
         EdkLogger.error("Trim", FILE_OPEN_FAILURE, ExtraData=Target)
 
+# Create a banner to indicate the start and
+# end of the included ASL file. Banner looks like:-
+#
+#   /*************************************
+#   *               @param               *
+#   *************************************/
+#
+# @param Pathname       File pathname to be included in the banner
+#
+def AddIncludeHeader(Pathname):
+    StartLine = "/*" + '*' * (len(Pathname) + 4)
+    EndLine = '*' * (len(Pathname) + 4) + "*/"
+    Banner = '\n' + StartLine
+    Banner += '\n' + ('{0}  {1}  {0}'.format('*', Pathname))
+    Banner += '\n' + EndLine + '\n'
+    return Banner
+
 ## Read the content  ASL file, including ASL included, recursively
 #
 # @param  Source            File to be read
@@ -276,16 +305,18 @@ def DoInclude(Source, Indent='', IncludePathList=[], LocalSearchPath=None, Inclu
                 try:
                     with open(IncludeFile, "r") as File:
                         F = File.readlines()
-                except:
+                except Exception:
                     with codecs.open(IncludeFile, "r", encoding='utf-8') as File:
                         F = File.readlines()
                 break
         else:
-            EdkLogger.error("Trim", "Failed to find include file %s" % Source)
+            EdkLogger.error("Trim", FILE_NOT_FOUND, ExtraData="Failed to find include file %s" % Source)
             return []
-    except:
-        EdkLogger.error("Trim", FILE_OPEN_FAILURE, ExtraData=Source)
-        return []
+    except Exception as e:
+        if str(e) == str(FILE_NOT_FOUND):
+            raise
+        else:
+            EdkLogger.error("Trim", FILE_OPEN_FAILURE, ExtraData=Source)
 
 
     # avoid A "include" B and B "include" A
@@ -303,6 +334,8 @@ def DoInclude(Source, Indent='', IncludePathList=[], LocalSearchPath=None, Inclu
             if len(Result) == 0:
                 Result = gAslCIncludePattern.findall(Line)
                 if len(Result) == 0 or os.path.splitext(Result[0][1])[1].lower() not in [".asl", ".asi"]:
+                    if gPragmaOncePattern.match(Line):
+                        continue
                     NewFileContent.append("%s%s" % (Indent, Line))
                     continue
                 #
@@ -312,7 +345,9 @@ def DoInclude(Source, Indent='', IncludePathList=[], LocalSearchPath=None, Inclu
                     LocalSearchPath = os.path.dirname(IncludeFile)
             CurrentIndent = Indent + Result[0][0]
             IncludedFile = Result[0][1]
+            NewFileContent.append(AddIncludeHeader(IncludedFile+" --START"))
             NewFileContent.extend(DoInclude(IncludedFile, CurrentIndent, IncludePathList, LocalSearchPath,IncludeFileList,filetype))
+            NewFileContent.append(AddIncludeHeader(IncludedFile+" --END"))
             NewFileContent.append("\n")
         elif filetype == "ASM":
             Result = gIncludePattern.findall(Line)
@@ -324,7 +359,9 @@ def DoInclude(Source, Indent='', IncludePathList=[], LocalSearchPath=None, Inclu
 
             IncludedFile = IncludedFile.strip()
             IncludedFile = os.path.normpath(IncludedFile)
+            NewFileContent.append(AddIncludeHeader(IncludedFile+" --START"))
             NewFileContent.extend(DoInclude(IncludedFile, '', IncludePathList, LocalSearchPath,IncludeFileList,filetype))
+            NewFileContent.append(AddIncludeHeader(IncludedFile+" --END"))
             NewFileContent.append("\n")
 
     gIncludedAslFile.pop()
@@ -506,6 +543,8 @@ def Options():
     OptionList = [
         make_option("-s", "--source-code", dest="FileType", const="SourceCode", action="store_const",
                           help="The input file is preprocessed source code, including C or assembly code"),
+        make_option("-f", "--source-code-format", dest="FileFormat", type="choice", choices=["NASM","NONE"], default="NONE",
+                          help="The format of the input file(NASM)"),
         make_option("-r", "--vfr-file", dest="FileType", const="Vfr", action="store_const",
                           help="The input file is preprocessed VFR file"),
         make_option("--Vfr-Uni-Offset", dest="FileType", const="VfrOffsetBin", action="store_const",
@@ -597,7 +636,7 @@ def Main():
         else :
             if CommandOptions.OutputFile is None:
                 CommandOptions.OutputFile = os.path.splitext(InputFile)[0] + '.iii'
-            TrimPreprocessedFile(InputFile, CommandOptions.OutputFile, CommandOptions.ConvertHex, CommandOptions.TrimLong)
+            TrimPreprocessedFile(InputFile, CommandOptions.OutputFile, CommandOptions.ConvertHex, CommandOptions.TrimLong, CommandOptions.FileFormat)
     except FatalError as X:
         import platform
         import traceback

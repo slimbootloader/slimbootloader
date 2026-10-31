@@ -12,7 +12,7 @@
   FILE_GUID                      = CB92AF64-D337-48A0-9DCD-ECF4549380D2
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = BootloaderLib
+  LIBRARY_CLASS                  = BootloaderCoreLib
 
 #
 # The following information is for reference only and not required by the build tools.

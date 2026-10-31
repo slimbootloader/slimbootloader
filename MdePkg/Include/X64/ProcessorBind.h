@@ -6,8 +6,7 @@
 
 **/
 
-#ifndef __PROCESSOR_BIND_H__
-#define __PROCESSOR_BIND_H__
+#pragma once
 
 ///
 /// Define the processor type so other code can make processor based choices
@@ -90,13 +89,13 @@
 
 //
 // This warning is for potentially uninitialized local variable, and it may cause false
-// positive issues in VS2015 build
+// positive issues in VS build
 //
     #pragma warning ( disable : 4701 )
 
 //
 // This warning is for potentially uninitialized local pointer variable, and it may cause
-// false positive issues in VS2015 build
+// false positive issues in VS build
 //
     #pragma warning ( disable : 4703 )
 
@@ -314,6 +313,4 @@ typedef INT64 INTN;
 
 #ifndef __USER_LABEL_PREFIX__
 #define __USER_LABEL_PREFIX__
-#endif
-
 #endif

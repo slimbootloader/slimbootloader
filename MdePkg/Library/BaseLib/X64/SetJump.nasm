@@ -40,7 +40,7 @@ ASM_PFX(SetJump):
     xor     rax, rax
     mov     [rcx + 0xF8], rax            ; save 0 to SSP
 
-    mov     eax, [ASM_PFX(PcdGet32 (PcdControlFlowEnforcementPropertyMask))]
+    mov     eax, FixedPcdGet32 (PcdControlFlowEnforcementPropertyMask)
     test    eax, eax
     jz      CetDone
     mov     rax, cr4
@@ -48,8 +48,10 @@ ASM_PFX(SetJump):
     jnc     CetDone
 
     mov     rax, 1
-    INCSSP_RAX                           ; to read original SSP
-    READSSP_RAX
+    ; incsspq rax                          ; to read original SSP
+    db 0xF3, 0x48, 0x0F, 0xAE, 0xE8
+    ; rdsspq  rax
+    db 0xF3, 0x48, 0x0F, 0x1E, 0xC8
     mov     [rcx + 0xF8], rax            ; save SSP
 
 CetDone:

@@ -8,13 +8,19 @@
   of size reduction when compiler optimization is disabled. If MDEPKG_NDEBUG is
   defined, then debug and assert related macros wrapped by it are the NULL implementations.
 
+  The implementations of the macros used when MDEPKG_NDEBUG is defined rely on the fact that
+  directly unreachable code is pruned, even with compiler optimization disabled (which has
+  been confirmed by generated code size tests on supported compilers). The advantage of
+  implementations which consume their arguments within directly unreachable code is that
+  compilers understand this, and stop warning about variables which would become unused when
+  MDEPKG_NDEBUG is defined if the macros had completely empty definitions.
+
 Copyright (c) 2006 - 2020, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-#ifndef __DEBUG_LIB_H__
-#define __DEBUG_LIB_H__
+#pragma once
 
 //
 // Declare bits for PcdDebugPropertyMask
@@ -48,9 +54,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define DEBUG_CACHE     0x00200000       // Memory range cachability changes
 #define DEBUG_VERBOSE   0x00400000       // Detailed debug messages that may
                                          // significantly impact boot performance
-#define DEBUG_MANAGEABILITY  0x00800000  // Detailed debug and payload message of manageability
-                                         // related modules, such Redfish, IPMI, MCTP and etc.
-#define DEBUG_ERROR  0x80000000          // Error
+#define DEBUG_MANAGEABILITY  0x00800000  // Detailed debug and payload manageability messages
+                                         // related to modules such as Redfish, IPMI, MCTP etc.
+#define DEBUG_SECURITY  0x01000000       // Security and security HW related messages, such as TPM
+#define DEBUG_PAGING    0x02000000       // Page table updates (memory encryption, page attributes, ...)
+#define DEBUG_ERROR     0x80000000       // Error
 
 //
 // Aliases of debug message mask bits
@@ -185,8 +193,8 @@ DebugBPrint (
 
   Print a message of the form "ASSERT <FileName>(<LineNumber>): <Description>\n"
   to the debug output device.  If DEBUG_PROPERTY_ASSERT_BREAKPOINT_ENABLED bit of
-  PcdDebugProperyMask is set then CpuBreakpoint() is called. Otherwise, if
-  DEBUG_PROPERTY_ASSERT_DEADLOOP_ENABLED bit of PcdDebugProperyMask is set then
+  PcdDebugPropertyMask is set then CpuBreakpoint() is called. Otherwise, if
+  DEBUG_PROPERTY_ASSERT_DEADLOOP_ENABLED bit of PcdDebugPropertyMask is set then
   CpuDeadLoop() is called.  If neither of these bits are set, then this function
   returns immediately after the message is printed to the debug output device.
   DebugAssert() must actively prevent recursion.  If DebugAssert() is called while
@@ -234,10 +242,10 @@ DebugClearMemory (
   Returns TRUE if ASSERT() macros are enabled.
 
   This function returns TRUE if the DEBUG_PROPERTY_DEBUG_ASSERT_ENABLED bit of
-  PcdDebugProperyMask is set.  Otherwise, FALSE is returned.
+  PcdDebugPropertyMask is set.  Otherwise, FALSE is returned.
 
-  @retval  TRUE    The DEBUG_PROPERTY_DEBUG_ASSERT_ENABLED bit of PcdDebugProperyMask is set.
-  @retval  FALSE   The DEBUG_PROPERTY_DEBUG_ASSERT_ENABLED bit of PcdDebugProperyMask is clear.
+  @retval  TRUE    The DEBUG_PROPERTY_DEBUG_ASSERT_ENABLED bit of PcdDebugPropertyMask is set.
+  @retval  FALSE   The DEBUG_PROPERTY_DEBUG_ASSERT_ENABLED bit of PcdDebugPropertyMask is clear.
 
 **/
 BOOLEAN
@@ -250,10 +258,10 @@ DebugAssertEnabled (
   Returns TRUE if DEBUG() macros are enabled.
 
   This function returns TRUE if the DEBUG_PROPERTY_DEBUG_PRINT_ENABLED bit of
-  PcdDebugProperyMask is set.  Otherwise, FALSE is returned.
+  PcdDebugPropertyMask is set.  Otherwise, FALSE is returned.
 
-  @retval  TRUE    The DEBUG_PROPERTY_DEBUG_PRINT_ENABLED bit of PcdDebugProperyMask is set.
-  @retval  FALSE   The DEBUG_PROPERTY_DEBUG_PRINT_ENABLED bit of PcdDebugProperyMask is clear.
+  @retval  TRUE    The DEBUG_PROPERTY_DEBUG_PRINT_ENABLED bit of PcdDebugPropertyMask is set.
+  @retval  FALSE   The DEBUG_PROPERTY_DEBUG_PRINT_ENABLED bit of PcdDebugPropertyMask is clear.
 
 **/
 BOOLEAN
@@ -266,10 +274,10 @@ DebugPrintEnabled (
   Returns TRUE if DEBUG_CODE() macros are enabled.
 
   This function returns TRUE if the DEBUG_PROPERTY_DEBUG_CODE_ENABLED bit of
-  PcdDebugProperyMask is set.  Otherwise, FALSE is returned.
+  PcdDebugPropertyMask is set.  Otherwise, FALSE is returned.
 
-  @retval  TRUE    The DEBUG_PROPERTY_DEBUG_CODE_ENABLED bit of PcdDebugProperyMask is set.
-  @retval  FALSE   The DEBUG_PROPERTY_DEBUG_CODE_ENABLED bit of PcdDebugProperyMask is clear.
+  @retval  TRUE    The DEBUG_PROPERTY_DEBUG_CODE_ENABLED bit of PcdDebugPropertyMask is set.
+  @retval  FALSE   The DEBUG_PROPERTY_DEBUG_CODE_ENABLED bit of PcdDebugPropertyMask is clear.
 
 **/
 BOOLEAN
@@ -282,10 +290,10 @@ DebugCodeEnabled (
   Returns TRUE if DEBUG_CLEAR_MEMORY() macro is enabled.
 
   This function returns TRUE if the DEBUG_PROPERTY_CLEAR_MEMORY_ENABLED bit of
-  PcdDebugProperyMask is set.  Otherwise, FALSE is returned.
+  PcdDebugPropertyMask is set.  Otherwise, FALSE is returned.
 
-  @retval  TRUE    The DEBUG_PROPERTY_CLEAR_MEMORY_ENABLED bit of PcdDebugProperyMask is set.
-  @retval  FALSE   The DEBUG_PROPERTY_CLEAR_MEMORY_ENABLED bit of PcdDebugProperyMask is clear.
+  @retval  TRUE    The DEBUG_PROPERTY_CLEAR_MEMORY_ENABLED bit of PcdDebugPropertyMask is set.
+  @retval  FALSE   The DEBUG_PROPERTY_CLEAR_MEMORY_ENABLED bit of PcdDebugPropertyMask is clear.
 
 **/
 BOOLEAN
@@ -343,20 +351,19 @@ UnitTestDebugAssert (
     #undef _ASSERT
   #endif
   #if defined(__KLOCWORK__) || defined(__COVERITY__)
-    #define ASSERT(Expression)    do { if (!(Expression)) abort(); } while (0)
-  #elif defined (__clang__) && defined (__FILE_NAME__)
-    #define _ASSERT(Expression)  UnitTestDebugAssert (__FILE_NAME__, DEBUG_LINE_NUMBER, DEBUG_EXPRESSION_STRING (Expression))
+#define ASSERT(Expression)    do { if (!(Expression)) abort(); } while (0)
+  #elif defined (__FILE_NAME__)
+#define _ASSERT(Expression)  UnitTestDebugAssert (__FILE_NAME__, DEBUG_LINE_NUMBER, DEBUG_EXPRESSION_STRING (Expression))
   #else
-    #define _ASSERT(Expression)  UnitTestDebugAssert (__FILE__, DEBUG_LINE_NUMBER, DEBUG_EXPRESSION_STRING (Expression))
+#define _ASSERT(Expression)  UnitTestDebugAssert (__FILE__, DEBUG_LINE_NUMBER, DEBUG_EXPRESSION_STRING (Expression))
   #endif
 #else
-
   #if defined(__KLOCWORK__) || defined(__COVERITY__)
     #define ASSERT(Expression)    do { if (!(Expression)) abort(); } while (0)
-  #elif defined (__clang__) && defined (__FILE_NAME__)
-    #define _ASSERT(Expression)  DebugAssert (__FILE_NAME__, DEBUG_LINE_NUMBER, DEBUG_EXPRESSION_STRING (Expression))
+  #elif defined (__FILE_NAME__)
+#define _ASSERT(Expression)  DebugAssert (__FILE_NAME__, DEBUG_LINE_NUMBER, DEBUG_EXPRESSION_STRING (Expression))
   #else
-    #define _ASSERT(Expression)  DebugAssert (__FILE__, DEBUG_LINE_NUMBER, DEBUG_EXPRESSION_STRING (Expression))
+#define _ASSERT(Expression)  DebugAssert (__FILE__, DEBUG_LINE_NUMBER, DEBUG_EXPRESSION_STRING (Expression))
   #endif
 #endif
 
@@ -380,16 +387,16 @@ UnitTestDebugAssert (
         DebugPrint (PrintLevel, ##__VA_ARGS__);      \
       }                                              \
     } while (FALSE)
-#define _DEBUG(Expression)  _DEBUG_PRINT Expression
+#define _DEBUGLIB_DEBUG(Expression)  _DEBUG_PRINT Expression
 #else
-#define _DEBUG(Expression)  DebugPrint Expression
+#define _DEBUGLIB_DEBUG(Expression)  DebugPrint Expression
 #endif
 
 /**
   Macro that calls DebugAssert() if an expression evaluates to FALSE.
 
   If MDEPKG_NDEBUG is not defined and the DEBUG_PROPERTY_DEBUG_ASSERT_ENABLED
-  bit of PcdDebugProperyMask is set, then this macro evaluates the Boolean
+  bit of PcdDebugPropertyMask is set, then this macro evaluates the Boolean
   expression specified by Expression.  If Expression evaluates to FALSE, then
   DebugAssert() is called passing in the source filename, source line number,
   and Expression.
@@ -398,8 +405,8 @@ UnitTestDebugAssert (
 
 **/
 #if !defined(__KLOCWORK__) && !defined(__COVERITY__)
-  #if !defined (MDEPKG_NDEBUG)
-  #define ASSERT(Expression)        \
+#if !defined (MDEPKG_NDEBUG)
+#define ASSERT(Expression)        \
     do {                            \
       if (DebugAssertEnabled ()) {  \
         if (!(Expression)) {        \
@@ -408,16 +415,21 @@ UnitTestDebugAssert (
         }                           \
       }                             \
     } while (FALSE)
-  #else
-  #define ASSERT(Expression)
-  #endif
+#else
+#define ASSERT(Expression)       \
+    do {                           \
+      if (FALSE) {                 \
+        (VOID) (Expression);       \
+      }                            \
+    } while (FALSE)
+#endif
 #endif
 
 /**
   Macro that calls DebugPrint().
 
   If MDEPKG_NDEBUG is not defined and the DEBUG_PROPERTY_DEBUG_PRINT_ENABLED
-  bit of PcdDebugProperyMask is set, then this macro passes Expression to
+  bit of PcdDebugPropertyMask is set, then this macro passes Expression to
   DebugPrint().
 
   @param  Expression  Expression containing an error level, a format string,
@@ -429,18 +441,23 @@ UnitTestDebugAssert (
 #define DEBUG(Expression)        \
     do {                           \
       if (DebugPrintEnabled ()) {  \
-        _DEBUG (Expression);       \
+        _DEBUGLIB_DEBUG (Expression);       \
       }                            \
     } while (FALSE)
 #else
-#define DEBUG(Expression)
+#define DEBUG(Expression)        \
+    do {                           \
+      if (FALSE) {                 \
+        _DEBUGLIB_DEBUG (Expression);       \
+      }                            \
+    } while (FALSE)
 #endif
 
 /**
   Macro that calls DebugAssert() if an EFI_STATUS evaluates to an error code.
 
   If MDEPKG_NDEBUG is not defined and the DEBUG_PROPERTY_DEBUG_ASSERT_ENABLED
-  bit of PcdDebugProperyMask is set, then this macro evaluates the EFI_STATUS
+  bit of PcdDebugPropertyMask is set, then this macro evaluates the EFI_STATUS
   value specified by StatusParameter.  If StatusParameter is an error code,
   then DebugAssert() is called passing in the source filename, source line
   number, and StatusParameter.
@@ -459,14 +476,19 @@ UnitTestDebugAssert (
       }                                                                                  \
     } while (FALSE)
 #else
-#define ASSERT_EFI_ERROR(StatusParameter)
+#define ASSERT_EFI_ERROR(StatusParameter)                                             \
+    do {                                                                                \
+      if (FALSE) {                                                                      \
+        (VOID) (StatusParameter);                                                       \
+      }                                                                                 \
+    } while (FALSE)
 #endif
 
 /**
   Macro that calls DebugAssert() if a RETURN_STATUS evaluates to an error code.
 
   If MDEPKG_NDEBUG is not defined and the DEBUG_PROPERTY_DEBUG_ASSERT_ENABLED
-  bit of PcdDebugProperyMask is set, then this macro evaluates the
+  bit of PcdDebugPropertyMask is set, then this macro evaluates the
   RETURN_STATUS value specified by StatusParameter.  If StatusParameter is an
   error code, then DebugAssert() is called passing in the source filename,
   source line number, and StatusParameter.
@@ -486,7 +508,12 @@ UnitTestDebugAssert (
       }                                                                 \
     } while (FALSE)
 #else
-#define ASSERT_RETURN_ERROR(StatusParameter)
+#define ASSERT_RETURN_ERROR(StatusParameter)                          \
+    do {                                                                \
+      if (FALSE) {                                                      \
+        (VOID) (StatusParameter);                                       \
+      }                                                                 \
+    } while (FALSE)
 #endif
 
 /**
@@ -494,7 +521,7 @@ UnitTestDebugAssert (
   handle database.
 
   If MDEPKG_NDEBUG is defined or the DEBUG_PROPERTY_DEBUG_ASSERT_ENABLED bit
-  of PcdDebugProperyMask is clear, then return.
+  of PcdDebugPropertyMask is clear, then return.
 
   If Handle is NULL, then a check is made to see if the protocol specified by Guid
   is present on any handle in the handle database.  If Handle is not NULL, then
@@ -535,29 +562,34 @@ UnitTestDebugAssert (
 /**
   Macro that marks the beginning of debug source code.
 
-  If the DEBUG_PROPERTY_DEBUG_CODE_ENABLED bit of PcdDebugProperyMask is set,
+  If the DEBUG_PROPERTY_DEBUG_CODE_ENABLED bit of PcdDebugPropertyMask is set,
   then this macro marks the beginning of source code that is included in a module.
   Otherwise, the source lines between DEBUG_CODE_BEGIN() and DEBUG_CODE_END()
   are not included in a module.
 
 **/
-#define DEBUG_CODE_BEGIN()  do { if (DebugCodeEnabled ()) { UINT8  __DebugCodeLocal
+#define DEBUG_CODE_BEGIN()     \
+  do {                         \
+    if (DebugCodeEnabled ()) { \
+      do { } while (FALSE)
 
 /**
   The macro that marks the end of debug source code.
 
-  If the DEBUG_PROPERTY_DEBUG_CODE_ENABLED bit of PcdDebugProperyMask is set,
+  If the DEBUG_PROPERTY_DEBUG_CODE_ENABLED bit of PcdDebugPropertyMask is set,
   then this macro marks the end of source code that is included in a module.
   Otherwise, the source lines between DEBUG_CODE_BEGIN() and DEBUG_CODE_END()
   are not included in a module.
 
 **/
-#define DEBUG_CODE_END()  __DebugCodeLocal = 0; __DebugCodeLocal++; } } while (FALSE)
+#define DEBUG_CODE_END()         \
+    }                            \
+  } while (FALSE)
 
 /**
   The macro that declares a section of debug source code.
 
-  If the DEBUG_PROPERTY_DEBUG_CODE_ENABLED bit of PcdDebugProperyMask is set,
+  If the DEBUG_PROPERTY_DEBUG_CODE_ENABLED bit of PcdDebugPropertyMask is set,
   then the source code specified by Expression is included in a module.
   Otherwise, the source specified by Expression is not included in a module.
 
@@ -570,7 +602,7 @@ UnitTestDebugAssert (
 /**
   The macro that calls DebugClearMemory() to clear a buffer to a default value.
 
-  If the DEBUG_PROPERTY_CLEAR_MEMORY_ENABLED bit of PcdDebugProperyMask is set,
+  If the DEBUG_PROPERTY_CLEAR_MEMORY_ENABLED bit of PcdDebugPropertyMask is set,
   then this macro calls DebugClearMemory() passing in Address and Length.
 
   @param  Address  The pointer to a buffer.
@@ -593,13 +625,17 @@ UnitTestDebugAssert (
   public data structure to retrieve a pointer to the private data structure.
 
   If MDEPKG_NDEBUG is defined or the DEBUG_PROPERTY_DEBUG_ASSERT_ENABLED bit
-  of PcdDebugProperyMask is clear, then this macro computes the offset, in bytes,
+  of PcdDebugPropertyMask is clear, then this macro computes the offset, in bytes,
   of the field specified by Field from the beginning of the data structure specified
-  by TYPE.  This offset is subtracted from Record, and is used to return a pointer
-  to a data structure of the type specified by TYPE.
+  by TYPE.  This offset is subtracted from Record, and is used to compute a pointer
+  to a data structure of the type specified by TYPE.  The Signature field of the
+  data structure specified by TYPE is compared to TestSignature.  If the signatures
+  match, then a pointer to the pointer to a data structure of the type specified by
+  TYPE is returned.  If the signatures do not match, then NULL is returned to
+  signify that the passed in data structure is invalid.
 
   If MDEPKG_NDEBUG is not defined and the DEBUG_PROPERTY_DEBUG_ASSERT_ENABLED bit
-  of PcdDebugProperyMask is set, then this macro computes the offset, in bytes,
+  of PcdDebugPropertyMask is set, then this macro computes the offset, in bytes,
   of field specified by Field from the beginning of the data structure specified
   by TYPE.  This offset is subtracted from Record, and is used to compute a pointer
   to a data structure of the type specified by TYPE.  The Signature field of the
@@ -629,13 +665,15 @@ UnitTestDebugAssert (
 #if defined(__KLOCWORK__) || defined(__COVERITY__)
   #define CR(Record, TYPE, Field, TestSignature)  BASE_CR(Record, TYPE, Field)
 #elif !defined (MDEPKG_NDEBUG)
-  #define CR(Record, TYPE, Field, TestSignature)                                              \
+#define CR(Record, TYPE, Field, TestSignature)                                              \
     (DebugAssertEnabled () && (BASE_CR (Record, TYPE, Field)->Signature != TestSignature)) ?  \
     (TYPE *) (_ASSERT (CR has Bad Signature), Record) :                                       \
+    (BASE_CR (Record, TYPE, Field)->Signature != TestSignature) ?                             \
+    NULL :                                                                                    \
     BASE_CR (Record, TYPE, Field)
 #else
-  #define CR(Record, TYPE, Field, TestSignature)                                              \
+#define CR(Record, TYPE, Field, TestSignature)                                              \
+    (BASE_CR (Record, TYPE, Field)->Signature != TestSignature) ?                           \
+    NULL :                                                                                  \
     BASE_CR (Record, TYPE, Field)
-#endif
-
 #endif

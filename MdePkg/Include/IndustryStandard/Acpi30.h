@@ -2,13 +2,23 @@
   ACPI 3.0 definitions from the ACPI Specification Revision 3.0b October 10, 2006
 
   Copyright (c) 2006 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (C) 2025, Advanced Micro Devices, Inc. All rights reserved.
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
-#ifndef _ACPI_3_0_H_
-#define _ACPI_3_0_H_
+#pragma once
 
 #include <IndustryStandard/Acpi20.h>
+
+///
+/// _CSD Revision for ACPI 3.0
+///
+#define EFI_ACPI_3_0_AML_CSD_REVISION  0
+
+///
+/// _CSD NumEntries for ACPI 3.0
+///
+#define EFI_ACPI_3_0_AML_CSD_NUM_ENTRIES  6
 
 //
 // Define for Descriptor
@@ -16,6 +26,20 @@
 #define ACPI_LARGE_EXTENDED_ADDRESS_SPACE_DESCRIPTOR_NAME  0x0B
 
 #define ACPI_EXTENDED_ADDRESS_SPACE_DESCRIPTOR  0x8B
+
+///
+/// C-state Coordination Types
+/// See s8.4.2.2 _CSD (C-State Dependency)
+///
+#define ACPI_AML_COORD_TYPE_SW_ALL  0xFC
+#define ACPI_AML_COORD_TYPE_SW_ANY  0xFD
+#define ACPI_AML_COORD_TYPE_HW_ALL  0xFE
+
+///
+/// _PSD Revision for ACPI 3.0
+// See s8.4.4.5 _PSD (P-State Dependency)
+///
+#define EFI_ACPI_3_0_AML_PSD_REVISION  0
 
 //
 // Ensure proper structure formats
@@ -719,5 +743,3 @@ typedef struct {
 #define EFI_ACPI_3_0_ISCSI_BOOT_FIRMWARE_TABLE_SIGNATURE  SIGNATURE_32('i', 'B', 'F', 'T')
 
 #pragma pack()
-
-#endif

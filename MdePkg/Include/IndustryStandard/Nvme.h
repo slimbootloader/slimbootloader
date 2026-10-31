@@ -1,19 +1,21 @@
 /** @file
-  Definitions based on NVMe spec. version 1.1.
+  Definitions based on NVMe spec. version 2.1.
 
   (C) Copyright 2016 Hewlett Packard Enterprise Development LP<BR>
   Copyright (c) 2017 - 2023, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) Microsoft Corporation.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
   @par Specification Reference:
   NVMe Specification 1.1
   NVMe Specification 1.4
   NVMe Specification 2.0
+  NVMe Specification 2.0c
+  NVMe Specification 2.1
 
 **/
 
-#ifndef __NVM_E_H__
-#define __NVM_E_H__
+#pragma once
 
 #pragma pack(1)
 
@@ -26,10 +28,12 @@
 #define NVME_INTMC_OFFSET   0x0010        // Interrupt Mask Clear
 #define NVME_CC_OFFSET      0x0014        // Controller Configuration
 #define NVME_CSTS_OFFSET    0x001c        // Controller Status
-#define NVME_NSSR_OFFSET    0x0020        // NVM Subsystem Reset
+#define NVME_NSSR_OFFSET    0x0020        // NVM Subsystem Reset (Optional)
 #define NVME_AQA_OFFSET     0x0024        // Admin Queue Attributes
 #define NVME_ASQ_OFFSET     0x0028        // Admin Submission Queue Base Address
 #define NVME_ACQ_OFFSET     0x0030        // Admin Completion Queue Base Address
+#define NVME_CMBLOC_OFFSET  0x0038        // Control Memory Buffer Location (Optional)
+#define NVME_CMBSZ_OFFSET   0x003C        // Control Memory Buffer Size (Optional)
 #define NVME_BPINFO_OFFSET  0x0040        // Boot Partition Information
 #define NVME_BPRSEL_OFFSET  0x0044        // Boot Partition Read Select
 #define NVME_BPMBL_OFFSET   0x0048        // Boot Partition Memory Buffer Location
@@ -53,16 +57,16 @@ typedef struct {
   UINT8     Cqr    : 1; // Contiguous Queues Required
   UINT8     Ams    : 2; // Arbitration Mechanism Supported
   UINT8     Rsvd1  : 5;
-  UINT8     To;     // Timeout
-  UINT16    Dstrd  : 4;
+  UINT8     To;         // Timeout
+  UINT16    Dstrd  : 4; // Doorbell Stride
   UINT16    Nssrs  : 1; // NVM Subsystem Reset Supported NSSRS
   UINT16    Css    : 8; // Command Sets Supported - Bit 37
   UINT16    Bps    : 1; // Boot Partition Support - Bit 45 in NVMe1.4
   UINT16    Rsvd3  : 2;
-  UINT8     Mpsmin : 4;
-  UINT8     Mpsmax : 4;
-  UINT8     Pmrs   : 1;
-  UINT8     Cmbs   : 1;
+  UINT8     Mpsmin : 4; // Memory Page Size Minimum
+  UINT8     Mpsmax : 4; // Memory Page Size Maximum
+  UINT8     Pmrs   : 1; // Persistent Memory Region Supported
+  UINT8     Cmbs   : 1; // Controller Memory Buffer Supported
   UINT8     Rsvd4  : 6;
 } NVME_CAP;
 
@@ -354,6 +358,22 @@ typedef struct {
   UINT8     Rsvd7[16];      /* Reserved as of Nvm Express 1.1 Spec */
 } NVME_PSDESCRIPTOR;
 
+typedef struct {
+  UINT32    Ces     : 1;    /* Crypto Erase Supported */
+  UINT32    Bes     : 1;    /* Block Erase Supported */
+  UINT32    Ows     : 1;    /* Overwrite Supported */
+  UINT32    Rsvd1   : 26;   /* Reserved as of NVM Express 2.0c Spec */
+  UINT32    Ndi     : 1;    /* No-Deallocate Inhibited */
+  UINT32    Nodmmas : 2;    /* No-Deallocate Modifies Media After Sanitize */
+} NVME_SANICAP;
+
+//
+// Power Loss Signaling Information
+// (ref. spec. v2.1 Figure 312).
+//
+#define PLS_EMERGENCY_POWER_FAIL  BIT0
+#define PLS_FORCED_QUIESCENCE     BIT1
+
 //
 //  Identify Controller Data
 //
@@ -372,7 +392,22 @@ typedef struct {
   UINT8                Cmic;        /* Multi-interface Capabilities */
   UINT8                Mdts;        /* Maximum Data Transfer Size */
   UINT8                Cntlid[2];   /* Controller ID */
-  UINT8                Rsvd1[176];  /* Reserved as of Nvm Express 1.1 Spec */
+  UINT32               Ver;         /* Version */
+  UINT32               Rtd3r;       /* RTD3 Resume Latency */
+  UINT32               Rtd3e;       /* RTD3 Entry Latency */
+  UINT32               Oaes;        /* Optional Async Events Supported */
+  UINT32               Ctratt;      /* Controller Attributes */
+  UINT16               Rrls;        /* Read Recovery Levels Supported */
+  UINT8                Rsvd1[8];    /* Reserved as of NVM Express 1.4c Spec */
+  UINT8                Plsi;        /* Power Loss Signaling Information */
+  UINT8                Cntrltype;   /* Controller Type */
+  UINT8                Fguid[16];   /* FRU Globally Unique Identifier */
+  UINT16               Crdt1;       /* Command Retry Delay Time 1 */
+  UINT16               Crdt2;       /* Command Retry Delay Time 2 */
+  UINT16               Crdt3;       /* Command Retry Delay Time 3 */
+  UINT8                Rsvd2[106];  /* Reserved as of NVM Express 1.4c Spec */
+  UINT8                Rsvd3[16];   /* Reserved for NVMe MI Spec */
+
   //
   // Admin Command Set Attributes
   //
@@ -403,30 +438,44 @@ typedef struct {
   UINT16               Edstt;       /* Extended Device Self-test Time */
   UINT8                Dsto;        /* Device Self-test Options  */
   UINT8                Fwug;        /* Firmware Update Granularity */
-  UINT8                Rsvd2[192];  /* Reserved as of Nvm Express 1.4 Spec */
+  UINT16               Kas;         /* Keep Alive Support */
+  UINT16               Hctma;       /* Host Controlled Thermal Management Attributes */
+  UINT16               Mntmt;       /* Minimum Thermal Management Temperature */
+  UINT16               Mxtmt;       /* Maximum Thermal Management Temperature */
+  NVME_SANICAP         Sanicap;     /* Sanitize Capabilities */
+  UINT32               Hmminds;     /* Host Memory Buffer Minimum Descriptor Entry Size */
+  UINT16               Hmmaxd;      /* Host Memory Maximum Descriptors Entries */
+  UINT16               Nsetidmax;   /* NVM Set Identifier Maximum */
+  UINT16               Endgidmax;   /* Endurance Group Identifier Maximum */
+  UINT8                Anatt;       /* ANA Transition Time */
+  UINT8                Anacap;      /* Asymmetric Namespace Access Capabilities */
+  UINT32               Anagrpmax;   /* ANA Group Identifier Maximum */
+  UINT32               Nanagrpid;   /* Number of ANA Group Identifiers */
+  UINT32               Pels;        /* Persistent Event Log Size */
+  UINT8                Rsvd4[156];  /* Reserved as of NVM Express 1.4c Spec */
   //
   // NVM Command Set Attributes
   //
-  UINT8                Sqes;       /* Submission Queue Entry Size */
-  UINT8                Cqes;       /* Completion Queue Entry Size */
-  UINT16               Rsvd3;      /* Reserved as of Nvm Express 1.1 Spec */
-  UINT32               Nn;         /* Number of Namespaces */
-  UINT16               Oncs;       /* Optional NVM Command Support */
-  UINT16               Fuses;      /* Fused Operation Support */
-  UINT8                Fna;        /* Format NVM Attributes */
-  UINT8                Vwc;        /* Volatile Write Cache */
-  UINT16               Awun;       /* Atomic Write Unit Normal */
-  UINT16               Awupf;      /* Atomic Write Unit Power Fail */
-  UINT8                Nvscc;      /* NVM Vendor Specific Command Configuration */
-  UINT8                Rsvd4;      /* Reserved as of Nvm Express 1.1 Spec */
-  UINT16               Acwu;       /* Atomic Compare & Write Unit */
-  UINT16               Rsvd5;      /* Reserved as of Nvm Express 1.1 Spec */
-  UINT32               Sgls;       /* SGL Support  */
-  UINT8                Rsvd6[164]; /* Reserved as of Nvm Express 1.1 Spec */
-  //
-  // I/O Command set Attributes
-  //
-  UINT8                Rsvd7[1344]; /* Reserved as of Nvm Express 1.1 Spec */
+  UINT8                Sqes;        /* Submission Queue Entry Size */
+  UINT8                Cqes;        /* Completion Queue Entry Size */
+  UINT16               Maxcmd;      /* Maximum Outstanding Commands */
+  UINT32               Nn;          /* Number of Namespaces */
+  UINT16               Oncs;        /* Optional NVM Command Support */
+  UINT16               Fuses;       /* Fused Operation Support */
+  UINT8                Fna;         /* Format NVM Attributes */
+  UINT8                Vwc;         /* Volatile Write Cache */
+  UINT16               Awun;        /* Atomic Write Unit Normal */
+  UINT16               Awupf;       /* Atomic Write Unit Power Fail */
+  UINT8                Nvscc;       /* NVM Vendor Specific Command Configuration */
+  UINT8                Nwpc;        /* Namespace Write Protection Capabilities */
+  UINT16               Acwu;        /* Atomic Compare & Write Unit */
+  UINT16               Rsvd5;       /* Reserved as of NVM Express 1.4c Spec */
+  UINT32               Sgls;        /* SGL Support */
+  UINT32               Mnan;        /* Maximum Number of Allowed Namespace */
+  UINT8                Rsvd6[224];  /* Reserved as of NVM Express 1.4c Spec */
+  UINT8                Subnqn[256]; /* NVM Subsystem NVMe Qualified Name */
+  UINT8                Rsvd7[768];  /* Reserved as of NVM Express 1.4c Spec */
+  UINT8                Rsvd8[256];  /* Reserved for NVMe over Fabrics Spec */
   //
   // Power State Descriptors
   //
@@ -538,7 +587,10 @@ typedef struct {
 //
 #define NVME_RPMB_RESULT_SUCCESS                 0x00
 #define NVME_RPMB_RESULT_GENERAL_FAILURE         0x01
-#define NVME_RPMB_RESULT_AHTHENTICATION_FAILURE  0x02
+#define NVME_RPMB_RESULT_AUTHENTICATION_FAILURE  0x02
+// This misspelling is kept temporarily for backwards compatibility and will
+// be removed in a future PR. Consumers must migrate to the new definition
+#define NVME_RPMB_RESULT_AHTHENTICATION_FAILURE  NVME_RPMB_RESULT_AUTHENTICATION_FAILURE
 #define NVME_RPMB_RESULT_COUNTER_FAILURE         0x03
 #define NVME_RPMB_RESULT_ADDRESS_FAILURE         0x04
 #define NVME_RPMB_RESULT_WRITE_FAILURE           0x05
@@ -687,10 +739,11 @@ typedef struct {
   // CDW 10
   //
   UINT32    Lid   : 8;        /* Log Page Identifier */
-  #define LID_ERROR_INFO    0x1
-  #define LID_SMART_INFO    0x2
-  #define LID_FW_SLOT_INFO  0x3
-  #define LID_BP_INFO       0x15
+  #define LID_ERROR_INFO            0x1
+  #define LID_SMART_INFO            0x2
+  #define LID_FW_SLOT_INFO          0x3
+  #define LID_BP_INFO               0x15
+  #define LID_SANITIZE_STATUS_INFO  0x81
   UINT32    Rsvd1 : 8;
   UINT32    Numd  : 12;       /* Number of Dwords */
   UINT32    Rsvd2 : 4;        /* Reserved as of Nvm Express 1.1 Spec */
@@ -709,6 +762,37 @@ typedef struct {
 } NVME_ADMIN_SET_FEATURES;
 
 //
+// Feature Identifier
+// (ref. spec. v2.1 Figure 32).
+//
+#define POWER_LOSS_SIGNALING_CONFIG_FID  0x1B  // Power Loss Signaling Config
+
+//
+// NvmExpress Admin Sanitize Command
+//
+typedef struct {
+  //
+  // CDW 10
+  //
+  UINT32    Sanact : 3;       /* Sanitize Action */
+  UINT32    Ause   : 1;       /* Allow Unrestricted Sanitize Exit */
+  UINT32    Owpass : 4;       /* Overwrite Pass Count */
+  UINT32    Oipbp  : 1;       /* Overwrite Invert Pattern Between Passes */
+  UINT32    Nodas  : 1;       /* No-Deallocate After Sanitize */
+  UINT32    Rsvd1  : 22;
+  //
+  // CDW 11
+  //
+  UINT32    Ovrpat;           /* Overwrite Pattern */
+} NVME_ADMIN_SANITIZE;
+
+#define SANITIZE_ACTION_NO_ACTION          0x0
+#define SANITIZE_ACTION_EXIT_FAILURE_MODE  0x1
+#define SANITIZE_ACTION_BLOCK_ERASE        0x2
+#define SANITIZE_ACTION_OVERWRITE          0x3
+#define SANITIZE_ACTION_CRYPTO_ERASE       0x4
+
+//
 // NvmExpress Admin Format NVM Command
 //
 typedef struct {
@@ -722,6 +806,10 @@ typedef struct {
   UINT32    Ses   : 3;        /* Secure Erase Settings */
   UINT32    Rsvd1 : 20;
 } NVME_ADMIN_FORMAT_NVM;
+
+#define SES_NO_SECURE_ERASE  0x0
+#define SES_USER_DATA_ERASE  0x1
+#define SES_CRYPTO_ERASE     0x2
 
 //
 // NvmExpress Admin Security Receive Command
@@ -770,6 +858,7 @@ typedef union {
   NVME_ADMIN_FORMAT_NVM                 FormatNvm;
   NVME_ADMIN_SECURITY_RECEIVE           SecurityReceive;
   NVME_ADMIN_SECURITY_SEND              SecuritySend;
+  NVME_ADMIN_SANITIZE                   Sanitize;
 } NVME_ADMIN_CMD;
 
 typedef struct {
@@ -872,6 +961,7 @@ typedef struct {
 #define NVME_ADMIN_FORMAT_NVM_CMD           0x80
 #define NVME_ADMIN_SECURITY_SEND_CMD        0x81
 #define NVME_ADMIN_SECURITY_RECEIVE_CMD     0x82
+#define NVME_ADMIN_SANITIZE_CMD             0x84
 
 #define NVME_IO_FLUSH_OPC  0
 #define NVME_IO_WRITE_OPC  1
@@ -894,7 +984,8 @@ typedef enum {
   NamespaceAttachmentOpcode     = NVME_ADMIN_NAMESACE_ATTACHMENT_CMD,
   FormatNvmOpcode               = NVME_ADMIN_FORMAT_NVM_CMD,
   SecuritySendOpcode            = NVME_ADMIN_SECURITY_SEND_CMD,
-  SecurityReceiveOpcode         = NVME_ADMIN_SECURITY_RECEIVE_CMD
+  SecurityReceiveOpcode         = NVME_ADMIN_SECURITY_RECEIVE_CMD,
+  SanitizeOpcode                = NVME_ADMIN_SANITIZE_CMD
 } NVME_ADMIN_COMMAND_OPCODE;
 
 //
@@ -934,12 +1025,14 @@ typedef enum {
 
 //
 // Get Log Page ? Log Page Identifiers
-// (ref. spec. v1.1 Figure 73).
+// (ref. spec. v2.0c Figure 202).
 //
 typedef enum {
-  ErrorInfoLogID        = LID_ERROR_INFO,
-  SmartHealthInfoLogID  = LID_SMART_INFO,
-  FirmwareSlotInfoLogID = LID_FW_SLOT_INFO
+  ErrorInfoLogID          = LID_ERROR_INFO,
+  SmartHealthInfoLogID    = LID_SMART_INFO,
+  FirmwareSlotInfoLogID   = LID_FW_SLOT_INFO,
+  BootPartitionInfoLogID  = LID_BP_INFO,
+  SanitizeStatusInfoLogID = LID_SANITIZE_STATUS_INFO
 } NVME_LOG_ID;
 
 //
@@ -1062,6 +1155,73 @@ typedef struct {
   UINT8     Reserved2[296];
 } NVME_SMART_HEALTH_INFO_LOG;
 
-#pragma pack()
+//
+// Sanitize Status (Log Identifier 81h)
+// (ref. spec. v2.0c 5.16.1.25).
+//
+typedef struct {
+  //
+  // Indicates the fraction complete of the sanitize operation. (SPROG)
+  //
+  UINT16    SanitizeProgress;
+  //
+  // Indicates the status associated with the most recent sanitize operation. (SSTAT)
+  //
+  UINT16    SanitizeStatus                   : 3;
+  UINT16    OverwriteSanitizeCompletedNumber : 5;
+  UINT16    GlobalDataErased                 : 1;
+  UINT16    SanitizeStatusRsvd               : 7;
+  //
+  // Contains the value of the Command Dword 10 field of the Sanitize command that started the sanitize operation whose status is reported in the SSTAT field. (SCDW10)
+  //
+  UINT32    SanitizeCmdDw10Info;
+  //
+  // Indicates the number of seconds required to complete an Overwrite sanitize operation with 16 passes in the background when the No-Deallocate Modifies Media After Sanitize field is not set to 10b.
+  //
+  UINT32    OverwriteEstimatedTime;
+  //
+  // Indicates the number of seconds required to complete a Block Erase sanitize operation in the background when the No-Deallocate Modifies Media After Sanitize field is not set to 10b.
+  //
+  UINT32    BlockEraseEstimatedTime;
+  //
+  // Indicates the number of seconds required to complete a Crypto Erase sanitize operation in the background when the No-Deallocate Modifies Media After Sanitize field is not set to 10b.
+  //
+  UINT32    CryptoEraseEstimatedTime;
+  //
+  // Indicates the number of seconds required to complete an Overwrite sanitize operation and the associated additional media modification after the Overwrite sanitize operation in the background.
+  // The No-Deallocate After Sanitize bit was set to ?1? in the Sanitize command that requested the Overwrite sanitize operation.
+  // The No-Deallocate Modifies Media After Sanitize field is set to 10b.
+  //
+  UINT32    OverwriteEstimatedTimeWithNodmm;
+  //
+  // Indicates the number of seconds required to complete a Block Erase sanitize operation and the associated additional media modification after the Block Erase sanitize operation in the background.
+  // The No-Deallocate After Sanitize bit was set to ?1? in the Sanitize command that requested the Block Erase sanitize operation.
+  // The No-Deallocate Modifies Media After Sanitize field is set to 10b.
+  //
+  UINT32    BlockEraseEstimatedTimeWithNodmm;
+  //
+  // Indicates the number of seconds required to complete a Crypto Erase sanitize operation and the associated additional media modification after the Crypto Erase sanitize operation in the background.
+  // The No-Deallocate After Sanitize bit was set to ?1? in the Sanitize command that requested the Crypto Erase sanitize operation.
+  // The No-Deallocate Modifies Media After Sanitize field is set to 10b.
+  //
+  UINT32    CryptoEraseEstimatedTimeWithNodmm;
+  UINT8     Reserved[480];
+} NVME_SANITIZE_STATUS_INFO_LOG;
 
-#endif
+//
+// Power Loss Signaling Config
+// (ref. spec. v2.1 Figure 414).
+//
+#define PLS_NOT_ENABLED                   0x0 // Power Loss Signaling Not Enabled
+#define PLS_EMERGENCY_POWER_FAIL_ENABLED  0x1 // Power Loss Signaling with Emergency Power Fail Enabled
+#define PLS_FORCED_QUIESCENCE_ENABLED     0x2 // Power Loss Signaling with Forced Quiescence Enabled
+
+typedef struct {
+  //
+  // Indicates the Power Loss Signaling mode of operation
+  //
+  UINT32    Plsm     : 2;     /* Power Loss Signaling Mode */
+  UINT32    Reserved : 30;
+} NVME_POWER_LOSS_SIGNALING_CONFIG;
+
+#pragma pack()

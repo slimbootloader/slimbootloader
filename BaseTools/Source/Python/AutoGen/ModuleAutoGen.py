@@ -51,12 +51,12 @@ gInfSpecVersion = "0x00010017"
 #
 # Match name = variable
 #
-gEfiVarStoreNamePattern = re.compile("\s*name\s*=\s*(\w+)")
+gEfiVarStoreNamePattern = re.compile(r"\s*name\s*=\s*(\w+)")
 #
 # The format of guid in efivarstore statement likes following and must be correct:
 # guid = {0xA04A27f4, 0xDF00, 0x4D42, {0xB5, 0x52, 0x39, 0x51, 0x13, 0x02, 0x11, 0x3D}}
 #
-gEfiVarStoreGuidPattern = re.compile("\s*guid\s*=\s*({.*?{.*?}\s*})")
+gEfiVarStoreGuidPattern = re.compile(r"\s*guid\s*=\s*({.*?{.*?}\s*})")
 
 #
 # Template string to generic AsBuilt INF
@@ -254,7 +254,6 @@ class ModuleAutoGen(AutoGen):
         self.AutoGenDepSet = set()
         self.ReferenceModules = []
         self.ConstPcd                  = {}
-        self.FileDependCache  = {}
 
     def __init_platform_info__(self):
         pinfo = self.DataPipe.Get("P_Info")
@@ -675,50 +674,6 @@ class ModuleAutoGen(AutoGen):
         RetVal, self.BuildRuleOrder = self.PlatformInfo.ApplyBuildOption(self.Module)
         if self.BuildRuleOrder:
             self.BuildRuleOrder = ['.%s' % Ext for Ext in self.BuildRuleOrder.split()]
-        return RetVal
-
-    ## Get include path list from tool option for the module build
-    #
-    #   @retval     list            The include path list
-    #
-    @cached_property
-    def BuildOptionIncPathList(self):
-        #
-        # Regular expression for finding Include Directories, the difference between MSFT and INTEL/GCC
-        # is the former use /I , the Latter used -I to specify include directories
-        #
-        if self.PlatformInfo.ToolChainFamily in (TAB_COMPILER_MSFT):
-            BuildOptIncludeRegEx = gBuildOptIncludePatternMsft
-        elif self.PlatformInfo.ToolChainFamily in ('INTEL', 'GCC'):
-            BuildOptIncludeRegEx = gBuildOptIncludePatternOther
-        else:
-            #
-            # New ToolChainFamily, don't known whether there is option to specify include directories
-            #
-            return []
-
-        RetVal = []
-        for Tool in ('CC', 'PP', 'VFRPP', 'ASLPP', 'ASLCC', 'APP', 'ASM'):
-            try:
-                FlagOption = self.BuildOption[Tool]['FLAGS']
-            except KeyError:
-                FlagOption = ''
-
-            IncPathList = [NormPath(Path, self.Macros) for Path in BuildOptIncludeRegEx.findall(FlagOption)]
-
-            #
-            # EDK II modules must not reference header files outside of the packages they depend on or
-            # within the module's directory tree. Report error if violation.
-            #
-            if GlobalData.gDisableIncludePathCheck == False:
-                for Path in IncPathList:
-                    if (Path not in self.IncludePathList) and (CommonPath([Path, self.MetaFile.Dir]) != self.MetaFile.Dir):
-                        ErrMsg = "The include directory for the EDK II module in this line is invalid %s specified in %s FLAGS '%s'" % (Path, Tool, FlagOption)
-                        EdkLogger.error("build",
-                                        PARAMETER_INVALID,
-                                        ExtraData=ErrMsg,
-                                        File=str(self.MetaFile))
-            RetVal += IncPathList
         return RetVal
 
     ## Return a list of files which can be built from source
@@ -1461,7 +1416,7 @@ class ModuleAutoGen(AutoGen):
         if self.DepexGenerated:
             if self.ModuleType in [SUP_MODULE_PEIM]:
                 AsBuiltInfDict['binary_item'].append('PEI_DEPEX|' + self.Name + '.depex')
-            elif self.ModuleType in [SUP_MODULE_DXE_DRIVER, SUP_MODULE_DXE_RUNTIME_DRIVER, SUP_MODULE_DXE_SAL_DRIVER, SUP_MODULE_UEFI_DRIVER]:
+            elif self.ModuleType in [SUP_MODULE_DXE_DRIVER, SUP_MODULE_DXE_RUNTIME_DRIVER, SUP_MODULE_UEFI_DRIVER]:
                 AsBuiltInfDict['binary_item'].append('DXE_DEPEX|' + self.Name + '.depex')
             elif self.ModuleType in [SUP_MODULE_DXE_SMM_DRIVER]:
                 AsBuiltInfDict['binary_item'].append('SMM_DEPEX|' + self.Name + '.depex')

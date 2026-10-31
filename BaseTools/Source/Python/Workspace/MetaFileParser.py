@@ -1,7 +1,7 @@
 ## @file
 # This file is used to parse meta files
 #
-# Copyright (c) 2008 - 2018, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2008 - 2025, Intel Corporation. All rights reserved.<BR>
 # (C) Copyright 2015-2018 Hewlett Packard Enterprise Development LP<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -158,7 +158,6 @@ class MetaFileParser(object):
         self._Arch = Arch
         self._FileType = FileType
         self.MetaFile = FilePath
-        self._FileDir = self.MetaFile.Dir
         self._Defines = {}
         self._Packages = []
         self._FileLocalMacros = {}
@@ -1183,9 +1182,6 @@ class DscParser(MetaFileParser):
     def _LibraryInstanceParser(self):
         self._ValueList[0] = self._CurrentLine
 
-
-    def _DecodeCODEData(self):
-        pass
     ## PCD sections parser
     #
     #   [PcdsFixedAtBuild]
@@ -1388,7 +1384,7 @@ class DscParser(MetaFileParser):
         self._SectionsMacroDict.clear()
         GlobalData.gPlatformDefines = {}
 
-        # Get all macro and PCD which has straitforward value
+        # Get all macro and PCD which has straightforward value
         self.__RetrievePcdValue()
         self._Content = self._RawTable.GetAll()
         self._ContentIndex = 0
@@ -1404,6 +1400,17 @@ class DscParser(MetaFileParser):
 
             self._Scope = [[S1, S2, S3]]
             #
+            # Expand macros in arch field for all records so that per-module
+            # sub-items (e.g. <LibraryClasses> under [Components.$(PEI_ARCH)])
+            # resolve correctly, not just the Component record itself.
+            #
+            self._Scope[0][0] = ReplaceMacro(self._Scope[0][0], self._Macros)
+            if '$(' in self._Scope[0][0] and S1 != TAB_ARCH_COMMON:
+                EdkLogger.warn("Parser",
+                               "Macro in arch field was not resolved. "
+                               "'%s' used in section header is not defined." % S1,
+                               File=self._FileWithError, Line=LineStart)
+            #
             # For !include directive, handle it specially,
             # merge arch and module type in case of duplicate items
             #
@@ -1411,7 +1418,11 @@ class DscParser(MetaFileParser):
                 if self._ContentIndex >= len(self._Content):
                     break
                 Record = self._Content[self._ContentIndex]
-                if LineStart == Record[10] and LineEnd == Record[12]:
+                #
+                # Avoid merging includes with different owners to make sure an
+                # include is correctly processed per arch.
+                #
+                if Owner == Record[8] and LineStart == Record[10] and LineEnd == Record[12]:
                     if [Record[5], Record[6], Record[7]] not in self._Scope:
                         self._Scope.append([Record[5], Record[6], Record[7]])
                     self._ContentIndex += 1
@@ -1464,7 +1475,7 @@ class DscParser(MetaFileParser):
                                 self._ValueList[0],
                                 self._ValueList[1],
                                 self._ValueList[2],
-                                S1,
+                                self._Scope[0][0],
                                 S2,
                                 S3,
                                 NewOwner,
@@ -1702,8 +1713,9 @@ class DscParser(MetaFileParser):
             ValList[Index] = '0'
 
         if (not self._DirectiveEvalStack) or (False not in self._DirectiveEvalStack):
-            GlobalData.gPlatformPcds[TAB_SPLIT.join(self._ValueList[0:2])] = PcdValue
-            self._Symbols[TAB_SPLIT.join(self._ValueList[0:2])] = PcdValue
+            if not self._InSubsection:
+                GlobalData.gPlatformPcds[TAB_SPLIT.join(self._ValueList[0:2])] = PcdValue
+                self._Symbols[TAB_SPLIT.join(self._ValueList[0:2])] = PcdValue
         try:
             self._ValueList[2] = '|'.join(ValList)
         except Exception:
@@ -1715,6 +1727,26 @@ class DscParser(MetaFileParser):
     def __ProcessBuildOption(self):
         self._ValueList = [ReplaceMacro(Value, self._Macros, RaiseError=False)
                            for Value in self._ValueList]
+
+    ## Find the file a record's line number refers to
+    #
+    # !include'd records are spliced into the including file's record list, so
+    # a record's line number is not necessarily an offset into self.MetaFile.
+    # Callers reporting a line number to the user should report this path with
+    # it rather than assuming the top-level DSC.
+    #
+    # @param RecordId:   ID of the record to locate
+    #
+    # @retval:       Path of the file the record was parsed from
+    #
+    def GetOriginFile(self, RecordId):
+        for Table in (self._Table, self._RawTable):
+            if Table is None:
+                continue
+            OriginFile = Table.GetOriginFile(RecordId)
+            if OriginFile is not None:
+                return OriginFile
+        return self.MetaFile
 
     def DisableOverrideComponent(self,module_id):
         for ori_id in self._IdMapping:
@@ -1792,8 +1824,6 @@ class DecParser(MetaFileParser):
         self._CurrentStructurePcdName = ""
         self._include_flag = False
         self._package_flag = False
-
-        self._RestofValue = ""
 
     ## Parser starter
     def Start(self):
@@ -1897,7 +1927,7 @@ class DecParser(MetaFileParser):
         self._SectionType = []
         ArchList = set()
         PrivateList = set()
-        Line = re.sub(',[\s]*', TAB_COMMA_SPLIT, self._CurrentLine)
+        Line = re.sub(r',[\s]*', TAB_COMMA_SPLIT, self._CurrentLine)
         for Item in Line[1:-1].split(TAB_COMMA_SPLIT):
             if Item == '':
                 EdkLogger.error("Parser", FORMAT_UNKNOWN_ERROR,

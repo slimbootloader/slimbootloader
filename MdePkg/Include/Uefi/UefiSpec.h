@@ -7,13 +7,13 @@
 
 Copyright (c) 2006 - 2021, Intel Corporation. All rights reserved.<BR>
 Portions Copyright (c) 2020, Hewlett Packard Enterprise Development LP. All rights reserved.<BR>
+Copyright (c) 2022, Loongson Technology Corporation Limited. All rights reserved.<BR>
 
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-#ifndef __UEFI_SPEC_H__
-#define __UEFI_SPEC_H__
+#pragma once
 
 #include <Uefi/UefiMultiPhase.h>
 
@@ -36,4 +36,4 @@ typedef struct {
 
 #include <Uefi/UefiGpt.h>
 
-#endif
+

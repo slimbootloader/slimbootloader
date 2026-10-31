@@ -6,6 +6,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
+#pragma once
+
 #ifndef __UEFI_MULTIPHASE_H__
 #define __UEFI_MULTIPHASE_H__
 
@@ -30,8 +32,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 ///
 #define EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS  0x00000010
 
-#ifndef VFRCOMPILE
-  #include <Guid/WinCertificate.h>
+  #ifndef VFRCOMPILE
+    #include <Guid/WinCertificate.h>
 ///
 /// Enumeration of memory types introduced in UEFI.
 ///
@@ -108,7 +110,22 @@ typedef enum {
   /// by a corresponding call to the underlying isolation architecture.
   ///
   EfiUnacceptedMemoryType,
-  EfiMaxMemoryType
+  EfiMaxMemoryType,
+  //
+  // +---------------------------------------------------+
+  // | 0..(EfiMaxMemoryType - 1)    - Normal memory type |
+  // +---------------------------------------------------+
+  // | EfiMaxMemoryType..0x6FFFFFFF - Invalid            |
+  // +---------------------------------------------------+
+  // | 0x70000000..0x7FFFFFFF       - OEM reserved       |
+  // +---------------------------------------------------+
+  // | 0x80000000..0xFFFFFFFF       - OS reserved        |
+  // +---------------------------------------------------+
+  //
+  MEMORY_TYPE_OEM_RESERVED_MIN = 0x70000000,
+  MEMORY_TYPE_OEM_RESERVED_MAX = 0x7FFFFFFF,
+  MEMORY_TYPE_OS_RESERVED_MIN  = 0x80000000,
+  MEMORY_TYPE_OS_RESERVED_MAX  = 0xFFFFFFFF
 } EFI_MEMORY_TYPE;
 
 ///
@@ -229,6 +246,6 @@ typedef struct {
   ///
   WIN_CERTIFICATE_UEFI_GUID    AuthInfo;
 } EFI_VARIABLE_AUTHENTICATION_2;
-#endif // VFRCOMPILE
+  #endif // VFRCOMPILE
 
 #endif

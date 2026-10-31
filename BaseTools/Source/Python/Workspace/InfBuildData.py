@@ -114,7 +114,6 @@ class InfBuildData(ModuleBuildClassObject):
         self._Target = Target
         self._Toolchain = Toolchain
         self._Platform = TAB_COMMON
-        self._TailComments = None
         self._BaseName = None
         self._DxsFile = None
         self._ModuleType = None
@@ -123,7 +122,6 @@ class InfBuildData(ModuleBuildClassObject):
         self._Guid = None
         self._Version = None
         self._PcdIsDriver = None
-        self._BinaryModule = None
         self._Shadow = None
         self._MakefileName = None
         self._CustomMakefile = None
@@ -592,7 +590,7 @@ class InfBuildData(ModuleBuildClassObject):
         RecordList = self._RawData[MODEL_EFI_PROTOCOL, self._Arch, self._Platform]
         for Record in RecordList:
             CName = Record[0]
-            Value = _ProtocolValue(CName, self.Packages, self.MetaFile.Path)
+            Value = _ProtocolValue(CName, self.Packages, self.MetaFile.OriginalPath.Path)
             if Value is None:
                 PackageList = "\n\t".join(str(P) for P in self.Packages)
                 EdkLogger.error('build', RESOURCE_NOT_AVAILABLE,
@@ -616,7 +614,7 @@ class InfBuildData(ModuleBuildClassObject):
         RecordList = self._RawData[MODEL_EFI_PPI, self._Arch, self._Platform]
         for Record in RecordList:
             CName = Record[0]
-            Value = _PpiValue(CName, self.Packages, self.MetaFile.Path)
+            Value = _PpiValue(CName, self.Packages, self.MetaFile.OriginalPath.Path)
             if Value is None:
                 PackageList = "\n\t".join(str(P) for P in self.Packages)
                 EdkLogger.error('build', RESOURCE_NOT_AVAILABLE,
@@ -640,7 +638,7 @@ class InfBuildData(ModuleBuildClassObject):
         RecordList = self._RawData[MODEL_EFI_GUID, self._Arch, self._Platform]
         for Record in RecordList:
             CName = Record[0]
-            Value = GuidValue(CName, self.Packages, self.MetaFile.Path)
+            Value = GuidValue(CName, self.Packages, self.MetaFile.OriginalPath.Path)
             if Value is None:
                 PackageList = "\n\t".join(str(P) for P in self.Packages)
                 EdkLogger.error('build', RESOURCE_NOT_AVAILABLE,
@@ -655,7 +653,7 @@ class InfBuildData(ModuleBuildClassObject):
             for TokenSpaceGuid, _, _, _, _, _, LineNo in RecordList:
                 # get the guid value
                 if TokenSpaceGuid not in RetVal:
-                    Value = GuidValue(TokenSpaceGuid, self.Packages, self.MetaFile.Path)
+                    Value = GuidValue(TokenSpaceGuid, self.Packages, self.MetaFile.OriginalPath.Path)
                     if Value is None:
                         PackageList = "\n\t".join(str(P) for P in self.Packages)
                         EdkLogger.error('build', RESOURCE_NOT_AVAILABLE,
@@ -777,7 +775,7 @@ class InfBuildData(ModuleBuildClassObject):
         # PEIM and DXE drivers must have a valid [Depex] section
         if len(self.LibraryClass) == 0 and len(RecordList) == 0:
             if self.ModuleType == SUP_MODULE_DXE_DRIVER or self.ModuleType == SUP_MODULE_PEIM or self.ModuleType == SUP_MODULE_DXE_SMM_DRIVER or \
-                self.ModuleType == SUP_MODULE_DXE_SAL_DRIVER or self.ModuleType == SUP_MODULE_DXE_RUNTIME_DRIVER:
+                self.ModuleType == SUP_MODULE_DXE_RUNTIME_DRIVER:
                 EdkLogger.error('build', RESOURCE_NOT_AVAILABLE, "No [Depex] section or no valid expression in [Depex] section for [%s] module" \
                                 % self.ModuleType, File=self.MetaFile)
 
@@ -818,11 +816,11 @@ class InfBuildData(ModuleBuildClassObject):
                         Value = Token
                     else:
                         # get the GUID value now
-                        Value = _ProtocolValue(Token, self.Packages, self.MetaFile.Path)
+                        Value = _ProtocolValue(Token, self.Packages, self.MetaFile.OriginalPath.Path)
                         if Value is None:
-                            Value = _PpiValue(Token, self.Packages, self.MetaFile.Path)
+                            Value = _PpiValue(Token, self.Packages, self.MetaFile.OriginalPath.Path)
                             if Value is None:
-                                Value = GuidValue(Token, self.Packages, self.MetaFile.Path)
+                                Value = GuidValue(Token, self.Packages, self.MetaFile.OriginalPath.Path)
 
                     if Value is None:
                         PackageList = "\n\t".join(str(P) for P in self.Packages)
