@@ -137,8 +137,12 @@ GetSpiInstance (
   Status = GetLibraryData (PcdGet8(PcdSpiFlashLibId), (VOID **)&SpiInstance);
   if (Status == EFI_NOT_FOUND) {
     SpiInstance  = AllocatePool (sizeof(SPI_INSTANCE));
-    ZeroMem (SpiInstance, sizeof(SPI_INSTANCE));
-    Status = SetLibraryData (PcdGet8(PcdSpiFlashLibId), SpiInstance, sizeof(SPI_INSTANCE));
+    if (SpiInstance != NULL) {
+      ZeroMem (SpiInstance, sizeof(SPI_INSTANCE));
+      Status = SetLibraryData (PcdGet8(PcdSpiFlashLibId), SpiInstance, sizeof(SPI_INSTANCE));
+    } else {
+      Status = EFI_OUT_OF_RESOURCES;
+    }
   }
 
   if (EFI_ERROR(Status)) {
@@ -172,6 +176,9 @@ SpiConstructor (
   //
   SpiInstance = GetSpiInstance();
   ASSERT (SpiInstance != NULL);
+  if (SpiInstance == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
   if (SpiInstance->Signature == PCH_SPI_PRIVATE_DATA_SIGNATURE) {
     Status = RegisterService ((VOID *)&mSpiFlashService);
     return Status;

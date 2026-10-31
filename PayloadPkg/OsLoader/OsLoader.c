@@ -132,6 +132,11 @@ UpdateLoadedImage (
     if (NumFiles < 2) {
       DEBUG ((DEBUG_ERROR, "Containers with only one file need to packaged as a \"Normal\" container.\n"));
       ASSERT (NumFiles >= 2);
+      // Not copied into LoadedImage yet, so free here to avoid leaking them.
+      for (Index = 0; Index < NumFiles; Index++) {
+        FreeImageData (&File[Index]);
+      }
+      return EFI_UNSUPPORTED;
     }
 
     LinuxImage                = &LoadedImage->Image.Linux;
@@ -394,9 +399,8 @@ ParseContainerImage (
   // Mask upper nibble in ImageType so that UpdateLoadedImage() supports CONTAINER Image types
   Status = UpdateLoadedImage (Index, File, LoadedImage, ContainerHdr->ImageType & 0xF);
 
-  if (EFI_ERROR (Status)) {
-    UnloadLoadedImage (LoadedImage);
-  }
+  // Do not unload here: LoadedImage stays referenced in the loaded-image
+  // list and is freed once by UnloadBootImages() in the outer boot routine.
 
   AddMeasurePoint (0x40A0);
   return Status;
@@ -427,9 +431,10 @@ ParseComponentImage (
   File.Size = LoadedImage->ImageData.Size;
   File.AllocType = ImageAllocateTypePointer;
   Status = UpdateLoadedImage (1, &File, LoadedImage, 0);
-  if (EFI_ERROR (Status)) {
-    UnloadLoadedImage (LoadedImage);
-  }
+
+  // Do not unload here: LoadedImage stays referenced in the loaded-image
+  // list and is freed once by UnloadBootImages() in the outer boot routine.
+
   return Status;
 }
 

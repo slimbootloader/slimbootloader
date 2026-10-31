@@ -1143,6 +1143,9 @@ GpioGetGpeMapping (
   GpioPad = GPIOV2_PAD_ID (0, ChipsetId, 0, 0, 0, 0);
   Status  = GetMiscCfg (GpioPad, &MiscCfgValue);
   ASSERT_EFI_ERROR (Status);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
 
   MiscCfgDwX[0] = (UINT8) ((MiscCfgValue & GPIOV2_PAD_MISCCFG_GPE0_DW0_MASK) >> GPIOV2_PAD_MISCCFG_GPE0_DW0_POS);
   MiscCfgDwX[1] = (UINT8) ((MiscCfgValue & GPIOV2_PAD_MISCCFG_GPE0_DW1_MASK) >> GPIOV2_PAD_MISCCFG_GPE0_DW1_POS);
