@@ -123,7 +123,7 @@ class Board(BaseBoard):
         if self.FSPDEBUG_MODE:
             self.STAGE2_SIZE += 0x4000
 
-        self.PAYLOAD_SIZE         = 0x00030000
+        self.PAYLOAD_SIZE         = 0x00031000
         self.EPAYLOAD_SIZE        = 0x00240000
 
 
