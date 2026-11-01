@@ -18,16 +18,16 @@ in CALL instructions to increase the compression ratio.
     ip       - current virtual Instruction Pinter (IP) value
     state    - state variable for x86 converter
     encoding - 0 (for decoding), 1 (for encoding)
-  
+
   Out:
     state    - state variable for x86 converter
 
   Returns:
     The number of processed bytes. If you call these functions with multiple calls,
     you must start next call with first byte after block of processed bytes.
-  
+
   Type   Endian  Alignment  LookAhead
-  
+
   x86    little      1          4
   ARMT   little      2          2
   ARM    little      4          0
