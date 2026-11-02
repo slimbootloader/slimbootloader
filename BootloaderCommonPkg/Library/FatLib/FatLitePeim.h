@@ -46,6 +46,24 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 //
 #define PEI_FAT_MAX_DIR_ENTRY_COUNT                   0x1000
 
+//
+// Maximum number of bytes read from one directory while resolving a single
+// path component: the FAT spec limit of 65,536 32-byte entries (2 MiB).
+//
+// PEI_FAT_MAX_DIR_ENTRY_COUNT counts lookups and returned entries, not the
+// raw slots consumed to produce them: FindFile() counts calls, and
+// FatReadNextDirectoryEntry() restarts its own count on each call and charges
+// a whole LFN chain (up to MAX_LFN_ENTRIES slots) as one entry. A crafted
+// directory (runs of deleted or LFN slots between live non-matching entries)
+// can therefore force hundreds of millions of slot reads per lookup.
+//
+// The directory's CurrentPos starts at 0 and advances by 32 for every slot
+// consumed, including deleted, LFN, volume-label and filtered entries, so
+// capping it bounds the total scan regardless of how many lookups are made.
+// No spec-valid directory exceeds this size.
+//
+#define PEI_FAT_MAX_DIR_SIZE                          (0x10000 * sizeof (FAT_DIRECTORY_ENTRY))
+
 
 //
 // Maximum number of clusters the straight-run look-ahead in FatSetFilePos()
@@ -438,6 +456,25 @@ FatReadFile (
   OUT VOID                  *Buffer
   );
 
+
+/**
+  Check whether a directory entry's declared FileSize can possibly be
+  held by the volume (at most MaxCluster clusters of ClusterSize bytes).
+  Any larger value is corrupt or malicious and must not reach consumers
+  that size pre-auth memory allocations off it.
+
+  @param  Volume     The volume the entry belongs to.
+  @param  FileSize   The FileSize field of the directory entry.
+
+  @retval TRUE       FileSize is within the volume's physical capacity.
+  @retval FALSE      FileSize cannot be represented on this volume.
+
+**/
+BOOLEAN
+FatFileSizeValid (
+  IN  PEI_FAT_VOLUME   *Volume,
+  IN  UINT32           FileSize
+  );
 
 /**
   This function reads the next item in the parent directory and

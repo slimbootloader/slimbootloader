@@ -450,24 +450,23 @@ FatSetFilePos (
     //
     // Cycle detection and defense-in-depth against corrupt or malicious FAT chains.
     //
-    // A valid, acyclic FAT chain can never contain more than (MaxCluster + 2)
-    // distinct clusters. If the chain is walked for more hops than that, at least
-    // one cluster must have been visited twice (pigeonhole principle), which means
-    // the chain contains a cycle or is otherwise corrupt.
+    // A valid, acyclic chain holds at most MaxCluster distinct clusters
+    // (numbered 2 .. MaxCluster + 1), so a file never needs more than about
+    // MaxCluster hops. The check allows MaxCluster + 2 as slack; exceeding it
+    // means a cluster was revisited (cycle) or the chain is corrupt.
     //
     // The hop count is tracked in File->TotalClusterHops and accumulates over the
     // whole lifetime of the File object, rather than being limited per call. A
     // per-call limit can be bypassed. For example, a directory scan such as
-    // FatReadNextDirectoryEntry reads 32 bytes at a time. Each call then takes
-    // only one hop, yet the same File object is walked cluster by cluster across
-    // many calls. A cumulative count catches the cycle however the hops are
-    // spread across calls.
+    // FatReadNextDirectoryEntry reads 32 bytes at a time, so each call takes at
+    // most one hop (only when it crosses a cluster boundary), yet the same File
+    // object is walked cluster by cluster across many calls.
     //
     // This loop advances only as far as the caller has actually consumed file
     // content. A legitimately large, non-cyclic file will therefore produce a
     // large hop count too, and that is expected. Other DoS vectors that depend
     // on volume are bounded separately:
-    //   - Oversized directory scans:            PEI_FAT_MAX_DIR_ENTRY_COUNT
+    //   - Oversized directory scans:            PEI_FAT_MAX_DIR_SIZE, PEI_FAT_MAX_DIR_ENTRY_COUNT
     //   - Oversized single-shot read-ahead:     PEI_FAT_MAX_STRAIGHT_RUN_CLUSTERS
     //
     if (Pos > MAX_UINT32 - File->CurrentPos) {
@@ -671,6 +670,26 @@ FatReadFile (
 
 
 /**
+  Check whether a directory entry's declared FileSize can possibly be
+  held by the volume.
+
+  @param  Volume     The volume the entry belongs to.
+  @param  FileSize   The FileSize field of the directory entry.
+
+  @retval TRUE       FileSize is within the volume's physical capacity.
+  @retval FALSE      FileSize cannot be represented on this volume.
+
+**/
+BOOLEAN
+FatFileSizeValid (
+  IN  PEI_FAT_VOLUME   *Volume,
+  IN  UINT32           FileSize
+  )
+{
+  return ((UINT64) FileSize <= MultU64x32 (Volume->MaxCluster, Volume->ClusterSize));
+}
+
+/**
   This function reads the next item in the parent directory and
   initializes the output parameter SubFile (CurrentPos is initialized to 0).
   The function updates the CurrentPos of the parent dir to after the item read.
@@ -753,6 +772,16 @@ FatReadNextDirectoryEntry (
         LfnBufferLen = 0;
         break;
       }
+
+      //
+      // Apply every raw slot against the per-directory budget.
+      // The per-call DirEntryCount alone does not bound total
+      // work across repeated calls or across LFN slots.
+      //
+      if (ParentDir->CurrentPos >= PEI_FAT_MAX_DIR_SIZE) {
+        return EFI_NOT_FOUND;
+      }
+
       Status = FatReadFile (PrivateData, ParentDir, 32, &DirEntry);
       if (EFI_ERROR (Status)) {
         return EFI_DEVICE_ERROR;
@@ -823,6 +852,17 @@ FatReadNextDirectoryEntry (
     // Skip Volume file
     //
     if (DirEntry.Attributes & FAT_ATTR_VOLUME_ID) {
+      continue;
+    }
+
+    //
+    // Skip entries whose declared size exceeds the volume's physical
+    // capacity (see FatFileSizeValid()). Such entries are corrupt or
+    // malicious; handing them out would let one 32-byte dir entry drive
+    // an unbounded pre-auth memory allocation in consumers that size
+    // buffers from FatFsGetFileSize().
+    //
+    if (!FatFileSizeValid (ParentDir->Volume, DirEntry.FileSize)) {
       continue;
     }
 
