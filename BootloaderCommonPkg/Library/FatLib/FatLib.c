@@ -255,7 +255,9 @@ FatInitFileSystem (
   }
 
   if ((PartBlockDev->PartitionType != EnumPartTypeUnknown) &&
-      (PartBlockDev->BlockDevice[SwPart].LastBlock < PartBlockDev->BlockDevice[SwPart].StartBlock)) {
+      ((PartBlockDev->BlockInfo.BlockNum == 0) ||
+       (PartBlockDev->BlockDevice[SwPart].LastBlock < PartBlockDev->BlockDevice[SwPart].StartBlock) ||
+       (PartBlockDev->BlockDevice[SwPart].LastBlock >= PartBlockDev->BlockInfo.BlockNum))) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -377,6 +379,18 @@ FatFsOpenFile (
 
   Status = FindFile (PrivateData, 0, FileName, &Handle);
   if (!EFI_ERROR (Status)) {
+    File = (PEI_FAT_FILE *) Handle;
+
+    //
+    // Defense in depth: FatReadNextDirectoryEntry() already filters
+    // impossible sizes, but never hand out a handle whose declared size
+    // exceeds the volume's physical capacity. Consumers size
+    // pre-authentication allocations off this value.
+    //
+    if (!FatFileSizeValid (File->Volume, File->FileSize)) {
+      return EFI_INVALID_PARAMETER;
+    }
+
     File = (PEI_FAT_FILE *) AllocatePool (sizeof (PEI_FAT_FILE));
     ASSERT (File != NULL);
     if (File == NULL) {
