@@ -125,3 +125,4 @@ identified in the applicable source code file(s) and/or file header(s).
 .. |mtlps_w32r| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Windows&configuration=Windows%20MTLPS_X86_RELEASE
 .. |mtlps_w64d| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Windows&configuration=Windows%20MTLPS_X64_DEBUG
 .. |mtlps_l32r| image:: https://dev.azure.com/slimbootloader/slimbootloader/_apis/build/status/slimbootloader.slimbootloader?branchName=master&jobName=Linux2204&configuration=Linux2204%20MTLPS_X86_RELEASE
+
