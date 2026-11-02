@@ -9,6 +9,13 @@
 
 #define LOADED_IMAGES_INFO_SIGNATURE   SIGNATURE_32 ('L', 'I', 'I', 'S')
 
+//
+// Upper bound for a Linux boot config file (config.cfg / grub.cfg). Real
+// configs are a few KB; the cap stops attacker-controlled file sizes from
+// reaching the allocator near MAX_UINTN.
+//
+#define MAX_LINUX_CONFIG_FILE_SIZE     SIZE_128KB
+
 typedef struct {
   UINTN                   Signature;
   LOADED_IMAGE           *LoadedImageList[LoadImageTypeMax];
@@ -513,7 +520,13 @@ GetTraditionalLinux (
 
     Status = GetFileSize (FileHandle, &ConfigFileSize);
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_INFO, "Get file '%s' size failed, Status = %r\n", (CHAR16 *)mConfigFileName[Index], Status));
+      DEBUG ((DEBUG_ERROR, " Get file size failed, Status = %r\n", Status));
+      CloseFile (FileHandle);
+      continue;
+    }
+
+    if (ConfigFileSize > MAX_LINUX_CONFIG_FILE_SIZE) {
+      DEBUG ((DEBUG_ERROR, " Config file size 0x%lx too large, skip\n", (UINT64)ConfigFileSize));
       CloseFile (FileHandle);
       continue;
     }
