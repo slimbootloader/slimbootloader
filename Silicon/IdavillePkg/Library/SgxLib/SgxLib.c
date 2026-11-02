@@ -503,16 +503,16 @@ UpdateFspmSgxConfig (
   SgxCfgData                = NULL;
   PlatformData              = GetPlatformDataPtr ();
 
+  if (FspmUpd == NULL || PlatformData == NULL) {
+    return UpdateFspmSgxConfigStatus;
+  }
+
   if (GetBootMode () == BOOT_ON_FLASH_UPDATE) {
     FspmUpd->FspmConfig.PcdSgxEnable = CONFIG_SGX_DISABLED;
     return UpdateFspmSgxConfigStatus;
   }
 
-  if (FspmUpd == NULL || PlatformData == NULL) {
-    return UpdateFspmSgxConfigStatus;
-  }
-
-   if (IsSgxCapSupported () == FALSE) {
+  if (IsSgxCapSupported () == FALSE) {
     return UpdateFspmSgxConfigStatus;
   }
   GetSgxUefiScenario (PlatformData);
@@ -523,7 +523,12 @@ UpdateFspmSgxConfig (
   if (SgxCfgData != NULL) {
     // GetPayloadId cant be checked in Stage1. So just check for SGX and TME here
     // and delay for PayloadId check for Stage2.
-    if ((SgxCfgData->EnableSgx == CONFIG_SGX_ENABLED) && (IsTmeEnabled() == TRUE)) {
+    if ((SgxCfgData->EnableSgx == CONFIG_SGX_ENABLED) &&
+        ((SgxCfgData->PrmrrSize < SIZE_2GB) || (SgxCfgData->PrmrrSize > SIZE_512GB) ||
+         (GetPowerOfTwo64 (SgxCfgData->PrmrrSize) != SgxCfgData->PrmrrSize))) {
+      DEBUG ((DEBUG_ERROR, "Invalid PRMRR size 0x%lx in SGX config.\n", SgxCfgData->PrmrrSize));
+      FspmUpd->FspmConfig.PcdSgxEnable = CONFIG_SGX_DISABLED;
+    } else if ((SgxCfgData->EnableSgx == CONFIG_SGX_ENABLED) && (IsTmeEnabled() == TRUE)) {
         // Setting EnableSgx and PrmrrSize from config data
 
         if (PlatformData->PlatformFeatures.SgxSblState == SgxUefiEnabled ||

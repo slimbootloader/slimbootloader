@@ -276,6 +276,11 @@ UpdateFspConfig (
   Fspmcfg->Lp5SplitACTEnable        = MemCfgData->Lp5SplitACTEnable;
   Fspmcfg->DramRfmMode              = 0;
   Fspmcfg->PrmrrSize                = MemCfgData->PrmrrSize;
+  // 0 selects the FSP default; any other size must be a power of two
+  if ((Fspmcfg->PrmrrSize != 0) && (GetPowerOfTwo32 (Fspmcfg->PrmrrSize) != Fspmcfg->PrmrrSize)) {
+    DEBUG ((DEBUG_ERROR, "Invalid PrmrrSize 0x%x, using FSP default\n", Fspmcfg->PrmrrSize));
+    Fspmcfg->PrmrrSize = 0;
+  }
 
   // Cpu Cfg
   Fspmcfg->CpuRatio                 = MemCfgData->CpuRatio;
