@@ -121,7 +121,10 @@ SgxGetStorageVariables (
     goto Exit;
   }
 
-  if (SgxManifest->ArraySize == 0) {
+  if ((SgxManifest == NULL) ||
+      (SgxManifestSize < OFFSET_OF (CCT_VAR_MANIFEST, DescriptorArray)) ||
+      (SgxManifest->ArraySize == 0) ||
+      (SgxManifest->ArraySize > (SgxManifestSize - OFFSET_OF (CCT_VAR_MANIFEST, DescriptorArray)) / sizeof (CCT_VS_VAR_DESCRIPTOR))) {
     Status = EFI_INVALID_PARAMETER;
     goto Exit;
   }
@@ -290,6 +293,10 @@ UpdateFspmSgxConfig (
   SgxCfgData                = NULL;
   PlatformData              = GetPlatformDataPtr ();
 
+  if (FspmUpd == NULL || PlatformData == NULL) {
+    return EFI_NOT_FOUND;
+  }
+
   if (GetBootMode () == BOOT_ON_FLASH_UPDATE) {
     FspmUpd->FspmConfig.SecurityCctEnableSgx = CONFIG_SGX_DISABLED;
     Status = EFI_NOT_READY;
@@ -299,10 +306,6 @@ UpdateFspmSgxConfig (
   if (IsSgxCapSupported () == FALSE) {
     Status = EFI_UNSUPPORTED;
     goto Exit;
-  }
-
-  if (FspmUpd == NULL || PlatformData == NULL) {
-    return EFI_NOT_FOUND;
   }
 
   GetSgxUefiScenario (PlatformData);
@@ -325,6 +328,14 @@ UpdateFspmSgxConfig (
       FspmUpd->FspmConfig.SecurityCctEnableSgx = CONFIG_SGX_DISABLED;
       DEBUG ((DEBUG_WARN, "Intel(R) SGX set to disabled Retry in cold Boot.\n"));
       Status = EFI_NOT_READY;
+      goto Exit;
+    }
+
+    if ((SgxCfgData->PrmrrSize < SIZE_2GB) || (SgxCfgData->PrmrrSize > SIZE_512GB) ||
+        (GetPowerOfTwo64 (SgxCfgData->PrmrrSize) != SgxCfgData->PrmrrSize)) {
+      DEBUG ((DEBUG_ERROR, "Invalid PRMRR size 0x%lx in SGX config.\n", SgxCfgData->PrmrrSize));
+      FspmUpd->FspmConfig.SecurityCctEnableSgx = CONFIG_SGX_DISABLED;
+      Status = EFI_INVALID_PARAMETER;
       goto Exit;
     }
 
@@ -374,6 +385,10 @@ UpdateFspsSgxConfig (
 )
 {
   SGX_CFG_DATA      *SgxCfgData;
+
+  if (FspsUpd == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
   SgxCfgData = (SGX_CFG_DATA *) FindConfigDataByTag (CDATA_SGX_TAG);
   if (SgxCfgData == NULL) {
