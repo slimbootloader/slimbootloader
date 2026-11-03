@@ -210,12 +210,22 @@ class REPORTER:
 
         while Offset < FvHdr.FvLength:
             Offset = AlignPtrUp(Offset)
+            if Offset + sizeof(EFI_FFS_FILE_HEADER) > FvHdr.FvLength:
+                if Offset < FvHdr.FvLength:
+                    Ffs = IMG_INFO('FFS', 'FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF', Offset, FvHdr.FvLength - Offset)
+                    FfsList.append(Ffs)
+                break
             FfsHdr = EFI_FFS_FILE_HEADER.from_buffer(FvData, Offset)
             FfsName = str(uuid.UUID(bytes_le=bytes(bytearray(FfsHdr.Name)))).upper()
             Ffs = IMG_INFO('FFS', FfsName, Offset, int(FfsHdr.Size))
             if bytearray(FfsHdr.Name) == b'\xff' * 16:
                 if (int(FfsHdr.Size) == 0xFFFFFF):
                     Ffs.Length = FvHdr.FvLength - Offset
+            if Ffs.Length <= 0:
+                if Offset < FvHdr.FvLength:
+                    Ffs = IMG_INFO('FFS', 'FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF', Offset, FvHdr.FvLength - Offset)
+                    FfsList.append(Ffs)
+                break
             Offset += Ffs.Length
             FfsList.append(Ffs)
 
