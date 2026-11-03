@@ -405,6 +405,39 @@ FatGetNextCluster (
 
 
 /**
+  Charge cluster-chain hops against the file's lifetime hop budget.
+
+  A valid, acyclic chain holds at most MaxCluster distinct clusters
+  (numbered 2 .. MaxCluster + 1). The budget allows MaxCluster + 3 hops in
+  total; exceeding it means a cluster was revisited (cycle) or the chain is
+  corrupt. Charging Hops at once is equivalent to charging one hop Hops
+  times.
+
+  @param  File     The file whose chain is being walked.
+  @param  Hops     Number of hops to charge.
+
+  @retval TRUE     The hops were charged.
+  @retval FALSE    The budget would be exceeded; nothing was charged.
+
+**/
+STATIC
+BOOLEAN
+FatChargeClusterHops (
+  IN  PEI_FAT_FILE  *File,
+  IN  UINT32        Hops
+  )
+{
+  if ((UINT64) File->TotalClusterHops + Hops > (UINT64) File->Volume->MaxCluster + 3) {
+    DEBUG ((DEBUG_ERROR, "FatSetFilePos: cluster chain hop limit exceeded, possible cyclic/malicious FAT\n"));
+    return FALSE;
+  }
+
+  File->TotalClusterHops += Hops;
+  return TRUE;
+}
+
+
+/**
   Set a file's CurrentPos and CurrentCluster, then compute StraightReadAmount.
 
   @param  PrivateData            the global memory map
@@ -430,7 +463,7 @@ FatSetFilePos (
   UINT32      Cluster;
   UINT32      PrevCluster;
   UINT32      HopCount;
-  UINT32      SeekHopsThisCall;
+  UINT32      Hops;
   UINT32      TargetPos;
 
   if (File->IsFixedRootDir) {
@@ -444,23 +477,77 @@ FatSetFilePos (
 
   } else {
 
+    if (Pos > MAX_UINT32 - File->CurrentPos) {
+      return EFI_INVALID_PARAMETER;
+    }
+
     DivU64x32Remainder (File->CurrentPos, File->Volume->ClusterSize, &Offset);
-    AlignedPos = (UINT32) File->CurrentPos - (UINT32) Offset;
+
+    //
+    // Fast path: the target lies inside the current straight-run window.
+    //
+    // While StraightRunValid is TRUE the window covers the bytes
+    // [CurrentPos, CurrentPos + StraightReadAmount). They lie in the clusters
+    // CurrentCluster, CurrentCluster + 1, ..., each verified by the look-ahead
+    // below to be the FAT successor of the one before it and below
+    // MaxCluster + 2. StraightReadAmount is never 0 while the window is valid.
+    //
+    // Because Pos < StraightReadAmount, the target cluster is
+    // CurrentCluster + Hops, so it can be reached without re-reading the FAT.
+    // The hops are still charged against the lifetime hop budget, so cycle
+    // detection sees exactly the same count as the chain walk below. The
+    // window end does not move, so the invariant still holds afterwards.
+    //
+    // Without this, every cluster boundary crossed by small reads (for
+    // example 32-byte directory entries) would rebuild the window from
+    // scratch, costing up to PEI_FAT_MAX_STRAIGHT_RUN_CLUSTERS FAT lookups per
+    // cluster instead of one rebuild per window.
+    //
+    // Pos == StraightReadAmount lands on the cluster after the window, which
+    // has not been verified, so it takes the slow path.
+    //
+    if (File->StraightRunValid && (Pos < File->StraightReadAmount)) {
+      Hops = (Offset + Pos) / File->Volume->ClusterSize;
+      if (Hops != 0) {
+        //
+        // Defense in depth: unreachable while the invariant above holds.
+        //
+        if ((File->CurrentCluster > MAX_UINT32 - Hops) ||
+            (File->CurrentCluster + Hops >= File->Volume->MaxCluster + 2)) {
+          File->StraightRunValid = FALSE;
+          return EFI_DEVICE_ERROR;
+        }
+
+        if (!FatChargeClusterHops (File, Hops)) {
+          return EFI_DEVICE_ERROR;
+        }
+
+        File->CurrentCluster += Hops;
+      }
+
+      File->CurrentPos         += Pos;
+      File->StraightReadAmount -= Pos;
+      return EFI_SUCCESS;
+    }
+
+    //
+    // Slow path: walk the chain to the target, then rebuild the window. The
+    // window is invalid until the rebuild completes, so an error part-way
+    // through can never leave a stale window behind for the fast path.
+    //
+    File->StraightRunValid = FALSE;
+    AlignedPos             = (UINT32) File->CurrentPos - (UINT32) Offset;
 
     //
     // Cycle detection and defense-in-depth against corrupt or malicious FAT chains.
     //
-    // A valid, acyclic chain holds at most MaxCluster distinct clusters
-    // (numbered 2 .. MaxCluster + 1), so a file never needs more than about
-    // MaxCluster hops. The check allows MaxCluster + 2 as slack; exceeding it
-    // means a cluster was revisited (cycle) or the chain is corrupt.
-    //
-    // The hop count is tracked in File->TotalClusterHops and accumulates over the
-    // whole lifetime of the File object, rather than being limited per call. A
+    // Every hop, here and in the fast path above, is charged against
+    // File->TotalClusterHops (see FatChargeClusterHops()). The budget covers
+    // the whole lifetime of the File object rather than a single call. A
     // per-call limit can be bypassed. For example, a directory scan such as
-    // FatReadNextDirectoryEntry reads 32 bytes at a time, so each call takes at
-    // most one hop (only when it crosses a cluster boundary), yet the same File
-    // object is walked cluster by cluster across many calls.
+    // FatReadNextDirectoryEntry reads 32 bytes at a time, so each call takes
+    // at most one hop (only when it crosses a cluster boundary), yet the same
+    // File object is walked cluster by cluster across many calls.
     //
     // This loop advances only as far as the caller has actually consumed file
     // content. A legitimately large, non-cyclic file will therefore produce a
@@ -469,12 +556,8 @@ FatSetFilePos (
     //   - Oversized directory scans:            PEI_FAT_MAX_DIR_SIZE, PEI_FAT_MAX_DIR_ENTRY_COUNT
     //   - Oversized single-shot read-ahead:     PEI_FAT_MAX_STRAIGHT_RUN_CLUSTERS
     //
-    if (Pos > MAX_UINT32 - File->CurrentPos) {
-      return EFI_INVALID_PARAMETER;
-    }
-
     TargetPos = (UINT32) File->CurrentPos + Pos;
-    SeekHopsThisCall = 0;
+    Hops      = 0;
 
     while
     (
@@ -482,11 +565,10 @@ FatSetFilePos (
       TargetPos >= AlignedPos &&
       (TargetPos - AlignedPos) >= File->Volume->ClusterSize
       ) {
-      if (File->TotalClusterHops++ > File->Volume->MaxCluster + 2) {
-        DEBUG ((DEBUG_ERROR, "FatSetFilePos: cluster chain hop limit exceeded, possible cyclic/malicious FAT\n"));
+      if (!FatChargeClusterHops (File, 1)) {
         return EFI_DEVICE_ERROR;
       }
-      SeekHopsThisCall++;
+      Hops++;
       AlignedPos += File->Volume->ClusterSize;
       Status = FatGetNextCluster (
                  PrivateData,
@@ -500,22 +582,27 @@ FatSetFilePos (
     }
 
     if (FAT_CLUSTER_FUNCTIONAL (File->CurrentCluster)) {
-      return EFI_INVALID_PARAMETER;
-    }
+      //
+      // Reading the last byte of a file whose size is an exact multiple of
+      // the cluster size advances the position onto the end-of-chain marker.
+      // Accept this one case: the walk in this call stepped from a data
+      // cluster onto a proper end-of-chain value and the target is exactly
+      // the start of that (nonexistent) cluster. StraightRunValid stays
+      // FALSE, and a window cannot be rebuilt from an end-of-chain cluster,
+      // so any further read on this handle fails in FatReadFile().
+      //
+      // Seeking past the end of the chain, or onto a free, reserved or bad
+      // cluster, is still an error.
+      //
+      if ((Hops != 0) &&
+          FAT_CLUSTER_END_OF_CHAIN (File->CurrentCluster) &&
+          (TargetPos == AlignedPos)) {
+        File->CurrentPos         = TargetPos;
+        File->StraightReadAmount = 0;
+        return EFI_SUCCESS;
+      }
 
-    //
-    // Fast path: the seek loop above took no hops, so we are still in the same
-    // cluster, and a straight-run window is already computed for it. Just
-    // shrink the window by Pos and skip the chain walk.
-    //
-    // Without this, a directory scan that makes many small reads (for example
-    // 32 bytes each) within one cluster would recompute the full look-ahead
-    // window on every call. That multiplies the cost by (ClusterSize / read size).
-    //
-    if ((SeekHopsThisCall == 0) && File->StraightRunValid && (Pos <= File->StraightReadAmount)) {
-      File->CurrentPos         += Pos;
-      File->StraightReadAmount -= Pos;
-      return EFI_SUCCESS;
+      return EFI_INVALID_PARAMETER;
     }
 
     File->CurrentPos += Pos;
@@ -527,7 +614,10 @@ FatSetFilePos (
     //
     // The look-ahead stops at the first non-contiguous cluster
     // (Cluster != PrevCluster + 1) and never modifies File->CurrentCluster.
-    // It therefore cannot walk a cycle.
+    // It therefore cannot walk a cycle. A cluster stays in the window only if
+    // FatGetNextCluster() accepts it (so it is below MaxCluster + 2) and its
+    // predecessor links to it; any failure aborts without validating the
+    // window. The fast path above relies on this.
     //
     // A crafted but valid volume can still hold a very long sequential chain,
     // for example a million clusters behind a tiny file. Walking all of it
@@ -638,10 +728,32 @@ FatReadFile (
         return EFI_DEVICE_ERROR;
       }
 
-      PhysicalAddr  = File->Volume->FirstClusterPos + MultU64x32 (File->Volume->ClusterSize, File->CurrentCluster - 2);
+      //
+      // A freshly opened sub-directory or file has no straight-run window
+      // yet; build it before using StraightReadAmount. A zero-length seek
+      // does not move CurrentPos or CurrentCluster. A handle positioned at
+      // the end of its cluster chain (see FatSetFilePos()) has no window and
+      // cannot rebuild one, so any further read fails here.
+      //
+      if (!File->StraightRunValid) {
+        Status = FatSetFilePos (PrivateData, File, 0);
+        if (EFI_ERROR (Status)) {
+          return EFI_DEVICE_ERROR;
+        }
+      }
 
       Amount        = File->StraightReadAmount;
       Amount        = Size > Amount ? Amount : Size;
+      //
+      // A valid straight-run window is never empty. Fail instead of looping
+      // forever without making progress if that invariant is ever broken.
+      //
+      if (Amount == 0) {
+        return EFI_DEVICE_ERROR;
+      }
+
+      PhysicalAddr  = File->Volume->FirstClusterPos + MultU64x32 (File->Volume->ClusterSize, File->CurrentCluster - 2);
+
       Status = FatReadDisk (
                  PrivateData,
                  File->Volume->BlockDeviceNo,

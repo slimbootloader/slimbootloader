@@ -154,7 +154,8 @@ typedef struct {
   //
   // Cumulative count of cluster-chain hops taken over the entire lifetime
   // of this PEI_FAT_FILE instance (across all FatSetFilePos()/FatReadFile()
-  // calls, not just a single call). A valid, acyclic FAT chain can never
+  // calls, not just a single call), including hops taken arithmetically
+  // inside a straight-run window. A valid, acyclic FAT chain can never
   // contain more than (Volume->MaxCluster + 2) distinct clusters, so by the
   // pigeonhole principle, exceeding that many *total* hops while walking
   // this file's chain proves a cycle (or an otherwise-corrupt/malicious FAT)
@@ -163,15 +164,15 @@ typedef struct {
   //
   UINT32          TotalClusterHops;
   //
-  // TRUE once StraightReadAmount has been computed at least once for the
-  // current CurrentCluster. The straight-run look-ahead only needs to be
-  // recomputed (an O(run length) operation) when CurrentCluster actually
-  // changes; for a call that stays within the same cluster (e.g. one of
-  // many small 32-byte directory-entry reads issued while scanning a
-  // single directory cluster), StraightReadAmount can simply be reduced by
-  // the consumed Pos in O(1). Without this, every single small read would
-  // redundantly re-walk the full look-ahead window, multiplying the cost
-  // of a large directory scan by (ClusterSize / entry size).
+  // TRUE while StraightReadAmount describes a verified straight-run window
+  // starting at CurrentPos/CurrentCluster: every cluster in it is a
+  // contiguous, in-range member of this file's chain. While the window is
+  // valid, FatSetFilePos() advances inside it in O(1), across cluster
+  // boundaries too, and only re-walks the FAT once the window is exhausted.
+  // Without this, small reads (e.g. 32-byte directory entries) would rebuild
+  // the look-ahead at every cluster boundary, costing up to
+  // PEI_FAT_MAX_STRAIGHT_RUN_CLUSTERS FAT lookups per cluster. Cleared at the
+  // start of every rebuild so a failed rebuild never leaves a stale window.
   //
   BOOLEAN         StraightRunValid;
 } PEI_FAT_FILE;
