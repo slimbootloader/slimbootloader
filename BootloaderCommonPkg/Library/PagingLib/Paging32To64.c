@@ -65,7 +65,10 @@ LoadPageTableForLongMode (
   if (mPageTablesX64 == NULL) {
     PageTblSize = GetPageTablesMemorySize (TRUE);
     PageTables  = AllocatePages (EFI_SIZE_TO_PAGES(PageTblSize));
-    ASSERT (PageTables != NULL);
+    if (PageTables == NULL) {
+      DEBUG ((DEBUG_ERROR, "Failed to allocate long mode page tables!\n"));
+      CpuDeadLoop ();
+    }
     Create4GbPageTables (PageTables, TRUE);
     DEBUG ((DEBUG_VERBOSE, "PageTables 0x%X\n", PageTables));
     mPageTablesX64 = PageTables;
