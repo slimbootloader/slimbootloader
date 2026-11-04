@@ -233,6 +233,10 @@ UpdateFpdtS3Table (
     return EFI_INVALID_PARAMETER;
   }
   ASSERT ((S3PerfTable != NULL) && (S3PerfTable->Header.Signature == EFI_ACPI_5_0_FPDT_S3_PERFORMANCE_TABLE_SIGNATURE));
+  // NULL is already rejected by S3_PTR_CHK() above.
+  if (S3PerfTable->Header.Signature != EFI_ACPI_5_0_FPDT_S3_PERFORMANCE_TABLE_SIGNATURE) {
+    return EFI_NOT_FOUND;
+  }
 
   // Get current time
   TscValue = ReadTimeStamp();
