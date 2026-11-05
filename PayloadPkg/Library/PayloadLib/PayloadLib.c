@@ -134,6 +134,9 @@ GetDebugLogBufferPtr (
   PAYLOAD_GLOBAL_DATA     *PayloadGlobalDataPtr;
 
   PayloadGlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)(UINTN)PcdGet32 (PcdGlobalDataAddress);
+  if (PayloadGlobalDataPtr == NULL) {
+    return NULL;
+  }
 
   return PayloadGlobalDataPtr->LogBufPtr;
 }
