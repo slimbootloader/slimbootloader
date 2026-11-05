@@ -65,6 +65,9 @@ PayloadInit (
   EFI_MEMORY_RANGE_ENTRY    MemoryRanges[3];
 
   PcdStatus1 = PcdSet32S (PcdPayloadHobList, (UINT32)(UINTN)HobList);
+  if (EFI_ERROR (PcdStatus1)) {
+    CpuDeadLoop ();
+  }
 
   //
   // Payload Memmap
@@ -114,10 +117,15 @@ PayloadInit (
   AddMemoryResourceRange (MemoryRanges, 3);
 
   GlobalDataPtr = AllocateZeroPool (sizeof (PAYLOAD_GLOBAL_DATA));
-  ASSERT (GlobalDataPtr != NULL);
+  if (GlobalDataPtr == NULL) {
+    // No CpuHalt(): DEBUG needs payload global data and serial, neither ready.
+    CpuDeadLoop ();
+  }
   GlobalDataPtr->Signature = PLD_GDATA_SIGNATURE;
   PcdStatus2 = PcdSet32S (PcdGlobalDataAddress, (UINT32) (UINTN)GlobalDataPtr);
-  ASSERT_EFI_ERROR (PcdStatus1 | PcdStatus2);
+  if (EFI_ERROR (PcdStatus2)) {
+    CpuDeadLoop ();
+  }
 
   // Create Debug Log Buffer and init configuration data
   GuidHob = GetNextGuidHob (&gLoaderPlatformDataGuid, (VOID *)(UINTN)PcdGet32 (PcdPayloadHobList));
@@ -132,10 +140,12 @@ PayloadInit (
     GlobalDataPtr->CfgDataPtr = LoaderPlatformData->ConfigDataPtr;
 
     DebugLogBufferHdr  = LoaderPlatformData->DebugLogBuffer;
-    if (DebugLogBufferHdr->Signature == DEBUG_LOG_BUFFER_SIGNATURE) {
+    if ((DebugLogBufferHdr != NULL) && (DebugLogBufferHdr->Signature == DEBUG_LOG_BUFFER_SIGNATURE)) {
       BufPtr = AllocatePool (DebugLogBufferHdr->TotalLength);
-      CopyMem (BufPtr, DebugLogBufferHdr, DebugLogBufferHdr->UsedLength);
-      GlobalDataPtr->LogBufPtr = BufPtr;
+      if (BufPtr != NULL) {
+        CopyMem (BufPtr, DebugLogBufferHdr, DebugLogBufferHdr->UsedLength);
+        GlobalDataPtr->LogBufPtr = BufPtr;
+      }
     }
 
     ContainerList = LoaderPlatformData->ContainerList;
@@ -217,6 +227,9 @@ SecStartup (
     AllocateLen += LoaderLibData->Count * sizeof (LIBRARY_DATA);
     BufPtr = AllocatePool (AllocateLen);
     ASSERT (BufPtr != NULL);
+    if (BufPtr == NULL) {
+      CpuHalt ("Failed to allocate payload library data!");
+    }
 
     CopyMem (BufPtr, LibData, LoaderLibData->Count * sizeof (LIBRARY_DATA));
     LibData = (LIBRARY_DATA *) BufPtr;
