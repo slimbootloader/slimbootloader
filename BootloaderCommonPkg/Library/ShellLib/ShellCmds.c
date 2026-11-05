@@ -68,6 +68,10 @@ LoadShellCommands (
       ShellCommandRegister (Shell, &ShellCommandCfgGet);
       ShellCommandRegister (Shell, &ShellCommandCfgFind);
     }
+
+    if (FeaturePcdGet (PcdEnableAsan)) {
+      ShellCommandRegister (Shell, &ShellCommandAsan);
+    }
   }
 
   return EFI_SUCCESS;

@@ -299,6 +299,7 @@ CoreAllocatePoolI (
   UINTN       Offset, MaxOffset;
   UINTN       NoPages;
   UINTN       Granularity;
+  UINTN       RequestedSize;
 
   ASSERT_LOCKED (&gMemoryLock);
 
@@ -321,6 +322,7 @@ CoreAllocatePoolI (
   // we don't get an unaligned access fault later when
   // pool_Tail is being initialized
   //
+  RequestedSize = Size;
   Size = ALIGN_VARIABLE (Size);
 
   Size += POOL_OVERHEAD;
@@ -423,6 +425,8 @@ Done:
     Tail->Size      = Size;
     Buffer          = Head->Data;
     DEBUG_CLEAR_MEMORY (Buffer, Size - POOL_OVERHEAD);
+    AsanPoison (Head, Size, ASAN_SHADOW_HEAP_REDZONE);
+    AsanUnpoison (Buffer, RequestedSize);
 
     DEBUG ((
              DEBUG_POOL,
@@ -525,8 +529,17 @@ CoreFreePoolI (
   UINTN       Offset;
   BOOLEAN     AllFree;
   UINTN       Granularity;
+  VOID        *Released;
 
   ASSERT (Buffer != NULL);
+  //
+  // An evicted block has free-list metadata but retains freed shadow until reuse.
+  // Check shadow before CR validates the allocation signature.
+  //
+  if (!AsanCheckFree (Buffer)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
   //
   // Get the head & tail of the pool entry
   //
@@ -555,6 +568,20 @@ CoreFreePoolI (
     return EFI_INVALID_PARAMETER;
   }
 
+  if (PoolType != NULL) {
+    *PoolType = Head->Type;
+  }
+
+  //
+  // AsanLib may hold the block in quarantine and hand back an older block to release instead.
+  //
+  Released = AsanQuarantine (Buffer, Head->Size);
+  AsanPoison (Head, Head->Size, ASAN_SHADOW_HEAP_FREED);
+  if (Released == NULL) {
+    return EFI_SUCCESS;
+  }
+  Head = BASE_CR (Released, POOL_HEAD, Data);
+
   //
   // Determine the pool type and account for it
   //
@@ -575,10 +602,6 @@ CoreFreePoolI (
     Granularity = EFI_ACPI_RUNTIME_PAGE_ALLOCATION_ALIGNMENT;
   } else {
     Granularity = DEFAULT_PAGE_ALLOCATION;
-  }
-
-  if (PoolType != NULL) {
-    *PoolType = Head->Type;
   }
 
   //
