@@ -52,9 +52,17 @@ CallExtraModule (
     ModArgs.HeapSize   = MOD_DEF_HEAP_SIZE;
   }
   ModArgs.RsvdBase   = (UINT32)(UINTN) AllocateReservedPages (EFI_SIZE_TO_PAGES (ModArgs.RsvdSize));
+  if (ModArgs.RsvdBase == 0) {
+    DEBUG ((DEBUG_ERROR, "Failed to allocate reserved memory for extra module\n"));
+    return EFI_OUT_OF_RESOURCES;
+  }
+
   ModArgs.HeapBase   = (UINT32)(UINTN) AllocatePages (EFI_SIZE_TO_PAGES (ModArgs.HeapSize));
-  ASSERT (ModArgs.HeapBase != 0);
-  ASSERT (ModArgs.RsvdBase != 0);
+  if (ModArgs.HeapBase == 0) {
+    DEBUG ((DEBUG_ERROR, "Failed to allocate heap for extra module\n"));
+    FreePages ((VOID *)(UINTN)ModArgs.RsvdBase, EFI_SIZE_TO_PAGES (ModArgs.RsvdSize));
+    return EFI_OUT_OF_RESOURCES;
+  }
 
   // Get entrypoint and call into module with thunk support
   Status = PeCoffLoaderGetEntryPoint (ExtraImageBase, LoadedImage->Image.Common.BootFile.Size, &EntryPoint);
