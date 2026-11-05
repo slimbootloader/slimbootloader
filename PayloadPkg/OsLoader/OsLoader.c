@@ -721,8 +721,10 @@ BeforeOSJump (
   // Print debug log buffer if serial port is not an active debug output device
   if ((PcdGet32 (PcdDebugOutputDeviceMask) & DEBUG_OUTPUT_DEVICE_SERIAL_PORT) == 0) {
     LogBufHdr = (DEBUG_LOG_BUFFER_HEADER *) GetDebugLogBufferPtr ();
-    SerialPortWrite ((UINT8 *)"\nLOGBUF:", 8);
-    SerialPortWrite ((UINT8 *)LogBufHdr->Buffer, LogBufHdr->UsedLength - LogBufHdr->HeaderLength);
+    if (LogBufHdr != NULL) {
+      SerialPortWrite ((UINT8 *)"\nLOGBUF:", 8);
+      SerialPortWrite ((UINT8 *)LogBufHdr->Buffer, LogBufHdr->UsedLength - LogBufHdr->HeaderLength);
+    }
   }
 
 }
