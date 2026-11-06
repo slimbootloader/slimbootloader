@@ -3,7 +3,7 @@
 #
 # Provide common functions for test script
 #
-# Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2020 - 2026, Intel Corporation. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 
@@ -20,7 +20,13 @@ def get_tool_dir (sbl_dir):
     if os.name == 'nt':
         return os.path.join(sbl_dir, 'BaseTools', 'Bin', 'Win32')
     else:
-        return os.path.join(sbl_dir, 'BaseTools', 'BinWrappers', 'PosixLike')
+        tool_dir = os.path.join(sbl_dir, 'BaseTools', 'BinWrappers', 'PosixLike')
+        # BaseTools wrappers source GenericShellWrapper through PATH.
+        path = os.environ.get('PATH', '')
+        path_list = path.split(os.pathsep)
+        if tool_dir not in path_list:
+            os.environ['PATH'] = tool_dir + (os.pathsep + path if path else '')
+        return tool_dir
 
 def get_key_dir (sbl_dir):
     return os.path.realpath (os.path.join(sbl_dir, '..', 'SblKeys'))
