@@ -37,7 +37,7 @@ class Board(AlderlakeBoardConfig.Board):
         self._CFGDATA_EXT_FILE    = ['CfgDataInt_Rplps_Crb_Ddr5.dlt', 'CfgDataInt_Rplps_Rvp_Ddr5.dlt']
         self._MULTI_VBT_FILE      = {1:'VbtRplPsRvp.dat', 2:'VbtRplPsCrb.dat'}
         self._LP_SUPPORT          = True
-        self.EPAYLOAD_SIZE        = 0x240000
+        self.EPAYLOAD_SIZE        = 0x258000
 
         # TXT (Trusted Execution Technology) support
         # 0: Disabled (default)  1: Enabled
