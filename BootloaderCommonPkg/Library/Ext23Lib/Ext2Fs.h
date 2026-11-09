@@ -95,7 +95,6 @@
 
 #define MAXSYMLINKS 1
 #define MAXPATHLEN 260
-#define EXT2_MAX_BLOCK_GROUPS 0x2000U
 
 #undef  EXT2FS_DEBUG
 
