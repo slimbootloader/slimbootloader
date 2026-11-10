@@ -41,6 +41,20 @@ FinalizeSmbios (
   );
 
 /**
+  Measure a filtered copy of the SMBIOS structure table into TPM PCR[1].
+
+  @retval EFI_SUCCESS            SMBIOS table measured and logged.
+  @retval EFI_NOT_FOUND          SMBIOS table is not available.
+  @retval EFI_OUT_OF_RESOURCES   Memory allocation failed.
+  @retval Others                 TPM extend failed.
+**/
+EFI_STATUS
+EFIAPI
+MeasureSmbiosTables (
+  VOID
+  );
+
+/**
   Initialize the runtime SMBIOS string buffer and seed common strings.
 
   @retval EFI_SUCCESS            The SMBIOS string buffer is ready.
