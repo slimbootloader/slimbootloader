@@ -356,6 +356,8 @@ HeciPacketWrite (
   UINT32                       Timeout;
   UINT32                       i;
   UINT32                       LengthInDwords;
+  UINT32                       BytesLeft;
+  UINT32                       Data;
   HECI_CONTROL_STATUS_REGISTER HeciCsrHost;
   HECI_CONTROL_STATUS_REGISTER HeciCsrMeHra;
 
@@ -392,8 +394,12 @@ HeciPacketWrite (
   ///
   /// Write Message Body
   ///
+  BytesLeft = MessageHeader->Fields.Length;
   for (i = 0; i < LengthInDwords; i++) {
-    MmioWrite32 (HeciMemBar + H_CB_WW, MessageData[i]);
+    Data = 0;
+    CopyMem (&Data, (UINT8 *) MessageData + i * sizeof (Data), MIN (BytesLeft, sizeof (Data)));
+    MmioWrite32 (HeciMemBar + H_CB_WW, Data);
+    BytesLeft -= MIN (BytesLeft, sizeof (Data));
   }
   ///
   /// Set Interrupt Generate bit
