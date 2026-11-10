@@ -10,6 +10,7 @@
 #include <Library/PcdLib.h>
 #include <Library/DebugLib.h>
 #include <Library/BaseLib.h>
+#include <Library/IoLib.h>
 #include <Library/SocInitLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
@@ -45,6 +46,91 @@
 #define PSD_FW_VER_DEFAULT_VALUE                        0xFF
 #define TME_MT_MAX_KEY_MASK                             0x0007FFF000000000
 #define TME_MT_MAX_KEY_IDX                              36
+
+#define MSR_CPU_BUSNUMBER                               0x128
+#define UBOX_DFX_DEV_NUM                                0
+#define UBOX_DFX_FUNC_NUM                               1
+#define R_MMIO_BASE_UBOX_DFX                            0xD0
+#define R_SCF_BAR_UBOX_DFX                              0xD4
+#define B_SCF_BAR_UBOX_DFX_VALID                        BIT31
+#define B_SCF_BAR_UBOX_DFX_BASE_ADDR                    0x7FF
+#define B_MMIO_BASE_UBOX_DFX_ADDR                       0x1FFFFFFF
+#define CPU_FAMILY_MODEL_GNRD                           0xA06E
+#define GNRD_A0_CPU_STEP                                0x00
+#define S3M_OFFSET_BASE_GNRD_A0                         0x283000
+#define S3M_OFFSET_BASE_GNRD_B0                         0x539000
+#define R_S3M_S3MFW_REVID_N1_S3M_TREG                   0x2DC
+#define S3M_REVID_MAJOR(RevId)                          (((RevId) >> 24) & 0xFF)
+#define S3M_REVID_MINOR(RevId)                          (((RevId) >> 20) & 0xF)
+#define S3M_REVID_RELEASE(RevId)                        (((RevId) >> 14) & 0x3F)
+#define S3M_REVID_BUILD(RevId)                          ((RevId) & 0x3FFF)
+
+typedef union {
+  struct {
+    UINT32 s3m_s3mfw_commited_revid : 32;
+  }      Bits;
+  UINT32 Data;
+} S3M_S3MFW_REVID_N1_S3M_TREG_STRUCT;
+
+/**
+  Read the committed S3M FW revision ID of the current socket.
+
+  Equivalent of BIOS UsraCsrRead (SocketId, 0, S3M_S3MFW_REVID_N1_S3M_TREG_REG),
+  translated to UBOX SCF BAR + S3M offset + register offset.
+
+  @param[out] RevID  Pointer to receive the S3M FW committed RevID.
+
+  @retval EFI_SUCCESS            RevID read successfully.
+  @retval EFI_INVALID_PARAMETER  RevID is NULL.
+  @retval EFI_NOT_READY          SCF BAR is not programmed.
+  @retval EFI_UNSUPPORTED        Not a GNR-D CPU or address not reachable.
+**/
+STATIC
+EFI_STATUS
+GetS3mFwRevId (
+  OUT UINT32    *RevID
+  )
+{
+  UINT32                              CpuSignature;
+  UINTN                               UboxDfxBase;
+  UINT32                              MmioBase;
+  UINT32                              ScfBar;
+  UINT64                              RegAddr;
+  UINT32                              S3mOffsetBase;
+  S3M_S3MFW_REVID_N1_S3M_TREG_STRUCT  S3mFwRevIDN1;
+
+  if (RevID == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  AsmCpuid (CPUID_VERSION_INFO, &CpuSignature, NULL, NULL, NULL);
+  if (((CpuSignature >> 4) & 0xFFFF) != CPU_FAMILY_MODEL_GNRD) {
+    DEBUG ((DEBUG_ERROR, "S3M RevID: unsupported CPU 0x%x\n", CpuSignature));
+    return EFI_UNSUPPORTED;
+  }
+  S3mOffsetBase = ((CpuSignature & 0xF) == GNRD_A0_CPU_STEP) ? S3M_OFFSET_BASE_GNRD_A0 : S3M_OFFSET_BASE_GNRD_B0;
+
+  UboxDfxBase = MM_PCI_ADDRESS ((UINT8)AsmReadMsr64 (MSR_CPU_BUSNUMBER), UBOX_DFX_DEV_NUM, UBOX_DFX_FUNC_NUM, 0);
+  MmioBase    = MmioRead32 (UboxDfxBase + R_MMIO_BASE_UBOX_DFX);
+  ScfBar      = MmioRead32 (UboxDfxBase + R_SCF_BAR_UBOX_DFX);
+  if ((ScfBar & B_SCF_BAR_UBOX_DFX_VALID) == 0) {
+    DEBUG ((DEBUG_ERROR, "S3M RevID: SCF BAR not valid (0x%x)\n", ScfBar));
+    return EFI_NOT_READY;
+  }
+
+  RegAddr = LShiftU64 ((UINT64)(MmioBase & B_MMIO_BASE_UBOX_DFX_ADDR), 23) +
+            LShiftU64 ((UINT64)(ScfBar & B_SCF_BAR_UBOX_DFX_BASE_ADDR), 12) +
+            S3mOffsetBase + R_S3M_S3MFW_REVID_N1_S3M_TREG;
+  if (RegAddr > MAX_UINTN) {
+    DEBUG ((DEBUG_ERROR, "S3M RevID: address 0x%lx not reachable\n", RegAddr));
+    return EFI_UNSUPPORTED;
+  }
+
+  S3mFwRevIDN1.Data = MmioRead32 ((UINTN)RegAddr);
+  *RevID = S3mFwRevIDN1.Bits.s3m_s3mfw_commited_revid;
+
+  return EFI_SUCCESS;
+}
 
 
 /**
@@ -300,6 +386,7 @@ UpdateAcpiPsdTable (
   EFI_ACPI_PSD_TABLE              *Psdt;
   PLATFORM_DATA_BL                *PlatformData;
   EFI_STATUS                      Status;
+  UINT32                          S3mFwRevId;
 
   DEBUG((DEBUG_INFO, "UpdateAcpiPsdTable start\n"));
   if ( Table == NULL) {
@@ -328,8 +415,20 @@ UpdateAcpiPsdTable (
   // CSME Sec Capabilities,
   //There is no CSME and HECI disabled on GNRD
   Psdt->CsmeSecCapabilities = PSD_CSME_SEC_CAPS_DEFAULT;
-   //No CSME FW version available on GNRD, set to default value
-  SetMem(&Psdt->FwVer, sizeof(Psdt->FwVer), PSD_FW_VER_DEFAULT_VALUE);
+  //No CSME on GNRD, report S3M FW committed RevID as FW version
+  Status = GetS3mFwRevId (&S3mFwRevId);
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, " GetS3mFwRevId failed =%r\n",Status));
+    SetMem(&Psdt->FwVer, sizeof(Psdt->FwVer), PSD_FW_VER_DEFAULT_VALUE);
+  } else {
+    Psdt->FwVer.CodeMajor   = S3M_REVID_MAJOR (S3mFwRevId);
+    Psdt->FwVer.CodeMinor   = S3M_REVID_MINOR (S3mFwRevId);
+    // S3M has no hotfix field; IPU release number is the closest equivalent
+    Psdt->FwVer.CodeHotFix  = S3M_REVID_RELEASE (S3mFwRevId);
+    Psdt->FwVer.CodeBuildNo = S3M_REVID_BUILD (S3mFwRevId);
+    DEBUG((DEBUG_INFO, "PSD_DEBUG S3M FW RevId 0x%x -> Major %d, Minor %d, Release(HotFix) %d, Build %d\n",
+      S3mFwRevId, Psdt->FwVer.CodeMajor, Psdt->FwVer.CodeMinor, Psdt->FwVer.CodeHotFix, Psdt->FwVer.CodeBuildNo));
+  }
 
   //SGX Capabilities
   Psdt->SgxCapabilities = 0x0;
