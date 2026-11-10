@@ -760,7 +760,13 @@ SecStartup (
 
   // Finalize Smbios (add Type127 and cheksum)
   if (FixedPcdGetBool (PcdSmbiosEnabled)) {
-    FinalizeSmbios ();
+    Status = FinalizeSmbios ();
+    if (!EFI_ERROR (Status) && MEASURED_BOOT_ENABLED () && (BootMode != BOOT_ON_S3_RESUME)) {
+      Status = MeasureSmbiosTables ();
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "SMBIOS measurement failed - %r\n", Status));
+      }
+    }
   }
 
   // Continue boot flow
