@@ -38,7 +38,7 @@
 
 **/
 STATIC
-VOID
+BOOLEAN
 PayloadInit (
   IN     VOID                   *HobList,
   IN OUT UINT32                 *PldHeapBase,
@@ -59,15 +59,10 @@ PayloadInit (
   UINT32                    StackBase;
   UINT32                    StackSize;
   LOADER_PLATFORM_DATA      *LoaderPlatformData;
-  EFI_STATUS                PcdStatus1;
-  EFI_STATUS                PcdStatus2;
   CONTAINER_LIST            *ContainerList;
   EFI_MEMORY_RANGE_ENTRY    MemoryRanges[3];
 
-  PcdStatus1 = PcdSet32S (PcdPayloadHobList, (UINT32)(UINTN)HobList);
-  if (EFI_ERROR (PcdStatus1)) {
-    CpuDeadLoop ();
-  }
+  (VOID)PcdSet32S (PcdPayloadHobList, (UINT32)(UINTN)HobList);
 
   //
   // Payload Memmap
@@ -120,12 +115,10 @@ PayloadInit (
   if (GlobalDataPtr == NULL) {
     // No CpuHalt(): DEBUG needs payload global data and serial, neither ready.
     CpuDeadLoop ();
+    return FALSE;
   }
   GlobalDataPtr->Signature = PLD_GDATA_SIGNATURE;
-  PcdStatus2 = PcdSet32S (PcdGlobalDataAddress, (UINT32) (UINTN)GlobalDataPtr);
-  if (EFI_ERROR (PcdStatus2)) {
-    CpuDeadLoop ();
-  }
+  (VOID)PcdSet32S (PcdGlobalDataAddress, (UINT32) (UINTN)GlobalDataPtr);
 
   // Create Debug Log Buffer and init configuration data
   GuidHob = GetNextGuidHob (&gLoaderPlatformDataGuid, (VOID *)(UINTN)PcdGet32 (PcdPayloadHobList));
@@ -173,6 +166,8 @@ PayloadInit (
   if (PldStatckSize != NULL) {
     *PldStatckSize = StackSize;
   }
+
+  return TRUE;
 }
 
 /**
@@ -208,7 +203,10 @@ SecStartup (
 
   TimeStamp = ReadTimeStamp ();
 
-  PayloadInit (Params, &HeapBase, &StackBase, &StackSize);
+  if (!PayloadInit (Params, &HeapBase, &StackBase, &StackSize)) {
+    CpuDeadLoop ();
+    return;
+  }
   GlobalDataPtr = (PAYLOAD_GLOBAL_DATA *)(UINTN)PcdGet32 (PcdGlobalDataAddress);
 
   // DEBUG will be available after PayloadInit ()
