@@ -192,7 +192,7 @@ class Board(BaseBoard):
         self.STAGE2_FD_BASE       = 0x01000000
 
         self.PAYLOAD_SIZE         = 0x00040000
-        self.EPAYLOAD_SIZE        = 0x00200000
+        self.EPAYLOAD_SIZE        = 0x00210000
         self.UEFI_VARIABLE_SIZE = 0x1000
         if len(self._PAYLOAD_NAME.split(';')) > 1:
             self.UEFI_VARIABLE_SIZE = 0x00090000
