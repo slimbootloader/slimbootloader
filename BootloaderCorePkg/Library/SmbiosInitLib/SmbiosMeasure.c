@@ -92,46 +92,60 @@ NormalizeSmbiosTable (
   SMBIOS_STRUCTURE   *TypeHdr;
   UINT8              *Field;
   UINT8               Excluded[SMBIOS_STRING_BITMAP_SIZE];
+  BOOLEAN             HasExcluded;
   UINTN               StringLen;
   UINTN               Index;
   UINT8               StringId;
   UINT8               Type;
+  UINT8               Length;
+
+  if ((Table == NULL) || ((UINTN)TableLength > (UINTN)MAX_ADDRESS - (UINTN)Table)) {
+    return 0;
+  }
 
   Limit = Table + TableLength;
   Src   = Table;
   Dst   = Normalized;
 
-  while ((Src + sizeof (SMBIOS_STRUCTURE) <= Limit) &&
-         (((CONST SMBIOS_STRUCTURE *)Src)->Length >= sizeof (SMBIOS_STRUCTURE)) &&
-         (Src + ((CONST SMBIOS_STRUCTURE *)Src)->Length <= Limit)) {
+  // Bounds are checked against the remaining length so no pointer addition can wrap.
+  while ((UINTN)(Limit - Src) >= sizeof (SMBIOS_STRUCTURE)) {
+    Length = ((CONST SMBIOS_STRUCTURE *)Src)->Length;
+    if ((Length < sizeof (SMBIOS_STRUCTURE)) || (Length > (UINTN)(Limit - Src))) {
+      break;
+    }
+
     TypeHdr = (SMBIOS_STRUCTURE *)Dst;
-    CopyMem (Dst, Src, ((CONST SMBIOS_STRUCTURE *)Src)->Length);
+    CopyMem (Dst, Src, Length);
     Type = TypeHdr->Type;
-    ZeroMem (Excluded, sizeof (Excluded));
+    HasExcluded = FALSE;
 
     if ((Type == SMBIOS_TYPE_TEMPERATURE_PROBE) &&
         (OFFSET_OF (SMBIOS_TABLE_TYPE28, LocationAndStatus) +
-         SMBIOS_FIELD_SIZE (SMBIOS_TABLE_TYPE28, LocationAndStatus) <= TypeHdr->Length)) {
+         SMBIOS_FIELD_SIZE (SMBIOS_TABLE_TYPE28, LocationAndStatus) <= Length)) {
       ((SMBIOS_TABLE_TYPE28 *)TypeHdr)->LocationAndStatus.TemperatureProbeStatus = 0;
     }
 
     for (Index = 0; Index < ARRAY_SIZE (mSmbiosMeasureFilter); Index++) {
       if ((mSmbiosMeasureFilter[Index].Type != Type) ||
-          (mSmbiosMeasureFilter[Index].Offset + mSmbiosMeasureFilter[Index].Size > TypeHdr->Length)) {
+          (mSmbiosMeasureFilter[Index].Offset + mSmbiosMeasureFilter[Index].Size > Length)) {
         continue;
       }
 
       Field = Dst + mSmbiosMeasureFilter[Index].Offset;
       if (((mSmbiosMeasureFilter[Index].Flags & FILTER_FLAG_IS_STRING) != 0) && (*Field != 0)) {
+        if (!HasExcluded) {
+          ZeroMem (Excluded, sizeof (Excluded));
+          HasExcluded = TRUE;
+        }
         Excluded[*Field >> 3] |= (UINT8)(1 << (*Field & 7));
       }
       ZeroMem (Field, mSmbiosMeasureFilter[Index].Size);
     }
 
-    Src += TypeHdr->Length;
-    Dst += TypeHdr->Length;
+    Src += Length;
+    Dst += Length;
 
-    if ((Src + 1 < Limit) && (Src[0] == 0) && (Src[1] == 0)) {
+    if (((UINTN)(Limit - Src) >= 2) && (Src[0] == 0) && (Src[1] == 0)) {
       // Structure without strings: keep the double-NUL terminator.
       Dst[0] = 0;
       Dst[1] = 0;
@@ -141,13 +155,13 @@ NormalizeSmbiosTable (
       StringId = 0;
       while ((Src < Limit) && (*Src != 0)) {
         StringLen = AsciiStrnLenS ((CONST CHAR8 *)Src, (UINTN)(Limit - Src));
-        if (Src + StringLen >= Limit) {
+        if (StringLen >= (UINTN)(Limit - Src)) {
           // Unterminated string: stop at the last complete structure data.
           return (UINT32)(Dst - Normalized);
         }
 
         StringId++;
-        if ((Excluded[StringId >> 3] & (1 << (StringId & 7))) != 0) {
+        if (HasExcluded && ((Excluded[StringId >> 3] & (1 << (StringId & 7))) != 0)) {
           *Dst++ = SMBIOS_EXCLUDED_STRING_CHAR;
         } else {
           CopyMem (Dst, Src, StringLen);
