@@ -171,9 +171,9 @@ ${END}
 
     def GetRealTarget(self,source_file_abs):
         """ Get the final target file based on source file abspath """
-        source_target_map = {item[1].Path:item[0].Path for item in self.TargetFileList.values()}
+        source_target_map = {os.path.normcase(os.path.normpath(item[1].Path)):item[0].Path for item in self.TargetFileList.values()}
         source_name_map = {item[1].File:item[0].Path for item in self.TargetFileList.values()}
-        target_abs = source_target_map.get(source_file_abs)
+        target_abs = source_target_map.get(os.path.normcase(os.path.normpath(source_file_abs)))
         if target_abs is None:
             if source_file_abs.strip().endswith(".i"):
                 sourcefilename = os.path.basename(source_file_abs.strip())
