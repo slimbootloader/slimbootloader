@@ -542,6 +542,14 @@ PlatformUpdateAcpiTable (
     if (GetBootMode() != BOOT_ON_FLASH_UPDATE) {
       AcpiPatchPss (Table, GlobalNvs);
     }
+  } else if ((Table->OemTableId == SIGNATURE_64 ('C', 'p', 'u', '0', 'H', 'w', 'p', 0)) ||
+             (Table->OemTableId == SIGNATURE_64 ('A', 'p', 'H', 'w', 'p', 0, 0, 0))) {
+    POWER_CFG_DATA *PowerCfgData;
+    PowerCfgData = (POWER_CFG_DATA *) FindConfigDataByTag (CDATA_POWER_TAG);
+    if ((PowerCfgData == NULL) || (PowerCfgData->Hwp == 0)) {
+      DEBUG ((DEBUG_INFO, "HWP disabled by policy, skip publishing Cpu0Hwp/ApHwp SSDT\n"));
+      return EFI_UNSUPPORTED;
+    }
   } else if (Table->OemTableId == SIGNATURE_64 ('D', 'p', 't', 'f', 'T', 'a', 'b', 'l')) { //DptfTabl
     DEBUG ((DEBUG_INFO, "Find DptfTabl table\n"));
 
