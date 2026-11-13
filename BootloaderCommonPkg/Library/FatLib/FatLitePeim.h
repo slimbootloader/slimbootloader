@@ -32,7 +32,66 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define PEI_FAT_MAX_BLOCK_DEVICE                      64
 #define PEI_FAT_MAX_BLOCK_IO_PPI                      32
 #define PEI_FAT_MAX_VOLUME                            64
-#define PEI_FAT_MAX_DIR_ENTRY_COUNT                   0x10000
+
+//
+// Maximum number of directory entries scanned while resolving a single path
+// component. This is a fixed policy limit and does not depend on any value
+// from the volume (MaxCluster, RootEntries, etc.).
+//
+// A crafted volume can describe a huge but valid, non-cyclic directory, such as
+// tens of thousands of decoy entries with no match. A cap derived from the
+// volume's own size would not stop that. Boot-time directories normally hold
+// at most a few hundred entries, so 0x1000 (4096) leaves ample headroom while
+// stopping amplification attacks before they stall boot.
+//
+#define PEI_FAT_MAX_DIR_ENTRY_COUNT                   0x1000
+
+//
+// Maximum number of bytes read from one directory while resolving a single
+// path component: the FAT spec limit of 65,536 32-byte entries (2 MiB).
+//
+// PEI_FAT_MAX_DIR_ENTRY_COUNT counts lookups and returned entries, not the
+// raw slots consumed to produce them: FindFile() counts calls, and
+// FatReadNextDirectoryEntry() restarts its own count on each call and charges
+// a whole LFN chain (up to MAX_LFN_ENTRIES slots) as one entry. A crafted
+// directory (runs of deleted or LFN slots between live non-matching entries)
+// can therefore force hundreds of millions of slot reads per lookup.
+//
+// The directory's CurrentPos starts at 0 and advances by 32 for every slot
+// consumed, including deleted, LFN, volume-label and filtered entries, so
+// capping it bounds the total scan regardless of how many lookups are made.
+// No spec-valid directory exceeds this size.
+//
+#define PEI_FAT_MAX_DIR_SIZE                          (0x10000 * sizeof (FAT_DIRECTORY_ENTRY))
+
+
+//
+// Maximum number of clusters the straight-run look-ahead in FatSetFilePos()
+// follows when sizing a contiguous read batch. This is a fixed limit and does
+// not depend on Volume->MaxCluster.
+//
+// A crafted volume can have a valid, strictly sequential chain far longer than
+// any boot payload needs (for example, a million clusters behind a tiny file).
+// Without a cap, the look-ahead would do an unbounded number of disk reads
+// just to size one batch.
+//
+// The cap only limits the batch size. FatReadFile() reads the rest of a large
+// file with additional bounded reads, so large files still work.
+//
+#define PEI_FAT_MAX_STRAIGHT_RUN_CLUSTERS             0x400
+
+//
+// Maximum allowed Volume->ClusterSize in bytes (SectorSize * SectorsPerCluster).
+// The FAT specification limits this to 32KB (0x8000) for compatible volumes.
+// Some implementations do accept 64KB, but volumes with 64KB clusters are
+// rejected here as a deliberate policy choice.
+//
+// Without a cap, a crafted BPB with a large but individually valid power-of-2
+// SectorSize and SectorsPerCluster could push ClusterSize into the megabytes.
+// That would inflate every per-cluster read and look-ahead buffer and the cost
+// of walking the volume. Compare U-Boot's fs/fat MAX_CLUSTSIZE.
+//
+#define PEI_FAT_MAX_CLUSTER_SIZE_BYTES                0x8000
 #define PEI_FAT_MEMORY_PAGE_SIZE                      0x1000
 
 //
@@ -92,6 +151,30 @@ typedef struct {
   UINT32          CurrentCluster;
   UINT8           Attributes;
   UINT32          FileSize;
+  //
+  // Cumulative count of cluster-chain hops taken over the entire lifetime
+  // of this PEI_FAT_FILE instance (across all FatSetFilePos()/FatReadFile()
+  // calls, not just a single call), including hops taken arithmetically
+  // inside a straight-run window. A valid, acyclic FAT chain can never
+  // contain more than (Volume->MaxCluster + 2) distinct clusters, so by the
+  // pigeonhole principle, exceeding that many *total* hops while walking
+  // this file's chain proves a cycle (or an otherwise-corrupt/malicious FAT)
+  // regardless of how the hops are spread across many small calls -- e.g.
+  // repeated 32-byte directory-entry reads during a directory scan.
+  //
+  UINT32          TotalClusterHops;
+  //
+  // TRUE while StraightReadAmount describes a verified straight-run window
+  // starting at CurrentPos/CurrentCluster: every cluster in it is a
+  // contiguous, in-range member of this file's chain. While the window is
+  // valid, FatSetFilePos() advances inside it in O(1), across cluster
+  // boundaries too, and only re-walks the FAT once the window is exhausted.
+  // Without this, small reads (e.g. 32-byte directory entries) would rebuild
+  // the look-ahead at every cluster boundary, costing up to
+  // PEI_FAT_MAX_STRAIGHT_RUN_CLUSTERS FAT lookups per cluster. Cleared at the
+  // start of every rebuild so a failed rebuild never leaves a stale window.
+  //
+  BOOLEAN         StraightRunValid;
 } PEI_FAT_FILE;
 
 //
@@ -374,6 +457,25 @@ FatReadFile (
   OUT VOID                  *Buffer
   );
 
+
+/**
+  Check whether a directory entry's declared FileSize can possibly be
+  held by the volume (at most MaxCluster clusters of ClusterSize bytes).
+  Any larger value is corrupt or malicious and must not reach consumers
+  that size pre-auth memory allocations off it.
+
+  @param  Volume     The volume the entry belongs to.
+  @param  FileSize   The FileSize field of the directory entry.
+
+  @retval TRUE       FileSize is within the volume's physical capacity.
+  @retval FALSE      FileSize cannot be represented on this volume.
+
+**/
+BOOLEAN
+FatFileSizeValid (
+  IN  PEI_FAT_VOLUME   *Volume,
+  IN  UINT32           FileSize
+  );
 
 /**
   This function reads the next item in the parent directory and
