@@ -35,6 +35,7 @@ Platform/CommonBoardPkg/CommonBoardPkg.dec
 
 [LibraryClasses]
 BaseLib
+IoLib
 DebugLib
 BootloaderCoreLib
 DebugDataLib
@@ -55,3 +56,4 @@ gPlatformCommonLibTokenSpaceGuid.PcdPcdLibId
 gPlatformCommonLibTokenSpaceGuid.PcdMeasuredBootEnabled
 gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
 gPlatformModuleTokenSpaceGuid.PcdPsdBiosEnabled
+gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
