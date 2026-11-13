@@ -15,7 +15,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/LitePeCoffLib.h>
 #include <Library/BootloaderCommonLib.h>
 
-#define  THREE_BYTE_LEN(x)    ((*(UINT32 *)(UINTN)(x)) & 0xFFFFFF)
+// Read byte-wise: Size is a UINT8[3] array, a UINT32 load would read past it.
+#define  THREE_BYTE_LEN(x)    ((UINT32)(x)[0] | ((UINT32)(x)[1] << 8) | ((UINT32)(x)[2] << 16))
 #define  GET_FFS_LENGTH(x)    THREE_BYTE_LEN((x)->Size)
 #define  GET_SEC_LENGTH(x)    THREE_BYTE_LEN((x)->Size)
 
