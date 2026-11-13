@@ -1,0 +1,22 @@
+## @file
+#  Null AddressSanitizer runtime used when AddressSanitizer is disabled.
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = AsanLibNull
+  FILE_GUID                      = C56E56BA-8053-4347-81D5-E22B40E3B917
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = AsanLib
+
+[Sources]
+  AsanLibNull.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
