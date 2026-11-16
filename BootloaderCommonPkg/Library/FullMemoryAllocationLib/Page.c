@@ -397,9 +397,12 @@ CoreAddMemoryDescriptor (
   CoreAcquireMemoryLock ();
   End = Start + LShiftU64 (NumberOfPages, EFI_PAGE_SHIFT) - 1;
   CoreAddRange (EfiConventionalMemory, Start, End, Attribute);
-  mMemoryTypeStatistics[Type].BaseAddress    = Start;
-  mMemoryTypeStatistics[Type].MaximumAddress = End;
-  mMemoryTypeStatistics[Type].NumberOfPages  = NumberOfPages;
+  // OEM-reserved types have no statistics slot.
+  if ((UINT32)Type < EfiMaxMemoryType) {
+    mMemoryTypeStatistics[Type].BaseAddress    = Start;
+    mMemoryTypeStatistics[Type].MaximumAddress = End;
+    mMemoryTypeStatistics[Type].NumberOfPages  = NumberOfPages;
+  }
   CoreFreeMemoryMapStack ();
   CoreReleaseMemoryLock ();
 }
