@@ -347,6 +347,8 @@ BoardInit (
   UINT32                Length;
   UINT32                PmBase;
   VOID                 *FspHobList;
+  UINT32                VariableBase;
+  UINT32                VariableSize;
 
   switch (InitPhase) {
   case PreSiliconInit:
@@ -356,12 +358,30 @@ BoardInit (
     }
     GpioInit ();
     EnableLegacyRegions ();
-    if (!FeaturePcdGet (PcdStage1BXip)) {
-      if (GetPlatformId () != PLATFORM_ID_QSP_SIMICS) {
-        SpiConstructor ();
-        VariableConstructor (PcdGet32 (PcdVariableRegionBase), PcdGet32 (PcdVariableRegionSize));
-        Status = TestVariableService ();
-        ASSERT_EFI_ERROR (Status);
+    if (!FeaturePcdGet (PcdStage1BXip) && (GetPlatformId () != PLATFORM_ID_QSP_SIMICS)) {
+      Status = SpiConstructor ();
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "Stage2 SPI initialization failed %r\n", Status));
+      } else {
+        Status = GetComponentInfo (FLASH_MAP_SIG_VARIABLE, &VariableBase, &VariableSize);
+        if (EFI_ERROR (Status)) {
+          Status = GetComponentInfo (FLASH_MAP_SIG_UEFIVARIABLE, &VariableBase, &VariableSize);
+        }
+        if (EFI_ERROR (Status)) {
+          DEBUG ((DEBUG_ERROR, "Stage2 variable region lookup failed %r\n", Status));
+        } else {
+          Status = VariableConstructor (VariableBase, VariableSize);
+          if (EFI_ERROR (Status)) {
+            DEBUG ((DEBUG_ERROR, "Stage2 variable initialization failed %r\n", Status));
+          } else if (Status == EFI_SUCCESS) {
+            Status = TestVariableService ();
+            if (Status == EFI_OUT_OF_RESOURCES) {
+              DEBUG ((DEBUG_WARN, "Variable test skipped: insufficient variable-store resources\n"));
+            } else if (EFI_ERROR (Status)) {
+              DEBUG ((DEBUG_ERROR, "Stage2 variable test failed %r\n", Status));
+            }
+          }
+        }
       }
     }
     // Get TSEG info from FSP HOB

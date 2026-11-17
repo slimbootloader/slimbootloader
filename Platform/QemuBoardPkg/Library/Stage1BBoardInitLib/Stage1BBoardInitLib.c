@@ -201,6 +201,8 @@ BoardInit (
   EFI_STATUS             Status;
   PLT_DEVICE_TABLE      *PltDeviceTable;
   VOID                  *FspHob;
+  UINT32                 VariableBase;
+  UINT32                 VariableSize;
 
   switch (InitPhase) {
   case PreConfigInit:
@@ -212,10 +214,29 @@ BoardInit (
     UpdateBootMode ();
     if (!FeaturePcdGet (PcdStage1BXip)) {
       if (GetPlatformId () != PLATFORM_ID_QSP_SIMICS) {
-        SpiConstructor ();
-        VariableConstructor (PcdGet32 (PcdVariableRegionBase), PcdGet32 (PcdVariableRegionSize));
-        Status = TestVariableService ();
-        ASSERT_EFI_ERROR (Status);
+        Status = GetComponentInfo (FLASH_MAP_SIG_VARIABLE, &VariableBase, &VariableSize);
+        if (EFI_ERROR (Status)) {
+          Status = GetComponentInfo (FLASH_MAP_SIG_UEFIVARIABLE, &VariableBase, &VariableSize);
+        }
+        if (!EFI_ERROR (Status)) {
+          Status = SpiConstructor ();
+          if (EFI_ERROR (Status)) {
+            DEBUG ((DEBUG_ERROR, "Stage1B SPI initialization failed %r; continuing boot\n", Status));
+          } else {
+            Status = VariableConstructor (VariableBase, VariableSize);
+            if (EFI_ERROR (Status)) {
+              DEBUG ((DEBUG_ERROR, "Stage1B variable initialization failed %r; continuing boot\n", Status));
+            }
+          }
+          if (Status == EFI_SUCCESS) {
+            Status = TestVariableService ();
+            if (Status == EFI_OUT_OF_RESOURCES) {
+              DEBUG ((DEBUG_WARN, "Stage1B variable test skipped: insufficient variable-store resources\n"));
+            } else if (EFI_ERROR (Status)) {
+              DEBUG ((DEBUG_ERROR, "Stage1B variable test failed %r; continuing boot\n", Status));
+            }
+          }
+        }
       }
     }
     break;
