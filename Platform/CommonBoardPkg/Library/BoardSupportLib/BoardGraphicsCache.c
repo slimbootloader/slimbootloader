@@ -177,7 +177,13 @@ SetFrameBufferWriteCombining (
   }
 
   // Enable Framebuffer as WC.
+  VirPhyAddressSize.Uint32 = 0;
   AsmCpuid (CPUID_VIR_PHY_ADDRESS_SIZE, &VirPhyAddressSize.Uint32, NULL, NULL, NULL);
+  if ((VirPhyAddressSize.Bits.PhysicalAddressBits == 0) ||
+      (VirPhyAddressSize.Bits.PhysicalAddressBits >= 64)) {
+    DEBUG ((DEBUG_VERBOSE, "Invalid physical address bits (%u)\n", VirPhyAddressSize.Bits.PhysicalAddressBits));
+    return EFI_UNSUPPORTED;
+  }
   MsrBase.Uint64    = FrameBufferBase;
   MsrBase.Bits.Type = MTRR_CACHE_WRITE_COMBINING;
   AsmWriteMsr64 (MsrIdx,  MsrBase.Uint64);
