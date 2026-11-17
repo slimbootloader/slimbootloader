@@ -54,6 +54,7 @@
   CmdSetup.c
   CmdUi.c
   CmdFlashmap.c
+  CmdAsan.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -99,6 +100,7 @@
 
 [FeaturePcd]
   gPlatformCommonLibTokenSpaceGuid.PcdUiSetupEnabled
+  gPlatformCommonLibTokenSpaceGuid.PcdEnableAsan
 
 [Guids]
   gLoaderPerformanceInfoGuid

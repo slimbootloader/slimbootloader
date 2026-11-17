@@ -37,6 +37,7 @@ extern CONST SHELL_COMMAND ShellCommandCfgSet;
 extern CONST SHELL_COMMAND ShellCommandCfgGet;
 extern CONST SHELL_COMMAND ShellCommandCfgFind;
 extern CONST SHELL_COMMAND ShellCommandFlashmap;
+extern CONST SHELL_COMMAND ShellCommandAsan;
 
 /**
   Load shell commands.

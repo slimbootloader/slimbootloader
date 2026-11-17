@@ -410,6 +410,7 @@
   gPlatformCommonLibTokenSpaceGuid.PcdAbSlotSupportEnabled        | TRUE   | BOOLEAN | 0x2000022D
   gPlatformCommonLibTokenSpaceGuid.PcdMultibootSupportEnabled     | TRUE   | BOOLEAN | 0x2000022E
   gPlatformCommonLibTokenSpaceGuid.PcdMultiboot2SupportEnabled    | TRUE   | BOOLEAN | 0x2000022F
+  gPlatformCommonLibTokenSpaceGuid.PcdEnableAsan                  | FALSE  | BOOLEAN | 0x20000234
 
 [PcdsFixedAtBuild]
   gPlatformCommonLibTokenSpaceGuid.PcdFipsSupport     | FALSE      | BOOLEAN | 0x20000226

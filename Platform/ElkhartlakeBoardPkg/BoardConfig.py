@@ -160,6 +160,11 @@ class Board(BaseBoard):
             self.UEFI_VARIABLE_SIZE = 0x00001000
         self.SBLRSVD_SIZE         = 0x00001000
         self.FWUPDATE_SIZE        = 0x0001C000 if self.ENABLE_FWU else 0
+        if self.ENABLE_ASAN:
+            # ASAN instrumentation, including shared Stage1 libraries, grows the compressed payloads
+            self.PAYLOAD_SIZE    += 0x13000
+            if self.ENABLE_FWU:
+                self.FWUPDATE_SIZE += 0x11000
 
         self.TOP_SWAP_SIZE        = 0x080000
         self.REDUNDANT_SIZE       = 0x360000
@@ -259,6 +264,7 @@ class Board(BaseBoard):
         if self.BUILD_CSME_UPDATE_DRIVER:
             common_libs.append ('MeFwUpdateLib|Silicon/$(SILICON_PKG_NAME)/Library/MeFwUpdateLib/MeFwUpdateLib.inf')
         dsc['LibraryClasses.%s' % self.BUILD_ARCH] = common_libs
+        self.AddPlatformDscAsanLibraries(dsc)
         return dsc
 
 
