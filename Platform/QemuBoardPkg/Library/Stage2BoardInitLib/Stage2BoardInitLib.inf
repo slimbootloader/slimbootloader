@@ -58,8 +58,6 @@
   gPlatformModuleTokenSpaceGuid.PcdOsBootOptionNumber
   gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress
   gPlatformModuleTokenSpaceGuid.PcdMaxServiceNumber
-  gPlatformModuleTokenSpaceGuid.PcdVariableRegionBase
-  gPlatformModuleTokenSpaceGuid.PcdVariableRegionSize
   gPlatformModuleTokenSpaceGuid.PcdFramebufferInitEnabled
   gPlatformModuleTokenSpaceGuid.PcdSmmRebaseMode
   gPlatformModuleTokenSpaceGuid.PcdSmramTsegBase
