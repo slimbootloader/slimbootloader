@@ -159,7 +159,7 @@ class Board(BaseBoard):
         else:
             self.UEFI_VARIABLE_SIZE = 0x00001000
         self.SBLRSVD_SIZE         = 0x00001000
-        self.FWUPDATE_SIZE        = 0x0001C000 if self.ENABLE_FWU else 0
+        self.FWUPDATE_SIZE        = 0x0001D000 if self.ENABLE_FWU else 0
 
         self.TOP_SWAP_SIZE        = 0x080000
         self.REDUNDANT_SIZE       = 0x360000
