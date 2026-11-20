@@ -147,18 +147,18 @@ IsFitImage (
   Context->ImageBase   = (EFI_PHYSICAL_ADDRESS)(UINTN)ImageBase;
   Context->PayloadSize = UplSize;
 
-  // Validate entry-start is within the loaded image bounds to prevent a crafted
+  // Validate entry-start is within the image bounds to prevent a crafted
   // FIT payload from redirecting Stage2 execution to an arbitrary address.
+  // entry-start is relative to the load address, since the image may be
+  // loaded elsewhere and relocated by the caller.
   {
-    EFI_PHYSICAL_ADDRESS  ImageEnd;
-
-    if (Context->PayloadSize > MAX_UINT64 - Context->ImageBase) {
+    if ((Context->PayloadSize > MAX_UINT64 - Context->ImageBase) ||
+        (Context->PayloadSize > MAX_UINT64 - Context->PayloadLoadAddress)) {
       return FALSE;
     }
 
-    ImageEnd = Context->ImageBase + Context->PayloadSize;
-    if ((Context->PayloadEntryPoint < Context->ImageBase) ||
-        (Context->PayloadEntryPoint >= ImageEnd)) {
+    if ((Context->PayloadEntryPoint < Context->PayloadLoadAddress) ||
+        (Context->PayloadEntryPoint - Context->PayloadLoadAddress >= Context->PayloadSize)) {
       return FALSE;
     }
   }
