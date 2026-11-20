@@ -73,6 +73,16 @@ FitParseFirmwarePropertyData (
     *ContextOffset64 = Fdt64ToCpu (*Data64);
   }
 
+  // A missing or unrecognised arch defaults to 64-bit for compatibility
+  Context->Machine = IMAGE_FILE_MACHINE_X64;
+  PropertyPtr      = FdtGetProperty (Fdt, TianoNode, "arch", &TempLen);
+  if (PropertyPtr != NULL) {
+    if (((TempLen == (INT32)sizeof ("x86")) && (AsciiStrnCmp (PropertyPtr->Data, "x86", TempLen) == 0)) ||
+        ((TempLen == (INT32)sizeof ("ia32")) && (AsciiStrnCmp (PropertyPtr->Data, "ia32", TempLen) == 0))) {
+      Context->Machine = IMAGE_FILE_MACHINE_I386;
+    }
+  }
+
   return EFI_SUCCESS;
 }
 
