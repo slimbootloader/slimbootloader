@@ -10,6 +10,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <PiPei.h>
 #include <Library/DebugLib.h>
 #include <Library/FdtLib.h>
+#include <IndustryStandard/PeImage.h>
 
 typedef struct {
   UINT64    RelocateType;
@@ -26,6 +27,7 @@ typedef struct {
   UINTN                   RelocateTableOffset;
   UINTN                   RelocateTableCount;
   EFI_PHYSICAL_ADDRESS    PayloadLoadAddress;
+  UINT16                  Machine;
 } FIT_IMAGE_CONTEXT;
 
 typedef struct {

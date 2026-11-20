@@ -206,6 +206,7 @@ NormalBootPath (
   FIT_RELOCATE_ITEM              *RelocateTable;
   INTN                            Delta;
   UINTN                           Index;
+  UINTN                           RelocSize;
   UNIVERSAL_PAYLOAD_BASE         *PayloadBase;
 
   LdrGlobal = (LOADER_GLOBAL_DATA *)GetLoaderGlobalDataPointer();
@@ -272,18 +273,24 @@ NormalBootPath (
       Delta         = (INTN)(Context.PayloadBaseAddress - Context.PayloadLoadAddress);
       Context.PayloadEntryPoint += Delta;
       for (Index = 0; Index < Context.RelocateTableCount; Index++) {
-        if ((RelocateTable[Index].RelocateType == 10) || (RelocateTable[Index].RelocateType == 3)) {
+        if ((RelocateTable[Index].RelocateType == EFI_IMAGE_REL_BASED_DIR64) ||
+            (RelocateTable[Index].RelocateType == EFI_IMAGE_REL_BASED_HIGHLOW)) {
+          RelocSize = (RelocateTable[Index].RelocateType == EFI_IMAGE_REL_BASED_DIR64) ? sizeof (UINT64) : sizeof (UINT32);
           //
-          // The write target is a UINT64 (8 bytes); ensure the entire write
-          // falls within the payload, not just the starting offset.
+          // Ensure the entire write falls within the payload, not just the
+          // starting offset.
           //
-           if (RelocateTable[Index].Offset > Context.PayloadSize ||
-               (Context.PayloadSize - RelocateTable[Index].Offset) < sizeof (UINT64)) {
-             DEBUG ((DEBUG_ERROR, "ERROR: FIT relocation entry [%d] offset 0x%lx is outside the payload (size 0x%lx)\n",
-                     Index, RelocateTable[Index].Offset, Context.PayloadSize));
+          if (RelocateTable[Index].Offset > Context.PayloadSize ||
+              (Context.PayloadSize - RelocateTable[Index].Offset) < RelocSize) {
+            DEBUG ((DEBUG_ERROR, "ERROR: FIT relocation entry [%d] offset 0x%lx is outside the payload (size 0x%lx)\n",
+                    Index, RelocateTable[Index].Offset, Context.PayloadSize));
             CpuHalt ("FIT relocation entry out of bounds");
           }
-          *((UINT64 *)(UINTN)(Context.PayloadBaseAddress + RelocateTable[Index].Offset)) += Delta;
+          if (RelocSize == sizeof (UINT64)) {
+            *((UINT64 *)(UINTN)(Context.PayloadBaseAddress + RelocateTable[Index].Offset)) += Delta;
+          } else {
+            *((UINT32 *)(UINTN)(Context.PayloadBaseAddress + RelocateTable[Index].Offset)) += (UINT32)Delta;
+          }
         }
       }
     }
@@ -291,8 +298,7 @@ NormalBootPath (
     PayloadBase = BuildGuidHob (&gUniversalPayloadBaseGuid, sizeof (UNIVERSAL_PAYLOAD_BASE));
     PayloadBase->Entry = (EFI_PHYSICAL_ADDRESS)Context.ImageBase;
 
-    // ASSUME 64bit payload. Need get arch info if need support 32bit payload
-    PldMachine = IMAGE_FILE_MACHINE_X64;
+    PldMachine = Context.Machine;
     PldEntry   = (PAYLOAD_ENTRY)(UINTN)Context.PayloadEntryPoint;
   } else if (FeaturePcdGet (PcdFvSupportEnabled) && (Dst[10] == EFI_FVH_SIGNATURE)) {
     // It is a FV format
