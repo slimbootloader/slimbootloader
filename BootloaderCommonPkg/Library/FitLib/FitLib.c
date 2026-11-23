@@ -73,6 +73,16 @@ FitParseFirmwarePropertyData (
     *ContextOffset64 = Fdt64ToCpu (*Data64);
   }
 
+  // A missing or unrecognised arch defaults to 64-bit for compatibility
+  Context->Machine = IMAGE_FILE_MACHINE_X64;
+  PropertyPtr      = FdtGetProperty (Fdt, TianoNode, "arch", &TempLen);
+  if (PropertyPtr != NULL) {
+    if (((TempLen == (INT32)sizeof ("x86")) && (AsciiStrnCmp (PropertyPtr->Data, "x86", TempLen) == 0)) ||
+        ((TempLen == (INT32)sizeof ("ia32")) && (AsciiStrnCmp (PropertyPtr->Data, "ia32", TempLen) == 0))) {
+      Context->Machine = IMAGE_FILE_MACHINE_I386;
+    }
+  }
+
   return EFI_SUCCESS;
 }
 
@@ -137,18 +147,18 @@ IsFitImage (
   Context->ImageBase   = (EFI_PHYSICAL_ADDRESS)(UINTN)ImageBase;
   Context->PayloadSize = UplSize;
 
-  // Validate entry-start is within the loaded image bounds to prevent a crafted
+  // Validate entry-start is within the image bounds to prevent a crafted
   // FIT payload from redirecting Stage2 execution to an arbitrary address.
+  // entry-start is relative to the load address, since the image may be
+  // loaded elsewhere and relocated by the caller.
   {
-    EFI_PHYSICAL_ADDRESS  ImageEnd;
-
-    if (Context->PayloadSize > MAX_UINT64 - Context->ImageBase) {
+    if ((Context->PayloadSize > MAX_UINT64 - Context->ImageBase) ||
+        (Context->PayloadSize > MAX_UINT64 - Context->PayloadLoadAddress)) {
       return FALSE;
     }
 
-    ImageEnd = Context->ImageBase + Context->PayloadSize;
-    if ((Context->PayloadEntryPoint < Context->ImageBase) ||
-        (Context->PayloadEntryPoint >= ImageEnd)) {
+    if ((Context->PayloadEntryPoint < Context->PayloadLoadAddress) ||
+        (Context->PayloadEntryPoint - Context->PayloadLoadAddress >= Context->PayloadSize)) {
       return FALSE;
     }
   }
