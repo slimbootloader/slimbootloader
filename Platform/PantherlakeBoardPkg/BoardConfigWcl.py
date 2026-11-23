@@ -155,7 +155,7 @@ class Board(BaseBoard):
             self.STAGE1A_SIZE         = 0x00018000
             self.STAGE1B_SIZE         = 0x0012F000
             self.STAGE2_SIZE          = 0x000C0000
-            self.PAYLOAD_SIZE         = 0x00027000
+            self.PAYLOAD_SIZE         = 0x00028000
 
         self.ENABLE_UI_SETUP   = 0
         if self.ENABLE_UI_SETUP:
