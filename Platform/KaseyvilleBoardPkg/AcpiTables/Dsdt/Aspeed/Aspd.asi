@@ -69,8 +69,4 @@ Method (EXFF, 0) {
 #include "Uar1.asi"
 #include "Uar2.asi"
 
-#ifdef ACPI_ENABLE_PS2_KBC
-#include "Ps2.asi"
-#endif
-
 #include "IpmiOprRegions.asi"
