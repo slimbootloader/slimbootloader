@@ -110,12 +110,12 @@ class Board(BaseBoard):
         self.STAGE1_STACK_SIZE    = 0x00002000
         self.STAGE1_DATA_SIZE     = 0x00014000
         self.FSP_M_STACK_TOP      = 0xFEF7FF00
-        self.STAGE1B_SIZE         = 0x000DD000
+        self.STAGE1B_SIZE         = 0x000DE000
         self.STAGE2_SIZE          = 0x000A0000
         self.STAGE2_FD_BASE       = 0x000B0000
 
         self.EPAYLOAD_SIZE        = 0x00256000
-        self.PAYLOAD_SIZE         = 0x0002E000
+        self.PAYLOAD_SIZE         = 0x00030000
 
 
         self.ENABLE_FAST_BOOT = 0
