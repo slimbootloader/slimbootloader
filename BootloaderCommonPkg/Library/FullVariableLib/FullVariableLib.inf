@@ -1,0 +1,38 @@
+## @file
+# Description file for SBL FullVariableLib implementation.
+#
+# Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = FullVariableLib
+  FILE_GUID                      = 1EBC9AE1-1DE4-4A6A-9A4F-6D18A9619859
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 0.1
+  LIBRARY_CLASS                  = VariableLib
+
+[Sources]
+  FullVariableLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  BootloaderCommonPkg/BootloaderCommonPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  ExtraBaseLib
+  BaseMemoryLib
+  MemoryAllocationLib
+  BootloaderCommonLib
+  DebugLib
+
+[Guids]
+  gEfiAuthenticatedVariableGuid
+  gEfiVariableGuid
+  gEdkiiWorkingBlockSignatureGuid
+  gEfiSystemNvDataFvGuid
+
+[Pcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdVariableLibId

@@ -91,7 +91,7 @@ SaveRecoveryStatus (
   return SetVariable (
            (CHAR16 *)mRecoveryStatusVariableName,
            &gRecoveryStatusVariableGuid,
-           EFI_VARIABLE_NON_VOLATILE,
+           EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS,
            sizeof (RECOVERY_STATUS),
            Status
            );

@@ -110,13 +110,16 @@ class Board(BaseBoard):
 
         if self._SMBIOS_YAML_FILE:
             self.SIIPFW_SIZE += 0x1000
-        self.EPAYLOAD_SIZE        = 0x0020D000
+        self.EPAYLOAD_SIZE        = 0x00260000
         self.PAYLOAD_SIZE         = 0x00024000
         self.CFGDATA_SIZE         = 0x00001000
         self.KEYHASH_SIZE         = 0x00001000
-        self.VARIABLE_SIZE        = 0x00002000
+
+        self.ENABLE_UNIFIED_VARIABLE = int(os.environ.get('SBL_UNIFIED_VARIABLE', '0'), 0)
+        self.UEFI_VARIABLE_SIZE   = 0x00040000 if self.ENABLE_UNIFIED_VARIABLE or len(self._PAYLOAD_NAME.split(';')) > 1 else 0
+        self.VARIABLE_SIZE        = 0          if self.ENABLE_UNIFIED_VARIABLE else 0x00002000
         self.SBLRSVD_SIZE         = 0x00001000
-        self.FWUPDATE_SIZE        = 0x0001A000 if self.ENABLE_FWU else 0
+        self.FWUPDATE_SIZE        = 0x0001B000 if self.ENABLE_FWU else 0
         self.SETUP_SIZE           = 0x00020000 if self.ENABLE_SBL_SETUP else 0
 
         self._REDUNDANT_LAYOUT    = 1
@@ -130,8 +133,8 @@ class Board(BaseBoard):
             if self.NO_OPT_MODE:
                 self.TOP_SWAP_SIZE  = 0x020000
             self.REDUNDANT_SIZE     = 0x080000
-            self.NON_VOLATILE_SIZE  = 0x001000
-            self.NON_REDUNDANT_SIZE = 0x2DF000
+            self.NON_VOLATILE_SIZE  = self.SBLRSVD_SIZE
+            self.NON_REDUNDANT_SIZE = 0x2E0000 - self.NON_VOLATILE_SIZE
 
 
         self.SLIMBOOTLOADER_SIZE = (self.TOP_SWAP_SIZE + self.REDUNDANT_SIZE) * 2 + \
@@ -159,6 +162,7 @@ class Board(BaseBoard):
         self.STAGE2_FD_BASE       = 0x01000000
 
         if self.NO_OPT_MODE:
+            self.EPAYLOAD_SIZE       -= 0x10000
             if self.FSPDEBUG_MODE == 1:
                 self.STAGE2_SIZE     += 0x8000
             else:
@@ -297,6 +301,15 @@ class Board(BaseBoard):
     def GetImageLayout (self):
 
         compress = '' if self.STAGE1B_XIP else 'Lz4'
+        variable_comp = []
+        if not self.ENABLE_UNIFIED_VARIABLE:
+            variable_comp.append (
+                ('VARIABLE.bin', '', self.VARIABLE_SIZE, STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL)
+            )
+        if self.UEFI_VARIABLE_SIZE > 0:
+            variable_comp.append (
+                ('UEFIVARIABLE.bin', '', self.UEFI_VARIABLE_SIZE, STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL)
+            )
         fwu_mode = STITCH_OPS.MODE_FILE_PAD if self.ENABLE_FWU else STITCH_OPS.MODE_FILE_IGNOR
         setup_mode = STITCH_OPS.MODE_FILE_PAD if self.ENABLE_SBL_SETUP else STITCH_OPS.MODE_FILE_IGNOR
 
@@ -308,7 +321,7 @@ class Board(BaseBoard):
             img_list.extend ([
                 ('SlimBootloader.bin', [
                     ('SBLRSVD.bin',    ''        , self.SBLRSVD_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
-                    ('VARIABLE.bin' ,  ''        , self.VARIABLE_SIZE, STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
+                    ] + variable_comp + [
                     ('PAYLOAD.bin'  ,  'Lzma'    , self.PAYLOAD_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
                     ('EPAYLOAD.bin' ,  ''        , self.EPAYLOAD_SIZE, STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
                     ('CFGDATA.bin'  ,  ''        , self.CFGDATA_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
@@ -324,8 +337,7 @@ class Board(BaseBoard):
                     ('SBLRSVD.bin',    ''        , self.SBLRSVD_SIZE,  STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
                     ]
                 ),
-                ('NON_REDUNDANT.bin', [
-                    ('VARIABLE.bin' ,  ''        , self.VARIABLE_SIZE, STITCH_OPS.MODE_FILE_NOP, STITCH_OPS.MODE_POS_TAIL),
+                ('NON_REDUNDANT.bin', variable_comp + [
                     ('PAYLOAD.bin'  ,  'Lzma'    , self.PAYLOAD_SIZE,  STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
                     ('EPAYLOAD.bin' ,  ''        , self.EPAYLOAD_SIZE, STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),
                     ('SIIPFW.bin'   ,  ''        , self.SIIPFW_SIZE,   STITCH_OPS.MODE_FILE_PAD, STITCH_OPS.MODE_POS_TAIL),

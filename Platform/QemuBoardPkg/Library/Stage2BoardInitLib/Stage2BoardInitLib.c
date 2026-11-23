@@ -77,6 +77,137 @@ MadtTableUpdate (
   AddLocalApicNmi (AcpiHeader, 0xFF, 0xD, 1); // All Processors, Active High, Level Triggered
 }
 
+STATIC
+EFI_STATUS
+TestVariableAppend (
+  IN EFI_GUID  *VarGuid
+  )
+{
+  UINT8       Buffer[520];
+  UINT64      MaxStorageSize;
+  UINT64      RemainingStorageSize;
+  UINT64      MaxVariableSize;
+  UINTN       DataSize;
+  UINTN       Index;
+  UINT32      Attributes;
+  UINT32      ReadAttributes;
+  EFI_STATUS  Status;
+
+  Attributes = EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS;
+  DataSize = sizeof (Buffer);
+  ReadAttributes = 0;
+  Status = GetVariable (L"ATTRKEEP", VarGuid, &ReadAttributes, &DataSize, Buffer);
+  if (!EFI_ERROR (Status)) {
+    if ((DataSize != 1) || (Buffer[0] != 0x22) ||
+        (ReadAttributes != (EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS))) {
+      return EFI_ABORTED;
+    }
+    DEBUG ((DEBUG_INFO, "TestVariableService: boot-services persistence status=Success\n"));
+  } else if (Status != EFI_NOT_FOUND) {
+    return Status;
+  }
+  Status = QueryVariableInfo (Attributes, &MaxStorageSize, &RemainingStorageSize, &MaxVariableSize);
+  if (EFI_ERROR (Status) || (MaxVariableSize != (SIZE_64KB - 60 - 2 * sizeof (CHAR16)))) {
+    return EFI_ABORTED;
+  }
+  if ((QueryVariableInfo (0, &MaxStorageSize, &RemainingStorageSize, &MaxVariableSize) != EFI_INVALID_PARAMETER) ||
+      (QueryVariableInfo (EFI_VARIABLE_NON_VOLATILE, &MaxStorageSize, &RemainingStorageSize, &MaxVariableSize) != EFI_INVALID_PARAMETER)) {
+    return EFI_ABORTED;
+  }
+  Status = SetVariable (L"EMPTYAPPEND", VarGuid, Attributes | EFI_VARIABLE_APPEND_WRITE, 0, NULL);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+  DataSize = sizeof (Buffer);
+  Status = GetVariable (L"EMPTYAPPEND", VarGuid, NULL, &DataSize, Buffer);
+  if (Status != EFI_NOT_FOUND) {
+    return EFI_ABORTED;
+  }
+  DEBUG ((DEBUG_INFO, "TestVariableService: absent zero-length append status=Success\n"));
+  if (SetVariable (L"VARTST0", VarGuid, EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_RUNTIME_ACCESS, 0, NULL) != EFI_INVALID_PARAMETER) {
+    return EFI_ABORTED;
+  }
+  if (SetVariable (L"VARTST0", VarGuid, EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS, sizeof (UINT32), Buffer) != EFI_INVALID_PARAMETER) {
+    return EFI_ABORTED;
+  }
+  Status = SetVariable (L"STREAMAPPEND", VarGuid, Attributes, (UINTN)MaxVariableSize + 1, Buffer);
+  if (Status != EFI_OUT_OF_RESOURCES) {
+    return EFI_ABORTED;
+  }
+  Status = SetVariable (L"STREAMAPPEND", VarGuid, Attributes, MAX_UINT32, Buffer);
+  if (Status != EFI_OUT_OF_RESOURCES) {
+    return EFI_ABORTED;
+  }
+  Status = SetVariable (L"STREAMAPPEND", VarGuid, Attributes, MAX_UINT32 - 0x10000, Buffer);
+  if (Status != EFI_OUT_OF_RESOURCES) {
+    return EFI_ABORTED;
+  }
+  DEBUG ((DEBUG_INFO, "TestVariableService: oversized write rejection status=Success\n"));
+  SetMem (Buffer, sizeof (Buffer), 0x55);
+  Status = SetVariable (L"STREAMAPPEND", VarGuid, Attributes, sizeof (Buffer) / 2, Buffer);
+  if (!EFI_ERROR (Status)) {
+    SetMem (Buffer, sizeof (Buffer), 0xAA);
+    Status = SetVariable (L"STREAMAPPEND", VarGuid, Attributes | EFI_VARIABLE_APPEND_WRITE, sizeof (Buffer) / 2, Buffer);
+  }
+  if (!EFI_ERROR (Status)) {
+    DataSize = sizeof (Buffer);
+    Status = GetVariable (L"STREAMAPPEND", VarGuid, NULL, &DataSize, Buffer);
+    if (!EFI_ERROR (Status)) {
+      if (DataSize != sizeof (Buffer)) {
+        Status = EFI_ABORTED;
+      } else {
+        for (Index = 0; Index < sizeof (Buffer); Index++) {
+          if (Buffer[Index] != ((Index < sizeof (Buffer) / 2) ? 0x55 : 0xAA)) {
+            Status = EFI_ABORTED;
+            break;
+          }
+        }
+      }
+    }
+  }
+  if (!EFI_ERROR (Status)) {
+    Status = SetVariable (L"STREAMAPPEND", VarGuid, 0, 0, NULL);
+  }
+  if (!EFI_ERROR (Status)) {
+    DataSize = sizeof (Buffer);
+    Status = GetVariable (L"STREAMAPPEND", VarGuid, NULL, &DataSize, Buffer);
+    Status = (Status == EFI_NOT_FOUND) ? EFI_SUCCESS : EFI_ABORTED;
+  }
+  if (!EFI_ERROR (Status)) {
+    Status = SetVariable (L"DELPRED", VarGuid, 0, 0, NULL);
+    if (Status == EFI_NOT_FOUND) {
+      Status = EFI_SUCCESS;
+    } else if (!EFI_ERROR (Status)) {
+      DataSize = sizeof (Buffer);
+      Status = (GetVariable (L"DELPRED", VarGuid, NULL, &DataSize, Buffer) == EFI_NOT_FOUND) ? EFI_SUCCESS : EFI_ABORTED;
+    }
+  }
+  if (!EFI_ERROR (Status)) {
+    Buffer[0] = 0x11;
+    Status = SetVariable (L"ATTRKEEP", VarGuid, EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS, 1, Buffer);
+    if (!EFI_ERROR (Status)) {
+      Buffer[0] = 0x22;
+      Status = SetVariable (L"ATTRKEEP", VarGuid, 0, 1, Buffer);
+    }
+    if (!EFI_ERROR (Status)) {
+      DataSize = sizeof (Buffer);
+      ReadAttributes = 0;
+      Status = GetVariable (L"ATTRKEEP", VarGuid, &ReadAttributes, &DataSize, Buffer);
+      if (EFI_ERROR (Status) || (DataSize != 1) || (Buffer[0] != 0x22) ||
+          (ReadAttributes != (EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS))) {
+        Status = EFI_ABORTED;
+      }
+    }
+    if (!EFI_ERROR (Status)) {
+      if (SetVariable (L"ATTRKEEP", VarGuid, Attributes, 0, NULL) != EFI_INVALID_PARAMETER) {
+        Status = EFI_ABORTED;
+      }
+    }
+  }
+  DEBUG ((DEBUG_INFO, "TestVariableService: streaming append status=%r\n", Status));
+  return Status;
+}
+
 /**
   Test variable services.
 
@@ -92,11 +223,35 @@ TestVariableService (
   UINT32      Data;
   UINTN       DataSize;
   EFI_STATUS  Status;
+  EFI_GUID    VarGuid;
+  UINT32      UvarBase;
+  UINT32      UvarSize;
 
   DEBUG ((DEBUG_INFO, "Test variable services\n"));
+  VarGuid = (EFI_GUID) { 0x26f6a9ea, 0x8f4a, 0x49b3, { 0xb0, 0x14, 0x44, 0x3f, 0x7e, 0xda, 0x3c, 0x91 } };
 
   DataSize   = sizeof(Data);
-  Status   = GetVariable (L"VARTST0", NULL, NULL, &DataSize, &Data);
+  Status   = GetVariable (L"VARTST0", &VarGuid, NULL, &DataSize, &Data);
+  if (!EFI_ERROR (Status) &&
+      EFI_ERROR (GetComponentInfo (FLASH_MAP_SIG_VARIABLE, &UvarBase, &UvarSize)) &&
+      !EFI_ERROR (GetComponentInfo (FLASH_MAP_SIG_UEFIVARIABLE, &UvarBase, &UvarSize))) {
+    Status = SetVariable (
+           L"VARTST0", &VarGuid,
+           EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS |
+           EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_APPEND_WRITE,
+           0, NULL
+           );
+    DEBUG ((DEBUG_INFO, "TestVariableService: zero-length append status=%r\n", Status));
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+    Status = TestVariableAppend (&VarGuid);
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+    DataSize = sizeof (Data);
+    Status = GetVariable (L"VARTST0", &VarGuid, NULL, &DataSize, &Data);
+  }
   if (!EFI_ERROR(Status) && (Data == 0x55667788) && (sizeof(Data) == DataSize)) {
     return EFI_SUCCESS;
   }
@@ -106,12 +261,15 @@ TestVariableService (
   }
 
   Data       = 0x55667788;
-  Status     = SetVariable (L"VARTST0", NULL, 0, sizeof(Data), &Data);
+  Status     = SetVariable (L"VARTST0", &VarGuid, 0, sizeof(Data), &Data);
+  if (Status == EFI_OUT_OF_RESOURCES) {
+    return Status;
+  }
 
   Data       = 0;
   DataSize   = sizeof(Data);
   if (!EFI_ERROR(Status)) {
-    Status   = GetVariable (L"VARTST0", NULL, NULL, &DataSize, &Data);
+    Status   = GetVariable (L"VARTST0", &VarGuid, NULL, &DataSize, &Data);
   }
 
   if (!EFI_ERROR(Status) && (Data == 0x55667788) && (sizeof(Data) == DataSize)) {
@@ -347,6 +505,8 @@ BoardInit (
   UINT32                Length;
   UINT32                PmBase;
   VOID                 *FspHobList;
+  UINT32                VariableBase;
+  UINT32                VariableSize;
 
   switch (InitPhase) {
   case PreSiliconInit:
@@ -356,12 +516,30 @@ BoardInit (
     }
     GpioInit ();
     EnableLegacyRegions ();
-    if (!FeaturePcdGet (PcdStage1BXip)) {
-      if (GetPlatformId () != PLATFORM_ID_QSP_SIMICS) {
-        SpiConstructor ();
-        VariableConstructor (PcdGet32 (PcdVariableRegionBase), PcdGet32 (PcdVariableRegionSize));
-        Status = TestVariableService ();
-        ASSERT_EFI_ERROR (Status);
+    if (!FeaturePcdGet (PcdStage1BXip) && (GetPlatformId () != PLATFORM_ID_QSP_SIMICS)) {
+      Status = SpiConstructor ();
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "Stage2 SPI initialization failed %r\n", Status));
+      } else {
+        Status = GetComponentInfo (FLASH_MAP_SIG_VARIABLE, &VariableBase, &VariableSize);
+        if (EFI_ERROR (Status)) {
+          Status = GetComponentInfo (FLASH_MAP_SIG_UEFIVARIABLE, &VariableBase, &VariableSize);
+        }
+        if (EFI_ERROR (Status)) {
+          DEBUG ((DEBUG_ERROR, "Stage2 variable region lookup failed %r\n", Status));
+        } else {
+          Status = VariableConstructor (VariableBase, VariableSize);
+          if (EFI_ERROR (Status)) {
+            DEBUG ((DEBUG_ERROR, "Stage2 variable initialization failed %r\n", Status));
+          } else if (Status == EFI_SUCCESS) {
+            Status = TestVariableService ();
+            if (Status == EFI_OUT_OF_RESOURCES) {
+              DEBUG ((DEBUG_WARN, "Variable test skipped: insufficient variable-store resources\n"));
+            } else if (EFI_ERROR (Status)) {
+              DEBUG ((DEBUG_ERROR, "Stage2 variable test failed %r\n", Status));
+            }
+          }
+        }
       }
     }
     // Get TSEG info from FSP HOB

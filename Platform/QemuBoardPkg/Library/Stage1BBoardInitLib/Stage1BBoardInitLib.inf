@@ -50,6 +50,4 @@
   gPlatformModuleTokenSpaceGuid.PcdCfgDataBase
   gPlatformModuleTokenSpaceGuid.PcdCfgDatabaseSize
   gPlatformCommonLibTokenSpaceGuid.PcdVerifiedBootEnabled
-  gPlatformModuleTokenSpaceGuid.PcdVariableRegionBase
-  gPlatformModuleTokenSpaceGuid.PcdVariableRegionSize
   gPlatformModuleTokenSpaceGuid.PcdStage1BXip

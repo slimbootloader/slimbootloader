@@ -2240,7 +2240,8 @@ PayloadMain (
     if (RecoveryStatusValid) {
       RecoveryStatus.LastResult = (UINT8)(Status & 0xFF);
       RecoveryVarStatus = SetVariable (RECOVERY_STATUS_VARIABLE_NAME, &gRecoveryStatusVariableGuid,
-                                       EFI_VARIABLE_NON_VOLATILE, sizeof (RECOVERY_STATUS), &RecoveryStatus);
+                                       EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS,
+                                       sizeof (RECOVERY_STATUS), &RecoveryStatus);
       if (EFI_ERROR (RecoveryVarStatus)) {
         DEBUG ((DEBUG_ERROR, "Failed to update RecoveryStatus result: %r\n", RecoveryVarStatus));
       }
