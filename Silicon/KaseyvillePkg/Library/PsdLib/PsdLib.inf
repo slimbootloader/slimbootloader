@@ -44,6 +44,8 @@ BootloaderLib
 PciLib
 ConfigDataLib
 BootGuardLib
+HobLib
+UefiVariableLib
 
 [Guids]
   gMeBiosPayloadHobGuid

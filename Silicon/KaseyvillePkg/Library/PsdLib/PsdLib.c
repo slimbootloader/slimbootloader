@@ -13,11 +13,13 @@
 #include <Library/SocInitLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/HobLib.h>
 #include <IndustryStandard/Acpi.h>
 #include <IndustryStandard/Tpm20.h>
 #include <Library/PciLib.h>
 #include <Library/BootGuardLib.h>
 #include <Library/SecureBootLib.h>
+#include <Library/UefiVariableLib.h>
 #include <Guid/PcdDataBaseSignatureGuid.h>
 #include <Library/ConfigDataLib.h>
 #include <Library/BootloaderCoreLib.h>
@@ -45,6 +47,27 @@
 #define PSD_FW_VER_DEFAULT_VALUE                        0xFF
 #define TME_MT_MAX_KEY_MASK                             0x0007FFF000000000
 #define TME_MT_MAX_KEY_IDX                              36
+#define PSD_SECUREBOOT_UEFI_ENABLED                     BIT0
+#define PSD_UEFI_SECURE_BOOT_MODE_ENABLE                1
+#define PSD_SECURE_BOOT_ENABLE_NAME                     L"SecureBootEnable"
+#define PSD_PLATFORM_KEY_NAME                           L"PK"
+
+//
+// gEfiSecureBootEnableDisableGuid (F0A30BC7-AF08-4556-99C4-001009C93A44).
+// The NV-persisted "SecureBootEnable" setup knob; SBL runs before the payload
+// recreates the volatile "SecureBoot" variable, so this is the only readable source.
+//
+STATIC CONST EFI_GUID mSecureBootEnableDisableGuid = {
+  0xf0a30bc7, 0xaf08, 0x4556, { 0x99, 0xc4, 0x00, 0x10, 0x09, 0xc9, 0x3a, 0x44 }
+};
+
+//
+// gEfiGlobalVariableGuid (8BE4DF61-93CA-11D2-AA0D-00E098032B8C).
+// Owns the "PK" platform key variable used to distinguish User Mode from Setup Mode.
+//
+STATIC CONST EFI_GUID mGlobalVariableGuid = {
+  0x8be4df61, 0x93ca, 0x11d2, { 0xaa, 0x0d, 0x00, 0xe0, 0x98, 0x03, 0x2b, 0x8c }
+};
 
 
 /**
@@ -284,6 +307,90 @@ GetSgxCapabilities (
 }
 
 /**
+  Check whether the UEFI Platform Key (PK) is enrolled.
+
+  An enrolled PK means the platform is in User Mode; without it the payload runs in
+  Setup Mode where Secure Boot is inactive regardless of the "SecureBootEnable" knob.
+  PK is a persisted authenticated NV variable, so only its presence is tested here.
+
+  @retval TRUE   PK is enrolled (User Mode).
+  @retval FALSE  PK is absent (Setup Mode) or could not be read.
+
+**/
+STATIC
+BOOLEAN
+IsPlatformKeyEnrolled (
+  VOID
+  )
+{
+  EFI_STATUS   Status;
+  UINTN        DataSize;
+
+  DataSize = 0;
+  Status = UefiGetVariable (
+             PSD_PLATFORM_KEY_NAME,
+             (EFI_GUID *)&mGlobalVariableGuid,
+             NULL,
+             &DataSize,
+             NULL
+             );
+  // PK present: a zero-length probe returns EFI_BUFFER_TOO_SMALL with the real size.
+  return (BOOLEAN)(Status == EFI_BUFFER_TOO_SMALL && DataSize > 0);
+}
+
+/**
+  Read the effective UEFI Secure Boot state.
+
+  The payload's "SecureBoot" variable is volatile (BS+RT) and is recreated by the
+  payload at runtime, so it does not exist in flash when SBL builds the PSD table.
+  The effective state is derived from two persisted NV inputs: the "SecureBootEnable"
+  request knob and PK enrollment. "SecureBootEnable" alone is only a request; if PK
+  is not enrolled the payload enters Setup Mode with Secure Boot disabled, so both
+  conditions must hold before advertising Secure Boot to the OS.
+
+  @retval TRUE   UEFI Secure Boot is effectively enabled.
+  @retval FALSE  Secure Boot is disabled, in Setup Mode, or the knob is not present.
+
+**/
+BOOLEAN
+GetUefiSecureBootState (
+  VOID
+  )
+{
+  EFI_STATUS   Status;
+  UINT8        SecureBootEnable;
+  UINTN        DataSize;
+
+  SecureBootEnable = 0;
+  DataSize         = sizeof (SecureBootEnable);
+  Status = UefiGetVariable (
+             PSD_SECURE_BOOT_ENABLE_NAME,
+             (EFI_GUID *)&mSecureBootEnableDisableGuid,
+             NULL,
+             &DataSize,
+             &SecureBootEnable
+             );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "PSD: UEFI SecureBootEnable variable not available yet (%r)\n", Status));
+    return FALSE;
+  }
+
+  if (SecureBootEnable != PSD_UEFI_SECURE_BOOT_MODE_ENABLE) {
+    DEBUG ((DEBUG_INFO, "PSD: UEFI SecureBootEnable disabled (0x%02x)\n", SecureBootEnable));
+    return FALSE;
+  }
+
+  // Enable requested; Secure Boot is only effective when PK is enrolled (User Mode).
+  if (!IsPlatformKeyEnrolled ()) {
+    DEBUG ((DEBUG_INFO, "PSD: PK not enrolled, UEFI Secure Boot inactive (Setup Mode)\n"));
+    return FALSE;
+  }
+
+  DEBUG ((DEBUG_INFO, "PSD: UEFI Secure Boot effectively enabled\n"));
+  return TRUE;
+}
+
+/**
 
   Update Platform Service Discovery Table.
   @param[in] Table Pointer of ACPI Table Data.
@@ -347,6 +454,10 @@ UpdateAcpiPsdTable (
 
   //BIT0: UEFI Secure boot is enabled, BIT1: Boot Guard is Enabled, BIT2: Bootloader Verified boot is Enabled, BIT0-2 can be combined.
   Psdt->SecureBoot = (UINT8)(((PlatformData->BtGuardInfo.VerifiedBoot) << 1)| (FeaturePcdGet (PcdVerifiedBootEnabled)) << 2);
+  // Set UEFI Secure Boot bit only when booting the UEFI payload with it enabled.
+  if ((GetPayloadId () == UEFI_PAYLOAD_ID_SIGNATURE) && GetUefiSecureBootState ()) {
+    Psdt->SecureBoot |= PSD_SECUREBOOT_UEFI_ENABLED;
+  }
   //Measured boot enabled.
   Psdt->MeasuredBoot = MEASURED_BOOT_ENABLED()? 1 : 0;
 
