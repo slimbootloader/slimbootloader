@@ -82,6 +82,7 @@
 #include <Library/BuildFdtLib.h>
 #include <Library/PlatformHookLib.h>
 #include <Library/S3SaveRestoreLib.h>
+#include <Library/AsanLib.h>
 
 #define UIMAGE_FIT_MAGIC               (0x56190527)
 
@@ -165,6 +166,16 @@ PrintStackHeapInfo (
 VOID
 EFIAPI
 InitializeService (
+  VOID
+  );
+
+/**
+  Track the Stage2 heap, stack and globals with AddressSanitizer and publish the
+  runtime as a service, when AddressSanitizer is enabled.
+
+**/
+VOID
+InitializeAsan (
   VOID
   );
 

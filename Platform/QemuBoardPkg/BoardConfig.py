@@ -37,6 +37,20 @@ class Board(BaseBoard):
         self._SMBIOS_YAML_FILE    = os.path.join('Platform', self.BOARD_PKG_NAME, 'SmbiosStrings.yaml')
         self.SILICON_PKG_NAME     = 'QemuSocPkg'
 
+        self._ASAN_LIBS.extend ([
+            'Silicon/QemuSocPkg/Library/GpioLib/GpioLib.inf',
+            'Silicon/CommonSocPkg/Library/MadtLib/MadtLib.inf',
+            'Silicon/CommonSocPkg/Library/BootGuardLibCBnT/BootGuardLibCBnT.inf',
+            # These also link into Stage1A/1B, where no ASAN runtime is connected:
+            # accesses are not checked, but instrumentation increases code and stack size.
+            'Platform/CommonBoardPkg/Library/LoaderLib/LoaderLib.inf',
+            'Silicon/QemuSocPkg/Library/SpiFlashLib/SpiFlashLib.inf',
+            'Silicon/CommonSocPkg/Library/TcoTimerLib/TcoTimerLib.inf',
+            'Silicon/CommonSocPkg/Library/TopSwapLib/TopSwapLib.inf',
+            'Silicon/CommonSocPkg/Library/P2sbLib/P2sbLib.inf',
+            'Silicon/CommonSocPkg/Library/WatchDogTimerLib/WatchDogTimerLib.inf',
+        ])
+
         #
         # By default,
         # _PCI_ENUM_DOWNGRADE_IO32  : 1
@@ -132,6 +146,13 @@ class Board(BaseBoard):
             self.REDUNDANT_SIZE     = 0x080000
             self.NON_VOLATILE_SIZE  = 0x001000
             self.NON_REDUNDANT_SIZE = 0x2DF000
+            if self.ENABLE_ASAN:
+                # Room for the shared-library ASAN growth below, SLIMBOOTLOADER_SIZE is unchanged
+                redundant_growth = 0x4000
+                if self.NO_OPT_MODE:
+                    redundant_growth += 0x8000 + (0xC000 if self.FSPDEBUG_MODE == 1 else 0x6000)
+                self.REDUNDANT_SIZE     += redundant_growth
+                self.NON_REDUNDANT_SIZE -= 2 * redundant_growth
 
 
         self.SLIMBOOTLOADER_SIZE = (self.TOP_SWAP_SIZE + self.REDUNDANT_SIZE) * 2 + \
@@ -151,19 +172,27 @@ class Board(BaseBoard):
             # If so, STAGE1B_FD_BASE/STAGE1B_FD_SIZE need to be defined
             self.STAGE1B_FD_SIZE      = 0x36000
             if self.NO_OPT_MODE:
-                self.STAGE1B_FD_SIZE += 0xE000
+                self.STAGE1B_FD_SIZE += 0x12000
             self.STAGE1B_FD_BASE    = FREE_TEMP_RAM_TOP - self.STAGE1B_FD_SIZE
 
         # For Stage2, it is always compressed.
         # if STAGE2_LOAD_HIGH is 1, STAGE2_FD_BASE will be ignored
         self.STAGE2_FD_BASE       = 0x01000000
 
+        if self.ENABLE_ASAN:
+            self.STAGE2_SIZE         += 0x6000
+            self.PAYLOAD_SIZE        += 0x17000
+            self.FWUPDATE_SIZE       += 0x10000
+            # ASAN also instruments shared container/decompress/HOB libraries linked by Stage2/payloads.
+            self.STAGE2_SIZE         += 0x4000
+            self.PAYLOAD_SIZE        += 0x3000
+            self.FWUPDATE_SIZE       += 0x1000
         if self.NO_OPT_MODE:
             if self.FSPDEBUG_MODE == 1:
-                self.STAGE2_SIZE     += 0x8000
+                self.STAGE2_SIZE     += 0xC000
             else:
-                self.STAGE2_SIZE     += 0x2000
-            self.PAYLOAD_SIZE        += 0xA000
+                self.STAGE2_SIZE     += 0x6000
+            self.PAYLOAD_SIZE        += 0xF000
             self.FWUPDATE_SIZE       += 0x8000
 
         if self.ENABLE_UI_SETUP:
@@ -225,6 +254,7 @@ class Board(BaseBoard):
         dsc['PcdsFeatureFlag.%s' % self.BUILD_ARCH] = [
             'gPlatformCommonLibTokenSpaceGuid.PcdMultiUsbBootDeviceEnabled | TRUE'
         ]
+        self.AddPlatformDscAsanLibraries(dsc)
         return dsc
 
     def GetKeyHashList (self):

@@ -119,7 +119,7 @@ class Board(BaseBoard):
         self.STAGE2_SIZE          = 0x000C1000
         self.STAGE2_FD_BASE       = 0x01000000
 
-        self.PAYLOAD_SIZE         = 0x00031000
+        self.PAYLOAD_SIZE         = 0x00032000
         self.EPAYLOAD_SIZE        = 0x00240000
 
         self.ENABLE_FAST_BOOT = 0
@@ -148,6 +148,11 @@ class Board(BaseBoard):
         self.VARIABLE_SIZE        = 0x00002000
         self.SBLRSVD_SIZE         = 0x00001000
         self.FWUPDATE_SIZE        = 0x00020000 if self.ENABLE_FWU else 0
+        if self.ENABLE_ASAN:
+            # ASAN instrumentation, including shared Stage1 libraries, grows the compressed payloads
+            self.PAYLOAD_SIZE    += 0x2E000
+            if self.ENABLE_FWU:
+                self.FWUPDATE_SIZE += 0x0C000
         # Need a little bit more for full paging table
 
         # If BUILD_IDENTICAL_TS is 0, the flash map sizings and layout
@@ -272,6 +277,7 @@ class Board(BaseBoard):
         if self._PS_SUPPORT:
             dsc['PcdsFixedAtBuild'].append('gPlatformMeteorLakeTokenSpaceGuid.PcdMtlPSSupport | TRUE')
 
+        self.AddPlatformDscAsanLibraries(dsc)
         return dsc
 
 

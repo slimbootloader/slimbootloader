@@ -36,4 +36,9 @@
 [LibraryClasses]
   DebugLib
   BaseMemoryLib
+  AsanLib
+  PcdLib
+
+[FeaturePcd]
+  gPlatformCommonLibTokenSpaceGuid.PcdEnableAsan
 

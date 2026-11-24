@@ -1,0 +1,24 @@
+## @file
+#  memcpy/memset for compiler-generated calls in builds without a C runtime.
+#
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = MemIntrinsicsLib
+  FILE_GUID                      = 7D3C2E91-4B5A-4F86-A1D2-6E0B9C83F527
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = NULL
+
+[Sources]
+  MemIntrinsics.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  BaseMemoryLib

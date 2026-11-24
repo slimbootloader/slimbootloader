@@ -102,6 +102,11 @@ class Board(AlderlakeBoardConfig.Board):
         self.VARIABLE_SIZE        = 0x00002000
         self.SBLRSVD_SIZE         = 0x00001000
         self.FWUPDATE_SIZE        = 0x00020000 if self.ENABLE_FWU else 0
+        if self.ENABLE_ASAN:
+            # ASAN instrumentation, including shared Stage1 libraries, grows the compressed payloads
+            self.PAYLOAD_SIZE    += 0x2E000
+            if self.ENABLE_FWU:
+                self.FWUPDATE_SIZE += 0x0C000
 
         self.SIIPFW_SIZE          = 0x1000
 
