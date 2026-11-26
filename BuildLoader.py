@@ -325,6 +325,19 @@ class BaseBoard(object):
 class Build(object):
 
     def __init__(self, board):
+        if board.ENABLE_CSME_RESILIENCY:
+            required_csme_features = (
+                'ENABLE_SBL_RESILIENCY',
+                'ENABLE_FWU',
+                'ENABLE_CSME_UPDATE',
+            )
+            missing_csme_features = [name for name in required_csme_features if not getattr(board, name, 0)]
+            if missing_csme_features:
+                raise Exception (
+                    'CSME resiliency requires %s; disable ENABLE_CSME_RESILIENCY or enable the missing features.'
+                    % ', '.join(missing_csme_features)
+                )
+
         self._workspace                    = os.environ['WORKSPACE']
         self._board                        = board
         self._image                        = "SlimBootloader.bin"
