@@ -2268,13 +2268,9 @@ EndOfFwu:
 
   // Conclude the FW state machine after a successful recovery so the next boot does not loop back into recovery.
   if (RecoveryStatusValid && (Status == EFI_SUCCESS)) {
-    if (((RecoveryStatus.Reason & (RECOVERY_REASON_CSME | RECOVERY_REASON_IOE)) != 0) &&
-        ((RecoveryStatus.Reason & (RECOVERY_REASON_SBL | RECOVERY_REASON_CSME_WDT)) == 0)) {
-      // CSME/IOE recovery: reset SM to INIT so FSP won't trigger an extra BOOT_ON_FLASH_UPDATE cycle from a lingering SM_DONE.
-      SetStateMachineFlag (FW_UPDATE_SM_INIT);
-    } else {
-      // SBL partition recovery concludes the in-progress update so Stage1B does not re-detect the pending switch and loop.
-      SetStateMachineFlag (FW_UPDATE_SM_DONE);
+    Status = SetStateMachineFlag (FW_UPDATE_SM_DONE);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to conclude recovery state machine: %r\n", Status));
     }
   }
 
