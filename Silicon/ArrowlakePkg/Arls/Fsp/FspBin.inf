@@ -1,7 +1,7 @@
 ## @file
 #  File to describe FSP repo information
 #
-#  Copyright (c) 2025, Intel Corporation. All rights reserved.<BR>
+#  Copyright (c) 2026, Intel Corporation. All rights reserved.<BR>
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
@@ -11,7 +11,7 @@
 
 [UserExtensions.SBL."CloneRepo"]
   REPO    = https://github.com/intel/FSP.git
-  COMMIT  = bb6233faff46d8b45480c06d1ab1f50ae28ec253
+  COMMIT  = b3fe6c4b130f02684aa26616dc2923eeb53a172e
 
 [UserExtensions.SBL."CopyList"]
   ArrowLakeFspBinPkg/IoT/ArrowLakeS/Fsp.fd                 : Silicon/ArrowlakePkg/Arls/Fsp/FspRel.bin
