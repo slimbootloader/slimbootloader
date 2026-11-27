@@ -24,7 +24,7 @@ class Board(BaseBoard):
 
         self.VERINFO_IMAGE_ID     = 'SB_ARLS'
         self.VERINFO_PROJ_MAJOR_VER = 1
-        self.VERINFO_PROJ_MINOR_VER = 4
+        self.VERINFO_PROJ_MINOR_VER = 5
         self.VERINFO_SVN            = 1
         self.VERINFO_BUILD_DATE     = time.strftime("%m/%d/%Y")
 
@@ -132,7 +132,7 @@ class Board(BaseBoard):
         self.STAGE1_DATA_SIZE     = 0x00014000
         self.FSP_M_STACK_TOP      = 0xFEFDFF00
         self.STAGE1B_SIZE         = 0x00200000
-        self.STAGE2_SIZE          = 0x000C4000
+        self.STAGE2_SIZE          = 0x000C8000
         self.STAGE2_FD_BASE       = 0x01000000
 
         self.PAYLOAD_SIZE         = 0x00034000
